@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="DB,MySQL,MySQL ACID,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="sulang blog" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="ACID数据库事务有ACID四个属性，分别是原子性、一致性、隔离性、持久性。 原子性(Atomicity)整个事务最终只能是要么成功要么失败，不能存在中间状态，如果发生错误了就需要回滚回去，就像这个事务从来没有执行过一样。  一致性(Consistency)指系统要处于一个一致的状态，不能因为并发事务的多少影响到系统的一致性，举个典型的例子就是转帐的情况，假设有ABC三个帐号各有100元，那么不管">
+<meta name="keywords" content="DB,MySQL,MySQL ACID">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL ACID">
+<meta property="og:url" content="https://sulangsss.github.io/2018/03/11/Database/MySQL/ACID/index.html">
+<meta property="og:site_name" content="sulang blog">
+<meta property="og:description" content="ACID数据库事务有ACID四个属性，分别是原子性、一致性、隔离性、持久性。 原子性(Atomicity)整个事务最终只能是要么成功要么失败，不能存在中间状态，如果发生错误了就需要回滚回去，就像这个事务从来没有执行过一样。  一致性(Consistency)指系统要处于一个一致的状态，不能因为并发事务的多少影响到系统的一致性，举个典型的例子就是转帐的情况，假设有ABC三个帐号各有100元，那么不管">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-28T12:45:02.544Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL ACID">
+<meta name="twitter:description" content="ACID数据库事务有ACID四个属性，分别是原子性、一致性、隔离性、持久性。 原子性(Atomicity)整个事务最终只能是要么成功要么失败，不能存在中间状态，如果发生错误了就需要回滚回去，就像这个事务从来没有执行过一样。  一致性(Consistency)指系统要处于一个一致的状态，不能因为并发事务的多少影响到系统的一致性，举个典型的例子就是转帐的情况，假设有ABC三个帐号各有100元，那么不管">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2018/03/11/Database/MySQL/ACID/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>MySQL ACID | sulang blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">sulang blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">python java android django web</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/11/Database/MySQL/ACID/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">MySQL ACID</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-11T22:55:07+08:00">
+                2018-03-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="ACID"><a href="#ACID" class="headerlink" title="ACID"></a>ACID</h3><p>数据库事务有ACID四个属性，分别是原子性、一致性、隔离性、持久性。</p>
+<h4 id="原子性-Atomicity"><a href="#原子性-Atomicity" class="headerlink" title="原子性(Atomicity)"></a>原子性(Atomicity)</h4><p>整个事务最终只能是要么成功要么失败，不能存在中间状态，如果发生错误了就需要回滚回去，就像这个事务从来没有执行过一样。</p>
+<hr>
+<h4 id="一致性-Consistency"><a href="#一致性-Consistency" class="headerlink" title="一致性(Consistency)"></a>一致性(Consistency)</h4><p>指系统要处于一个一致的状态，不能因为并发事务的多少影响到系统的一致性，举个典型的例子就是转帐的情况，假设有ABC三个帐号各有100元，<br>那么不管这三个帐号之间怎么转账，整个系统总的额度是300元这一点是应该是不变的。其实ACID里的一致性更多的是应用程序需要考虑的问题，<br>和分布式系统里的CAP里的一致性完全不是一个概念。</p>
+<hr>
+<h4 id="隔离性-Isolation"><a href="#隔离性-Isolation" class="headerlink" title="隔离性(Isolation)"></a>隔离性(Isolation)</h4><p>本质上是解决并发执行的事务如何保证数据库状态是正确的，抽象描述叫可串行化，就是并发的事务在执行的时候效果要求达到看起来像是一个个事务串行执行的效果。<br>有冲突的事务之间的隔离性如果保证不了会引起前面的一致性(consistency)也无法满足。</p>
+<hr>
+<h4 id="持久性-Durability"><a href="#持久性-Durability" class="headerlink" title="持久性(Durability)"></a>持久性(Durability)</h4><p>在事务完成以后所有的修改可以持久的保存在数据库中，一般会采用WAL的方式，会把操作提前记录到日志中来保证即使操作还没有刷到磁盘就宕机的情况下有日志可以恢复。</p>
+<h3 id="MySQL无法提供严格的分布式事务语义的支持"><a href="#MySQL无法提供严格的分布式事务语义的支持" class="headerlink" title="MySQL无法提供严格的分布式事务语义的支持"></a>MySQL无法提供严格的分布式事务语义的支持</h3><p>如果客户端发送的SQL只涉及到一个节点，那自然是可以保证事务的，但是如果客户端发送的SQL涉及到两个及以上节点的SQL，那就无法保证事务语义了。原因主要是两个：</p>
+<ul>
+<li><p>原子性无法保证，在一个节点commit成功以后，在另外的节点commit失败了，这个事务就处在一个中间状态，此时原子性被打破。</p>
+</li>
+<li><p>隔离性，这个事务的一部分提交了，另一部分未提交，此时该事务正常是不该被读取到的，但是提交成功的部分会被其他事务读到，此时就无法保证隔离性了。</p>
+</li>
+</ul>
+<p>另外就算是涉及多个节点的操作都是成功的，理论上来说也是无法保证隔离性的。因为假设A事务的一个节点先commit成功，其他的节点后commit成功，而此时B事务在读取的<br>时候可能会读取到了A事务最早commit成功的那部分内容，却没有读到后来commit成功的内容，此时依然无法保证隔离性。</p>
+<p>更本质一点的原因是MySQL的事务都是每个实例维护自身的事务ID，而基于MySQL集群的分布式方案没有一个全局的事务ID来标识每个MySQL实例上的事务以及全局事务的元信息<br>的管理，所以无法做到严格的分布式事务语义。</p>
+<p>但实际上绝大多数业务对这个需求未必那么强烈，因为绝大多数的业务逻辑都是可以拆分的，拆成一个个只落在一个分库里的操作在绝大多数场景下是完全可行的，而且拆分完以后<br>也会更可控，所以这个问题在我们支撑业务的过程中也不是一个特别大的问题。</p>
+<h3 id="隔离级别"><a href="#隔离级别" class="headerlink" title="隔离级别"></a>隔离级别</h3><hr>
+<h4 id="READ-UNCOMMITTED"><a href="#READ-UNCOMMITTED" class="headerlink" title="READ UNCOMMITTED"></a>READ UNCOMMITTED</h4><p>事务中的修改，即使没有提交，对其他事务也都是可见的。从性能来说，READ UNCOMMITTED不会比其他的级别好太多，实际应用中很少使用。</p>
+<p>事务可以读取未提交的数据，称为脏读(Dirty Read)。</p>
+<hr>
+<h4 id="READ-COMMITTED"><a href="#READ-COMMITTED" class="headerlink" title="READ COMMITTED"></a>READ COMMITTED</h4><p>大多数数据库默认的级别，这个级别只是满足前面提到的隔离性的简单定义：一个事务开始时，只能“看见”已经提交的事务所做的修改。</p>
+<p>即一个事务从开始直到提交前，所做的任何修改对其他事务是不可见的。</p>
+<p>这个级别也称为不可重复读（nonrepeatable read），因为两次执行同样的查询，可能会得到不一样的结果。</p>
+<hr>
+<h4 id="REPEATABLE-READ"><a href="#REPEATABLE-READ" class="headerlink" title="REPEATABLE READ"></a>REPEATABLE READ</h4><p>该级别解决了脏读问题，保证了在同一个事务中多次读取同样的记录的结果是一致的。</p>
+<p>但是该级别在理论上，还是无法解决另一个问题——幻读（Phantom Read）。</p>
+<p>Phantom Read：当某个事务在读取某个范围内的记录时，另外一个事务又在该范围内插入了新的记录，此时如果之前的事务再次读取该范围的<br>记录时，会产生幻行（Phantom Row）</p>
+<p>注：InnoDB和XtraDB通过多版本并发控制（MVCC，Mutlversion Concurrency Control）解决了幻读问题。</p>
+<p>关于账户转账出问题的参考案例：<a href="http://www.importnew.com/28657.html" target="_blank" rel="noopener">http://www.importnew.com/28657.html</a></p>
+<hr>
+<h4 id="SERIALIZABLE"><a href="#SERIALIZABLE" class="headerlink" title="SERIALIZABLE"></a>SERIALIZABLE</h4><p>最高级别的隔离，通过强制事务串行执行，避免了前面提到的幻读（Phantom Read）问题。</p>
+<p>该级别会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁争用的问题。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>Dirty Read</th>
+<th>Nonrepeatable Read</th>
+<th>Phantom Read</th>
+<th>Locked Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>READ UNCOMMITTED</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>READ COMMITTED</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>REPEATABLE READ</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>SERIALIZABLE</td>
+<td>no</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/DB/" rel="tag"># DB</a>
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+            <a href="/tags/MySQL-ACID/" rel="tag"># MySQL ACID</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/08/Server/SpringBoot/MyBatis/config/" rel="next" title="MyBatis Common Mapper">
+                <i class="fa fa-chevron-left"></i> MyBatis Common Mapper
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/03/11/Database/MySQL/Concurrency-Control/" rel="prev" title="MySQL  Concurrency Control">
+                MySQL  Concurrency Control <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="sulang">
+          
+            <p class="site-author-name" itemprop="name">sulang</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">369</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">167</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">415</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#ACID"><span class="nav-number">1.</span> <span class="nav-text">ACID</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#原子性-Atomicity"><span class="nav-number">1.1.</span> <span class="nav-text">原子性(Atomicity)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#一致性-Consistency"><span class="nav-number">1.2.</span> <span class="nav-text">一致性(Consistency)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#隔离性-Isolation"><span class="nav-number">1.3.</span> <span class="nav-text">隔离性(Isolation)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#持久性-Durability"><span class="nav-number">1.4.</span> <span class="nav-text">持久性(Durability)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MySQL无法提供严格的分布式事务语义的支持"><span class="nav-number">2.</span> <span class="nav-text">MySQL无法提供严格的分布式事务语义的支持</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#隔离级别"><span class="nav-number">3.</span> <span class="nav-text">隔离级别</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#READ-UNCOMMITTED"><span class="nav-number">3.1.</span> <span class="nav-text">READ UNCOMMITTED</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#READ-COMMITTED"><span class="nav-number">3.2.</span> <span class="nav-text">READ COMMITTED</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#REPEATABLE-READ"><span class="nav-number">3.3.</span> <span class="nav-text">REPEATABLE READ</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SERIALIZABLE"><span class="nav-number">3.4.</span> <span class="nav-text">SERIALIZABLE</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">3.5.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sulang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

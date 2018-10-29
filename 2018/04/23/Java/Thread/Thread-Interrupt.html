@@ -1,0 +1,117 @@
+<hr>
+<p>title: Java Thread Interrupt<br>date: 2018-09-16 15:01:22<br>tags:</p>
+<ul>
+<li>Java</li>
+<li>Thread</li>
+<li>Interrupt<br>categories: </li>
+<li>Java</li>
+<li>Thread</li>
+</ul>
+<hr>
+<h4 id="What’s-thread-interrupt"><a href="#What’s-thread-interrupt" class="headerlink" title="What’s thread interrupt"></a>What’s thread interrupt</h4><p>在我们的 Java 程序中其实有不止一条执行线程，只有当所有的线程都运行结束的时候，这个 Java 程序才算运行结束。 官方的话给你描述一下：当所有的非守护线程运行结束时，或者其中一个线程调用了 System.exit() 方法时，这个 Java 程序才能运行结束。</p>
+<h4 id="场景举例"><a href="#场景举例" class="headerlink" title="场景举例"></a>场景举例</h4><p>我们现在在下载一个 500 多 M 的大片，我们点击开始下载，那个这个时候就等于开启了一个线程去下载我们的文件，然而这个时候我们的网速不是很给力，几十 KB 的在这跑，作为一个年轻人我是等不了了，我不下来，那么这个时候我们第一个操作就是结束掉这个下载文件的操作，其实更接近程序的来说，这个时候我们就需要把这个线程给中断了。</p>
+<p>如何终端一个线程？</p>
+<p>这段程序我们模拟下载，最开始获取系统时间，然后进入循环每次获取系统时间，如果时间超过 10 秒我们就中断线程，不在继续下载，下载速度时每秒1M：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>{
+    <span class="keyword">int</span> number = <span class="number">0</span>;
+
+    <span class="comment">// 记录程序开始的时间 </span>
+    Long start = System.currentTimeMillis();
+
+    <span class="keyword">while</span> (<span class="keyword">true</span>) {
+        <span class="comment">// 每次执行一次结束的时间 </span>
+        Long end = System.currentTimeMillis();
+
+        <span class="comment">// 获取时间差 </span>
+        Long interval = end - start;
+
+        <span class="comment">// 如果时间超过了 10 秒，那么我们就结束下载 </span>
+        <span class="keyword">if</span> (interval &gt;= <span class="number">10000</span>) {
+            <span class="comment">// 中断线程 </span>
+            interrupted();
+            System.err.println(<span class="string">"太慢了，我不下了"</span>);
+            <span class="keyword">return</span>;
+        } <span class="keyword">else</span> <span class="keyword">if</span> (number &gt;= <span class="number">500</span>) {
+            System.out.println(<span class="string">"文件下载完成"</span>);
+            <span class="comment">// 中断线程 </span>
+            interrupted();
+            <span class="keyword">return</span>;
+        }
+
+        number++;
+        System.out.println(<span class="string">"已下载"</span> + number + <span class="string">"M"</span>);
+
+        <span class="keyword">try</span> {
+            Thread.sleep(<span class="number">2000</span>);
+        } <span class="keyword">catch</span> (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+</code></pre>
+<p><strong>中断线程的方式</strong></p>
+<p>Thread 类中给我们提供了中断线程的方法，我们先来看下这个方法到底是如何让线程中断的：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">interrupted</span><span class="params">()</span> </span>{
+    <span class="keyword">return</span> currentThread().isInterrupted(<span class="keyword">true</span>);
+}
+</code></pre>
+<p>这个方法是检查当前线程是否被中断，中断返回 true，未中断返回 false</p>
+<pre><code class="java"><span class="function"><span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">boolean</span> <span class="title">isInterrupted</span><span class="params">(<span class="keyword">boolean</span> ClearInterrupted)</span></span>;
+</code></pre>
+<p>通过查看源码我们可以发现，中断线程就是通过调用检查线程是否被中断的方法，把值设为true。这个时候你再去调用检查线程是否中断的方法时就返回true了。</p>
+<p>这里大家需要注意一个问题：Thread.interrupted() 方法只是修改了当前线程的状态告诉他被中断了，但是对于非阻塞中的线程，只是改变了中断状态，即 Thread.isInterrupted() 返回 true，对于可取消的阻塞状态中的线程，例如等待在这些函数上的线程 ，Thread.sleep()，这个线程收到中断信号之后就会抛出 InterruptedException 异常，同时会把中断状态设置为 true。</p>
+<h4 id="线程睡眠引起-InterruptedException-异常的原因"><a href="#线程睡眠引起-InterruptedException-异常的原因" class="headerlink" title="线程睡眠引起 InterruptedException 异常的原因"></a>线程睡眠引起 InterruptedException 异常的原因</h4><p>错误示例</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>{
+    <span class="keyword">int</span> number = <span class="number">0</span>;
+
+    <span class="keyword">while</span> (<span class="keyword">true</span>) {
+        <span class="comment">// 检查线程是否被中断，中断就停止下载 </span>
+        <span class="keyword">if</span> (isInterrupted()) {
+
+            System.err.println(<span class="string">"太慢了，我不下了"</span>);
+            <span class="keyword">return</span>;
+        } <span class="keyword">else</span> <span class="keyword">if</span> (number &gt;= <span class="number">500</span>) {
+            System.out.println(<span class="string">"下载完成"</span>);
+            <span class="keyword">return</span>;
+        }
+
+        number++;
+        System.out.println(<span class="string">"已下载"</span> + number + <span class="string">"M"</span>);
+
+        <span class="keyword">try</span> {
+            Thread.sleep(<span class="number">2000</span>);
+        } <span class="keyword">catch</span> (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+</code></pre>
+<p>主程序，等待 10 秒后中断线程</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>{
+    Thread thread = <span class="keyword">new</span> PrimeGenerator();
+    <span class="comment">// 启动线程 </span>
+    thread.start();
+    <span class="comment">// 等待 10 秒后中断线程 </span>
+    Thread.sleep(<span class="number">1000</span>);
+    <span class="comment">// 中断线程 </span>
+    thread.interrupt();
+}
+</code></pre>
+<p>输出结果</p>
+<pre><code class="java">已下载<span class="number">1</span>M
+已下载<span class="number">2</span>M
+已下载<span class="number">3</span>M
+已下载<span class="number">4</span>M
+已下载<span class="number">5</span>M
+Main Thread wake up
+java.lang.InterruptedException: sleep interrupted
+已下载<span class="number">6</span>M
+    at java.lang.Thread.sleep(Native Method)
+    at thread.DownLoadThread.run(DownLoadThread.kt:<span class="number">20</span>)
+已下载<span class="number">7</span>M
+</code></pre>
+<p>这里我们先要了解 Thread.interrupt() 方法不会中断一个正在运行的线程，调用 Thread.sleep() 方法时，这个时候就不再占用 CPU，我们来分析下我们这个程序，我们下载是要等待 10 秒，每次下载的速度是 0.5M/S，也就是当我们下载到 5M 的时候等待时间已经到了，这个时候调用 Thread.interrupt() 方法中断线程，但是 run() 方法中的睡眠还要接着往下执行，它是不会因为中断而放弃执行下面的代码的，那么这个时候当它再执行 Thread.sleep() 的时候就会抛出 InterruptedException 异常，因为当前的线程已经被中断了。</p>
+<p>说到这里，你是否已经明白产生这个异常的原因了？另外还有另外的两个原因致使线程产生 InterruptedException 异常的原因，wait()、join(）两个方法使用不当也会引起线程抛出该异常。</p>
+<h4 id="查看线程是否中断的两种方式"><a href="#查看线程是否中断的两种方式" class="headerlink" title="查看线程是否中断的两种方式"></a>查看线程是否中断的两种方式</h4><p>在Thread类中有一个方法 interrupted() 可以用来检查当前线程时候被中断，还有 isInterrupted() 方法可以用来检查当前线程是否被中断。</p>
+<p>中断线程的方法其实底层就是将这个属性设置为 true，isInterrupted() 方法只是返回了这个属性值而已。</p>
+<p>这两个方法有一个区别就是 isInterrupted() 不能改变 interrupted() 的属性值，但是 interrupted() 方法却能改变 interrupted 的属性值，所以在判断一个线程时候被中断的时候我们更推荐使用 isInterrupted()。</p>

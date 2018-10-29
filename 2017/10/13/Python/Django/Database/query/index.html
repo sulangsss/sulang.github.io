@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="database,django,query,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="sulang blog" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="QuerySetsInternally, a QuerySet can be constructed, filtered, sliced. 只有当进行取值操作时候，才会触发数据库操作。 触发数据库操作的方式  Iteration Slicing，例如 Entry.objects.all()[:5] Pickling/Caching repr() len() list()，例如 list(Entry">
+<meta name="keywords" content="database,django,query">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库查询操作">
+<meta property="og:url" content="https://sulangsss.github.io/2017/10/13/Python/Django/Database/query/index.html">
+<meta property="og:site_name" content="sulang blog">
+<meta property="og:description" content="QuerySetsInternally, a QuerySet can be constructed, filtered, sliced. 只有当进行取值操作时候，才会触发数据库操作。 触发数据库操作的方式  Iteration Slicing，例如 Entry.objects.all()[:5] Pickling/Caching repr() len() list()，例如 list(Entry">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-28T12:45:02.949Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="数据库查询操作">
+<meta name="twitter:description" content="QuerySetsInternally, a QuerySet can be constructed, filtered, sliced. 只有当进行取值操作时候，才会触发数据库操作。 触发数据库操作的方式  Iteration Slicing，例如 Entry.objects.all()[:5] Pickling/Caching repr() len() list()，例如 list(Entry">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2017/10/13/Python/Django/Database/query/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>数据库查询操作 | sulang blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">sulang blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">python java android django web</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/13/Python/Django/Database/query/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">数据库查询操作</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-13T01:16:13+08:00">
+                2017-10-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/database/" itemprop="url" rel="index">
+                    <span itemprop="name">database</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="QuerySets"><a href="#QuerySets" class="headerlink" title="QuerySets"></a>QuerySets</h2><p>Internally, a QuerySet can be constructed, filtered, sliced.</p>
+<p>只有当进行取值操作时候，才会触发数据库操作。</p>
+<p>触发数据库操作的方式</p>
+<ul>
+<li>Iteration</li>
+<li>Slicing，例如 Entry.objects.all()[:5]</li>
+<li>Pickling/Caching</li>
+<li>repr()</li>
+<li>len()</li>
+<li>list()，例如 list(Entry.objects.all())</li>
+<li>bool()</li>
+</ul>
+<p>参考链接：<a href="https://docs.djangoproject.com/en/1.11/ref/models/querysets/#when-querysets-are-evaluated" target="_blank" rel="noopener">https://docs.djangoproject.com/en/1.11/ref/models/querysets/#when-querysets-are-evaluated</a></p>
+<h3 id="Iteration"><a href="#Iteration" class="headerlink" title="Iteration"></a>Iteration</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> e <span class="keyword">in</span> Entry.objects.all():</span><br><span class="line">    print(e.headline)</span><br></pre></td></tr></table></figure>
+<h3 id="Limiting"><a href="#Limiting" class="headerlink" title="Limiting"></a>Limiting</h3><p>返回5个对象 (等价 LIMIT 5)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.all()[:<span class="number">5</span>]</span><br></pre></td></tr></table></figure>
+<p>分页返回对象 (等价 OFFSET 5 LIMIT 5)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.all()[<span class="number">5</span>:<span class="number">10</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="生成List"><a href="#生成List" class="headerlink" title="生成List"></a>生成List</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">entry_list = list(Entry.objects.all())</span><br></pre></td></tr></table></figure>
+<h3 id="bool"><a href="#bool" class="headerlink" title="bool"></a>bool</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> Entry.objects.filter(headline=<span class="string">"Test"</span>):</span><br><span class="line">   print(<span class="string">"There is at least one Entry with the headline Test"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> Entry.objects.filter(headline=<span class="string">"Test"</span>).bool():</span><br><span class="line">   print(<span class="string">"There is at least one Entry with the headline Test"</span>)</span><br></pre></td></tr></table></figure>
+<p>此时会触发数据库查询操作，如果查询结果中至少有一个对象，则返回True，否则False。</p>
+<hr>
+<h2 id="查询操作"><a href="#查询操作" class="headerlink" title="查询操作"></a>查询操作</h2><h3 id="查询所有对象"><a href="#查询所有对象" class="headerlink" title="查询所有对象"></a>查询所有对象</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">all_entries = Entry.objects.all()</span><br></pre></td></tr></table></figure>
+<p>The <strong>all()</strong> method returns a QuerySet of all the objects in the database.</p>
+<p>需要注意的是，最好先判断查询结果是否有效，可以通过 <strong>exists()</strong>来判断。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">entry = Entry.objects.get(pk=<span class="number">123</span>)</span><br><span class="line"><span class="keyword">if</span> some_queryset.filter(pk=entry.pk).exists():</span><br><span class="line">    do something</span><br></pre></td></tr></table></figure>
+<p>更加高效的方式，直接检查是否有数据返回，上面的操作，还会检查查询结果是否有效。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> some_queryset:</span><br><span class="line">    do something</span><br></pre></td></tr></table></figure>
+<p>some_queryset.exists() will do more overall work (one query for the existence check plus an extra one to later retrieve the results) than simply using bool(some_queryset), which retrieves the results and then checks if any were returned.</p>
+<h3 id="查询单个对象"><a href="#查询单个对象" class="headerlink" title="查询单个对象"></a>查询单个对象</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.order_by(<span class="string">'headline'</span>)[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">Entry.objects.get(id=<span class="number">3</span>)</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="查询运算符"><a href="#查询运算符" class="headerlink" title="查询运算符"></a>查询运算符</h3><h4 id="exact"><a href="#exact" class="headerlink" title="exact"></a>exact</h4><h4 id="iexact"><a href="#iexact" class="headerlink" title="iexact"></a>iexact</h4><h3 id="values-字段查询"><a href="#values-字段查询" class="headerlink" title="values() 字段查询"></a>values() 字段查询</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.values(<span class="string">'name'</span>).get(name=<span class="string">'hello'</span>)</span><br></pre></td></tr></table></figure>
+<p>返回的数据为dict结构 {‘name’:’hello’}</p>
+<h3 id="values-list-字段列表查询"><a href="#values-list-字段列表查询" class="headerlink" title="values_list() 字段列表查询"></a>values_list() 字段列表查询</h3><h3 id="根据参数查询"><a href="#根据参数查询" class="headerlink" title="根据参数查询"></a>根据参数查询</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.filter(pub_date__year=<span class="number">2006</span>)</span><br></pre></td></tr></table></figure>
+<p>The <figure class="highlight plain"><figcaption><span>return a QuerySet containing objects that match the given lookup parameters.</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line">### 链式查询</span><br><span class="line"></span><br><span class="line">``` python</span><br><span class="line">Entry.objects.filter(headline__startswith=&apos;What&apos;)</span><br><span class="line">.exclude(pub_date__gte=datetime.date.today())</span><br><span class="line">.filter(pub_date__gte=datetime.date(2005, 1, 30))</span><br></pre></td></tr></table></figure></p>
+<h3 id="多次过滤查询"><a href="#多次过滤查询" class="headerlink" title="多次过滤查询"></a>多次过滤查询</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">q1 = Entry.objects.filter(headline__startswith=<span class="string">"What"</span>)</span><br><span class="line">q2 = q1.exclude(pub_date__gte=datetime.date.today())</span><br><span class="line">q3 = q1.filter(pub_date__gte=datetime.date.today())</span><br></pre></td></tr></table></figure>
+<p>q2 和 q3 都是 q1 查询结果的子集</p>
+<h3 id="惰性查询"><a href="#惰性查询" class="headerlink" title="惰性查询"></a>惰性查询</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">q = Entry.objects.filter(headline__startswith=<span class="string">"What"</span>)</span><br><span class="line">q = q.filter(pub_date__lte=datetime.date.today())</span><br><span class="line">q = q.exclude(body_text__icontains=<span class="string">"food"</span>)</span><br><span class="line"><span class="keyword">print</span> (q)</span><br></pre></td></tr></table></figure>
+<p>从代码上来看，执行了3次数据库查询操作，而实际上只执行了一次，因为只有当执行到 print(q) 时才会触发数据库查询操作。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/database/" rel="tag"># database</a>
+          
+            <a href="/tags/django/" rel="tag"># django</a>
+          
+            <a href="/tags/query/" rel="tag"># query</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/12/Python/stdlib/sched/" rel="next" title="sched">
+                <i class="fa fa-chevron-left"></i> sched
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/10/13/Python/Django/Model/field-types/" rel="prev" title="field types">
+                field types <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="sulang">
+          
+            <p class="site-author-name" itemprop="name">sulang</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">369</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">167</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">415</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#QuerySets"><span class="nav-number">1.</span> <span class="nav-text">QuerySets</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Iteration"><span class="nav-number">1.1.</span> <span class="nav-text">Iteration</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Limiting"><span class="nav-number">1.2.</span> <span class="nav-text">Limiting</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成List"><span class="nav-number">1.3.</span> <span class="nav-text">生成List</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bool"><span class="nav-number">1.4.</span> <span class="nav-text">bool</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查询操作"><span class="nav-number">2.</span> <span class="nav-text">查询操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#查询所有对象"><span class="nav-number">2.1.</span> <span class="nav-text">查询所有对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询单个对象"><span class="nav-number">2.2.</span> <span class="nav-text">查询单个对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询运算符"><span class="nav-number">2.3.</span> <span class="nav-text">查询运算符</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#exact"><span class="nav-number">2.3.1.</span> <span class="nav-text">exact</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#iexact"><span class="nav-number">2.3.2.</span> <span class="nav-text">iexact</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#values-字段查询"><span class="nav-number">2.4.</span> <span class="nav-text">values() 字段查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#values-list-字段列表查询"><span class="nav-number">2.5.</span> <span class="nav-text">values_list() 字段列表查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#根据参数查询"><span class="nav-number">2.6.</span> <span class="nav-text">根据参数查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#多次过滤查询"><span class="nav-number">2.7.</span> <span class="nav-text">多次过滤查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#惰性查询"><span class="nav-number">2.8.</span> <span class="nav-text">惰性查询</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sulang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
