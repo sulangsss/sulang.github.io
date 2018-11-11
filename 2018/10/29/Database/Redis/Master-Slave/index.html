@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Redis,DB,Replication,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="sulang blog" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="Replication 演进复制原理 复制初始化阶段   当执行完slaveof masterip port 命令时候，从库根据指明的master节点ip和port向主库发起socket连接，主库收到socket连接之后将连接信息保存，此时连接建立；   当socket连接建立完成以后，从库向主库发送ping命令，以确认主库是否可用，此时的结果返回如果是PONG则代表主库可以用，否则可能出现超时或">
+<meta name="keywords" content="Redis,DB,Replication">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis Replication">
+<meta property="og:url" content="https://sulangsss.github.io/2018/10/29/Database/Redis/Master-Slave/index.html">
+<meta property="og:site_name" content="sulang blog">
+<meta property="og:description" content="Replication 演进复制原理 复制初始化阶段   当执行完slaveof masterip port 命令时候，从库根据指明的master节点ip和port向主库发起socket连接，主库收到socket连接之后将连接信息保存，此时连接建立；   当socket连接建立完成以后，从库向主库发送ping命令，以确认主库是否可用，此时的结果返回如果是PONG则代表主库可以用，否则可能出现超时或">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-10-30T02:59:12.799Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis Replication">
+<meta name="twitter:description" content="Replication 演进复制原理 复制初始化阶段   当执行完slaveof masterip port 命令时候，从库根据指明的master节点ip和port向主库发起socket连接，主库收到socket连接之后将连接信息保存，此时连接建立；   当socket连接建立完成以后，从库向主库发送ping命令，以确认主库是否可用，此时的结果返回如果是PONG则代表主库可以用，否则可能出现超时或">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2018/10/29/Database/Redis/Master-Slave/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>Redis Replication | sulang blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">sulang blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">python java android django web</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/29/Database/Redis/Master-Slave/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Redis Replication</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-29T23:31:19+08:00">
+                2018-10-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Replication-演进"><a href="#Replication-演进" class="headerlink" title="Replication 演进"></a>Replication 演进</h3><h4 id="复制原理"><a href="#复制原理" class="headerlink" title="复制原理"></a>复制原理</h4><ol>
+<li>复制初始化阶段</li>
+</ol>
+<blockquote>
+<p>当执行完slaveof masterip port 命令时候，从库根据指明的master节点ip和port向主库发起socket连接，主库收到socket连接之后将连接信息保存，此时连接建立；</p>
+</blockquote>
+<blockquote>
+<p>当socket连接建立完成以后，从库向主库发送ping命令，以确认主库是否可用，此时的结果返回如果是PONG则代表主库可以用，否则可能出现超时或者主库此时在处理其他任务阻塞那么此时从库将断开socket连接，然后进行重试；</p>
+</blockquote>
+<blockquote>
+<p>如果主库连接设置了密码，则从库需要设置masterauth参数，此时从库会发送auth命令，命令格式为“auth + 密码”进行密码验证，其中密码为masterauth参数配置的密码，需要注意的是如果主库设置了密码验证，从库未配置masterauth参数则报错，socket连接断开。</p>
+</blockquote>
+<blockquote>
+<p>当身份验证完成以后，从节点发送自己的监听端口，主库保存其端口信息，此时进入下一个阶段：数据同步阶段。</p>
+</blockquote>
+<hr>
+<ol start="2">
+<li>数据同步阶段</li>
+</ol>
+<blockquote>
+<p>主库和从库都确认对方信息以后，便可开始数据同步，此时从库向主库发送psync命令(注意，redis4.0版本对2.8版本的psync做了优化)，主库收到该命令后判断是进行增量复制还是全量复制，然后根据策略进行数据的同步，当主库有新的写操作时候，此时进入复制第三阶段：命令传播阶段。</p>
+</blockquote>
+<blockquote>
+<p>redis采用量乐观复制策略，容忍在一定时间内主从数据内容是不同的，但是两者的数据最终会同步。</p>
+</blockquote>
+<hr>
+<ol start="3">
+<li>命令传播阶段</li>
+</ol>
+<blockquote>
+<p>当数据同步完成以后，在此后的时间里主从维护着心跳检查来确认对方是否在线，每隔一段时间（默认10秒，通过repl-ping-slave-period参数指定）主节点向从节点发送PING命令判断从节点是否在线，而从节点每秒1次向主节点发送REPLCONF ACK命令，命令格式为：REPLCONF ACK {offset}，其中offset指从节点保存的复制偏移量。作用一是汇报自己复制偏移量，主节点会对比复制偏移量向从节点发送未同步的命令，作用二在于判断主节点是否在线，从库接送命令并执行，最终实现与主库数据相同。</p>
+</blockquote>
+<hr>
+<h4 id="复制演进"><a href="#复制演进" class="headerlink" title="复制演进"></a>复制演进</h4><p>sync -&gt; psync1 -&gt; psync2</p>
+<ol>
+<li>redis版本 &lt;= 2.6 &lt; 2.8，复制采用sync命令，无论是第一次主从复制还是断线重连进行复制都采用全量复制；</li>
+<li>2.8 &lt;= redis版本 &lt; 4.0，复制采用psync，从redis2.8开始，redis复制从sync过渡到psync，这一特性主要添加了redis在断线重新时候可使用<strong>部分复制</strong>；</li>
+<li>redis版本 &gt;= 4.0，也采用psync，相比与2.8版本的psync优化了<strong>增量复制</strong>，这里我们称为psync2，2.8版本的psync称为psync1。</li>
+</ol>
+<p><strong>sync</strong></p>
+<p>在redis2.6以及以前的版本，复制采用sync命令，当一个从库启动后，会向主库发送sync命令，主库收到sync命令后执行bgsave后台保存RDB快照，同时将保存快照的将快照保存期间接受的写命令保存到缓冲队列。</p>
+<p>当快照完成以后，主库将快照文件已经缓存的所有命令发送给从库，从库接受到快照文件并载入，再将执行主库发送的命令，也就是上面我们介绍的复制初始化阶段和数据同步阶段，其后就是命令增量同步，最终主库与从库保持数据一直。</p>
+<p>当从库在某些情况断线重连（如从库重启、由于网络原因主从连接超时），重复上述过程，进行数据同步。由此可见，redis2.6版本以及2.6以前复制过程全部采用全量复制。</p>
+<p>sync虽然解决了数据同步问题，但是在数据量比较大情况下，从库断线从来依然采用全量复制机制，无论是从数据恢复、宽带占用来说，sync所带来的问题还是很多的。于是redis从2.8开始，引入新的命令psync。</p>
+<p><strong>psync1</strong></p>
+<p>在redis2.8版本，redis引入psync命令来进行主从的数据同步，这里我们称该命令为psync1。</p>
+<p>psync1实现依赖以下三个关键点：</p>
+<ul>
+<li>offset（复制偏移量）</li>
+</ul>
+<blockquote>
+<p>主库和从库分别各自维护一个复制偏移量（可以使用info replication查看），用于标识自己复制的情况，在主库中代表主节点向从节点传递的字节数，在从库中代表从库同步的字节数。每当主库向从节点发送N个字节数据时，主节点的offset增加N，从库每收到主节点传来的N个字节数据时，从库的offset增加N。因此offset总是不断增大，这也是判断主从数据是否同步的标志，若主从的offset相同则表示数据同步量，不通则表示数据不同步。以下图示分别代表某个时刻两个主从的同步情况</p>
+</blockquote>
+<ul>
+<li>replication backlog buffer（复制积压缓冲区）</li>
+</ul>
+<blockquote>
+<p>复制积压缓冲区是一个固定长度的FIFO队列，大小由配置参数repl-backlog-size指定，默认大小1MB。需要注意的是该缓冲区由master维护并且有且只有一个，所有slave共享此缓冲区，其作用在于备份最近主库发送给从库的数据。</p>
+<p>在主从命令传播阶段，主节点除了将写命令发送给从节点外，还会发送一份到复制积压缓冲区，作为写命令的备份。除了存储最近的写命令，复制积压缓冲区中还存储了每个字节相应的复制偏移量，由于复制积压缓冲区固定大小先进先出的队列，所以它总是保存的是最近redis执行的命令。</p>
+</blockquote>
+<ul>
+<li>run_id(服务器运行的唯一ID)</li>
+</ul>
+<blockquote>
+<p>每个redis实例在启动时候，都会随机生成一个长度为40的唯一字符串来标识当前运行的redis节点，查看此id可通过命令info server查看。</p>
+</blockquote>
+<blockquote>
+<p>当主从复制在初次复制时，主节点将自己的runid发送给从节点，从节点将这个runid保存起来,当断线重连时，从节点会将这个runid发送给主节点。主节点根据runid判断能否进行部分复制：</p>
+</blockquote>
+<ul>
+<li>如果从节点保存的runid与主节点现在的runid相同，说明主从节点之前同步过，主节点会更具offset偏移量之后的数据判断是否执行部分复制，如果offset偏移量之后的数据仍然都在复制积压缓冲区里，则执行部分复制，否则执行全量复制；</li>
+<li>如果从节点保存的runid与主节点现在的runid不同，说明从节点在断线前同步的redis节点并不是当前的主节点，只能进行全量复制;</li>
+</ul>
+<p><strong>psync2</strong></p>
+<blockquote>
+<p>redis4.0新版本除了增加混合持久化，还优化了psync（以下称psync2）并实现即使redis实例重启的情况下也能实现部分同步，下面主要介绍psync2实现过程。psync2在psync1基础上新增两个复制id</p>
+</blockquote>
+<blockquote>
+<ul>
+<li>master_replid1: 复制id1(后文简称：replid1)，一个长度为41个字节(40个随机串+’0’)的字符串，每个redis实例都有，和runid没有直接关联，但和runid生成规则相同。当实例变为从实例后，自己的replid1会被主实例的replid1覆盖。</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>master_replid2：复制id2(后文简称:replid2)，默认初始化为全0，用于存储上次主实例的replid1。</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>在4.0之前的版本，redis复制信息完全丢失，所以每个实例重启后只能进行全量复制，到了4.0版本，任然可以使用部分同步，其实现过程：</p>
+</blockquote>
+<blockquote>
+<ul>
+<li>第一步：存储复制信息</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>redis在关闭时，通过shutdown save,都会调用rdbSaveInfoAuxFields函数，把当前实例的repl-id和repl-offset保存到RDB文件中,当前的RDB存储的数据内容和复制信息是一致性的可通过redis-check-rdb命令查看</p>
+</blockquote>
+<blockquote>
+<ul>
+<li>第二步：重启后加载RDB文件中的复制信息</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>redis加载RDB文件，会专门处理文件中辅助字段(AUX fields）信息，把其中repl_id和repl_offset加载到实例中，分别赋给master_replid和master_repl_offset两个变量值，特别注意当从库开启了AOF持久化，redis加载顺序发生变化优先加载AOF文件，但是由于aof文件中没有复制信息，所以导致重启后从实例依旧使用全量复制！</p>
+</blockquote>
+<blockquote>
+<ul>
+<li>第三步：向主库上报复制信息，判断是否进行部分同步</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>从实例向主库上报master_replid和master_repl_offset+1；从实例同时满足以下两条件，就可以部分重新同步，否则执行全量同步：</p>
+</blockquote>
+<blockquote>
+<blockquote>
+<ul>
+<li>从实例上报master_replid串，与主实例的master_replid1或replid2有一个相等，用于判断主从未发生改变；</li>
+</ul>
+</blockquote>
+</blockquote>
+<blockquote>
+<blockquote>
+<ul>
+<li>从实例上报的master_repl_offset+1字节，还存在于主实例的复制积压缓冲区中，用于判断从库丢失部分是否在复制缓冲区中；</li>
+</ul>
+</blockquote>
+</blockquote>
+<blockquote>
+<p>psync2除了解决redis重启使用部分同步外，还为解决在主库故障时候从库切换为主库时候使用部分同步机制。redis从库默认开启复制积压缓冲区功能，以便从库故障切换变化master后，其他落后该从库可以从缓冲区中获取缺少的命令。该过程的实现通过两组replid、offset替换原来的master runid和offset变量实现</p>
+</blockquote>
+<blockquote>
+<blockquote>
+<ul>
+<li>第一组：master_replid和master_repl_offset：如果redis是主实例，则表示为自己的replid和复制偏移量； 如果redis是从实例，则表示为自己主实例的replid1和同步主实例的复制偏移量。</li>
+<li>第二组：master_replid2和second_repl_offset：无论主从，都表示自己上次主实例repid1和复制偏移量；用于兄弟实例或级联复制，主库故障切换psync。</li>
+</ul>
+</blockquote>
+</blockquote>
+<blockquote>
+<p>判断是否使用部分复制条件：如果从库提供的master_replid与master的replid不同，且与master的replid2不同，或同步速度快于master； 就必须进行全量复制，否则执行部分复制。</p>
+</blockquote>
+<blockquote>
+<p>以下常见的主从切换都可以使用部分复制：</p>
+</blockquote>
+<blockquote>
+<ul>
+<li>一主一从发生切换，A-&gt;B 切换变成 B-&gt;A；</li>
+<li>一主多从发生切换，兄弟节点变成父子节点时；</li>
+<li>级别复制发生切换， A-&gt;B-&gt;C 切换变成 B-&gt;C-&gt;A；</li>
+</ul>
+</blockquote>
+<hr>
+<h4 id="全量复制"><a href="#全量复制" class="headerlink" title="全量复制"></a>全量复制</h4><p><strong>原理</strong></p>
+<p>redis全量复制的原理是，首先将master本身的RDB文件同步给slave，而在同步期间，master写入的命令也会记录下来（master内部有一个复制缓冲区，会记录同步时master新增的写入），当slave将RDB加载完后，会通过偏移量的对比将这期间master写入的值同步给slave。</p>
+<hr>
+<h4 id="部分复制"><a href="#部分复制" class="headerlink" title="部分复制"></a>部分复制</h4><p>为什么要部分复制？ 在redis2.8版本之前，如果master和slave之间的网络发生了抖动连接断开，就会导致slave完全不知道master的动作，同步就会出问题，而为了保证数据一致，等网络恢复后进行一次全量复制。而全量复制的开销是很大的，redis2.8版本就提个了一个部分复制的功能。</p>
+<p><strong>原理</strong></p>
+<p>当master和slave断开连接时，master会将期间所做的操作记录到复制缓存区当中（可以看成是一个队列，其大小默认1M）。待slave重连后，slave会向master发送psync命令并传入offset和runId，这时候，如果master发现slave传输的偏移量的值，在缓存区队列范围中，就会将从offset开始到队列结束的数据传给slave，从而达到同步，降低了使用全量复制的开销。</p>
+<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><p><a href="https://my.oschina.net/u/3371837/blog/1787643" target="_blank" rel="noopener">https://my.oschina.net/u/3371837/blog/1787643</a></p>
+<p><a href="https://juejin.im/post/5b67029c6fb9a04fa42fd592" target="_blank" rel="noopener">https://juejin.im/post/5b67029c6fb9a04fa42fd592</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Redis/" rel="tag"># Redis</a>
+          
+            <a href="/tags/DB/" rel="tag"># DB</a>
+          
+            <a href="/tags/Replication/" rel="tag"># Replication</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/29/Vim/Keymap/" rel="next" title="Vim Keymap">
+                <i class="fa fa-chevron-left"></i> Vim Keymap
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/11/01/CS/Compiler/LLVM/" rel="prev" title="LLVM">
+                LLVM <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="sulang">
+          
+            <p class="site-author-name" itemprop="name">sulang</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">382</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">177</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">431</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Replication-演进"><span class="nav-number">1.</span> <span class="nav-text">Replication 演进</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#复制原理"><span class="nav-number">1.1.</span> <span class="nav-text">复制原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#复制演进"><span class="nav-number">1.2.</span> <span class="nav-text">复制演进</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#全量复制"><span class="nav-number">1.3.</span> <span class="nav-text">全量复制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#部分复制"><span class="nav-number">1.4.</span> <span class="nav-text">部分复制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refer"><span class="nav-number">2.</span> <span class="nav-text">Refer</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sulang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
