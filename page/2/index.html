@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/11/Database/MySQL/Slow-Query/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/22/Java/Advance/Instrumentation/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/11/Database/MySQL/Slow-Query/" itemprop="url">MySQL Slow Query</a></h2>
+                <a class="post-title-link" href="/2018/11/22/Java/Advance/Instrumentation/" itemprop="url">Instrumentation</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-11T15:13:06+08:00">
-                2018-11-11
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-22T10:13:06+08:00">
+                2018-11-22
               </time>
             
 
@@ -338,8 +338,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
                   </a>
                 </span>
 
@@ -349,8 +349,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
                   </a>
                 </span>
 
@@ -388,24 +388,15 @@
       
         
           
-            <h3 id="Enable-Slow-Query"><a href="#Enable-Slow-Query" class="headerlink" title="Enable Slow Query"></a>Enable Slow Query</h3><h4 id="MariaDB"><a href="#MariaDB" class="headerlink" title="MariaDB"></a>MariaDB</h4><p>开启了慢查询日志只对当前数据库生效，如果重启后则会失效。如果要永久生效，就必须修改配置文件my.cnf</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">variables</span>  <span class="keyword">like</span> <span class="string">'%slow_query_log%'</span>;</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> slow_query_log=<span class="number">1</span>;</span><br></pre></td></tr></table></figure>
-<p>输出结果</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">slow_query_log	ON</span><br><span class="line">slow_query_log_file	/var/log/mysql/mariadb-slow.log</span><br></pre></td></tr></table></figure>
-<h3 id="mysqldumpslow"><a href="#mysqldumpslow" class="headerlink" title="mysqldumpslow"></a>mysqldumpslow</h3><ul>
-<li>t：返回前面多少条的数据</li>
-<li>g：一个正则匹配模式，大小写不敏感</li>
-<li>c：访问计数</li>
-<li>l：锁定时间</li>
-<li>r：返回记录</li>
-<li>t：查询时间</li>
-<li>al：平均锁定时间</li>
-<li>ar：平均返回记录数</li>
-<li>at：平均查询时间</li>
+            <h3 id="Introducation"><a href="#Introducation" class="headerlink" title="Introducation"></a>Introducation</h3><h4 id="What-is-a-Java-Agent"><a href="#What-is-a-Java-Agent" class="headerlink" title="What is a Java Agent?"></a>What is a Java Agent?</h4><p>In general, a java agent is just a specially crafted jar file. It utilizes the Instrumentation API that the JVM provides to alter existing byte-code that is loaded in a JVM.</p>
+<p>For an agent to work, we need to define two methods:</p>
+<ul>
+<li>premain – will statically load the agent using -javaagent parameter at JVM startup</li>
+<li>agentmain – will dynamically load the agent into the JVM using the Java Attach API</li>
 </ul>
-<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#得到返回记录集最多的10个SQL。</span></span><br><span class="line"></span><br><span class="line">mysqldumpslow -s r -t 10 log_path</span><br><span class="line"></span><br><span class="line"><span class="comment">#得到访问次数最多的10个SQL</span></span><br><span class="line"></span><br><span class="line">mysqldumpslow -s c -t 10 log_path</span><br><span class="line"></span><br><span class="line"><span class="comment">#得到按照时间排序的前10条里面含有左连接的查询语句。</span></span><br><span class="line"></span><br><span class="line">mysqldumpslow -s t -t 10 -g “left join” log_path</span><br><span class="line"></span><br><span class="line"><span class="comment">#另外建议在使用这些命令时结合 | 和more 使用 ，否则有可能出现刷屏的情况。</span></span><br></pre></td></tr></table></figure>
+<p>An interesting concept to keep in mind is that a JVM implementation, like Oracle, OpenJDK, and others, can provide a mechanism to start agents dynamically, but it is not a requirement.</p>
 <h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
-<p>MySQL慢查询日志总结 <a href="http://www.cnblogs.com/kerrycode/p/5593204.html" target="_blank" rel="noopener">http://www.cnblogs.com/kerrycode/p/5593204.html</a></p>
+<p><a href="https://www.baeldung.com/java-instrumentation" target="_blank" rel="noopener">https://www.baeldung.com/java-instrumentation</a><br><a href="https://juejin.im/post/5ac32eba5188255c313af0dd" target="_blank" rel="noopener">https://juejin.im/post/5ac32eba5188255c313af0dd</a><br><a href="https://www.ibm.com/developerworks/cn/java/j-lo-jse61/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/java/j-lo-jse61/index.html</a><br><a href="http://www.iocoder.cn/SkyWalking/agent-plugin-system/" target="_blank" rel="noopener">http://www.iocoder.cn/SkyWalking/agent-plugin-system/</a></p>
 </blockquote>
 
           
@@ -455,7 +446,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/09/Kubenetes/PV-And-PVC/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/19/读书笔记/认知/职称/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -474,7 +465,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/09/Kubenetes/PV-And-PVC/" itemprop="url">Kuberntes PV PVC</a></h2>
+                <a class="post-title-link" href="/2018/11/19/读书笔记/认知/职称/" itemprop="url">职称</a></h2>
         
 
         <div class="post-meta">
@@ -486,8 +477,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-09T14:01:22+08:00">
-                2018-11-09
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-19T22:24:07+08:00">
+                2018-11-19
               </time>
             
 
@@ -509,8 +500,19 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kuberntes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kuberntes</span>
+                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
+                    <span itemprop="name">读书笔记</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/读书笔记/认知/" itemprop="url" rel="index">
+                    <span itemprop="name">认知</span>
                   </a>
                 </span>
 
@@ -548,8 +550,17 @@
       
         
           
-            <h3 id="PVC"><a href="#PVC" class="headerlink" title="PVC"></a>PVC</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">kind: PersistentVolumeClaim</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  name: mysql-volumeclaim</span><br><span class="line">spec:</span><br><span class="line">  accessModes:</span><br><span class="line">    - ReadWriteOnce</span><br><span class="line">  resources:</span><br><span class="line">    requests:</span><br><span class="line">      storage: 200Gi</span><br></pre></td></tr></table></figure>
-<h3 id="volume"><a href="#volume" class="headerlink" title="volume"></a>volume</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: mysql</span><br><span class="line">  labels:</span><br><span class="line">    app: mysql</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: mysql</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: mysql</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">        - image: mysql:5.6</span><br><span class="line">          name: mysql</span><br><span class="line">          ports:</span><br><span class="line">            - containerPort: 3306</span><br><span class="line">              name: mysql</span><br><span class="line">          volumeMounts:</span><br><span class="line">            - name: mysql-persistent-storage</span><br><span class="line">              mountPath: /var/lib/mysql</span><br><span class="line">      volumes:</span><br><span class="line">        - name: mysql-persistent-storage</span><br><span class="line">          persistentVolumeClaim:</span><br><span class="line">            claimName: mysql-volumeclaim</span><br></pre></td></tr></table></figure>
+            <h3 id="结构层次"><a href="#结构层次" class="headerlink" title="结构层次"></a>结构层次</h3><ol>
+<li>董事会 board of director，制定政策</li>
+<li>董事（公司的老板们）</li>
+<li>董事长 chairman of the board（董事们任命)，股份最多</li>
+<li>CEO（chief executive officer），行政级别最高领导人，最高决策人，董事会任命，执行政策</li>
+<li>CFO（chief financial officer）部门老大</li>
+<li>COO（chief operating officer）部门老大</li>
+<li>CTO（chief technology officer）部门老大</li>
+<li>总监，主管，项目经理 etc.</li>
+</ol>
+
           
         
       
@@ -597,7 +608,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/09/Nginx/certbot/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/19/读书笔记/认知/开曼群岛/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -616,7 +627,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/09/Nginx/certbot/" itemprop="url">certbot docker Let's Encrypt</a></h2>
+                <a class="post-title-link" href="/2018/11/19/读书笔记/认知/开曼群岛/" itemprop="url">开曼群岛</a></h2>
         
 
         <div class="post-meta">
@@ -628,8 +639,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-09T13:33:06+08:00">
-                2018-11-09
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-19T22:24:07+08:00">
+                2018-11-19
               </time>
             
 
@@ -651,7 +662,180 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Nginx/" itemprop="url" rel="index">
+                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
+                    <span itemprop="name">读书笔记</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/读书笔记/认知/" itemprop="url" rel="index">
+                    <span itemprop="name">认知</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="优势"><a href="#优势" class="headerlink" title="优势"></a>优势</h3><ol>
+<li>个人所得税，不交</li>
+<li>公司所得税，不交</li>
+<li>资本利得税，不交</li>
+<li>不动产税，不交</li>
+<li>遗产税，不交</li>
+</ol>
+<h3 id="VIE"><a href="#VIE" class="headerlink" title="VIE"></a>VIE</h3><p>Variable Interest Entity 可变利益实体</p>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>在新加坡生产一台 Mac Pro，以$200价格卖给 -&gt; 开曼群岛财务公司，以$900卖给 -&gt; 美国Apple公司，以$1000 -&gt; 分销商</p>
+<p>在美国，Apple实际上只为$100交税，规避了大部分税收。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/19/Nginx/SSL/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/19/Nginx/SSL/" itemprop="url">Nginx SSL</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-19T17:38:18+08:00">
+                2018-11-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
                     <span itemprop="name">Nginx</span>
                   </a>
                 </span>
@@ -690,15 +874,7 @@
       
         
           
-            <h3 id="Step"><a href="#Step" class="headerlink" title="Step"></a>Step</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --rm -p 80:80 -p 443:443 \</span><br><span class="line">    -v $(<span class="built_in">pwd</span>)/letsencrypt:/etc/letsencrypt \</span><br><span class="line">    quay.io/letsencrypt/letsencrypt auth</span><br></pre></td></tr></table></figure>
-<p>运行成功后，如下提示</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">How would you like to authenticate with the ACME CA?</span><br><span class="line">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br><span class="line">1: Spin up a temporary webserver (standalone)</span><br><span class="line">2: Place files <span class="keyword">in</span> webroot directory (webroot)</span><br><span class="line">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br><span class="line">Select the appropriate number [1-2] <span class="keyword">then</span> [enter] (press <span class="string">'c'</span> to cancel):</span><br></pre></td></tr></table></figure>
-<p>选择1，然后输入Email地址</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Plugins selected: Authenticator standalone, Installer None</span><br><span class="line">Enter email address (used <span class="keyword">for</span> urgent renewal and security notices) (Enter <span class="string">'c'</span> to</span><br><span class="line">cancel):</span><br></pre></td></tr></table></figure>
-<p>同意协议</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br><span class="line">Please <span class="built_in">read</span> the Terms of Service at</span><br><span class="line">https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf. You must</span><br><span class="line">agree <span class="keyword">in</span> order to register with the ACME server at</span><br><span class="line">https://acme-v02.api.letsencrypt.org/directory</span><br><span class="line">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br></pre></td></tr></table></figure>
-<p>最后接着输入你的domain，然后生成证书</p>
-<h3 id="One-Step"><a href="#One-Step" class="headerlink" title="One Step"></a>One Step</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run --rm -p 80:80 -p 443:443 \</span><br><span class="line">    -v $(<span class="built_in">pwd</span>)/letsencrypt:/etc/letsencrypt \</span><br><span class="line">    quay.io/letsencrypt/letsencrypt auth \</span><br><span class="line">    --standalone -m someone@email.com --agree-tos \</span><br><span class="line">    -d your.domain1.com -d your.domain2.com</span><br></pre></td></tr></table></figure>
+            <h3 id="Conf"><a href="#Conf" class="headerlink" title="Conf"></a>Conf</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># use let's encrypt ssl</span></span><br><span class="line">listen 80;</span><br><span class="line">listen 443 default_server ssl;</span><br><span class="line">ssl_certificate /etc/letsencrypt/live/sit.leverup.com/fullchain.pem;</span><br><span class="line">ssl_certificate_key /etc/letsencrypt/live/sit.leverup.com/privkey.pem;</span><br><span class="line">charset utf-8;</span><br><span class="line">server_name sit.leverup.com;</span><br></pre></td></tr></table></figure>
           
         
       
@@ -746,7 +922,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/08/SpringBoot/API-Gateway/Error/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/19/Mac/Toos/Alfred/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -765,7 +941,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/08/SpringBoot/API-Gateway/Error/" itemprop="url">Spring Cloud Api Gateway Error</a></h2>
+                <a class="post-title-link" href="/2018/11/19/Mac/Toos/Alfred/" itemprop="url">Alfred</a></h2>
         
 
         <div class="post-meta">
@@ -777,8 +953,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-08T23:00:06+08:00">
-                2018-11-08
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-19T12:07:27+08:00">
+                2018-11-19
               </time>
             
 
@@ -800,8 +976,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
+                  <a href="/categories/Mac/" itemprop="url" rel="index">
+                    <span itemprop="name">Mac</span>
                   </a>
                 </span>
 
@@ -811,8 +987,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/SpringBoot/ApiGateway/" itemprop="url" rel="index">
-                    <span itemprop="name">ApiGateway</span>
+                  <a href="/categories/Mac/Tools/" itemprop="url" rel="index">
+                    <span itemprop="name">Tools</span>
                   </a>
                 </span>
 
@@ -850,161 +1026,8 @@
       
         
           
-            <h3 id="Unable-to-start-reactive-web"><a href="#Unable-to-start-reactive-web" class="headerlink" title="Unable to start reactive web"></a>Unable to start reactive web</h3>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/08/SpringBoot/API-Gateway/CORS/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/11/08/SpringBoot/API-Gateway/CORS/" itemprop="url">Spring Cloud Api Gateway 跨域问题</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-08T23:00:06+08:00">
-                2018-11-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/SpringBoot/ApiGateway/" itemprop="url" rel="index">
-                    <span itemprop="name">ApiGateway</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Java"><a href="#Java" class="headerlink" title="Java"></a>Java</h3><h3 id="Kotlin"><a href="#Kotlin" class="headerlink" title="Kotlin"></a>Kotlin</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RouteConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function">fun <span class="title">allowCORS</span><span class="params">()</span>: WebFilter </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> WebFilter &#123; webExchange, chains -&gt;</span><br><span class="line">            val request = webExchange.request</span><br><span class="line">            val requestHeaders = request.headers</span><br><span class="line">            val response = webExchange.response</span><br><span class="line">            val respHeaders = response.headers</span><br><span class="line"></span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, <span class="string">"*"</span>)</span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, <span class="string">"*"</span>)</span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_MAX_AGE, MAX_AGE)</span><br><span class="line">            respHeaders.addAll(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, requestHeaders.accessControlRequestHeaders)</span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, <span class="string">"*"</span>)</span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, <span class="string">"true"</span>)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (request.method == HttpMethod.OPTIONS) &#123;</span><br><span class="line">                response.statusCode = HttpStatus.OK</span><br><span class="line">                Mono.empty()</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                chains.filter(webExchange)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    companion object &#123;</span><br><span class="line">        <span class="keyword">const</span> val MAX_AGE = <span class="string">"18000L"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
-<p><a href="http://springcloud.cn/view/343" target="_blank" rel="noopener">http://springcloud.cn/view/343</a></p>
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><blockquote>
+<p>Windows - WoX</p>
 </blockquote>
 
           
@@ -1054,7 +1077,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/08/SpringBoot/Eureka/conf/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Caddy/Basic/Install/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1073,7 +1096,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/08/SpringBoot/Eureka/conf/" itemprop="url">Eureka Conf</a></h2>
+                <a class="post-title-link" href="/2018/11/17/Caddy/Basic/Install/" itemprop="url">Install Caddy</a></h2>
         
 
         <div class="post-meta">
@@ -1085,8 +1108,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-08T12:13:06+08:00">
-                2018-11-08
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-17T23:50:23+08:00">
+                2018-11-17
               </time>
             
 
@@ -1108,326 +1131,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
-<p><a href="https://yq.aliyun.com/articles/138261" target="_blank" rel="noopener">https://yq.aliyun.com/articles/138261</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/07/Kubenetes/Deployment-Attribute/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/11/07/Kubenetes/Deployment-Attribute/" itemprop="url">Attribute</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-07T10:13:06+08:00">
-                2018-11-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kubernetes</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: <span class="built_in">command</span>-demo</span><br><span class="line">  labels:</span><br><span class="line">    purpose: demonstrate-command</span><br><span class="line">spec:</span><br><span class="line">  containers:</span><br><span class="line">  - name: <span class="built_in">command</span>-demo-container</span><br><span class="line">    image: debian</span><br><span class="line">    <span class="built_in">command</span>: [<span class="string">"printenv"</span>]</span><br><span class="line">    args: [<span class="string">"HOSTNAME"</span>, <span class="string">"KUBERNETES_PORT"</span>]</span><br><span class="line">  restartPolicy: OnFailure</span><br></pre></td></tr></table></figure>
-<h3 id="Access-Modes"><a href="#Access-Modes" class="headerlink" title="Access Modes"></a>Access Modes</h3><ul>
-<li>ReadWriteOnce – the volume can be mounted as read-write by a single node</li>
-<li>ReadOnlyMany – the volume can be mounted read-only by many nodes</li>
-<li>ReadWriteMany – the volume can be mounted as read-write by many nodes</li>
-</ul>
-<p>In the CLI, the access modes are abbreviated to:</p>
-<ul>
-<li>RWO - ReadWriteOnce</li>
-<li>ROX - ReadOnlyMany</li>
-<li>RWX - ReadWriteMany</li>
-</ul>
-<h3 id="Deployment"><a href="#Deployment" class="headerlink" title="Deployment"></a>Deployment</h3><h3 id="StatefulSet"><a href="#StatefulSet" class="headerlink" title="StatefulSet"></a>StatefulSet</h3><p><strong>应用场景</strong></p>
-<ul>
-<li>Stable, unique network identifiers.</li>
-<li>Stable, persistent storage.</li>
-<li>Ordered, graceful deployment and scaling.</li>
-<li>Ordered, automated rolling updates.</li>
-</ul>
-<h4 id="updateStrategy"><a href="#updateStrategy" class="headerlink" title="updateStrategy"></a>updateStrategy</h4><p>spec.updateStrategy.type</p>
-<ul>
-<li>OnDelete：不会自动更新StatefulSet中的Pod，用户必须手动删除Pods以使控制器创建新的Pod。</li>
-<li>RollingUpdate：删除并重新创建StatefulSet中的每个Pod。它将以与Pod终止相同的顺序进行（从最大的序数到最小的顺序）来更新每个Pod。</li>
-</ul>
-<p>spe.updateStrategy.rollingUpdate.partition 金丝雀策略</p>
-<h4 id="volumeClaimTemplates"><a href="#volumeClaimTemplates" class="headerlink" title="volumeClaimTemplates"></a>volumeClaimTemplates</h4><ul>
-<li>persistentVolume：用来向真正的存储服务器申请真正的存储资源的一个object，至于这个存储资源谁来用，那就是接下来说的pvc的职责所在。</li>
-<li>persistentVolumeClaim：用来关联pv和pod的一个桥梁。</li>
-</ul>
-<p>通过volumeClaimTemplates关联创建PV，volumeMounts使用PV</p>
-<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
-<p><a href="http://docs.kubernetes.org.cn/" target="_blank" rel="noopener">http://docs.kubernetes.org.cn/</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/06/CS/Network/HTTP-Hijack/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/11/06/CS/Network/HTTP-Hijack/" itemprop="url">HTTP Hijack</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-06T13:28:19+08:00">
-                2018-11-06
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/" itemprop="url" rel="index">
-                    <span itemprop="name">CS</span>
+                  <a href="/categories/Caddy/" itemprop="url" rel="index">
+                    <span itemprop="name">Caddy</span>
                   </a>
                 </span>
 
@@ -1437,8 +1142,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
+                  <a href="/categories/Caddy/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
                   </a>
                 </span>
 
@@ -1476,9 +1181,471 @@
       
         
           
-            <h3 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h3><p>而HTTP劫持很容易解决，那就是加上SSL证书，网站链接全部内容加密，这样“检查站：墙”就无法解密数据分析关键词了。但是这不是绝对能解决这个问题的，如果你的网站只是误杀或者违规擦边球，那还好，如果是大型网站，就会特殊对待了。</p>
-<p>HTTPS在建立加密连接的时候，需要一次握手，也就是达成链接协议建立加密连接，但是这次握手是明文的（建立加密链接首先就是链接双方信任，比如网站的SSL证书是自己签的，或者SSL证书到期或伪造的，在访问这个网站的时候浏览器就会进行提示，表示此网站不安全啥的。</p>
-<p>握手是明文的就意味着，如果你的域名被重点关注，即使你加上了SSL证书，也会在首次握手的时候，被关键词匹配然后掐断链接。还有一种方式，就是域名备案，使用国内服务器。这样用户在访问你的网站时，根本不需要经过墙，自然也没有了拦截。</p>
+            <h3 id="Ubuntu"><a href="#Ubuntu" class="headerlink" title="Ubuntu"></a>Ubuntu</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">https://caddyserver.com/download</span><br><span class="line"></span><br><span class="line">curl https://getcaddy.com | bash -s personal</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Caddy/Basic/Conf/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/17/Caddy/Basic/Conf/" itemprop="url">Caddy Conf</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-17T23:30:23+08:00">
+                2018-11-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Caddy/" itemprop="url" rel="index">
+                    <span itemprop="name">Caddy</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Caddy/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="Case-1"><a href="#Case-1" class="headerlink" title="Case 1"></a>Case 1</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">localhost:8080</span><br><span class="line">gzip</span><br><span class="line">log ./access.log</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Linux/Command/cat/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/17/Linux/Command/cat/" itemprop="url">cat</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-17T19:30:23+08:00">
+                2018-11-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">cat &gt;&gt; /etc/systemd/system/mosh.service &lt;&lt;EOF</span><br><span class="line">[Unit]</span><br><span class="line">Description=Mosh Service</span><br><span class="line">After=network.target</span><br><span class="line">After=systemd-user-sessions.service</span><br><span class="line">After=network-online.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">ExecStart=/mosh.sh</span><br><span class="line">TimeoutSec=30</span><br><span class="line">Restart=on-failure</span><br><span class="line">RestartSec=30</span><br><span class="line">StartLimitInterval=350</span><br><span class="line">StartLimitBurst=10</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Linux/Command/mosh/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/17/Linux/Command/mosh/" itemprop="url">Mosh</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-17T19:30:23+08:00">
+                2018-11-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Install"><a href="#Install" class="headerlink" title="Install"></a>Install</h3><p>在服务器端需要运行mosh-server，默认情况下使用 UDP 60001~61000 范围的端口简历session</p>
+<p>查看端口是否监听成功</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -anp | grep mosh</span><br></pre></td></tr></table></figure>
+<h4 id="Ubuntu-18-04"><a href="#Ubuntu-18-04" class="headerlink" title="Ubuntu 18.04"></a>Ubuntu 18.04</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">sudo apt remove iptables</span><br><span class="line">sudo apt-get update -y</span><br><span class="line">sudo apt-get install -y mosh</span><br><span class="line"><span class="comment"># 为了防止出现乱码，安装locales组件</span></span><br><span class="line">sudo apt-get install locales</span><br><span class="line"><span class="comment"># 添加对en_US.UTF-8的支持</span></span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_ALL=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANG=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANGUAGE==en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="comment"># 写入locale配置文件，保存设置</span></span><br><span class="line">localedef -v -c -i en_US -f UTF-8 en_US.UTF-8</span><br><span class="line"><span class="comment"># 开启60000到61000的端口</span></span><br><span class="line">mosh-server</span><br></pre></td></tr></table></figure>
+<h4 id="MacOS"><a href="#MacOS" class="headerlink" title="MacOS"></a>MacOS</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install mosh</span><br></pre></td></tr></table></figure>
+<p>配置locale</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_ALL=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANG=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_CTYPE=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANGUAGE==en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line">localedef -v -c -i en_US -f UTF-8 en_US.UTF-8</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Usege"><a href="#Usege" class="headerlink" title="Usege"></a>Usege</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mosh root@host -p 60001</span><br><span class="line"></span><br><span class="line">mosh -ssh=<span class="string">"ssh -i ~/.ssh/id_rsa -p 10002"</span> user@host</span><br></pre></td></tr></table></figure>
 
           
         
@@ -1527,7 +1694,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/01/读书笔记/职业/医生的修炼/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Linux/Command/systemctl/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1546,7 +1713,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/01/读书笔记/职业/医生的修炼/" itemprop="url">医生的修炼</a></h2>
+                <a class="post-title-link" href="/2018/11/17/Linux/Command/systemctl/" itemprop="url">systemctl</a></h2>
         
 
         <div class="post-meta">
@@ -1558,8 +1725,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-01T13:38:18+08:00">
-                2018-11-01
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-17T19:30:23+08:00">
+                2018-11-17
               </time>
             
 
@@ -1581,8 +1748,19 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/职业/" itemprop="url" rel="index">
-                    <span itemprop="name">职业</span>
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
                   </a>
                 </span>
 
@@ -1620,170 +1798,11 @@
       
         
           
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/01/CS/Compiler/LLVM/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/11/01/CS/Compiler/LLVM/" itemprop="url">LLVM</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-01T10:31:19+08:00">
-                2018-11-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/" itemprop="url" rel="index">
-                    <span itemprop="name">CS</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="What’s-LLVM"><a href="#What’s-LLVM" class="headerlink" title="What’s LLVM"></a>What’s LLVM</h3><p>LLVM is Low Level Virtual Machine.</p>
-<p>LLVM可以被看作是一系列的编译器和工具链技术的集合，而且它们是模块化并且是可重用的。</p>
-<p>原话是：<strong>The LLVM Project is a collection of modular and reusable compiler and toolchain technologies.</strong></p>
-<p><strong>特性</strong></p>
-<ul>
-<li>LLVM的“中间表示”（IR）是一项大创新。LLVM的程序表示方法真的“可读”（如果你会读汇编）。虽然看上去这没什么要紧，但要知道，其他编译器的中间表示大多是种内存中的复杂数据结构，以至于很难写出来，这让其他编译器既难懂又难以实现。</li>
-<li>然而LLVM并非如此。其架构远比其他编译器要模块化得多。这种优点可能部分来自于它的最初实现者。</li>
-<li>尽管LLVM给我们这些狂热的学术黑客提供了一种研究工具的选择，它还是一款有大公司做后台的工业级编译器。这意味着你不需要去在“强大的编译器”和“可玩的编译器”之间做妥协——不像你在Java世界中必须在HotSpot和Jikes之间权衡那样。</li>
-</ul>
-<p><strong>特别注意：LLVM不是只用来实现编译优化的！</strong></p>
-<h3 id="Components"><a href="#Components" class="headerlink" title="Components"></a>Components</h3><p>LLVM架构的主要组成部分如下（事实上也是所有现代编译器架构）：</p>
-<p><strong>前端 -&gt; 流程（Pass) -&gt; 后端</strong></p>
-<img src="/2018/11/01/CS/Compiler/LLVM/components.png">
-<ul>
-<li><p>前端获取你的源代码然后将它转变为某种中间表示。这种翻译简化了编译器其他部分的工作，这样它们就不需要面对比如C++源码的所有复杂性了。作为一个豪迈人，你很可能不想再做这部分工作；可以不加改动地使用Clang来完成。</p>
-</li>
-<li><p>“流程”将程序在中间表示之间互相变换。一般情况下，流程也用来优化代码：流程输出的（中间表示）程序和它输入的（中间表示）程序相比在功能上完全相同，只是在性能上得到改进。这部分通常是给你发挥的地方。你的研究工具可以通过观察和修改编译过程流中的IR来完成任务。</p>
-</li>
-<li><p>后端部分可以生成实际运行的机器码。你几乎肯定不想动这部分了。</p>
-</li>
-</ul>
-<p>虽然当今大多数编译器都使用了这种架构，但是LLVM有一点值得注意而与众不同：整个过程中，程序都使用了同一种中间表示。在其他编译器中，可能每一个流程产出的代码都有一种独特的格式。LLVM在这一点上对hackers大为有利。我们不需要担心我们的改动该插在哪个位置，只要放在前后端之间某个地方就足够了。</p>
-
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><p><strong>configure service</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/systemd/system/test.service</span></span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Spark service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/path/to/spark/sbin/start-all.sh</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">cat &gt;&gt; /etc/systemd/system/mosh-server.service &lt;&lt;EOF</span><br><span class="line">[Unit]</span><br><span class="line">Description=Mosh Service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/usr/bin/mosh-server</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<p><strong>boot service</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl <span class="built_in">enable</span> mosh-server</span><br><span class="line">sudo systemctl start mosh-server</span><br></pre></td></tr></table></figure>
           
         
       
@@ -1822,7 +1841,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/40/">40</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/43/">43</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1869,7 +1888,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">395</span>
+                <span class="site-state-item-count">421</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1880,7 +1899,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">182</span>
+                <span class="site-state-item-count">194</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1891,7 +1910,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">444</span>
+                <span class="site-state-item-count">472</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/Thread-Interrupt/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Fluentd/RegularExp/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/09/16/Java/Thread/Thread-Interrupt/" itemprop="url">Java Thread Interrupt</a></h2>
+                <a class="post-title-link" href="/2018/10/07/ELK/Fluentd/RegularExp/" itemprop="url">Fluentd Regular Expression</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-16T15:01:22+08:00">
-                2018-09-16
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-07T19:13:06+08:00">
+                2018-10-07
               </time>
             
 
@@ -338,8 +338,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
                   </a>
                 </span>
 
@@ -349,8 +349,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Thread/" itemprop="url" rel="index">
-                    <span itemprop="name">Thread</span>
+                  <a href="/categories/ELK/Fluentd/" itemprop="url" rel="index">
+                    <span itemprop="name">Fluentd</span>
                   </a>
                 </span>
 
@@ -388,30 +388,11 @@
       
         
           
-            <h4 id="What’s-thread-interrupt"><a href="#What’s-thread-interrupt" class="headerlink" title="What’s thread interrupt"></a>What’s thread interrupt</h4><p>在我们的 Java 程序中其实有不止一条执行线程，只有当所有的线程都运行结束的时候，这个 Java 程序才算运行结束。 官方的话给你描述一下：当所有的非守护线程运行结束时，或者其中一个线程调用了 System.exit() 方法时，这个 Java 程序才能运行结束。</p>
-<h4 id="场景举例"><a href="#场景举例" class="headerlink" title="场景举例"></a>场景举例</h4><p>我们现在在下载一个 500 多 M 的大片，我们点击开始下载，那个这个时候就等于开启了一个线程去下载我们的文件，然而这个时候我们的网速不是很给力，几十 KB 的在这跑，作为一个年轻人我是等不了了，我不下来，那么这个时候我们第一个操作就是结束掉这个下载文件的操作，其实更接近程序的来说，这个时候我们就需要把这个线程给中断了。</p>
-<p>如何终端一个线程？</p>
-<p>这段程序我们模拟下载，最开始获取系统时间，然后进入循环每次获取系统时间，如果时间超过 10 秒我们就中断线程，不在继续下载，下载速度时每秒1M：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> number = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 记录程序开始的时间 </span></span><br><span class="line">    Long start = System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">// 每次执行一次结束的时间 </span></span><br><span class="line">        Long end = System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取时间差 </span></span><br><span class="line">        Long interval = end - start;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果时间超过了 10 秒，那么我们就结束下载 </span></span><br><span class="line">        <span class="keyword">if</span> (interval &gt;= <span class="number">10000</span>) &#123;</span><br><span class="line">            <span class="comment">// 中断线程 </span></span><br><span class="line">            interrupted();</span><br><span class="line">            System.err.println(<span class="string">"太慢了，我不下了"</span>);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (number &gt;= <span class="number">500</span>) &#123;</span><br><span class="line">            System.out.println(<span class="string">"文件下载完成"</span>);</span><br><span class="line">            <span class="comment">// 中断线程 </span></span><br><span class="line">            interrupted();</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        number++;</span><br><span class="line">        System.out.println(<span class="string">"已下载"</span> + number + <span class="string">"M"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>中断线程的方式</strong></p>
-<p>Thread 类中给我们提供了中断线程的方法，我们先来看下这个方法到底是如何让线程中断的：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">interrupted</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> currentThread().isInterrupted(<span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这个方法是检查当前线程是否被中断，中断返回 true，未中断返回 false</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">boolean</span> <span class="title">isInterrupted</span><span class="params">(<span class="keyword">boolean</span> ClearInterrupted)</span></span>;</span><br></pre></td></tr></table></figure>
-<p>通过查看源码我们可以发现，中断线程就是通过调用检查线程是否被中断的方法，把值设为true。这个时候你再去调用检查线程是否中断的方法时就返回true了。</p>
-<p>这里大家需要注意一个问题：Thread.interrupted() 方法只是修改了当前线程的状态告诉他被中断了，但是对于非阻塞中的线程，只是改变了中断状态，即 Thread.isInterrupted() 返回 true，对于可取消的阻塞状态中的线程，例如等待在这些函数上的线程 ，Thread.sleep()，这个线程收到中断信号之后就会抛出 InterruptedException 异常，同时会把中断状态设置为 true。</p>
-<h4 id="线程睡眠引起-InterruptedException-异常的原因"><a href="#线程睡眠引起-InterruptedException-异常的原因" class="headerlink" title="线程睡眠引起 InterruptedException 异常的原因"></a>线程睡眠引起 InterruptedException 异常的原因</h4><p>错误示例</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> number = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">// 检查线程是否被中断，中断就停止下载 </span></span><br><span class="line">        <span class="keyword">if</span> (isInterrupted()) &#123;</span><br><span class="line"></span><br><span class="line">            System.err.println(<span class="string">"太慢了，我不下了"</span>);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (number &gt;= <span class="number">500</span>) &#123;</span><br><span class="line">            System.out.println(<span class="string">"下载完成"</span>);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        number++;</span><br><span class="line">        System.out.println(<span class="string">"已下载"</span> + number + <span class="string">"M"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>主程序，等待 10 秒后中断线程</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    Thread thread = <span class="keyword">new</span> PrimeGenerator();</span><br><span class="line">    <span class="comment">// 启动线程 </span></span><br><span class="line">    thread.start();</span><br><span class="line">    <span class="comment">// 等待 10 秒后中断线程 </span></span><br><span class="line">    Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">    <span class="comment">// 中断线程 </span></span><br><span class="line">    thread.interrupt();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>输出结果</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">已下载<span class="number">1</span>M</span><br><span class="line">已下载<span class="number">2</span>M</span><br><span class="line">已下载<span class="number">3</span>M</span><br><span class="line">已下载<span class="number">4</span>M</span><br><span class="line">已下载<span class="number">5</span>M</span><br><span class="line">Main Thread wake up</span><br><span class="line">java.lang.InterruptedException: sleep interrupted</span><br><span class="line">已下载<span class="number">6</span>M</span><br><span class="line">	at java.lang.Thread.sleep(Native Method)</span><br><span class="line">	at thread.DownLoadThread.run(DownLoadThread.kt:<span class="number">20</span>)</span><br><span class="line">已下载<span class="number">7</span>M</span><br></pre></td></tr></table></figure>
-<p>这里我们先要了解 Thread.interrupt() 方法不会中断一个正在运行的线程，调用 Thread.sleep() 方法时，这个时候就不再占用 CPU，我们来分析下我们这个程序，我们下载是要等待 10 秒，每次下载的速度是 0.5M/S，也就是当我们下载到 5M 的时候等待时间已经到了，这个时候调用 Thread.interrupt() 方法中断线程，但是 run() 方法中的睡眠还要接着往下执行，它是不会因为中断而放弃执行下面的代码的，那么这个时候当它再执行 Thread.sleep() 的时候就会抛出 InterruptedException 异常，因为当前的线程已经被中断了。</p>
-<p>说到这里，你是否已经明白产生这个异常的原因了？另外还有另外的两个原因致使线程产生 InterruptedException 异常的原因，wait()、join(）两个方法使用不当也会引起线程抛出该异常。</p>
-<h4 id="查看线程是否中断的两种方式"><a href="#查看线程是否中断的两种方式" class="headerlink" title="查看线程是否中断的两种方式"></a>查看线程是否中断的两种方式</h4><p>在Thread类中有一个方法 interrupted() 可以用来检查当前线程时候被中断，还有 isInterrupted() 方法可以用来检查当前线程是否被中断。</p>
-<p>中断线程的方法其实底层就是将这个属性设置为 true，isInterrupted() 方法只是返回了这个属性值而已。</p>
-<p>这两个方法有一个区别就是 isInterrupted() 不能改变 interrupted() 的属性值，但是 interrupted() 方法却能改变 interrupted 的属性值，所以在判断一个线程时候被中断的时候我们更推荐使用 isInterrupted()。</p>
-
+            <h3 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h3><h4 id="Example-1"><a href="#Example-1" class="headerlink" title="Example-1"></a>Example-1</h4><p>数据源</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[2013-03-29 07:21:55.483292] router - pid=14615 tid=7a93 fid=5354  DEBUG -- Request body: &#123;"host":"api.vcap.me","stats":[&#123;"response_latency":0,"request_tags":"BAh7BjoOY29tcG9uZW50SSIUQ2xvdWRDb250cm9sbGVyBjoGRVQ=","response_codes":&#123;"responses_2xx":2&#125;,"response_samples":2&#125;]&#125;</span><br></pre></td></tr></table></figure>
+<p>表达式：/(?<time>.∗) (?<name>[^ ]<em>) - (?<pid>[^ ]</pid></em>) (?<tid>[^ ]<em>) (?<fid>[^ ]</fid></em>)  (?<level>[^ ]<em>) – (?<info>[^ ].</info></em>)$/</level></tid></name></time></p>
+<p>存储到mongo结果</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">"_id"</span> : ObjectId(<span class="string">"516d31c415bb53374d000004"</span>), <span class="attr">"name"</span> : <span class="string">"router"</span>, <span class="attr">"pid"</span> : <span class="string">"pid=14615"</span>, <span class="attr">"tid"</span> : <span class="string">"tid=7a93"</span>, <span class="attr">"fid"</span> : <span class="string">"fid=5354"</span>, <span class="attr">"level"</span> : <span class="string">"DEBUG"</span>, <span class="attr">"info"</span> : <span class="string">"Request body: &#123;\"host\":\"api.vcap.me\",\"stats\":[&#123;\"response_latency\":0,\"request_tags\":\"BAh7BjoOY29tcG9uZW50SSIUQ2xvdWRDb250cm9sbGVyBjoGRVQ=\",\"response_codes\":&#123;\"responses_2xx\":2&#125;,\"response_samples\":2&#125;]&#125;"</span>,</span><br><span class="line"> <span class="attr">"time"</span> : ISODate(<span class="string">"2013-04-23T11:21:55Z"</span>) &#125;</span><br></pre></td></tr></table></figure>
           
         
       
@@ -459,7 +440,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/Future/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Fluentd/Conf/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -478,7 +459,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/09/16/Java/Thread/Future/" itemprop="url">Java Future</a></h2>
+                <a class="post-title-link" href="/2018/10/07/ELK/Fluentd/Conf/" itemprop="url">Fluentd Conf</a></h2>
         
 
         <div class="post-meta">
@@ -490,8 +471,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-16T15:01:22+08:00">
-                2018-09-16
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-07T19:13:06+08:00">
+                2018-10-07
               </time>
             
 
@@ -513,8 +494,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
                   </a>
                 </span>
 
@@ -524,8 +505,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Thread/" itemprop="url" rel="index">
-                    <span itemprop="name">Thread</span>
+                  <a href="/categories/ELK/Fluentd/" itemprop="url" rel="index">
+                    <span itemprop="name">Fluentd</span>
                   </a>
                 </span>
 
@@ -563,1478 +544,1484 @@
       
         
           
-            <h3 id="Future"><a href="#Future" class="headerlink" title="Future"></a>Future</h3><p>JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。</p>
-<p>Future模式是多线程设计常用的一种设计模式。Future模式可以理解成：我有一个任务，提交给了Future，Future替我完成这个任务。期间我自己可以去做任何想做的事情。一段时间之后，我就便可以从Future那儿取出结果。</p>
-<h3 id="CompletableFuture"><a href="#CompletableFuture" class="headerlink" title="CompletableFuture"></a>CompletableFuture</h3><p>Future虽然可以实现获取异步执行结果的需求，但是它没有提供通知的机制，我们无法得知Future什么时候完成。要么使用阻塞，在future.get()的地方等待future返回的结果，这时又变成同步操作。要么使用isDone()轮询地判断Future是否完成，这样会耗费CPU的资源。</p>
-<p>Netty、Guava分别扩展了Java的Future 接口，方便异步编程。Java 8新增的CompletableFuture类正是吸收了所有Google Guava中ListenableFuture和SettableFuture的特征，还提供了其它强大的功能，让Java拥有了完整的非阻塞编程模型：Future、Promise 和 Callback(在Java8之前，只有无Callback 的Future)。</p>
-<p>CompletableFuture能够将回调放到与任务不同的线程中执行，也能将回调作为继续执行的同步函数，在与任务相同的线程中执行。它避免了传统回调最大的问题，那就是能够将控制流分离到不同的事件处理器中。</p>
-<p>CompletableFuture弥补了Future模式的缺点。在异步的任务完成后，需要用其结果继续操作时，无需等待。可以直接通过thenAccept、thenApply、thenCompose等方式将前面异步处理的结果交给另外一个异步事件处理线程来处理。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/14/Go/Tutorial/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/14/Go/Tutorial/" itemprop="url">Go Tutorial</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-14T20:01:22+08:00">
-                2018-09-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Go/" itemprop="url" rel="index">
-                    <span itemprop="name">Go</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h3><h4 id="Hello"><a href="#Hello" class="headerlink" title="Hello"></a>Hello</h4>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/12/Linux/Manjaro/Software/tools/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/12/Linux/Manjaro/Software/tools/" itemprop="url">Manjaro Tools</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-12T17:00:27+08:00">
-                2018-09-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Manjaro/" itemprop="url" rel="index">
-                    <span itemprop="name">Manjaro</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Manjaro/Software/" itemprop="url" rel="index">
-                    <span itemprop="name">Software</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="TeXmacs"><a href="#TeXmacs" class="headerlink" title="TeXmacs"></a>TeXmacs</h4><p>GNU TeXmacs 1.99.8 已发布，这是一个支持各种数学公式的所见即所得编辑器，可以用来编辑文本、图形、数学、交互内容，它的界面非常友好，并且内置高质量的排版引擎。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/08/Database/MySQL/Optimize/SQL优化之覆盖索引/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/08/Database/MySQL/Optimize/SQL优化之覆盖索引/" itemprop="url">MySQL SQL优化之覆盖索引（索引覆盖）</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-08T22:55:07+08:00">
-                2018-09-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
-                    <span itemprop="name">Optimize</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h3><h4 id="覆盖索引（索引覆盖）"><a href="#覆盖索引（索引覆盖）" class="headerlink" title="覆盖索引（索引覆盖）"></a>覆盖索引（索引覆盖）</h4><ul>
-<li><p>解释一： 就是select的数据列只用从索引中就能够取得，不必从数据表中读取，换句话说查询列要被所使用的索引覆盖。</p>
-</li>
-<li><p>解释二： 索引是高效找到行的一个方法，当能通过检索索引就可以读取想要的数据，那就不需要再到数据表中读取行了。如果一个索引包含了（或覆盖了）满足查询语句中字段与条件的数据就叫做覆盖索引。</p>
-</li>
-<li><p>解释三： 是非聚集组合索引的一种形式，它包括在查询里的Select、Join和Where子句用到的所有列（即建立索引的字段正好是覆盖查询语句[select子句]与查询条件[Where子句]中所涉及的字段，也即，索引包含了查询正在查找的所有数据）。</p>
-</li>
+            <h3 id="Tag"><a href="#Tag" class="headerlink" title="Tag"></a>Tag</h3><ul>
+<li>source：确定输入源</li>
+<li>match： 确定输出目的地</li>
+<li>filter：确定 event 处理流</li>
+<li>system：设置系统范围的配置</li>
+<li>label：将内部路由的输出和过滤器分组</li>
+<li>@include：包括其它文件</li>
+</ul>
+<h3 id="Syntax"><a href="#Syntax" class="headerlink" title="Syntax"></a>Syntax</h3><h4 id="Event-structure"><a href="#Event-structure" class="headerlink" title="Event structure"></a>Event structure</h4><ul>
+<li>tag: 事件来自何处</li>
+<li>time: 事件发生事件(原子时间)</li>
+<li>record: log内容(json)</li>
+</ul>
+<h4 id="Processing-Events"><a href="#Processing-Events" class="headerlink" title="Processing Events"></a>Processing Events</h4><ul>
+<li>Filters</li>
+<li>Labels</li>
+<li>Buffers</li>
 </ul>
 <hr>
-<h3 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h3><h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><ul>
-<li>表结构</li>
+<h3 id="Source"><a href="#Source" class="headerlink" title="Source"></a>Source</h3><p>Fluentd支持多输入。每一个输入配置必须包含类型／type，比如tcp数据输入，或者http类型输入。type将指定使用的input plugin。</p>
+<p>以下的示例中就定义了两个输入源，一个是从24224端口进入的tcp数据流，另一个是从9880端口进入的http数据。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Receive events from 24224/tcp</span></span><br><span class="line"><span class="comment"># This is used by log forwarding and the fluent-cat command</span></span><br><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> forward</span><br><span class="line">  port 24224</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># http://this.host:9880/myapp.access?json=&#123;"event":"data"&#125;</span></span><br><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> http</span><br><span class="line">  port 9880</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br></pre></td></tr></table></figure>
+<h4 id="举例说明"><a href="#举例说明" class="headerlink" title="举例说明"></a>举例说明</h4><ul>
+<li>tail</li>
 </ul>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`t_order`</span> (</span><br><span class="line">  <span class="string">`id`</span> <span class="built_in">bigint</span>(<span class="number">20</span>) <span class="keyword">unsigned</span> <span class="keyword">NOT</span> <span class="literal">NULL</span> AUTO_INCREMENT,</span><br><span class="line">  <span class="string">`order_code`</span> <span class="built_in">char</span>(<span class="number">12</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span>,</span><br><span class="line">  <span class="string">`order_amount`</span> <span class="built_in">decimal</span>(<span class="number">12</span>,<span class="number">2</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span>,</span><br><span class="line">  PRIMARY <span class="keyword">KEY</span> (<span class="string">`id`</span>),</span><br><span class="line">  <span class="keyword">UNIQUE</span> <span class="keyword">KEY</span> <span class="string">`uni_order_code`</span> (<span class="string">`order_code`</span>) <span class="keyword">USING</span> BTREE</span><br><span class="line">) <span class="keyword">ENGINE</span>=<span class="keyword">InnoDB</span> AUTO_INCREMENT=<span class="number">1</span> <span class="keyword">DEFAULT</span> <span class="keyword">CHARSET</span>=utf8;</span><br></pre></td></tr></table></figure>
-<p>在 order_code 上创建了唯一性索引 uni_order_code</p>
-<ul>
-<li><p>数据条数：32W条</p>
-</li>
-<li><p>SQL：<strong>select order_code, order_amount from t_order order by order_code limit 1000;</strong></p>
-</li>
-<li><p>执行计划</p>
-</li>
-</ul>
-<p>id    select_type    table    type    possible_keys    key        key_len    ref        rows    Extra<br>1    SIMPLE        t_order    ALL        NULL            NULL    NULL    NULL    316350    Using filesort</p>
-<p>全表扫描、文件排序，注定查询慢！</p>
-<p>那为什么MySQL没有利用索引（uni_order_code）扫描完成查询呢？</p>
-<p>因为MySQL认为这个场景利用索引扫描并非最优的结果。我们先来看下执行时间，然后再来分析为什么没有利用索引扫描。</p>
-<ul>
-<li>执行时间：260ms</li>
-</ul>
-<p>如果表数据量继续增长下去，性能会越来越差。</p>
-<h4 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h4><p>MySQL为什么使用全表扫描、文件排序，而没有使用索引扫描、利用索引顺序？</p>
-<ul>
-<li>全表扫描、文件排序</li>
-</ul>
-<p>虽然是全表扫描，但是扫描是顺序的（不管机械硬盘还是 SSD 顺序读写性能都是高的），并且数据量不是特别大，所以这部分消耗的时间应该不是特别大，主要的消耗应该是在排序上。</p>
-<ul>
-<li>利用索引扫描、利用索引顺序</li>
-</ul>
-<p>uni_order_code 是二级索引，索引上保存了（order_code,id），每扫描一条索引需要根据索引上的 id 定位（随机 IO）到数据行上读取order_amount，需要1000次随机IO才能完成查询，而机械硬盘随机 IO 的效率是极低的（机械硬盘每秒寻址几百次）。</p>
-<p>既然我们已经知道是因为随机IO导致无法利用索引，那么有没有办法消除随机IO?</p>
-<p>解决办法：覆盖索引。</p>
-<h4 id="优化方案"><a href="#优化方案" class="headerlink" title="优化方案"></a>优化方案</h4><ul>
-<li>创建索引</li>
-</ul>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`t_order`</span> </span><br><span class="line"><span class="keyword">ADD</span> <span class="keyword">INDEX</span> <span class="string">`idx_ordercode_orderamount`</span> <span class="keyword">USING</span> BTREE (<span class="string">`order_code`</span> <span class="keyword">ASC</span>, <span class="string">`order_amount`</span> <span class="keyword">ASC</span>);</span><br></pre></td></tr></table></figure>
-<p>创建了复合索引 idx_ordercode_orderamount(order_code,order_amount)，将 select 的列 order_amount 也放到索引中。</p>
-<ul>
-<li>执行计划</li>
-</ul>
-<p>id    select_type        table    type    possible_keys    key                            key_len    ref        rows    Extra<br>1    SIMPLE            t_order    index    NULL            idx_ordercode_orderamount    42        NULL    1000    Using index</p>
-<ul>
-<li>执行时间：13ms</li>
-</ul>
-<p>从执行时间来看，SQL 的执行时间提升到原来的 1/20，已经达到我们的预期。</p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>覆盖索引是select的数据列只用从索引中就能够取得，不必读取数据行，换句话说查询列要被所建的索引覆盖。索引的字段不只包含查询列，还包含查询条件、排序等。</p>
-<p>要写出性能很好的SQL不仅需要学习SQL，还要能看懂数据库执行计划，了解数据库执行过程、索引的数据结构等。</p>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>聚集索引：<a href="https://www.cnblogs.com/chillsrc/archive/2012/09/04/2671092.html" target="_blank" rel="noopener">https://www.cnblogs.com/chillsrc/archive/2012/09/04/2671092.html</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/08/Database/MySQL/Optimize/BigTable/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/08/Database/MySQL/Optimize/BigTable/" itemprop="url">MySQL Optimize Big Table</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-08T22:55:07+08:00">
-                2018-09-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
-                    <span itemprop="name">Optimize</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="优化思路"><a href="#优化思路" class="headerlink" title="优化思路"></a>优化思路</h3><h4 id="思路一"><a href="#思路一" class="headerlink" title="思路一"></a>思路一</h4><ul>
-<li>优化SQL和索引。考虑点：引擎类型，数据分布，索引情况，锁策略，业务特点。</li>
-<li>加缓存，比如Redis等等</li>
-<li>主从复制；主主复制；读写分离</li>
-<li>MySQL自带分区表</li>
-<li>垂直拆分，其实就是根据你模块的耦合度，将一个大的系统分为多个小的系统，也就是分布式系统；</li>
-<li>水平拆分，针对数据量大的表，这一步最麻烦，最能考验技术水平，要选择一个合理的sharding key,为了有好的查询效率，表结构也要改动，做一定的冗余，应用也要改，sql中尽量带sharding key，将数据定位到限定的表上去查，而不是扫描全部的表；</li>
-</ul>
-<p>MySQL数据库一般都是按照这个步骤去演化的，成本也是由低到高。</p>
-<h4 id="思路二"><a href="#思路二" class="headerlink" title="思路二"></a>思路二</h4><p>对于一个存储设计，必须考虑业务特点，收集的信息如下：</p>
-<ul>
-<li>数据的容量：1-3年内会大概多少条数据，每条数据大概多少字节；</li>
-<li>数据项：是否有大字段，那些字段的值是否经常被更新；</li>
-<li>数据查询SQL条件：哪些数据项的列名称经常出现在WHERE、GROUP BY、ORDER BY子句中等； </li>
-<li>数据更新类SQL条件：有多少列经常出现UPDATE或DELETE 的WHERE子句中；</li>
-<li>SQL量的统计比，如：SELECT：UPDATE+DELETE：INSERT=多少？</li>
-<li>预计大表及相关联的SQL，每天总的执行量在何数量级？ </li>
-<li>表中的数据：更新为主的业务，还是查询为主的业务 </li>
-<li>打算采用什么数据库物理服务器，以及数据库服务器架构？</li>
-<li>并发如何？</li>
-<li>存储引擎选择InnoDB还是MyISAM？</li>
-</ul>
-<p>大致明白以上10个问题，至于如何设计此类的大表，应该什么都清楚了！</p>
-<p>至于优化若是指创建好的表，不能变动表结构的话，那建议InnoDB引擎，多利用点内存，减轻磁盘IO负载，因为IO往往是数据库服务器的瓶颈。</p>
-<p>另外对优化索引结构去解决性能问题的话，建议优先考虑修改类SQL语句，使他们更快些，不得已只靠索引组织结构的方式，当然此话前提是，<br>索引已经创建的非常好，若是读为主，可以考虑打开query_cache，以及调整一些参数值：sort_buffer_size，read_buffer_size，read_rnd_buffer_size，join_buffer_size</p>
-<h4 id="思路三"><a href="#思路三" class="headerlink" title="思路三"></a>思路三</h4><p>MySQL 数据库设计总结：<a href="https://cloud.tencent.com/developer/article/1004367" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1004367</a></p>
-<ul>
-<li><p>联合索引的建立原则(以下均假设在数据库表的字段a,b,c上建立联合索引(a,b,c))</p>
-</li>
-<li><ul>
-<li>联合索引中的字段应尽量满足过滤数据从多到少的顺序，也就是说差异最大的字段应该房子第一个字段</li>
-</ul>
-</li>
-<li><ul>
-<li>建立索引尽量与SQL语句的条件顺序一致，使SQL语句尽量以整个索引为条件，尽量避免以索引的一部分(特别是首个条件与索引的首个字段不一致时)作为查询的条件</li>
-</ul>
-</li>
-<li><ul>
-<li>Where a=1；where a&gt;=12 and a&lt;15；where a=1 and b<5 ；where="" a="1" and="" b="7" c="">=40为条件可以用到此联合索引；而这些语句where b=10；where c=221；where b&gt;=12 and c=2则无法用到这个联合索引。</5></li>
-</ul>
-</li>
-<li><ul>
-<li>当需要查询的数据库字段全部在索引中体现时，数据库可以直接查询索引得到查询信息无须对整个表进行扫描(这就是所谓的key-only)，能大大的提高查询效率。特别注意，当a，ab，abc与其他表字段关联查询时可以用到索引。</li>
-</ul>
-</li>
-</ul>
-<hr>
-<ul>
-<li><p>合理构造Query语句</p>
-</li>
-<li><ul>
-<li>Insert语句中，根据测试，批量一次插入1000条时效率最高，多于1000条时，要拆分，多次进行同样的插入，应该合并批量进行。注意query语句的长度要小于mysqld的参数 max_allowed_packet</li>
-</ul>
-</li>
-<li><ul>
-<li>查询条件中各种逻辑操作符性能顺序是and &gt; or &gt; in，因此在查询条件中应该尽量避免使用在大集合中使用in</li>
-</ul>
-</li>
-</ul>
-<h4 id="思路四"><a href="#思路四" class="headerlink" title="思路四"></a>思路四</h4><p>背景：有三张表，是5亿的数据，每天张表每天的增量是100w，每张表大概在10个columns左右</p>
-<p>当前使用mysiam，没有做分区。在只读情况下，比innodb的效率要高13％左右。</p>
-<p>在做了partition之后，读一下mysql的官方文档，其实对于partition，专门是对myisam做的优化，对于innodb，所有的数据是存在ibdata里面的，所以即使你可以看到schema变了，其实没有本质的变化。在分区出于同一个physical disk下面的情况下，提升大概只有1％ </p>
-<p>在分区在不同的physical disk下，分到了三个不同的disks下，提升大概在3％，其实所谓的吞吐量，由很多因素决定的，比如你的explain parition时候可以看到，record在那一个分区，如果每个分区都有，其实本质上没有解决读的问题，这样只会提升写的效率。</p>
-<p>另外一个问题在于，分区，你怎么分，如果一张表，有三个column都是经常被用于做查询条件的，其实是一件很悲惨的事情，因为你没有办法对所有的sql做针对性的分区，如果你只是如mysql官方文档上说的，只对时间做一个分区，而且你也只用时间查询的话，恭喜你。</p>
-<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://www.zhihu.com/question/19719997" target="_blank" rel="noopener">https://www.zhihu.com/question/19719997</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/03/Database/MySQL/Promotion/MySQL-Feature/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/03/Database/MySQL/Promotion/MySQL-Feature/" itemprop="url">MySQL Feature</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-03T22:55:07+08:00">
-                2018-09-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Promotion/" itemprop="url" rel="index">
-                    <span itemprop="name">Promotion</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="资源利用特点"><a href="#资源利用特点" class="headerlink" title="资源利用特点"></a>资源利用特点</h3><h4 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h4><ul>
-<li>5.1可以利用4个核；5.5可以利用到24个核；5.6可以利用到64个核</li>
-<li>每个连接一个是一个线程(非thread pool)，每个query只能使用到一个核，随着连接数增加，性能下降</li>
-<li>无执行计划缓存(无SQL执行计划预编译)</li>
-<li>有Result缓存，但比较鸡肋</li>
-</ul>
-<h4 id="内存"><a href="#内存" class="headerlink" title="内存"></a>内存</h4><ul>
-<li>64位系统可利用内存（2的64次方）GB</li>
-<li>在高速并发环境，基本是靠内存缓存来减少对磁盘的IO冲击</li>
-<li>通常内存按实际数据的15%-20%规划，如果特别热的数据，需要考虑更大的比例来缓存数据</li>
-<li>可以根据Query响应时间来做指导分配</li>
-<li>query cache建议关闭或设置很小</li>
-</ul>
-<h4 id="磁盘"><a href="#磁盘" class="headerlink" title="磁盘"></a>磁盘</h4><ul>
-<li>Binlog，redo log，undo log顺序IO</li>
-<li>Datafile 随机IO和顺序IO相结合</li>
-<li>OLTP业务更多的需要随机IO（可以利用内存做缓存，从而减少随机IO）</li>
-<li>OLAP业务更多需要顺序IO（内存缓存作用不大）</li>
-</ul>
-<h3 id="性能特性"><a href="#性能特性" class="headerlink" title="性能特性"></a>性能特性</h3><h4 id="HOT（堆表）和IOT（索引组织表）的区别"><a href="#HOT（堆表）和IOT（索引组织表）的区别" class="headerlink" title="HOT（堆表）和IOT（索引组织表）的区别"></a>HOT（堆表）和IOT（索引组织表）的区别</h4><ul>
-<li>起源</li>
-</ul>
-<p><strong>堆组织表</strong>的存储速度因为不用考虑排序，所以存储速度会比较快。但是要查找符合某个条件的记录，就必须得读取全部的记录以便筛选。而这个时候为了加快查询速度，索引就出现了，索引是针对少量特定字段的值拿出来进行排序存储，并记录在表中的位置，而因为索引是有序的，所以就会很容易通过索引查询到具体的记录位置（普遍使用二分查找法），然后再根据记录位置直接从表中读取该记录。同时因为索引的字段较少，所以索引通常会比其基表小得多。</p>
-<p>从上面通过索引访问表记录的方式可以看出，<strong>当要访问的数据量较大时，通过每一条记录的位置去访问原始记录，每一条符合条件的记录都需要经过索引访问后再访问基表这样一个复杂的过程，这会花费很多时间。</strong>同样，如果不经过索引而直接查询表，也可能因为表字段太多，记录较大的情况下把全部的数据读取进来，这也会花费很多时间。</p>
-<p>那怎么办呢？这个时候就会想到，如果表中数据本身就是有序的，这样查询表的时候就可以快速的找到符合条件的记录位置，而很容易判断符合条件记录的位置，这样只需要读取一小部分数据出来就可以了，不需要全表记录都读取出来进行判断。<strong>索引组织表</strong>就这样产生了，当然索引表中插入，更新的时候可能会因为需要排序而将数据重组，这时候数据插入或更新速度会比堆组织表慢一些。如果堆组织表上有索引，那么对堆组织表的插入也会因为要修改索引而变慢。</p>
-<ul>
-<li>堆表</li>
-</ul>
-<p>堆表（heap table）数据插入时时存储位置是随机的，主要是数据库内部块的空闲情况决定，获取数据是按照命中率计算，全表扫表时不见得先插入的数据先查到。</p>
-<p>堆表的特点就是索引和数据分开，所有索引都是二级索引，或叫辅助索引。所以主键索引也是二级索引，没有完整记录，区别只有唯一或非唯一。索引中存储的是key与指针，指针指向具体数据记录。当然，查找key的算法都是一样的，使用二分查找，也叫书签查找。</p>
-<p>两者的查找方式都一样，通过先找到key，然后定位到数据。不论是通过主键还是二级索引，两者的开销都是一样的。</p>
-<ul>
-<li>索引表</li>
-</ul>
-<p>索引表（IOT）数据存储是把表按照索引的方式存储的，数据是有序的，数据的位置是预先定好的，与插入的顺序没有关系。</p>
-<p>索引表的查询效率逼堆表高（相当于查询索引的效率），插入数据的速度比堆表慢。</p>
-<p>索引组织表必须要有主键，如果非显式创建，InnoDB存储引擎会默认创建一个ROWID当做主键；而堆表则无强制要求。</p>
-<p>这就是经常有文章说MyISAM比InnoDB快的原因吧，但这个说法并不完全正确，索引组织表由于索引项和数据存储在一起，且InnoDB聚集索引各个叶子节点之间都是同过双向链表组织，且都是根据主键逻辑顺序存放，所以无论是基于主键的等值查询还是范围查询都能大大节省磁盘访问时间。</p>
-<p>特别对于范围查询，只需要定位到开始key的位置，就可以顺着这个位置扫描到结束key。如下SQL语句：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">table</span> <span class="keyword">where</span> <span class="keyword">id</span> <span class="keyword">between</span> <span class="number">1000</span> <span class="keyword">and</span> <span class="number">2000</span></span><br></pre></td></tr></table></figure>
-<h4 id="超大单表问题"><a href="#超大单表问题" class="headerlink" title="超大单表问题"></a>超大单表问题</h4><p>常见的水平切分方式：分库分表；分区表</p>
-<ul>
-<li>什么是分库分表？</li>
-</ul>
-<p>把一个很大的库（表）的数据分到几个库（表）中，每个库（表）的结构都相同，但他们可能分布在不同的mysql实例，甚至不同的物理机器上，以达到降低单库（表）数据量，提高访问性能的目的。分库分表往往是业务层实施的，分库分表后，为了满足某些特定业务功能，往往需要rd修改代码。</p>
-<ul>
-<li>什么是分区表？</li>
-</ul>
-<p>所有数据还在一个表中，但物理存储根据一定的规则放在不同的文件中。这个是mysql支持的功能，业务rd代码无需改动。</p>
-<p>看上去分区表很帅气，为什么大部分互联网还是更多的选择自己分库分表来水平扩展咧？</p>
-<ul>
-<li><ul>
-<li>分区表，分区键设计不太灵活，如果不走分区键，很容易出现全表锁</li>
-</ul>
-</li>
-<li><ul>
-<li>旦数据量并发量上来，如果在分区表实施关联，就是一个灾难</li>
-</ul>
-</li>
-<li><ul>
-<li>自己分库分表，自己掌控业务场景与访问模式，可控。分区表，研发写了一个sql，都不确定mysql是怎么玩的，不太可控</li>
-</ul>
-</li>
-</ul>
-<h4 id="水平拆分设计与约束"><a href="#水平拆分设计与约束" class="headerlink" title="水平拆分设计与约束"></a>水平拆分设计与约束</h4><p>缺点</p>
-<ul>
-<li>数据分散，group by ,order by , sum, count等排序，聚 集函数不能支持，如果一定需要，需要某一个地方存全量</li>
-<li>分片过多，会造成维护难度增加，比较定位(要求分区尽可能的简单)</li>
-<li>后期迁移较复杂</li>
-</ul>
-<p>优点</p>
-<ul>
-<li>同一个功能内的关连，事务操作都可以进行</li>
-<li>不会存在超大规模的表</li>
-<li>应用程序端改动比较小</li>
-<li>拆分规则设计的好的情况，较难触到性能瓶颈，也比较 易扩展</li>
-</ul>
-<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p>堆表与索引表：<a href="http://www.ywnds.com/?p=7702" target="_blank" rel="noopener">http://www.ywnds.com/?p=7702</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/08/28/Java/Advance/OOM/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/08/28/Java/Advance/OOM/" itemprop="url">OutOfMemoryError</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-28T18:57:06+08:00">
-                2018-08-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
-                    <span itemprop="name">Advance</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="java-lang-OutOfMemoryError-Requested-array-size-exceeds-VM-limit"><a href="#java-lang-OutOfMemoryError-Requested-array-size-exceeds-VM-limit" class="headerlink" title="java.lang.OutOfMemoryError: Requested array size exceeds VM limit"></a>java.lang.OutOfMemoryError: Requested array size exceeds VM limit</h3><p>原因分析：这个错误是由JVM中的本地代码抛出的. 在真正为数组分配内存之前, JVM会执行一项检查: 要分配的数据结构在该平台是否可以寻址(addressable)。</p>
-<p>一般很少看到这个错误, 因为Java使用 int 类型作为数组的下标(index, 索引)。在Java中, int类型的最大值为 2^31 – 1 = 2,147,483,647。大多数平台的限制都约等于这个值，例如在 64位的 MB Pro 上, Java 1.7 平台可以分配长度为 2,147,483,645, 以及 Integer.MAX_VALUE-2) 的数组。</p>
-<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://blog.csdn.net/renfufei/article/details/78170188" target="_blank" rel="noopener">https://blog.csdn.net/renfufei/article/details/78170188</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/08/21/Java/Advance/Object-pools/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/08/21/Java/Advance/Object-pools/" itemprop="url">Java Object Pools</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-21T18:19:22+08:00">
-                2018-08-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h3><p>一个对象池需要完成哪些功能：</p>
-<ul>
-<li>如果有可用的对象，对象池应当能返回给客户端。</li>
-<li>客户端把对象放回池里后，可以对这些对象进行重用。</li>
-<li>对象池能够创建新的对象来满足客户端不断增长的需求。</li>
-<li>需要有一个正确关闭池的机制来确保关闭后不会发生内存泄露。</li>
-</ul>
-<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="http://ifeve.com/generic-concurrent-object-pool/" target="_blank" rel="noopener">http://ifeve.com/generic-concurrent-object-pool/</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/08/12/Server/Distributed/UUID/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/08/12/Server/Distributed/UUID/" itemprop="url">UUID</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-12T01:52:18+08:00">
-                2018-08-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Distributed/" itemprop="url" rel="index">
-                    <span itemprop="name">Distributed</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="UUID"><a href="#UUID" class="headerlink" title="UUID"></a>UUID</h3><ol>
-<li>什么是UUID？<br>UUID是通用唯一标识符（Universally Unique Identifier）。由128bit组成，如果用16进制表示，那么就是32个字符。表示形式如下：03e1c09e-4967-469c-85f5-764c5b286d47（8-4-4-4-12）。</li>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> tail</span><br><span class="line">  path /var/<span class="built_in">log</span>/httpd-access.log</span><br><span class="line">  pos_file /var/<span class="built_in">log</span>/td-agent/httpd-access.log.pos</span><br><span class="line">  tag apache.access</span><br><span class="line">  format apache2</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>配置tail，表示从日志文件的尾部开始读取；如果是新文件，则从头开始读。</li>
+<li>重启后，从pos文件读取上次读取位置。</li>
 </ol>
+<ul>
+<li><p>path：路径读取。可以指定多个路径“、“分离。（可以同时收集多个log日志，而不用在重新起一个source）</p>
+</li>
+<li><p>tag：The tag of the event</p>
+</li>
+<li><p>format：日志的格式</p>
+</li>
+</ul>
+<p>支持：regexp 和 正则表达式</p>
+<p>Example：Apache</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 读取日志文件apache的为以下字段:主机、用户、时间、方法、路径、代码、大小、推荐人和代理</span></span><br><span class="line">format /^(?&lt;host&gt;[^ ]*) [^ ]* (?&lt;user&gt;[^ ]*) \[(?&lt;time&gt;[^\]]*)\] <span class="string">"(?&lt;method&gt;\S+)(?: +(?&lt;path&gt;[^ ]*) +\S*)?"</span> (?&lt;code&gt;[^ ]*) (?&lt;size&gt;[^ ]*)(?: <span class="string">"(?&lt;referer&gt;[^\"]*)"</span> <span class="string">"(?&lt;agent&gt;[^\"]*)"</span>)?$/</span><br><span class="line">time_format %d/%b/%Y:%H:%M:%S %z</span><br></pre></td></tr></table></figure>
+<p>Example：syslog</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 读取syslog的输出文件(例如,/var/log/syslog)对下列字段:时间、主机，识别,和消息</span></span><br><span class="line">format /^(?&lt;time&gt;[^ ]* [^ ]* [^ ]*) (?&lt;host&gt;[^ ]*) (?&lt;ident&gt;[a-zA-Z0-9_\/\.\-]*)(?:\[(?&lt;pid&gt;[0-9]+)\])?[^\:]*\: *(?&lt;message&gt;.*)$/</span><br><span class="line">time_format %b %d %H:%M:%S</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>time_key：用来确定记录的时间戳。时间戳是当Fluentd读取记录是默认情况下使用的。</p>
+</li>
+<li><p>pos_file（必不可少）：Fluentd将记录它上次读到这个文件的位置。</p>
+</li>
+</ul>
+<p>Example</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pos_file /var/<span class="built_in">log</span>/td-agent/tmp/access.log.pos</span><br></pre></td></tr></table></figure>
+<ul>
+<li>time_format：时间格式</li>
+</ul>
+<hr>
+<h3 id="Match"><a href="#Match" class="headerlink" title="Match"></a>Match</h3><p>Match配置了数据流的匹配规则和匹配成功后所需执行的动作，和路由表项类似。</p>
+<p>比如以下的配置中就对匹配myapp.access标签成功的数据包执行file类型动作，将数据写入到路径为/var/log/fluent/access的文件中。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Match events tagged with "myapp.access" and</span></span><br><span class="line"><span class="comment"># store them to /var/log/fluent/access.%Y-%m-%d</span></span><br><span class="line"><span class="comment"># Of course, you can control how you partition your data</span></span><br><span class="line"><span class="comment"># with the time_slice_format option.</span></span><br><span class="line">&lt;match myapp.access&gt;</span><br><span class="line">  @<span class="built_in">type</span> file</span><br><span class="line">  path /var/<span class="built_in">log</span>/fluent/access</span><br><span class="line">&lt;/match&gt;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h3><hr>
+<h3 id="System"><a href="#System" class="headerlink" title="System"></a>System</h3><hr>
+<h3 id="Label"><a href="#Label" class="headerlink" title="Label"></a>Label</h3><hr>
+<h3 id="include"><a href="#include" class="headerlink" title="@include"></a>@include</h3><hr>
+<h3 id="Plugin"><a href="#Plugin" class="headerlink" title="Plugin"></a>Plugin</h3><p>Fluentd有5种类型的插件，分别是：</p>
+<ul>
+<li>Input：完成输入数据的读取，由source部分配置</li>
+<li>Parser：解析插件</li>
+<li>Output：完成输出数据的操作，由match部分配置</li>
+<li>Formatter：消息格式化的插件，属于filter类型</li>
+<li>Buffer：缓存插件，用于缓存数据</li>
+</ul>
+<hr>
+<h3 id="Route"><a href="#Route" class="headerlink" title="Route"></a>Route</h3><p>Route指的是数据在Fluentd中的处理流水线，一般的流程为</p>
+<ul>
+<li>input -&gt; filter -&gt; output</li>
+<li>input -&gt; filter -&gt; output with label</li>
+</ul>
+<p>即由输入插件获取数据，然后交给filter做处理，然后交给output插件去转发。同时，也支持数据包／事件的重新提交，比如修改tag之后重新路由等等。</p>
+<ul>
+<li>reroute event by tags</li>
+<li>reroute event by record content</li>
+<li>reroute event to other label</li>
+</ul>
+<p><a href="https://docs.fluentd.org/v0.12/articles/routing-examples" target="_blank" rel="noopener">https://docs.fluentd.org/v0.12/articles/routing-examples</a></p>
+<h3 id="Fluentd-to-Fluentd"><a href="#Fluentd-to-Fluentd" class="headerlink" title="Fluentd to Fluentd"></a>Fluentd to Fluentd</h3><h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"># Takes the messages sent over TCP</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  port 24224</span><br><span class="line">  bind 0.0.0.0</span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @id fluentd-server</span><br><span class="line">  @type elasticsearch</span><br><span class="line">  @log_level info</span><br><span class="line">  include_tag_key true</span><br><span class="line">  host elasticsearch</span><br><span class="line">  port 9200</span><br><span class="line">  logstash_format true</span><br><span class="line">  index_name fluentd</span><br><span class="line">  type_name fluentd</span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">buffer</span>&gt;</span></span><br><span class="line">    @type file</span><br><span class="line">    path /var/log/fluentd/kubernetes.system.buffer</span><br><span class="line">    flush_mode interval</span><br><span class="line">    retry_type exponential_backoff</span><br><span class="line">    flush_thread_count 2</span><br><span class="line">    flush_interval 5s</span><br><span class="line">    retry_forever</span><br><span class="line">    retry_max_interval 30</span><br><span class="line">    chunk_limit_size 2M</span><br><span class="line">    queue_limit_length 4</span><br><span class="line">    overflow_action block</span><br><span class="line">  <span class="tag">&lt;/<span class="name">buffer</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">containers.input.conf: |-</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @id fluentd-containers.log</span><br><span class="line">  @type tail</span><br><span class="line">  path /var/log/containers/*.log</span><br><span class="line">  pos_file /var/log/es-containers.log.pos</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">  tag raw.kubernetes.*</span><br><span class="line">  read_from_head true</span><br><span class="line">  <span class="tag">&lt;<span class="name">parse</span>&gt;</span></span><br><span class="line">    @type multi_format</span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format json          time_key time</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format /^(?<span class="tag">&lt;<span class="name">time</span>&gt;</span>.+) (?<span class="tag">&lt;<span class="name">stream</span>&gt;</span>stdout|stderr) [^ ]* (?<span class="tag">&lt;<span class="name">log</span>&gt;</span>.*)$/</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">parse</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"># Detect exceptions in the log output and forward them as one log entry.</span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> <span class="attr">raw.kubernetes.</span>**&gt;</span></span><br><span class="line">  @id raw.kubernetes</span><br><span class="line">  @type detect_exceptions</span><br><span class="line">  remove_tag_prefix raw</span><br><span class="line">  message log</span><br><span class="line">  stream stream</span><br><span class="line">  multiline_flush_interval 5</span><br><span class="line">  max_bytes 500000</span><br><span class="line">  max_lines 1000</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br><span class="line"></span><br><span class="line">output.conf: |-</span><br><span class="line"># Enriches records with Kubernetes metadata</span><br><span class="line"><span class="tag">&lt;<span class="name">filter</span> <span class="attr">kubernetes.</span>**&gt;</span></span><br><span class="line">  @type kubernetes_metadata</span><br><span class="line"><span class="tag">&lt;/<span class="name">filter</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;<span class="name">server</span>&gt;</span></span><br><span class="line">      host fluentd-service</span><br><span class="line">      port 24224</span><br><span class="line">    <span class="tag">&lt;/<span class="name">server</span>&gt;</span></span><br><span class="line">  flush_interval 1s</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://blog.csdn.net/hxpjava1/article/details/79447630" target="_blank" rel="noopener">https://blog.csdn.net/hxpjava1/article/details/79447630</a></p>
+<p><a href="http://www.muzixing.com/pages/2017/02/05/fluentdru-men-jiao-cheng.html" target="_blank" rel="noopener">http://www.muzixing.com/pages/2017/02/05/fluentdru-men-jiao-cheng.html</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/05/Kubenetes/Log/Structure/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/05/Kubenetes/Log/Structure/" itemprop="url">Kubernetes Log Structure</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-05T02:13:06+08:00">
+                2018-10-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Log/" itemprop="url" rel="index">
+                    <span itemprop="name">Log</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Structure"><a href="#Structure" class="headerlink" title="Structure"></a>Structure</h3><h3 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h3><p>k8s集群日志通用收集方案</p>
+<ul>
+<li>集群内相关组件日志使用fluentd/filebeat收集</li>
+<li>应用输出到标准输出或标准错误输出的日志使用fluentd/filebeat收集</li>
+<li>应用输出到容器中指定文件日志使用fluent-bit/filebeat收集</li>
+</ul>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://juejin.im/post/5b6eaef96fb9a04fa25a0d37" target="_blank" rel="noopener">https://juejin.im/post/5b6eaef96fb9a04fa25a0d37</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Database/MySQL/Error/CommonError/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/Database/MySQL/Error/CommonError/" itemprop="url">MySQL Common Error</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T22:00:18+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Error/" itemprop="url" rel="index">
+                    <span itemprop="name">Error</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h3><h4 id="1-ERROR-1045-28000-Access-denied-for-user-‘testcon‘-’10-24-236-231’-using-password-YES"><a href="#1-ERROR-1045-28000-Access-denied-for-user-‘testcon‘-’10-24-236-231’-using-password-YES" class="headerlink" title="1. ERROR 1045 (28000): Access denied for user ‘testcon‘@’10.24.236.231’ (using password: YES)"></a>1. ERROR 1045 (28000): Access denied for user ‘testcon‘@’10.24.236.231’ (using password: YES)</h4><h4 id="2-ERROR-2005-HY000-Unknown-MySQL-server-host-‘com-mysql-coflodhn1n0y-us-west-1-rds-amazonaws-com’-110"><a href="#2-ERROR-2005-HY000-Unknown-MySQL-server-host-‘com-mysql-coflodhn1n0y-us-west-1-rds-amazonaws-com’-110" class="headerlink" title="2. ERROR 2005 (HY000): Unknown MySQL server host ‘com-mysql.coflodhn1n0y.us-west-1.rds.amazonaws.com’ (110)"></a>2. ERROR 2005 (HY000): Unknown MySQL server host ‘com-mysql.coflodhn1n0y.us-west-1.rds.amazonaws.com’ (110)</h4><h4 id="3-ERROR-1449-HY000-The-user-specified-as-a-definer-‘testcon‘-’10-24-236-231’-does-not-exist-或者-ERROR-1045-28000-user-not-exist"><a href="#3-ERROR-1449-HY000-The-user-specified-as-a-definer-‘testcon‘-’10-24-236-231’-does-not-exist-或者-ERROR-1045-28000-user-not-exist" class="headerlink" title="3. ERROR 1449 (HY000): The user specified as a definer (‘testcon‘@’10.24.236.231’) does not exist 或者 ERROR 1045 (28000): user not exist"></a>3. ERROR 1449 (HY000): The user specified as a definer (‘testcon‘@’10.24.236.231’) does not exist 或者 ERROR 1045 (28000): user not exist</h4><h4 id="4-ERROR-2003-HY000-Can’t-connect-to-MySQL-server-on’test-mysql-rds-aliyuncs-com’-110"><a href="#4-ERROR-2003-HY000-Can’t-connect-to-MySQL-server-on’test-mysql-rds-aliyuncs-com’-110" class="headerlink" title="4. ERROR 2003 (HY000): Can’t connect to MySQL server on’test.mysql.rds.aliyuncs.com’ (110)"></a>4. ERROR 2003 (HY000): Can’t connect to MySQL server on’test.mysql.rds.aliyuncs.com’ (110)</h4><h4 id="5-ERROR-1135-HY000-Can’t-create-a-new-thread-errno-11-if-you-are-not-out-of-available-memory-you-can-consult-the-manual-for-a-possible-OS-dependent-bug"><a href="#5-ERROR-1135-HY000-Can’t-create-a-new-thread-errno-11-if-you-are-not-out-of-available-memory-you-can-consult-the-manual-for-a-possible-OS-dependent-bug" class="headerlink" title="5. ERROR 1135 (HY000): Can’t create a new thread (errno 11); if you are not out of available memory, you can consult the manual for a possible OS-dependent bug"></a>5. ERROR 1135 (HY000): Can’t create a new thread (errno 11); if you are not out of available memory, you can consult the manual for a possible OS-dependent bug</h4><h4 id="6-ERROR-1130-HY000-Host-‘192-168-1-3’-is-not-allowed-to-connect-to-this-MySQL-server"><a href="#6-ERROR-1130-HY000-Host-‘192-168-1-3’-is-not-allowed-to-connect-to-this-MySQL-server" class="headerlink" title="6. ERROR 1130 (HY000): Host ‘192.168.1.3’ is not allowed to connect to this MySQL server"></a>6. ERROR 1130 (HY000): Host ‘192.168.1.3’ is not allowed to connect to this MySQL server</h4><h4 id="7-ERROR-1045-HY000-28000ip-not-in-whitelist"><a href="#7-ERROR-1045-HY000-28000ip-not-in-whitelist" class="headerlink" title="7. ERROR 1045 (HY000): #28000ip not in whitelist"></a>7. ERROR 1045 (HY000): #28000ip not in whitelist</h4><h4 id="8-ERROR-5-HY000-Out-of-memory-Needed-260400-bytes"><a href="#8-ERROR-5-HY000-Out-of-memory-Needed-260400-bytes" class="headerlink" title="8. ERROR 5 (HY000): Out of memory (Needed 260400 bytes)"></a>8. ERROR 5 (HY000): Out of memory (Needed 260400 bytes)</h4><h4 id="9-ERROR-1129-HY000-Host-‘10-24-236-231’-is-blocked-because-of-many-connection-errors-unblock-with-‘mysqladmin-flush-hosts’"><a href="#9-ERROR-1129-HY000-Host-‘10-24-236-231’-is-blocked-because-of-many-connection-errors-unblock-with-‘mysqladmin-flush-hosts’" class="headerlink" title="9. ERROR 1129 (HY000): Host ‘10.24.236.231’ is blocked because of many connection errors; unblock with ‘mysqladmin flush-hosts’"></a>9. ERROR 1129 (HY000): Host ‘10.24.236.231’ is blocked because of many connection errors; unblock with ‘mysqladmin flush-hosts’</h4><h4 id="10-ERROR-1226-42000-User-‘testcon’-has-exceeded-the-‘max-user-connections’-resource-current-value-2"><a href="#10-ERROR-1226-42000-User-‘testcon’-has-exceeded-the-‘max-user-connections’-resource-current-value-2" class="headerlink" title="10. ERROR 1226 (42000): User ‘testcon’ has exceeded the ‘max_user_connections’ resource (current value: 2)"></a>10. ERROR 1226 (42000): User ‘testcon’ has exceeded the ‘max_user_connections’ resource (current value: 2)</h4><h4 id="11-ERROR-1226-42000-User-‘testcon’-has-exceeded-the-‘max-connections-per-hour’-resource-current-value-2"><a href="#11-ERROR-1226-42000-User-‘testcon’-has-exceeded-the-‘max-connections-per-hour’-resource-current-value-2" class="headerlink" title="11. ERROR 1226 (42000): User ‘testcon’ has exceeded the ‘max_connections_per_hour’ resource (current value: 2)"></a>11. ERROR 1226 (42000): User ‘testcon’ has exceeded the ‘max_connections_per_hour’ resource (current value: 2)</h4><h4 id="12-ERROR-1040-HY000-Too-many-connections"><a href="#12-ERROR-1040-HY000-Too-many-connections" class="headerlink" title="12. ERROR 1040 (HY000): Too many connections"></a>12. ERROR 1040 (HY000): Too many connections</h4><h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Solution/ELK/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/Kubenetes/Solution/ELK/" itemprop="url">Kubernetes ELK Solution</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T21:13:06+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Solution/" itemprop="url" rel="index">
+                    <span itemprop="name">Solution</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="max-virtual-memory-areas-vm-max-map-count-65530-is-too-low-increase-to-at-least-262144"><a href="#max-virtual-memory-areas-vm-max-map-count-65530-is-too-low-increase-to-at-least-262144" class="headerlink" title="max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]"></a>max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">initContainers:</span><br><span class="line">    - name: init-sysctl</span><br><span class="line">    image: busybox</span><br><span class="line">    imagePullPolicy: IfNotPresent</span><br><span class="line">    <span class="built_in">command</span>: [<span class="string">"sysctl"</span>, <span class="string">"-w"</span>, <span class="string">"vm.max_map_count=262144"</span>]</span><br><span class="line">    securityContext:</span><br><span class="line">        privileged: <span class="literal">true</span></span><br><span class="line">containers:</span><br><span class="line">    - name: es-master</span><br><span class="line">    securityContext:</span><br><span class="line">        capabilities:</span><br><span class="line">        add:</span><br><span class="line">        - IPC_LOCK</span><br><span class="line">    image: gcr.io/tokyo-skein-217911/elasticsearch:6.4.0.1</span><br></pre></td></tr></table></figure>
+<h4 id="“xxx”-is-forbidden-attempt-to-grant-extra-privileges"><a href="#“xxx”-is-forbidden-attempt-to-grant-extra-privileges" class="headerlink" title="“xxx” is forbidden: attempt to grant extra privileges"></a>“xxx” is forbidden: attempt to grant extra privileges</h4><ul>
+<li>solution on GKE</li>
+</ul>
+<p>Due to some reason the first character of the username was set to uppercase in Google Cloud/IAM settings, however the above command returned all characters in lowercase.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gcloud config get-value core/account</span><br><span class="line"></span><br><span class="line">kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=<span class="string">"&lt;case-sensitive-username&gt;@gmail.com"</span></span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Database/MySQL/ViewStatus/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/Database/MySQL/ViewStatus/" itemprop="url">MySQL View Status</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T15:00:18+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status  <span class="comment"># 输出所有记录的状态</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status like <span class="string">'%xxxx%'</span>  <span class="comment"># 输出记录带有xxx关键字的状态，show global status like ‘thread%’</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Status"><a href="#Status" class="headerlink" title="Status"></a>Status</h3><h4 id="Connection"><a href="#Connection" class="headerlink" title="Connection"></a>Connection</h4><ul>
+<li>Aborted_clients<ul>
+<li>由于客户端没有正确关闭连接导致客户端终止而中断的连接数。 如，客户端和服务端建立连接好之后，等待 wait_time 时间后，客户端和服务器之间的连接自动退出，此时会发现 Aborted_clients 计数器加 1。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Aborted_connects<ul>
+<li>试图连接到 MySQL 服务器而失败的连接数。如:telnet 127.0.0.1 3306， 然后什么都不做，ctrl+]，quit 退出，就会发现 aborted_connects 计数器加 1。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>connections<ul>
+<li>试图连接到 (不管成功与否)MySQL 服务器的连接数计数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Bytes_received<ul>
+<li>从所有客户端接收到的字节数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Bytes_sent<ul>
+<li>发送给所有客户端的字节数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_cached<ul>
+<li>代表当前此时此刻线程缓存中有多少空闲线程。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_connected<ul>
+<li>代表当前已建立连接的数量，因为一个连接就需要一个线程，所以也可以看成当前被使用的线程数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_created<ul>
+<li>创建用来处理连接的线程数。如果 Threads_created 较大，则需要增加 thread_cached_size 的值。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_running<ul>
+<li>代表当前激活的（非睡眠状态）线程数。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Database/MySQL/Configuration/Connection/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/Database/MySQL/Configuration/Connection/" itemprop="url">MySQL Connection Configuration</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T15:00:18+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Configuration/" itemprop="url" rel="index">
+                    <span itemprop="name">Configuration</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="参数说明"><a href="#参数说明" class="headerlink" title="参数说明"></a>参数说明</h3><ol>
+<li>skip-networking</li>
+</ol>
+<p>开启该选项可以彻底关闭 MySQL 的 TCP/IP 连接方式，如果 WEB 服务器是以远程连接的方式访问MySQL数据库服务器则不要开启该选项！否则将无法正常连接！</p>
 <ol start="2">
-<li>UUID的作用？<br>让分布式系统中的所有元素都能有唯一的辨识资讯，而不需要通过中央控制端来作辨别资讯的指定。</li>
+<li>skip-name-resolve</li>
 </ol>
+<p>禁止 MySQL 对外部连接进行 DNS 解析，使用这一选项可以消除 MySQL 进行 DNS 解析的时间。但需要注意，如果开启该选项，则所有远程主机连接授权都要使用 IP 地址方式，否则 MySQL 将无法正常处理连接请求！</p>
 <ol start="3">
-<li>UUID由哪些元素组成才能让其成为唯一？<br>UUID指在一台机器上生成的数字，他保证对在同一时空内的所有机器都是唯一的。说得明白一点就是它能保证无论在某时某地某台机器上它都能生成一个唯一字符串。</li>
+<li>max_connections</li>
 </ol>
-<p>组成部分：</p>
+<p>max_connections 是指 MySql 的最大连接数，如果服务器的并发连接请求量比较大，建议调高此值，以增加并行连接数量，当然这建立在服务器能支撑的情况下，因为如果连接数越多，由于 MySQL 会为每个连接提供连接缓冲区，就会开销越多的内存，所以要适当调整该值，不能盲目提高设值。</p>
+<ol start="4">
+<li>max_user_connections</li>
+</ol>
+<p>max_user_connections 是指每个数据库用户的最大连接针对某一个账号的所有客户端并行连接到 MYSQL 服务的最大并行连接数。简单说是指同一个账号能够同时连接到 mysql 服务的最大连接数。设置为 0 表示不限制。</p>
+<ol start="5">
+<li>max_connect_errors</li>
+</ol>
+<p>设置每个主机的连接请求异常中断的最大次数，当超过该次数，MySQL 服务器将禁止 host 的连接请求，直到 mysql 服务器重启或通过 flush hosts 命令清空此 host 的相关信息</p>
+<ol start="6">
+<li>thread_handing</li>
+</ol>
+<p>Mysql 服务中线程处理模式包括两种：</p>
 <ul>
-<li>当前日期及时间</li>
-<li>时钟序列</li>
-<li>全局唯一的IEEE机器识别号。</li>
+<li>no-threads(单线程处理，多用于 debug)</li>
+<li>one- thread-per-connection（每个请求对应一个线程，目前被作为默认值 )；</li>
 </ul>
-<h3 id="生成算法"><a href="#生成算法" class="headerlink" title="生成算法"></a>生成算法</h3><h4 id="基于随机数的UUID"><a href="#基于随机数的UUID" class="headerlink" title="基于随机数的UUID"></a>基于随机数的UUID</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UUID.randomUUID().toString()</span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>thread_cache_size</li>
+</ol>
+<p>这个值表示可以重新利用保存在缓存中线程的数量, 当断开连接时如果缓存中还有空间, 那么客户端的线程将被放到缓存中, 如果线程重新被请求，那么请求将从缓存中读取。</p>
+<p>如果缓存中是空的或者是新的请求，那么这个线程将被重新创建, 如果有很多新的线程，增加这个值可以改善系统性能. 因为当应用发起一个对数据库的操作时，在整个应用中是一个不小的开销，从建立连接之初，CPU 要给它划分一定的 thread stack，然后进行用户身份认证，建立上下文信息，最后请求完成，关闭连接，同时释放资源，可以称的上是秒级的过程。</p>
+<p>在高并发的情况下，将给系统带来巨大的压力更不能保证性能。所以，采用线程重用，减小这部分的消耗。通过比较 Connections 和 Threads_created 状态的变量，可以看到这个变量的作用。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show status like <span class="string">'thread%'</span>;</span><br><span class="line">+-------------------+-------+</span><br><span class="line">| Variable_name     | Value |</span><br><span class="line">+-------------------+-------+</span><br><span class="line">| Threads_cached    | 649   | &lt;—当前被缓存的空闲线程的数量</span><br><span class="line">| Threads_connected | 93    | &lt;—正在使用（处于连接状态）的线程</span><br><span class="line">| Threads_created   | 742   | &lt;—服务启动以来，创建了多少个线程</span><br><span class="line">| Threads_running   | 5     | &lt;—正在忙的线程（正在查询数据，传输数据等等操作）</span><br><span class="line">+-------------------+-------+</span><br></pre></td></tr></table></figure>
+<p>查看开机起来数据库被连接了多少次？</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show global status like <span class="string">'%connections%'</span>;</span><br><span class="line">+-----------------------------------+---------------------+</span><br><span class="line">| Variable_name                     | Value               |</span><br><span class="line">+-----------------------------------+---------------------+</span><br><span class="line">| Connection\_errors\_max_connections | 0                   |</span><br><span class="line">| Connections                       | 101395055             |   &lt;–服务启动以来，历史连接数</span><br><span class="line">| Max\_used\_connections              | 742                 |</span><br><span class="line">| Max\_used\_connections_time         | 2018-08-21 15:42:38 |</span><br><span class="line">+-----------------------------------+---------------------+</span><br></pre></td></tr></table></figure>
+<p>通过连接线程池的命中率来判断设置值是否合适？命中率超过90%以上, 设定合理。(Connections - Threads_created) / Connections * 100%</p>
+<ol start="8">
+<li>thread_stack</li>
+</ol>
+<p>每个连接线程被创建时，MySQL给它分配的内存大小。当MySQL创建一个新的连接线程时，需要给它分配一定大小的内存堆栈空间，以便存放客户端的请求的 Query 及自身的各种状态和处理信息。当然如果遇到下面的错误提示就应该考虑增加这个值了。mysql-debug: Thread stack overrun 如:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java.sql.SQLException: Thread stack overrun: 5456 bytes used of a 131072 byte stack, and 128000 bytes needed. Use <span class="string">'mysqld --thread_stack=#'</span> to specify a bigger stack.</span><br></pre></td></tr></table></figure>
+<ol start="9">
+<li>Connect_Timeout</li>
+</ol>
+<p>字面上看意思是连接超时，指的是 MySQL 连接过程中握手的超时时间，在 5.0.52 以后默认为 10 秒，之前版本默认是 5 秒。</p>
+<p>mysql的基本原理是有个监听线程循环接收请求，当有请求来时，创建线程（或者从线程池中取）来处理这个请求。由于 mysql 连接采用 TCP 协议，那么之前势必是需要进行TCP三次握手的。</p>
+<p>TCP三次握手成功之后，客户端会进入阻塞，等待服务端的消息。服务端这个时候会创建一个线程 (或者从线程池中取一个线程) 来处理请求，主要验证部分包括host和用户名密码验证。host验证我们比较熟悉，因为在用grant命令授权用户的时候是有指定host的。用户名密码认证则是服务端先生成一个随机数发送给客户端，客户端用该随机数和密码进行多次 sha1 加密后发送给服务端验证。如果通过，整个连接握手过程完成。</p>
+<p>由此可见，整个连接握手可能会有各种可能出错。所以这个 connect_timeout 值就是指这个超时时间了。可以简单测试下，运行下面的 telnet 命令会发现客户端会在 10 秒后超时返回。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$time</span> telnet mysql\_ip\_addr port</span><br><span class="line">$ time telnet 127.0.0.1 5051</span><br><span class="line">Trying 127.0.0.1...</span><br><span class="line">Connected to 127.0.0.1.</span><br><span class="line">Escape character is <span class="string">'^\]'</span>.</span><br><span class="line">?</span><br><span class="line">Connection closed by foreign</span><br><span class="line">host.</span><br><span class="line">real    0m5.005s <span class="comment">#这里的5秒即mysql默认的连接超时</span></span><br><span class="line">user    0m0.000s</span><br><span class="line">sys 0m0.000s</span><br></pre></td></tr></table></figure>
+<p>Telnet 未退出前通过 show processlist 查看各线程状态可见，当前该连接处于授权认证阶段，此时的用户为“unauthenticated user”。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">256 | unauthenticated user | localhost:60595 | NULL | Connect | NULL | Reading from net | NULL</span><br></pre></td></tr></table></figure>
+<ol start="10">
+<li>wait_timeout&amp;interactive_timeout</li>
+</ol>
+<p>等待超时，那MySQL等什么呢？确切的说是 MySQL 在等用户的请求 (query)，如果发现一个线程已经 sleep 的时间超过 wait_timeout 了那么这个线程将被清理掉，从文档上来看 wait_timeout 和 interactive_timeout 都是指不活跃的连接超时时间，而 interactive_timeout 针对交互式连接，wait_timeout 针对非交互式连接。</p>
+<p>MySQL 连接线程启动的时候 wait_timeout 会根据是交互模式还是非交互模式被设置为这两个值中的一个。如果我们运行 MySQL -uroot -p 命令登陆到 MySQL，wait_timeout 就会被设置为 interactive_timeout 的值。如果我们在 wait_timeout 时间内没有进行任何操作，那么再次操作的时候就会提示超时，这是 MySQL client 会重新连接。</p>
+<ol start="11">
+<li>net_read_timeout</li>
+<li>net_write_timeout</li>
+<li>net_retry_count</li>
+</ol>
+<p>如果 MySQL 服务端在读写数据时，出现连接中断，会重试 net_retry_count 指定的次数。在系统 FreeBSD 中有效，Linux 中只有在 build 的时候指定 NO_ALARM 参数时 net_retry_count 才会起作用。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>connect_timeout在获取连接阶段（authenticate）起作用，interactive_timeout 和 wait_timeout 在连接空闲阶段（sleep）起作用，而net_read_timeout和net_write_timeout则是在连接繁忙阶段（query）起作用。</p>
+<p>获取MySQL连接是多次握手的结果，除了用户名和密码的匹配校验外，还有 IP-&gt;HOST-&gt;DNS-&gt;IP 验证，任何一步都可能因为网络问题导致线程阻塞。为了防止线程浪费在不必要的校验等待上，超过connect_timeout的连接请求将会被拒绝。<br>即使没有网络问题，也不能允许客户端一直占用连接。对于保持 sleep 状态超过了 wait_timeout（或 interactive_timeout，取决于 CLIENT_INTERACTIVE 标志）的客户端，MySQL 会主动断开连接。</p>
+<p>即使连接没有处于 sleep 状态，即客户端忙于计算或者存储数据，MySQL 也选择了有条件的等待。在数据包的分发过程中，客户端可能来不及响应（发送、接收、或者处理数据包太慢）。为了保证连接不被浪费在无尽的等待中，MySQL 也会选择有条件（net_read_timeout 和 net_write_timeout）地主动断开连接。比如我在客户端用 load data infile 的方式导入很大的一个文件到数据库中，然后中途用 iptables 禁用掉 mysql 的 3306 端口，这个时候服务器端该连接状态是 reading from net，在等待 net_read_timeout 后关闭该连接。同理，在程序里面查询一个很大的表时，在查询过程中同样禁用掉端口，制造网络不通的情况，这样该连接状态是 writing to net，然后在 net_write_timeout 后关闭该连接。</p>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>MySQL 连接机制浅析及运维：<a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Command/node/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/Kubenetes/Command/node/" itemprop="url">kubectl node</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T11:13:06+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h3><h4 id="Running-with-Shell"><a href="#Running-with-Shell" class="headerlink" title="Running with Shell"></a>Running with Shell</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run pod-name -i --rm --image nginx:lastes -- sh -c</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">Examples:</span><br><span class="line">  <span class="comment"># Start a single instance of nginx.</span></span><br><span class="line">  kubectl run nginx --image=nginx</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and let the container expose port 5701 .</span></span><br><span class="line">  kubectl run hazelcast --image=hazelcast --port=5701</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and set environment variables "DNS_DOMAIN=cluster" and "POD_NAMESPACE=default" in the container.</span></span><br><span class="line">  kubectl run hazelcast --image=hazelcast --env=<span class="string">"DNS_DOMAIN=cluster"</span> --env=<span class="string">"POD_NAMESPACE=default"</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and set labels "app=hazelcast" and "env=prod" in the container.</span></span><br><span class="line">  kubectl run hazelcast --image=nginx --labels=<span class="string">"app=hazelcast,env=prod"</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a replicated instance of nginx.</span></span><br><span class="line">  kubectl run nginx --image=nginx --replicas=5</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Dry run. Print the corresponding API objects without creating them.</span></span><br><span class="line">  kubectl run nginx --image=nginx --dry-run</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of nginx, but overload the spec of the deployment with a partial set of values parsed from JSON.</span></span><br><span class="line">  kubectl run nginx --image=nginx --overrides=<span class="string">'&#123; "apiVersion": "v1", "spec": &#123; ... &#125; &#125;'</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a pod of busybox and keep it in the foreground, don't restart it if it exits.</span></span><br><span class="line">  kubectl run -i -t busybox --image=busybox --restart=Never</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the nginx container using the default command, but use custom arguments (arg1 .. argN) for that command.</span></span><br><span class="line">  kubectl run nginx --image=nginx -- &lt;arg1&gt; &lt;arg2&gt; ... &lt;argN&gt;</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the nginx container using a different command and custom arguments.</span></span><br><span class="line">  kubectl run nginx --image=nginx --<span class="built_in">command</span> -- &lt;cmd&gt; &lt;arg1&gt; ... &lt;argN&gt;</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the perl container to compute π to 2000 places and print it out.</span></span><br><span class="line">  kubectl run pi --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the cron job to compute π to 2000 places and print it out every 5 minutes.</span></span><br><span class="line">  kubectl run pi --schedule=<span class="string">"0/5 * * * ?"</span> --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span></span><br></pre></td></tr></table></figure>
+<h3 id="Label"><a href="#Label" class="headerlink" title="Label"></a>Label</h3><h4 id="Add-label-to-node"><a href="#Add-label-to-node" class="headerlink" title="Add label to node"></a>Add label to node</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl label nodes &lt;node-name&gt; &lt;label-key&gt;=&lt;label-value&gt;</span><br></pre></td></tr></table></figure>
+<p>example：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl label nodes gke-xxx-cc361276-cvfg node=elasticsearch</span><br></pre></td></tr></table></figure>
+<h4 id="Adding-or-updating-labels-for-existing-clusters"><a href="#Adding-or-updating-labels-for-existing-clusters" class="headerlink" title="Adding or updating labels for existing clusters"></a>Adding or updating labels for existing clusters</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container clusters update [CLUSTER_NAME] --update-labels [KEY]=[VALUE]</span><br></pre></td></tr></table></figure>
+<h4 id="Remove-labels-for-existing-clusters"><a href="#Remove-labels-for-existing-clusters" class="headerlink" title="Remove labels for existing clusters"></a>Remove labels for existing clusters</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container clusters update example-cluster --remove-labels env=dev</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Term/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/Kubenetes/Term/" itemprop="url">Kubernetes Term</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T11:13:06+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Resouce"><a href="#Resouce" class="headerlink" title="Resouce"></a>Resouce</h3><h4 id="Meaning-of-memory"><a href="#Meaning-of-memory" class="headerlink" title="Meaning of memory"></a>Meaning of memory</h4><p>128974848, 129e6, 129M, 123Mi</p>
+<p>123Mi = 123 <em> 1024 </em> 1024 = 128,974,848 Bytes</p>
+<p>129M = 129 <em> 1000 </em> 1000 = 129,000,000 Bytes</p>
+<p>举例说明：</p>
+<p>当我们在Deployment设置memory = 500Mi时候，在Kubernetes显示使用内存 524.29 MB = (500Mi <em> 1024 </em> 1024) / 1000 / 1000 = 524.288 MB</p>
+<h4 id="Meaning-of-CPU"><a href="#Meaning-of-CPU" class="headerlink" title="Meaning of CPU"></a>Meaning of CPU</h4><h3 id="Kind"><a href="#Kind" class="headerlink" title="Kind"></a>Kind</h3><h4 id="ReplicationController"><a href="#ReplicationController" class="headerlink" title="ReplicationController"></a>ReplicationController</h4><p>A ReplicationController ensures that a specified number of pod replicas are running at any one time. In other words, a ReplicationController makes sure that a pod or a homogeneous set of pods is always up and available.</p>
+<h4 id="ReplicaSet"><a href="#ReplicaSet" class="headerlink" title="ReplicaSet"></a>ReplicaSet</h4><h4 id="Deployment"><a href="#Deployment" class="headerlink" title="Deployment"></a>Deployment</h4>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DevTools/Vscode/Markdown All in One/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/DevTools/Vscode/Markdown All in One/" itemprop="url">Markdown All in One</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T00:54:06+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tools/" itemprop="url" rel="index">
+                    <span itemprop="name">Tools</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tools/VsCode/" itemprop="url" rel="index">
+                    <span itemprop="name">VsCode</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Shortcut-Key"><a href="#Shortcut-Key" class="headerlink" title="Shortcut Key"></a>Shortcut Key</h3><ul>
+<li>Ctrl + B    Toggle bold</li>
+<li>Ctrl + I    Toggle italic</li>
+<li>Alt + S    Toggle strikethrough</li>
+<li>Ctrl + Shift + ]    Toggle heading (uplevel)</li>
+<li>Ctrl + Shift + [    Toggle heading (downlevel)</li>
+<li>Ctrl + M    Toggle math environment</li>
+<li>Alt + C    Check/Uncheck task list item</li>
+</ul>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>Official：<a href="https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one" target="_blank" rel="noopener">https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one</a></p>
+
           
         
       
@@ -2073,7 +2060,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/7/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/page/40/">40</a><a class="extend next" rel="next" href="/page/9/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/7/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/page/43/">43</a><a class="extend next" rel="next" href="/page/9/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2120,7 +2107,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">395</span>
+                <span class="site-state-item-count">421</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2131,7 +2118,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">182</span>
+                <span class="site-state-item-count">194</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2142,7 +2129,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">444</span>
+                <span class="site-state-item-count">472</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

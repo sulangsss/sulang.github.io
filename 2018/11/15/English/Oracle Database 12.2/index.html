@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="English,Coder,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="sulang blog" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="EnglishOracle Database 12.2. It is close to 25 million(百万) lines of C code. What an unimaginable horror! You can’t change a single line of code in the product without breaking 1000s of existing tests.">
+<meta name="keywords" content="English,Coder">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Oracle Database 12.2, What an unimaginable horror!">
+<meta property="og:url" content="https://sulangsss.github.io/2018/11/15/English/Oracle Database 12.2/index.html">
+<meta property="og:site_name" content="sulang blog">
+<meta property="og:description" content="EnglishOracle Database 12.2. It is close to 25 million(百万) lines of C code. What an unimaginable horror! You can’t change a single line of code in the product without breaking 1000s of existing tests.">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-11-19T13:38:16.077Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Oracle Database 12.2, What an unimaginable horror!">
+<meta name="twitter:description" content="EnglishOracle Database 12.2. It is close to 25 million(百万) lines of C code. What an unimaginable horror! You can’t change a single line of code in the product without breaking 1000s of existing tests.">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2018/11/15/English/Oracle Database 12.2/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>Oracle Database 12.2, What an unimaginable horror! | sulang blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">sulang blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">python java android django web</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/15/English/Oracle Database 12.2/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Oracle Database 12.2, What an unimaginable horror!</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-15T10:48:18+08:00">
+                2018-11-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/English/" itemprop="url" rel="index">
+                    <span itemprop="name">English</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="English"><a href="#English" class="headerlink" title="English"></a>English</h3><p>Oracle Database 12.2.</p>
+<p>It is close to 25 million(百万) lines of C code.</p>
+<p>What an unimaginable horror! You can’t change a single line of code in the product without breaking 1000s of existing tests. Generations of programmers have worked on that code under difficult deadlines and filled the code with all kinds of crap(废物，屎).</p>
+<p>Very complex pieces of logic, memory management, context switching, etc. are all held together with thousands of flags. The whole code is ridden(充斥) with mysterious macros that one cannot decipher(理解，解释) without picking a notebook and expanding relevant pats of the macros by hand. It can take a day to two days to really understand what a macro does.</p>
+<p>Sometimes one needs to understand the values and the effects of 20 different flag to predict(预测) how the code would behave in different situations(情况). Sometimes 100s too! I am not exaggerating(夸张).</p>
+<p>The only reason why this product is still surviving and still works is due to literally(正确地) millions of tests!</p>
+<p>Here is how the life of an Oracle Database developer is:</p>
+<ul>
+<li><p>Start working on a new bug.</p>
+</li>
+<li><p>Spend two weeks trying to understand the 20 different flags that interact in mysterious ways to cause this bag.</p>
+</li>
+<li><p>Add one more flag to handle the new special scenario. Add a few more lines of code that checks this flag and works around the problematic(有问题的) situation and avoids the bug.</p>
+</li>
+<li><p>Submit the changes to a test farm(集群) consisting of about 100 to 200 servers that would compile the code, build a new Oracle DB, and run the millions of tests in a distributed fashion.</p>
+</li>
+<li><p>Go home. Come the next day and work on something else. The tests can take 20 hours to 30 hours to complete.</p>
+</li>
+<li><p>Go home. Come the next day and check your farm test results. On a good day, there would be about 100 failing tests. On a bad day, there would be about 1000 failing tests. Pick some of these tests randomly and try to understand what went wrong with your assumptions(假设，设想). Maybe there are some 10 more flags to consider to truly understand the nature of the bug.</p>
+</li>
+<li><p>Add a few more flags in an attempt to fix the issue. Submit the changes again for testing. Wait another 20 to 30 hours.</p>
+</li>
+<li><p>Rinse and repeat for another two weeks until you get the mysterious incantation of the combination of flags right.</p>
+</li>
+<li><p>Finally one fine day you would succeed with 0 tests failing.</p>
+</li>
+<li><p>Add a hundred more tests for your new change to ensure that the next developer who has the misfortune(不幸) of touching this new piece of code never ends up breaking your fix.</p>
+</li>
+<li><p>Submit the work for one final round of testing. Then submit it for review. The review itself may take another 2 weeks to 2 months. So now move on to the next bug to work on.</p>
+</li>
+<li><p>After 2 weeks to 2 months, when everything is complete, the code would be finally merged into the main branch.</p>
+</li>
+</ul>
+<p>The above is a non-exaggerated description of the life of a programmer in Oracle fixing a bug. Now imagine what horror it is going to be to develop a new feature. It takes 6 months to a year (sometimes two years!) to develop a single small feature (say something like adding a new mode of authentication like support for AD authentication).</p>
+<p>The fact that this product even works is nothing short of a miracle! (short of 除..以外)</p>
+<p>I don’t work for Oracle anymore. Will never work for Oracle again!</p>
+<h3 id="Chinese"><a href="#Chinese" class="headerlink" title="Chinese"></a>Chinese</h3><p>Oracle 数据库 12.2。它有近 2500 万行 C 代码。</p>
+<p>这有多恐怖，简直难以想象！你无法在不破坏成千上万个现有测试的情况下更改产品中的单行代码。好几代程序员在有限的项目期限内编写了这些代码，其中充斥着大量的垃圾代码。</p>
+<p>非常复杂的逻辑、内存管理、上下文切换等，这些都用数千个 flag 连接起来。整个代码充斥着神秘的宏命令，如果不拿出笔记本，并且手动去展开相关的宏命令，就无法理清楚这些命令。甚至可能需要一两天才能真正理解某个宏命令的作用。</p>
+<p>有时你需要理顺 20 个不同 flag 的值和效果来预测代码在不同情况下的行为方式。有时多达数百个 flag ！这一点也不夸张。</p>
+<p>这个产品仍然存活并且仍然可用的唯一原因是数百万次的测试！</p>
+<p>以下是 Oracle 数据库开发人员的日常：</p>
+<p>开始处理一个新的 bug 。<br>花两周的时间试图理解 20 个不同的 flag ，这些 flag 以神秘的方式相互交互，导致这个困境。<br>再添加一个 flag 来处理新的特殊场景。添加几行代码来检查此 flag ，并解决有问题的情况，规避该 bug 。<br>将更改提交到包含大约 100-200 台服务器的测试服务器集群，这些服务器将编译代码，构建新的 Oracle 数据库，并以分布式方式运行数百万个测试。<br>回家。第二天来上班，继续处理别的 bug 。测试可能需要 20-30 个小时才能完成。<br>再回家。再来上班，检查你的集群测试结果。顺利的话，会有大约 100 个失败的测试。倒霉的话，将有大约 1000 个失败的测试。随机选择一些测试并试图搞清楚你的假设出了什么问题。或许还需要考虑 10 多个 flag 才能真正理解 bug 的本质。<br>再添加一些 flag 以尝试解决问题。再次提交更改以进行测试。再等 20-30 个小时。<br>来来回回重复两周，直到你得到了将这些 flag 组合起来的“神秘咒语”。<br>终有一天，你会成功，不再出现测试失败。<br>为你的新更改添加 100 多个测试，以确保下一个不幸接触这段新代码的开发人员永远不会破坏你的修复。<br>提交最后一轮测试的成果。然后提交以供审核。审查本身可能还需要 2 周到 2 个月。所以接下来继续去处理下一个 bug 。<br>在 2 周到 2 个月之后，一切已就绪，代码将最终合并到主分支中。<br>以上就是对在 Oracle 修复 bug 的程序员日常生活的描述，一点也不夸张。现在想象一下开发新功能会有多么恐怖。开发一个小功能需要 6 个月到 1 年的时间（如果是添加一种新的身份验证模式，比如支持 AD 身份验证，可能需要 2 年）。</p>
+<p>这款产品本身就是一个奇迹！</p>
+<p>我不再为 Oracle 工作了。永远不会再为 Oracle 工作了！</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/English/" rel="tag"># English</a>
+          
+            <a href="/tags/Coder/" rel="tag"># Coder</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/11/15/CS/Searching-Skills/" rel="next" title="Searching Skills">
+                <i class="fa fa-chevron-left"></i> Searching Skills
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/11/17/Linux/Command/systemctl/" rel="prev" title="systemctl">
+                systemctl <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="sulang">
+          
+            <p class="site-author-name" itemprop="name">sulang</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">421</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">194</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">472</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#English"><span class="nav-number">1.</span> <span class="nav-text">English</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chinese"><span class="nav-number">2.</span> <span class="nav-text">Chinese</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sulang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/07/Server/Http/https,ssl,tls/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/16/Linux/Command/rsync/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/07/Server/Http/https,ssl,tls/" itemprop="url">HTTPS SSL TLS</a></h2>
+                <a class="post-title-link" href="/2017/11/16/Linux/Command/rsync/" itemprop="url">rsync</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-07T15:45:18+08:00">
-                2017-11-07
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-16T14:43:57+08:00">
+                2017-11-16
               </time>
             
 
@@ -338,8 +338,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
                   </a>
                 </span>
 
@@ -349,8 +349,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Http/" itemprop="url" rel="index">
-                    <span itemprop="name">Http</span>
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
                   </a>
                 </span>
 
@@ -388,107 +388,24 @@
       
         
           
-            <h3 id="简要关系图"><a href="#简要关系图" class="headerlink" title="简要关系图"></a>简要关系图</h3><p>HTTPS，也称作HTTP over TLS。</p>
-<p>TLS的前身是SSL</p>
+            <h2 id="rsync"><a href="#rsync" class="headerlink" title="rsync"></a>rsync</h2><p>rsync命令是一个远程数据同步工具，可通过LAN/WAN快速同步多台主机间的文件。rsync使用所谓的“rsync算法”来使本地和远程两个主机之间的文件达到同步，这个算法只传送两个文件的不同部分，而不是每次都整份传送，因此速度相当快。</p>
+<h3 id="rsync-备份系统"><a href="#rsync-备份系统" class="headerlink" title="rsync 备份系统"></a>rsync 备份系统</h3><p>为什么选择rsync？</p>
 <ul>
-<li>TLS 1.0通常被标示为SSL 3.1</li>
-<li>TLS 1.1为SSL 3.2</li>
-<li>TLS 1.2为SSL 3.3（目前主流）</li>
+<li>在备份还原过程中，可以保存文件原有的时间、权限、软硬链接等信息；</li>
+<li>首次备份时，需要复制所有文件，但是再次备份或还原系统时，只需要复制修改过的文件。</li>
 </ul>
-<p>下图描述了在TCP/IP协议栈中TLS(各子协议)和HTTP的关系。</p>
-<img src="/2017/11/07/Server/Http/https,ssl,tls/relation.png">
-<hr>
-<h3 id="HTTPS-与-HTTP-区别"><a href="#HTTPS-与-HTTP-区别" class="headerlink" title="HTTPS 与 HTTP 区别"></a>HTTPS 与 HTTP 区别</h3><ol>
-<li><p>HTTPS协议需要到证书颁发机构(Certificate Authority，简称CA)申请证书。</p>
-</li>
-<li><p>HTTP是超文本传输协议，信息是明文传输，HTTPS则是具有安全性的SSL加密传输协议。</p>
-</li>
-<li><p>HTTP和HTTPS使用的是完全不同的连接方式，使用的端口也不一样,前者是80,后者是443。</p>
-</li>
-<li><p>HTTP的连接很简单，是无状态的。</p>
-</li>
-<li><p>HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，要比HTTP协议安全。</p>
-</li>
-</ol>
-<p>从上面可看出，HTTPS和HTTP协议相比提供了：</p>
-<ul>
-<li>数据完整性：内容传输经过完整性校验</li>
-<li>数据隐私性：内容经过对称加密，每个连接生成一个唯一的加密密钥</li>
-<li>身份认证：第三方无法伪造服务端(客户端)身份</li>
-</ul>
-<p>其中，数据完整性和隐私性由TLS Record Protocol保证，身份认证由TLS Handshaking Protocols实现。</p>
-<h3 id="深入了解-HTTPS"><a href="#深入了解-HTTPS" class="headerlink" title="深入了解 HTTPS"></a>深入了解 HTTPS</h3><h4 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h4><p>HTTP协议运行在TCP之上，所有传输的内容都是明文，客户端和服务器端都无法验证对方的身份。</p>
-<p>HTTPS是运行在SSL/TLS之上的HTTP协议，SSL/TLS运行在TCP之上。所有传输的内容都经过加密，加密采用对称加密，但对称加密的密钥用服务器方的证书进行了非对称加密。</p>
-<p>HTTPS是由两部分组成：HTTP +SSL/TLS，也就是在HTTP上又加了一层处理加密信息的模块。服务端和客户端的信息传输都会通过TLS进行加密，所以传输的数据都是加密后的数据。</p>
-<img src="/2017/11/07/Server/Http/https,ssl,tls/tls_ssl.png">
-<p>对称加密：密钥只有一个，加密解密为同一个密码，且加解密速度快，典型的对称加密算法有DES、AES等；</p>
-<p>非对称加密：密钥成对出现（且根据公钥无法推知私钥，根据私钥也无法推知公钥），加密解密使用不同密钥（公钥加密需要私钥解密，私钥加密需要公钥解密），相对对称加密速度较慢，典型的非对称加密算法有RSA、DSA等。</p>
-<hr>
-<h4 id="通过HTTP访问网站的过程"><a href="#通过HTTP访问网站的过程" class="headerlink" title="通过HTTP访问网站的过程"></a>通过HTTP访问网站的过程</h4><img src="/2017/11/07/Server/Http/https,ssl,tls/visit_web_by_http.png">
-<hr>
-<h4 id="通过HTTPS访问网站的过程"><a href="#通过HTTPS访问网站的过程" class="headerlink" title="通过HTTPS访问网站的过程"></a>通过HTTPS访问网站的过程</h4><img src="/2017/11/07/Server/Http/https,ssl,tls/https_comunication.png">
-<p>步骤如下：</p>
 <ol>
-<li><p>客户使用HTTPS的URL访问Web服务器，要求与Web服务器建立SSL连接。</p>
+<li><p>首先查看磁盘空间使用情况</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">df -lH</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>Web服务器收到客户端请求后，会将网站的证书信息（证书中包含公钥）传送一份给客户端。</p>
+<li><p>备份系统</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo rsync -Pa / /media/saisi/usb/backup --exclude=/media/* --exclude=/sys/* --exclude=/proc/* --exclude=/mnt/* --exclude=/tmp/*</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>客户端的浏览器与Web服务器开始协商SSL/TLS连接的安全等级，也就是信息加密的等级。</p>
-</li>
-<li><p>客户端的浏览器根据双方同意的安全等级，建立会话密钥，然后利用网站的公钥将会话密钥加密，并传送给网站。</p>
-</li>
-<li><p>Web服务器利用自己的私钥解密出会话密钥。</p>
-</li>
-<li><p>Web服务器利用会话密钥加密与客户端之间的通信。</p>
+<li><p>恢复系统</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo rsync -Pa /media/saisi/usb/backup /</span><br></pre></td></tr></table></figure>
 </li>
 </ol>
-<p>小结</p>
-<ul>
-<li>客户端产生的密钥只有客户端和服务器端能得到；</li>
-<li>加密的数据只有客户端和服务器端才能得到明文；</li>
-<li>客户端到服务端的通信是安全的。</li>
-</ul>
-<hr>
-<h4 id="HTTPS的局限"><a href="#HTTPS的局限" class="headerlink" title="HTTPS的局限"></a>HTTPS的局限</h4><ol>
-<li><p>HTTPS比HTTP耗费更多服务器资源，HTTPS其实就是在SSL/TLS之上的HTTP协议。</p>
-</li>
-<li><p>耗费的资源多，过程也复杂，想当然访问不如HTTP高效。大流量网站非必要也不会采用，流量成本太高。</p>
-</li>
-<li><p>SSL证书需要钱，功能越强大的证书费用越高。</p>
-</li>
-<li><p>SSL证书通常需要绑定IP，不能在同一IP上绑定多个域名，IPv4资源不可能支撑这个消耗。</p>
-</li>
-</ol>
-<hr>
-<h4 id="如何加密和解密"><a href="#如何加密和解密" class="headerlink" title="如何加密和解密"></a>如何加密和解密</h4><img src="/2017/11/07/Server/Http/https,ssl,tls/encrypt_and_decrypt.png">
-<ol>
-<li><p>客户端发起HTTPS请求<br>用户在浏览器里输入一个HTTPS网址，然后连接到server的443端口</p>
-</li>
-<li><p>服务端的配置<br>采用HTTPS协议的服务器必须要有一套数字证书，这套证书其实就是一对公钥和私钥。如果对公钥和私钥不太理解，可以想象成一把钥匙和一个锁头，只是全世界只有你一个人有这把钥匙，你可以把锁头给别人，别人可以用这个锁把重要的东西锁起来，然后发给你，因为只有你一个人有这把钥匙，所以只有你才能看到被这把锁锁起来的东西。</p>
-</li>
-</ol>
-<ol start="3">
-<li>服务器传送证书给客户端<br>这个证书其实就是公钥，只是包含了很多信息，如证书的颁发机构，过期时间等等。</li>
-</ol>
-<ol start="4">
-<li>客户端解析证书<br>这部分工作是由客户端的TLS来完成的，首先会验证公钥是否有效，比如颁发机构，过期时间等等，如果发现异常，则会弹出一个警告框，提示证书存在问题。如果证书没有问题，那么就生成一个随机值。然后用证书对该随机值进行加密。就好像上面说的，把随机值用锁头锁起来，这样除非有钥匙，不然看不到被锁住的内容。</li>
-</ol>
-<ol start="5">
-<li>客户端发送加密信息给服务器<br>这部分传送的是用证书加密后的随机值，目的就是让服务端得到这个随机值，以后客户端和服务端的通信就可以通过这个随机值来进行加密解密了。</li>
-</ol>
-<ol start="6">
-<li>服务端解密信息<br>服务端用私钥解密后，得到了客户端传过来的随机值(私钥)，然后把内容通过该值进行对称加密。所谓对称加密就是，将信息和私钥(随机值)通过某种算法混合在一起，这样除非知道私钥(随机值)，不然无法获取内容，而正好客户端和服务端都知道这个私钥(随机值)，所以只要加密算法够彪悍，私钥(随机值)够复杂，数据就够安全。</li>
-</ol>
-<ol start="7">
-<li>服务器发送加密后的信息给客户端<br>这部分信息是服务端用私钥(随机值)加密后的信息，可以在客户端被还原</li>
-</ol>
-<ol start="8">
-<li>客户端解密信息<br>客户端用之前生成的私钥(随机值)解密服务端传过来的信息，于是获取了解密后的内容。整个过程第三方即使监听到了数据，也束手无策。</li>
-</ol>
-<hr>
-<h3 id="SSL-TLS"><a href="#SSL-TLS" class="headerlink" title="SSL/TLS"></a>SSL/TLS</h3><p>SSL 是“Secure Sockets Layer”的缩写，中文叫做“安全套接层”。</p>
-<p>为什么要使用SSL？HTTP 协议是明文的，存在很多缺点——比如传输内容会被偷窥（嗅探）和篡改。发明 SSL 协议，就是为了解决这些问题。</p>
-<p>1999年，SSL 因为应用广泛，已经成为互联网上的事实标准。IETF 就在那年把 SSL 标准化。标准化之后的名称改为 TLS（是“Transport Layer Security”的缩写），中文叫做“传输层安全协议”。</p>
+<p><strong>注意：rsync命令在使用中，如果源参数的末尾有斜线，就会复制指定目录内的内容，而不复制目录本身;如果没有斜线，则会复制目录本身。目标参数的末尾有没有斜线都不影响。</strong></p>
 
           
         
@@ -537,7 +454,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/07/Python/stdlib/urllib/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/16/Docker/Mac/Linux-tty/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -556,7 +473,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/07/Python/stdlib/urllib/" itemprop="url">urllib</a></h2>
+                <a class="post-title-link" href="/2017/11/16/Docker/Mac/Linux-tty/" itemprop="url">MacOS Docker tty</a></h2>
         
 
         <div class="post-meta">
@@ -568,8 +485,483 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-07T11:54:53+08:00">
-                2017-11-07
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-16T12:36:12+08:00">
+                2017-11-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/Mac/" itemprop="url" rel="index">
+                    <span itemprop="name">Mac</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="View-Containers-Log"><a href="#View-Containers-Log" class="headerlink" title="View Containers Log"></a>View Containers Log</h3><p>需要进入Linux虚拟机环境</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">screen ~/Library/Containers/com.docker.docker/Data/vms/0/tty</span><br><span class="line"><span class="built_in">cd</span> /var/lib/docker/containers/</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/16/Docker/Log/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/16/Docker/Log/" itemprop="url">Docker Log</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-16T12:36:12+08:00">
+                2017-11-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Intoduction"><a href="#Intoduction" class="headerlink" title="Intoduction"></a>Intoduction</h3><p>Docker容器在默认情况下会将打印到stdout、stderr的日志数据存储在本地磁盘上，默认位置为/var/lib/docker/containers/{ContainerId} /{ContainerId}-json.log。</p>
+<h3 id="Driver"><a href="#Driver" class="headerlink" title="Driver"></a>Driver</h3><ul>
+<li>none：No logs are available for the container and docker logs does not return any output.</li>
+<li>json-file：The logs are formatted as JSON. The default logging driver for Docker.</li>
+<li>syslog：Writes logging messages to the syslog facility. The syslog daemon must be running on the host machine.</li>
+<li>journald：Writes log messages to journald. The journald daemon must be running on the host machine.</li>
+<li>gelf：Writes log messages to a Graylog Extended Log Format (GELF) endpoint such as Graylog or Logstash.</li>
+<li>fluentd：Writes log messages to fluentd (forward input). The fluentd daemon must be running on the host machine.</li>
+<li>awslogs：Writes log messages to Amazon CloudWatch Logs.</li>
+<li>splunk：Writes log messages to splunk using the HTTP Event Collector.</li>
+<li>etwlogs：Writes log messages as Event Tracing for Windows (ETW) events. Only available on Windows platforms.</li>
+<li>gcplogs：Writes log messages to Google Cloud Platform (GCP) Logging.</li>
+<li>logentries：Writes log messages to Rapid7 Logentries.</li>
+</ul>
+<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker run \</span><br><span class="line">    --<span class="built_in">log</span>-driver json-file --<span class="built_in">log</span>-opt max-size=10m \</span><br><span class="line">    alpine <span class="built_in">echo</span> hello world</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/16/Linux/Command/search/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/16/Linux/Command/search/" itemprop="url">查找命令</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-16T10:13:57+08:00">
+                2017-11-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="locate"><a href="#locate" class="headerlink" title="locate"></a>locate</h2><p>前提：已经建立索引数据库</p>
+<p>locate命令和slocate命令都用来查找文件或目录。 </p>
+<p>locate命令其实是find -name的另一种写法，但是要比后者快得多，原因在于它不搜索具体目录，而是搜索一个数据库/var/lib/locatedb，这个数据库中含有本地所有文件信息。Linux系统自动创建这个数据库，并且每天自动更新一次，所以使用locate命令查不到最新变动过的文件。为了避免这种情况，可以在使用locate之前，先使用updatedb命令，手动更新数据库。</p>
+<p><strong>注：manjaro需要单独安装 sudo pacman -Ss locate</strong></p>
+<h3 id="语法格式"><a href="#语法格式" class="headerlink" title="语法格式"></a>语法格式</h3><p>locate  选项  参数</p>
+<ul>
+<li>-d&lt;目录&gt;或–database=&lt;目录&gt;：指定数据库所在的目录；</li>
+<li>-u：更新slocate数据库；</li>
+</ul>
+<h3 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h3><h4 id="建立索引数据库"><a href="#建立索引数据库" class="headerlink" title="建立索引数据库"></a>建立索引数据库</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo updatedb</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="搜索etc目录下所有以sh开头的文件"><a href="#搜索etc目录下所有以sh开头的文件" class="headerlink" title="搜索etc目录下所有以sh开头的文件"></a>搜索etc目录下所有以sh开头的文件</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">locate /etc/sh</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="搜索用户主目录下，所有以m开头的文件"><a href="#搜索用户主目录下，所有以m开头的文件" class="headerlink" title="搜索用户主目录下，所有以m开头的文件"></a>搜索用户主目录下，所有以m开头的文件</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">locate ~/m</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="搜索用户主目录下，所有以m开头的文件，并且忽略大小写"><a href="#搜索用户主目录下，所有以m开头的文件，并且忽略大小写" class="headerlink" title="搜索用户主目录下，所有以m开头的文件，并且忽略大小写"></a>搜索用户主目录下，所有以m开头的文件，并且忽略大小写</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">locate -i ~/m</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/16/Python/Django/django-error/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/16/Python/Django/django-error/" itemprop="url">Django Error解决</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-16T10:11:38+08:00">
+                2017-11-16
               </time>
             
 
@@ -602,8 +994,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/stdlib/" itemprop="url" rel="index">
-                    <span itemprop="name">stdlib</span>
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
                   </a>
                 </span>
 
@@ -641,12 +1033,10 @@
       
         
           
-            <h2 id="urllib-parse"><a href="#urllib-parse" class="headerlink" title="urllib.parse"></a>urllib.parse</h2><h3 id="URL编码"><a href="#URL编码" class="headerlink" title="URL编码"></a>URL编码</h3><p>python3之后urllib.quote()这个转换字符串str类型为url编码的方法已经不能用了,</p>
-<p>现在由 urllib.parse.quote(str)代替.</p>
-<p>解码则用 urllib.parse.unquote(str)</p>
-<p>因为urllib.parse.urlencode只能编码对象格式的数据,对于字符串类型数据需要编码就得使用quote了. </p>
-<p>ps文件开头必须引入 import urllib.parse 这个包后才可以使用.</p>
-<h3 id="解析URL"><a href="#解析URL" class="headerlink" title="解析URL"></a>解析URL</h3>
+            <h2 id="MySQL"><a href="#MySQL" class="headerlink" title="MySQL"></a>MySQL</h2><h3 id="Error-loading-MySQLdb-module-usr-lib-libmysqlclient-so-20-version-libmysqlclient-20-0’-not-found"><a href="#Error-loading-MySQLdb-module-usr-lib-libmysqlclient-so-20-version-libmysqlclient-20-0’-not-found" class="headerlink" title="Error loading MySQLdb module: /usr/lib/libmysqlclient.so.20: version `libmysqlclient_20.0’ not found"></a>Error loading MySQLdb module: /usr/lib/libmysqlclient.so.20: version `libmysqlclient_20.0’ not found</h3><h4 id="Manjaro"><a href="#Manjaro" class="headerlink" title="Manjaro"></a>Manjaro</h4><p>查看文件所在路径<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">locate libmysqlclient</span><br></pre></td></tr></table></figure></p>
+<p>查看文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ls -l | grep libmysqlclient</span><br></pre></td></tr></table></figure></p>
+<p>输出结果<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">lrwxrwxrwx   1 root root        17 9月  28 02:59 libmysqlclient_r.so -&gt; libmysqlclient.so</span><br><span class="line">lrwxrwxrwx   1 root root        17 9月  28 02:59 libmysqlclient_r.so.18 -&gt; libmysqlclient.so</span><br><span class="line">lrwxrwxrwx   1 root root        17 9月  28 02:59 libmysqlclient_r.so.18.0.0 -&gt; libmysqlclient.so</span><br><span class="line">lrwxrwxrwx   1 root root        20 9月  28 02:59 libmysqlclient.so -&gt; libmysqlclient.so.18</span><br><span class="line">lrwxrwxrwx   1 root root        24 9月  28 02:59 libmysqlclient.so.18 -&gt; libmysqlclient.so.18.0.0</span><br><span class="line">-rwxr-xr-x   1 root root   3707440 9月  28 02:59 libmysqlclient.so.18.0.0</span><br></pre></td></tr></table></figure></p>
+
           
         
       
@@ -694,7 +1084,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/06/读书笔记/行业/集装箱改变世界/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/15/Database/MySQL/Checklist/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -713,7 +1103,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/06/读书笔记/行业/集装箱改变世界/" itemprop="url">集装箱改变世界</a></h2>
+                <a class="post-title-link" href="/2017/11/15/Database/MySQL/Checklist/" itemprop="url">MySQL Checklist</a></h2>
         
 
         <div class="post-meta">
@@ -725,8 +1115,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-06T14:24:07+08:00">
-                2017-11-06
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-15T19:36:12+08:00">
+                2017-11-15
               </time>
             
 
@@ -748,8 +1138,19 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Industry/" itemprop="url" rel="index">
-                    <span itemprop="name">Industry</span>
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
                   </a>
                 </span>
 
@@ -787,28 +1188,9 @@
       
         
           
-            <h3 id="核心内容"><a href="#核心内容" class="headerlink" title="核心内容"></a>核心内容</h3><img src="/2017/11/06/读书笔记/行业/集装箱改变世界/container-core.png">
-<p>你可能会问，集装箱不就是一个大铁箱子吗，没什么技术含量，跟改变世界有什么关系？这是因为集装箱直接推动了全球大分工。拿苹果手机举个例子，它的核心部件来自美国，摄像头和芯片是日本、韩国生产，电池是中国厂商制造的，最后由富士康的工人组装，你才能买到一部成型的手机。这个过程你可能不陌生，但是你有没有想过，正是因为集装箱节省了把货物搬来搬去的时间，极大降低了成本，这个过程才能实现。</p>
-<p>如果没有集装箱，运输成本极高，别说海运，就是跨越半个国家，这个成本也没法承担，一件商品卖100元，可能有25元是它的运费。有了集装箱，人类的货物运输成本降低了90%以上，全球分工才有了可能。资源在全球范围内流动配置，美国人吃到了巴西的牛肉，欧洲人也用上了中国生产的手机。我们中国就是通过全球化加入了全球价值链。说到这你就能发现，集装箱就不仅仅是一个普通的铁箱子了，它改变了世界的经济和政治格局，在一定程度上改变了人类的财富面貌。</p>
-<h4 id="集装箱是怎么发明出来的"><a href="#集装箱是怎么发明出来的" class="headerlink" title="集装箱是怎么发明出来的"></a>集装箱是怎么发明出来的</h4><p>发明集装箱的人叫麦克莱恩，是个美国人，人们叫他“集装箱之父”。但其实更准确的说，麦克莱恩并不是第一个发明集装箱的人。人们使用集装箱几十年之后，麦克莱恩才开始用集装箱。</p>
-<p>麦克莱恩认识到，航运业的根本业务就是运货而不是通航，要降低货运成本，要的不仅仅是一只只铁皮箱子，而是一整套货物处理的新方法，这个系统包括港口、货船、起重机、卡车，还有发货人的自身操作方式等，都得发生配套的改变。这种认识就比当时同行业的人先进了很多，所以他的贡献不在于使用了集装箱，而是改变了货运行业的整个操作模式。</p>
-<p>从这个过程我们可以看到，一个创新的产品从发明出来到广泛的应用，其实需要一个很漫长的过程，在这个过程中，很可能第一个推进的人熬不到爆发的那一天，享受不到它的红利，只不过麦克莱恩还算是比较幸运的。这种第一个吃螃蟹的人很可能会死的现象，也是很多创新者在现实中遭遇的困境。这也能回答我们一开始问到的那个问题，为什么集装箱到了麦克莱恩手上才变成了一个新发明，因为真实世界的新发明其实就是一套系统性的工程，一个产品的价值不在于它是什么，而在于它被怎么使用。</p>
-<p>对一个高度自动化、低成本和低复杂性的货物运输系统来说，集装箱就是核心，但是它也只是这个系统的关键一环而已，真正的难点在搭建这个系统，让它稳定地运作下去。而麦克莱恩就是第一个看到这个方向，第一个用行动做出尝试，而且是第一个获得成功的人。如果没有他，集装箱依然会被当作一个普通的铁皮箱子在装货，是麦克莱恩让集装箱发挥出了最大功效，所以人们才认为他是集装箱的发明者。</p>
-<h4 id="集装箱的演变以及它给世界带来的影响"><a href="#集装箱的演变以及它给世界带来的影响" class="headerlink" title="集装箱的演变以及它给世界带来的影响"></a>集装箱的演变以及它给世界带来的影响</h4><hr>
-<h3 id="Term"><a href="#Term" class="headerlink" title="Term"></a>Term</h3><ul>
-<li>3C：一个箱子，一种货物，一个目的地</li>
-</ul>
-<hr>
-<h3 id="Enlightenment"><a href="#Enlightenment" class="headerlink" title="Enlightenment"></a>Enlightenment</h3><ul>
-<li><p>首先，<strong>科技含量的高低并不是改变生产力的主要因素。</strong>就像集装箱，虽然没什么技术含量，但是它的影响力却是巨大的。所以，创新的关键不在于一个产品是什么，而在于怎么用。在创新领域有一句话是这么说的：未来已来，只是分布得不均匀。我们能看到很多拥有巨大影响力，大到能改变世界的产品，其实很多发明者都不是第一个制造出他们的人。比如智能手机，乔布斯就不是第一个制造它的人，在他之前诺基亚公司已经推广了很多年了。再比如蒸汽机、婴儿用的恒温箱，很多都是已经存在、在技术上没有什么实现难度的产品，但是这些产品被另外一个领域的人看到、改进、推广，就能变成一个伟大的产品。所以我们周围根本不缺伟大的创新，缺少的是发现它们的眼睛。</p>
-</li>
-<li><p>其次，<strong>创新并不是一个单点突破的过程，真正的颠覆性创新是一个系统工程，需要周围的配套设施都跟上才能发挥出它的最大优势。</strong>再拿集装箱举例，从麦克莱恩第一次用集装箱，到整个行业广泛使用，期间过了十几年的时间，麦克莱恩也克服了无数的困难，经历了一个漫长又痛苦的过程，中间差点破产。现实中的创新也经常会遇到这样的窘境，比如互联网刚出现的时候，阿里巴巴也不是第一个做电商的，想到同样点子并且做得好的企业也有很多，但是那时候一系列外部环境的设施没跟上，比如网络没普及、支付方式很麻烦、网速也受到限制，所以很多企业都没有熬到电商时代的爆发期。所以，单点创新不一定能带来很大突破，关键要看是不是一个系统，只有系统的创新才能产生颠覆性的影响。</p>
-</li>
-<li><p>再次，<strong>一个创新产品所带来的影响力是一开始根本想不到的。</strong>麦克莱恩也想不到自己发明的系统改变了整个世界贸易的格局，他也想不到集装箱能影响日本、中国这些国家制造业的生产模式。很多产品会给原来不相关的领域带来破坏力，比如电商会影响实体经济，因为人们都开始网上购物；再比如智能手机普及以后，超市收银台旁边的口香糖销量下降了，因为大家排队时都在玩手机，不买口香糖了。所以，很多创新产品会有意无意地破坏跟自己不相关的产业格局，如果我们只关心自己本行业的技术发展，可能就会有危机了。这个世界的任何创新都有可能是你的机会或是危机，因此我们在关注本行业的同时，应该时刻紧盯其他行业的创新，这样才能不被时代所淘汰。</p>
-</li>
-<li><p>最后，<strong>一名优秀的创新者，不管是成功还是失败，只要做出了贡献，都会被整个行业铭记。</strong>每个创新者在开拓新领域的时候都会面临着巨大的风险和不确定性，比如麦克莱恩后来卖掉了航运公司，又几次创业，但是都没成功，最后负债累累，在晚年的时候破产，以失败告终。但是航运业的人依然把他奉为“集装箱之父”，在他去世的时候，整个行业的轮船都同时鸣了一次汽笛，表示对他的尊敬。所以说对一个创新者来说，只要他为整个行业做出了贡献，不管是成功还是失败，我们都应该对他们保持一份敬意。</p>
-</li>
-</ul>
+            <h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
+<p><a href="https://testerhome.com/topics/15871" target="_blank" rel="noopener">https://testerhome.com/topics/15871</a></p>
+</blockquote>
 
           
         
@@ -857,7 +1239,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/02/Linux/Command/cd/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/15/Linux/Alpine/command/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -876,7 +1258,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/02/Linux/Command/cd/" itemprop="url">CD 命令</a></h2>
+                <a class="post-title-link" href="/2017/11/15/Linux/Alpine/command/" itemprop="url">Alpine Command</a></h2>
         
 
         <div class="post-meta">
@@ -888,8 +1270,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-02T18:42:57+08:00">
-                2017-11-02
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-15T16:33:27+08:00">
+                2017-11-15
               </time>
             
 
@@ -922,8 +1304,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/comamnd/" itemprop="url" rel="index">
-                    <span itemprop="name">comamnd</span>
+                  <a href="/categories/linux/alpine/" itemprop="url" rel="index">
+                    <span itemprop="name">alpine</span>
                   </a>
                 </span>
 
@@ -961,7 +1343,24 @@
       
         
           
-            
+            <h2 id="package-manager"><a href="#package-manager" class="headerlink" title="package manager"></a>package manager</h2><p>apk is the tool used to install, upgrade, or delete software on a running sytem.</p>
+<p>lbu is the tool used to capture the data necessary to restore a system to a previously configured state.</p>
+<h3 id="apk"><a href="#apk" class="headerlink" title="apk"></a>apk</h3><ul>
+<li>add    Add new packages to the running system</li>
+<li>del    Delete packages from the running system</li>
+<li>fix    Attempt to repair or upgrade an installed package</li>
+<li>update    Update the index of available packages</li>
+<li>info    Prints information about installed or available packages</li>
+<li>search    Search for packages or descriptions with wildcard patterns</li>
+<li>upgrade    Upgrade the currently installed packages</li>
+</ul>
+<h4 id="add"><a href="#add" class="headerlink" title="add"></a>add</h4><p>在线安装<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apk add --no-cache pkgName</span><br></pre></td></tr></table></figure></p>
+<p>本地安装<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apk add --allow-untrusted /path/to/foo.apk</span><br></pre></td></tr></table></figure></p>
+<h4 id="del"><a href="#del" class="headerlink" title="del"></a>del</h4><p>删除软件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apk del pkgName1 pkgName2</span><br></pre></td></tr></table></figure></p>
+<h4 id="update"><a href="#update" class="headerlink" title="update"></a>update</h4><p>更新包列表<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apk update</span><br></pre></td></tr></table></figure></p>
+<h4 id="search"><a href="#search" class="headerlink" title="search"></a>search</h4><p>搜索软件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apk search pkgName</span><br></pre></td></tr></table></figure></p>
+<p>列出可选的软件包列表<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apk search -v <span class="string">"package"</span></span><br></pre></td></tr></table></figure></p>
+
           
         
       
@@ -1009,7 +1408,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/02/Linux/Command/time/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/15/Linux/Manjaro/Software/mysql/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1028,7 +1427,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/02/Linux/Command/time/" itemprop="url">Time 命令</a></h2>
+                <a class="post-title-link" href="/2017/11/15/Linux/Manjaro/Software/mysql/" itemprop="url">Manjaro 安装mysql</a></h2>
         
 
         <div class="post-meta">
@@ -1040,8 +1439,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-02T18:42:57+08:00">
-                2017-11-02
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-15T16:33:27+08:00">
+                2017-11-15
               </time>
             
 
@@ -1074,164 +1473,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="timesyncd"><a href="#timesyncd" class="headerlink" title="timesyncd"></a>timesyncd</h3><h4 id="强制同步"><a href="#强制同步" class="headerlink" title="强制同步"></a>强制同步</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo sntp -s 24.56.178.140</span><br></pre></td></tr></table></figure>
-<h4 id="time-status"><a href="#time-status" class="headerlink" title="time status"></a>time status</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">timedatectl status</span><br></pre></td></tr></table></figure>
-<h4 id="查看可用时区"><a href="#查看可用时区" class="headerlink" title="查看可用时区"></a>查看可用时区</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">timedatectl list-timezones</span><br></pre></td></tr></table></figure>
-<h4 id="设置本地时区"><a href="#设置本地时区" class="headerlink" title="设置本地时区"></a>设置本地时区</h4><ol>
-<li><p>Linux中设置本地时区</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">timedatectl <span class="built_in">set</span>-timezone UTC</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>硬件时钟设置为协调世界时（UTC）</p>
-</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">timedatectl <span class="built_in">set</span>-local-rtc 0</span><br></pre></td></tr></table></figure>
-<h4 id="设置同步时间"><a href="#设置同步时间" class="headerlink" title="设置同步时间"></a>设置同步时间</h4><ol>
-<li>Linux系统时钟与远程NTP服务器同步</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">timedatectl <span class="built_in">set</span>-ntp <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">timedatectl <span class="built_in">set</span>-ntp <span class="literal">false</span></span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Nginx/log_format/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/30/Nginx/log_format/" itemprop="url">log_format</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T17:28:18+08:00">
-                2017-10-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
+                  <a href="/categories/Linux/Manjaro/" itemprop="url" rel="index">
+                    <span itemprop="name">Manjaro</span>
                   </a>
                 </span>
 
@@ -1241,8 +1484,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
-                    <span itemprop="name">Nginx</span>
+                  <a href="/categories/Linux/Manjaro/Software/" itemprop="url" rel="index">
+                    <span itemprop="name">Software</span>
                   </a>
                 </span>
 
@@ -1280,15 +1523,27 @@
       
         
           
-            <p>nginx服务器日志相关指令主要有两条：</p>
-<ul>
-<li>log_format：用来设置日志格式；</li>
-<li>access_log：用来指定日志文件的存放路径、格式和缓存大小；</li>
-</ul>
-<h3 id="access-log"><a href="#access-log" class="headerlink" title="access_log"></a>access_log</h3><p>Syntax: access_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition]];<br>access_log off;</p>
-<p>Default:<br>access_log logs/access.log combined;</p>
-<h4 id="示例代码1"><a href="#示例代码1" class="headerlink" title="示例代码1"></a>示例代码1</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">log_format compression '$remote_addr - $remote_user [$time_local] '</span><br><span class="line">                       '"$request" $status $bytes_sent '</span><br><span class="line">                       '"$http_referer" "$http_user_agent" "$gzip_ratio"';</span><br><span class="line"></span><br><span class="line">access_log /spool/logs/nginx-access.log compression buffer=32k;</span><br></pre></td></tr></table></figure>
-<p>log_format  main  ‘$remote_addr - $remote_user [$time_local] “$request” ‘<br>                  ‘$status $body_bytes_sent “$http_referer” ‘<br>                  ‘“$http_user_agent” “$http_x_forwarded_for”‘;</p>
+            <h3 id="安装Mariadb代替MySQL"><a href="#安装Mariadb代替MySQL" class="headerlink" title="安装Mariadb代替MySQL"></a>安装Mariadb代替MySQL</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pacman -S mysql</span><br></pre></td></tr></table></figure>
+<h3 id="初始化配置"><a href="#初始化配置" class="headerlink" title="初始化配置"></a>初始化配置</h3><ol>
+<li>初始化Mariadb<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>输出提示信息<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">PLEASE REMEMBER TO SET A PASSWORD FOR THE MariaDB root USER !</span><br><span class="line">To <span class="keyword">do</span> so, start the server, <span class="keyword">then</span> issue the following commands:</span><br><span class="line"></span><br><span class="line"><span class="string">'/usr/bin/mysqladmin'</span> -u root password <span class="string">'new-password'</span></span><br><span class="line"><span class="string">'/usr/bin/mysqladmin'</span> -u root -h sulang-pc password <span class="string">'new-password'</span></span><br><span class="line"></span><br><span class="line">Alternatively you can run:</span><br><span class="line"><span class="string">'/usr/bin/mysql_secure_installation'</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">which</span> will also give you the option of removing the <span class="built_in">test</span></span><br><span class="line">databases and anonymous user created by default.  This is</span><br><span class="line">strongly recommended <span class="keyword">for</span> production servers.</span><br><span class="line"></span><br><span class="line">See the MariaDB Knowledgebase at http://mariadb.com/kb or the</span><br><span class="line">MySQL manual <span class="keyword">for</span> more instructions.</span><br><span class="line"></span><br><span class="line">You can start the MariaDB daemon with:</span><br><span class="line"><span class="built_in">cd</span> <span class="string">'/usr'</span> ; /usr/bin/mysqld_safe --datadir=<span class="string">'/var/lib/mysql'</span></span><br><span class="line"></span><br><span class="line">You can <span class="built_in">test</span> the MariaDB daemon with mysql-test-run.pl</span><br><span class="line"><span class="built_in">cd</span> <span class="string">'/usr/mysql-test'</span> ; perl mysql-test-run.pl</span><br></pre></td></tr></table></figure></p>
+<ol start="2">
+<li><p>启动Mariadb</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl start mariadb</span><br><span class="line">systemctl <span class="built_in">enable</span> mariadb</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>设置root密码</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql_secure_installation</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置文件加载读取顺序<br>/etc/my.cnf -&gt;  /etc/mysql/my.cnf   -&gt;  ~/.my.cnf</p>
+</li>
+</ol>
+<ol start="5">
+<li>设置数据库编码UTF-8<br>在 /etc/mysql/my.cnf 的 mysqld 下添加:<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">init_connect                = 'SET collation_connection = utf8_general_ci,NAMES utf8'</span><br><span class="line">collation_server            = utf8_general_ci</span><br><span class="line">character_set_client        = utf8</span><br><span class="line">character_set_server        = utf8</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>重启mariadb</p>
 
           
         
@@ -1337,7 +1592,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Command/nohup/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/15/Linux/Manjaro/command/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1356,7 +1611,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/30/Linux/Command/nohup/" itemprop="url">nohup 命令</a></h2>
+                <a class="post-title-link" href="/2017/11/15/Linux/Manjaro/command/" itemprop="url">Manjaro 命令工具</a></h2>
         
 
         <div class="post-meta">
@@ -1368,180 +1623,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T14:17:57+08:00">
-                2017-10-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><img src="/2017/10/30/Linux/Command/nohup/process_session.png">
-<h4 id="进程组"><a href="#进程组" class="headerlink" title="进程组"></a>进程组</h4><p>进程组是一个或多个进程的集合，进程组方便了对多个进程的控制，在进程数较多的情况下，向进程组发送信号就行了。</p>
-<p>它的 ID 由它的组长进程的进程 ID 决定。组长进程创建了进程组，但它并不能决定进程组的存活时间，只要进程组内还有一个进程存在，进程就存在，与组长进程是否已终止无关。</p>
-<h4 id="会话"><a href="#会话" class="headerlink" title="会话"></a>会话</h4><p>会话(session)是一个或多个进程组的集合，它开始于用户登陆终端，结束于用户退出登陆。其义如其名，就是指用户与系统的一次对话的全程。</p>
-<p>会话包括控制进程（与终端建立连接的领头进程），一个前台进程组和任意后台进程组。一个会话只能有一个控制终端，通常是登录到其上的终端设备或伪终端设备，产生在控制终端上的输入和信号将发送给会话的前台进程组中的所有进程。</p>
-<h4 id="控制终端"><a href="#控制终端" class="headerlink" title="控制终端"></a>控制终端</h4><p>每当我们使用终端工具打开一个本地或远程 shell，我们便打开了一个控制终端，通过 ps 命令可以查看到 command 为 ttyn 的就是它对应的进程了，同时它对应 linux /dev/ 目录下的一个文件。</p>
-<h4 id="作业"><a href="#作业" class="headerlink" title="作业"></a>作业</h4><p>作业的概念与进程组类似，同样由一个或多个进程组成，它分为前台作业和后台作业，一个会话会有一个前台作业和多个后台作业，与进程组不同的是，作业内的某个进程产生的子进程并不属于这个作业。</p>
-<h4 id="后台执行"><a href="#后台执行" class="headerlink" title="后台执行"></a>后台执行</h4><p>我们每次在终端窗口执行命令的时候，进程总会一直占用着终端，直到进程结束。这段时间内，我们在终端的输入是没有用的。而且，当终端窗口关闭或网络连接失败后，再次打开终端，会发现进程已经中断了。这是因为用户注销或者网络断开时，SIGHUP信号会被发送到会话所属的子进程，而此 SIGHUP 的默认处理方式是终止收到该信号的进程。所以若程序中没有捕捉该信号，当终端关闭后，会话所属进程就会退出。</p>
-<h3 id="nohup"><a href="#nohup" class="headerlink" title="nohup"></a>nohup</h3><p>我们要实现后台执行的目的，实际上是要完成如下两个目标：</p>
-<ul>
-<li>使进程让出前台终端，让我们可以继续通过终端与系统进行交互。</li>
-<li>使进程不再受终端关闭的影响，即系统在终端关闭后不再向进程发送 SIGHUP 信号或即使发送了信号程序也不会退出。</li>
-</ul>
-<p>涉及两个指令 &amp; 和 nohup</p>
-<ul>
-<li>&amp;：将它附在命令后面可以使进程在后台执行，不会占用前台界面。它实际上是在会话中开启了一个后台作业。但我们会发现，如果此时终端被关闭后，进程还是会退出。这是因为，&amp; 符号只有让进程让出前台终端的功能，无法让进程不受 SIGHUP 信号的影响。</li>
-<li>nohup：使进程不受 SIGHUP 信号的影响。但我们在使用 nohup php test.php 后会发现，进程还会一直占用前台终端，但即使终端被关闭或连接断开了，程序还是会执行，另外我们会发现在当前文件夹下多了个名为 nohup.out 的文件。这是因为 nohup 的功能仅仅是让进程不受 SIGHUP 信号的影响，并不会让出前台终端，而且它还会在命令执行目录下建立 nohup.out 用以存储进程的输出。如果进程不需要输出，且不想让 nohup 创建文件，可以将标准输出和标准错误输出重定向。</li>
-</ul>
-<p>我们常将 nohup 和 &amp; 搭配到一块使用，执行命令如下 nohup command &gt;/dev/null 2&gt;&amp;1 &amp; 这样，就可以放心的等待进程运行结果了。</p>
-<p>参考链接：<a href="http://www.cnblogs.com/zhenbianshu/p/7152327.html" target="_blank" rel="noopener">http://www.cnblogs.com/zhenbianshu/p/7152327.html</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Tools/aria2/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/30/Linux/Tools/aria2/" itemprop="url">aria2</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T12:26:27+08:00">
-                2017-10-30
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-15T16:33:27+08:00">
+                2017-11-15
               </time>
             
 
@@ -1574,8 +1657,19 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/tools/" itemprop="url" rel="index">
-                    <span itemprop="name">tools</span>
+                  <a href="/categories/linux/manjaro/" itemprop="url" rel="index">
+                    <span itemprop="name">manjaro</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/manjaro/software/" itemprop="url" rel="index">
+                    <span itemprop="name">software</span>
                   </a>
                 </span>
 
@@ -1613,30 +1707,9 @@
       
         
           
-            <h2 id="aria2-yaaw-实现离线下载"><a href="#aria2-yaaw-实现离线下载" class="headerlink" title="aria2 + yaaw 实现离线下载"></a>aria2 + yaaw 实现离线下载</h2><hr>
-<h2 id="Centos-7"><a href="#Centos-7" class="headerlink" title="Centos 7"></a>Centos 7</h2><h3 id="aria2"><a href="#aria2" class="headerlink" title="aria2"></a>aria2</h3><h4 id="安装aria2"><a href="#安装aria2" class="headerlink" title="安装aria2"></a>安装aria2</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#安装epel源</span></span><br><span class="line">yum -y install epel-release</span><br><span class="line"><span class="comment">#安装aria2</span></span><br><span class="line">yum -y install aria2</span><br><span class="line"><span class="comment">#查看aria2版本</span></span><br><span class="line">aria2c -v</span><br></pre></td></tr></table></figure>
-<p>-o:下载并重命名<br>-x:需要使用的线程数，后面跟数字，线程数越多速度越快(最多16)<br>-c:断点续传</p>
-<p>#使用16线程下载一个文件<br>aria2c -x 16 <a href="http://soft.xiaoz.top/windows/ChromeStandaloneSetup.exe" target="_blank" rel="noopener">http://soft.xiaoz.top/windows/ChromeStandaloneSetup.exe</a></p>
-<hr>
-<h4 id="配置aria2"><a href="#配置aria2" class="headerlink" title="配置aria2"></a>配置aria2</h4><p>创建相关文件及目录</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir aria2</span><br><span class="line">touch aria2/aria2.session</span><br><span class="line"></span><br><span class="line">mkdir download</span><br></pre></td></tr></table></figure>
-<p>通过WEB界面的方式离线下载需要开启 JSON-RPC 支持，将下面的规则适当修改并另存为/root/aria2/aria2.conf</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"># 文件的保存路径(可使用绝对路径或相对路径), 默认: 当前启动位置</span><br><span class="line">dir=/root/download</span><br><span class="line"># 启用磁盘缓存, 0为禁用缓存, 需1.16以上版本, 默认:16M</span><br><span class="line">#disk-cache=32M</span><br><span class="line"># 文件预分配方式, 能有效降低磁盘碎片, 默认:prealloc</span><br><span class="line"># 预分配所需时间: none &lt; falloc ? trunc &lt; prealloc</span><br><span class="line"># falloc和trunc则需要文件系统和内核支持</span><br><span class="line"># NTFS建议使用falloc, EXT3/4建议trunc, MAC 下需要注释此项</span><br><span class="line">file-allocation=trunc</span><br><span class="line"># 断点续传</span><br><span class="line">continue=true</span><br><span class="line"> </span><br><span class="line">## 下载连接相关 ##</span><br><span class="line"># 最大同时下载任务数, 运行时可修改, 默认:5</span><br><span class="line">max-concurrent-downloads=5</span><br><span class="line"># 同一服务器连接数, 添加时可指定, 默认:1</span><br><span class="line">max-connection-per-server=5</span><br><span class="line"># 最小文件分片大小, 添加时可指定, 取值范围1M -1024M, 默认:20M</span><br><span class="line"># 假定size=10M, 文件为20MiB 则使用两个来源下载; 文件为15MiB 则使用一个来源下载</span><br><span class="line">min-split-size=10M</span><br><span class="line"># 单个任务最大线程数, 添加时可指定, 默认:5</span><br><span class="line">split=32</span><br><span class="line"># 整体下载速度限制, 运行时可修改, 默认:0</span><br><span class="line">#max-overall-download-limit=0</span><br><span class="line"># 单个任务下载速度限制, 默认:0</span><br><span class="line">#max-download-limit=0</span><br><span class="line"># 整体上传速度限制, 运行时可修改, 默认:0</span><br><span class="line">#max-overall-upload-limit=0</span><br><span class="line"># 单个任务上传速度限制, 默认:0</span><br><span class="line">#max-upload-limit=0</span><br><span class="line"># 禁用IPv6, 默认:false</span><br><span class="line">disable-ipv6=true</span><br><span class="line"> </span><br><span class="line">## 进度保存相关 ##</span><br><span class="line"> </span><br><span class="line"># 从会话文件中读取下载任务</span><br><span class="line">input-file=/root/aria2/aria2.session</span><br><span class="line"># 在Aria2退出时保存`错误/未完成`的下载任务到会话文件</span><br><span class="line">save-session=/root/aria2/aria2.session</span><br><span class="line"># 定时保存会话, 0为退出时才保存, 需1.16.1以上版本, 默认:0</span><br><span class="line">#save-session-interval=60</span><br><span class="line"> </span><br><span class="line">## RPC相关设置 ##</span><br><span class="line"> </span><br><span class="line"># 启用RPC, 默认:false</span><br><span class="line">enable-rpc=true</span><br><span class="line"># 允许所有来源, 默认:false</span><br><span class="line">rpc-allow-origin-all=true</span><br><span class="line"># 允许非外部访问, 默认:false</span><br><span class="line">rpc-listen-all=true</span><br><span class="line"># 事件轮询方式, 取值:[epoll, kqueue, port, poll, select], 不同系统默认值不同</span><br><span class="line">#event-poll=select</span><br><span class="line"># RPC监听端口, 端口被占用时可以修改, 默认:6800</span><br><span class="line">#rpc-listen-port=6800</span><br><span class="line"># 设置的RPC授权令牌, v1.18.4新增功能, 取代 --rpc-user 和 --rpc-passwd 选项</span><br><span class="line">#rpc-secret=</span><br><span class="line"># 设置的RPC访问用户名, 此选项新版已废弃, 建议改用 --rpc-secret 选项</span><br><span class="line">#rpc-user=</span><br><span class="line"># 设置的RPC访问密码, 此选项新版已废弃, 建议改用 --rpc-secret 选项</span><br><span class="line">#rpc-passwd=</span><br><span class="line"> </span><br><span class="line">## BT/PT下载相关 ##</span><br><span class="line"> </span><br><span class="line"># 当下载的是一个种子(以.torrent结尾)时, 自动开始BT任务, 默认:true</span><br><span class="line">#follow-torrent=true</span><br><span class="line"># BT监听端口, 当端口被屏蔽时使用, 默认:6881-6999</span><br><span class="line">listen-port=51413</span><br><span class="line"># 单个种子最大连接数, 默认:55</span><br><span class="line">#bt-max-peers=55</span><br><span class="line"># 打开DHT功能, PT需要禁用, 默认:true</span><br><span class="line">enable-dht=false</span><br><span class="line"># 打开IPv6 DHT功能, PT需要禁用</span><br><span class="line">#enable-dht6=false</span><br><span class="line"># DHT网络监听端口, 默认:6881-6999</span><br><span class="line">#dht-listen-port=6881-6999</span><br><span class="line"># 本地节点查找, PT需要禁用, 默认:false</span><br><span class="line">#bt-enable-lpd=false</span><br><span class="line"># 种子交换, PT需要禁用, 默认:true</span><br><span class="line">enable-peer-exchange=false</span><br><span class="line"># 每个种子限速, 对少种的PT很有用, 默认:50K</span><br><span class="line">#bt-request-peer-speed-limit=50K</span><br><span class="line"># 客户端伪装, PT需要</span><br><span class="line">peer-id-prefix=-TR2770-</span><br><span class="line">user-agent=Transmission/2.77</span><br><span class="line"># 当种子的分享率达到这个数时, 自动停止做种, 0为一直做种, 默认:1.0</span><br><span class="line"># seed-ratio=0</span><br><span class="line"># 强制保存会话, 即使任务已经完成, 默认:false</span><br><span class="line"># 较新的版本开启后会在任务完成后依然保留.aria2文件</span><br><span class="line">#force-save=false</span><br><span class="line"># BT校验相关, 默认:true</span><br><span class="line">#bt-hash-check-seed=true</span><br><span class="line"># 继续之前的BT任务时, 无需再次校验, 默认:false</span><br><span class="line">bt-seed-unverified=true</span><br><span class="line"># 保存磁力链接元数据为种子文件(.torrent文件), 默认:false</span><br><span class="line">bt-save-metadata=true</span><br></pre></td></tr></table></figure>
-<hr>
-<h4 id="运行aria2c"><a href="#运行aria2c" class="headerlink" title="运行aria2c"></a>运行aria2c</h4><p>测试运行命令<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aria2c --conf-path=/root/aria2/aria2.conf</span><br></pre></td></tr></table></figure></p>
-<p>开机启动<br>/etc/rc.d/rc.local文件下面加入下面这一行</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aria2c --conf-path=/root/aria2/aria2.conf -D &amp;</span><br></pre></td></tr></table></figure>
-<h3 id="yaaw"><a href="#yaaw" class="headerlink" title="yaaw"></a>yaaw</h3><h4 id="安装yaaw"><a href="#安装yaaw" class="headerlink" title="安装yaaw"></a>安装yaaw</h4><p>yaaw是一个为aria2提供WEB界面的管理工具，完全使用HTML + javascript实现，因此不需要任何脚本环境，直接下载到您本地或部署到您的WEB服务中使用。</p>
-<p>安装Nginx<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y nginx</span><br></pre></td></tr></table></figure></p>
-<p>安装yaaw<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /usr/share/nginx/html</span><br><span class="line">wget https://github.com/binux/yaaw/archive/master.zip</span><br><span class="line">unzip master</span><br><span class="line">mv yaaw-master yaaw</span><br><span class="line"></span><br><span class="line">systemctl restart nginx</span><br></pre></td></tr></table></figure></p>
-<p>测试访问yaaw，<a href="http://ip/yaaw/index.html" target="_blank" rel="noopener">http://ip/yaaw/index.html</a></p>
-<hr>
-<h4 id="设置yaaw"><a href="#设置yaaw" class="headerlink" title="设置yaaw"></a>设置yaaw</h4><p>点击右上角Settings按钮，填写WEB接口，没有设置密码的情况下接口地址为<a href="http://IP:6800/jsonrpc" target="_blank" rel="noopener">http://IP:6800/jsonrpc</a></p>
-<p>如果您启用了rpc-secret=，那么接口地址为<a href="http://token:kye@IP:6800/jsonrpc" target="_blank" rel="noopener">http://token:kye@IP:6800/jsonrpc</a></p>
-<p>注意防火墙还需要放行6800端口，以免出现无法下载的情况，正式环境中请为aria2设置密码，以免被恶意下载。</p>
-<hr>
-<h4 id="chrome插件"><a href="#chrome插件" class="headerlink" title="chrome插件"></a>chrome插件</h4><p>yaaw有对应的chrome插件，建议配置使用</p>
-<h3 id="webui-aria2"><a href="#webui-aria2" class="headerlink" title="webui-aria2"></a>webui-aria2</h3><p><a href="https://github.com/ziahamza/webui-aria2" target="_blank" rel="noopener">https://github.com/ziahamza/webui-aria2</a></p>
+            <h2 id="locate"><a href="#locate" class="headerlink" title="locate"></a>locate</h2><p>mlocate pcakage包含locate命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pacman -S mlocate</span><br></pre></td></tr></table></figure>
+<p>安装后需要建立索引数据库<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo updatedb</span><br></pre></td></tr></table></figure></p>
 
           
         
@@ -1685,7 +1758,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Tools/logrotate/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/14/Language/Javascript/function/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1704,7 +1777,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/30/Linux/Tools/logrotate/" itemprop="url">logrotate</a></h2>
+                <a class="post-title-link" href="/2017/11/14/Language/Javascript/function/" itemprop="url">Javascript Function</a></h2>
         
 
         <div class="post-meta">
@@ -1716,8 +1789,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T11:42:27+08:00">
-                2017-10-30
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-14T21:47:48+08:00">
+                2017-11-14
               </time>
             
 
@@ -1739,8 +1812,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
+                  <a href="/categories/language/" itemprop="url" rel="index">
+                    <span itemprop="name">language</span>
                   </a>
                 </span>
 
@@ -1750,8 +1823,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/tools/" itemprop="url" rel="index">
-                    <span itemprop="name">tools</span>
+                  <a href="/categories/language/javascript/" itemprop="url" rel="index">
+                    <span itemprop="name">javascript</span>
                   </a>
                 </span>
 
@@ -1789,229 +1862,21 @@
       
         
           
-            <h3 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h3><p>logrotate是个十分有用的工具，它可以自动对日志进行截断（或轮循）、压缩以及删除旧的日志文件。</p>
-<p>例如，你可以设置logrotate，让/var/log/foo日志文件每30天轮循，并删除超过6个月的日志。配置完后，logrotate的运作完全自动化，不必进行任何进一步的人为干预。</p>
-<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><h4 id="Centos-7"><a href="#Centos-7" class="headerlink" title="Centos 7"></a>Centos 7</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install -y logrotate</span><br></pre></td></tr></table></figure>
-<h3 id="使用方法"><a href="#使用方法" class="headerlink" title="使用方法"></a>使用方法</h3><h4 id="配置文件说明"><a href="#配置文件说明" class="headerlink" title="配置文件说明"></a>配置文件说明</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/logrotate.d/django_log</span><br></pre></td></tr></table></figure>
-<p>配置信息如下：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">/var/log/log-file &#123;</span><br><span class="line">    monthly</span><br><span class="line">    rotate 5</span><br><span class="line">    compress</span><br><span class="line">    delaycompress</span><br><span class="line">    missingok</span><br><span class="line">    notifempty</span><br><span class="line">    create 644 root root</span><br><span class="line">    postrotate</span><br><span class="line">        /usr/bin/killall -HUP rsyslogd</span><br><span class="line">    endscript</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>上面的模板是通用的，而配置参数则根据你的需求进行调整，不是所有的参数都是必要的。</p>
-<p>参数说明</p>
+            <h3 id="自执行匿名函数"><a href="#自执行匿名函数" class="headerlink" title="自执行匿名函数"></a>自执行匿名函数</h3><p>语法格式：(function() { /<em> do something </em>/ })();</p>
+<p>语法说明：(??)，最外层的括号向脚本返回未命名的函数，(??)()，最右边括号表示立即执行返回的未命名函数，括号内为匿名函数的参数。</p>
+<p>其他语法格式：</p>
 <ul>
-<li>monthly: 日志文件将按月轮循。其它可用值为‘daily’，‘weekly’或者‘yearly’。</li>
-<li>rotate 5: 一次将存储5个归档日志。对于第六个归档，时间最久的归档将被删除。</li>
-<li>compress: 在轮循任务完成后，已轮循的归档将使用gzip进行压缩。</li>
-<li>delaycompress: 总是与compress选项一起用，delaycompress选项指示logrotate不要将最近的归档压缩，压缩将在下一次轮循周期进行。这在你或任何软件仍然需要读取最新归档时很有用。</li>
-<li>missingok: 在日志轮循期间，任何错误将被忽略，例如“文件无法找到”之类的错误。</li>
-<li>notifempty: 如果日志文件为空，轮循不会进行。</li>
-<li>create 644 root root: 以指定的权限创建全新的日志文件，同时logrotate也会重命名原始日志文件。</li>
-<li>postrotate/endscript: 在所有其它指令完成后，postrotate和endscript里面指定的命令将被执行。在这种情况下，rsyslogd 进程将立即再次读取其配置并继续运行。</li>
+<li>!function () { /<em> code </em>/ } ();</li>
+<li>~function () { /<em> code </em>/ } ();</li>
+<li>-function () { /<em> code </em>/ } ();</li>
+<li>+function () { /<em> code </em>/ } ();</li>
 </ul>
-<h4 id="使用举例1：轮循一个日志文件，日志文件大小可以增长到50MB。"><a href="#使用举例1：轮循一个日志文件，日志文件大小可以增长到50MB。" class="headerlink" title="使用举例1：轮循一个日志文件，日志文件大小可以增长到50MB。"></a>使用举例1：轮循一个日志文件，日志文件大小可以增长到50MB。</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/var/log/log-file &#123;</span><br><span class="line">    size=50M</span><br><span class="line">    rotate 5</span><br><span class="line">    create 644 root root</span><br><span class="line">    postrotate</span><br><span class="line">        /usr/bin/killall -HUP rsyslogd</span><br><span class="line">    endscript</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>参考链接：<a href="https://linux.cn/article-4126-1.html" target="_blank" rel="noopener">https://linux.cn/article-4126-1.html</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Server/Cache/缓存使用技巧/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/30/Server/Cache/缓存使用技巧/" itemprop="url">缓存使用技巧</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T10:48:18+08:00">
-                2017-10-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Cache/" itemprop="url" rel="index">
-                    <span itemprop="name">Cache</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="如何将业务逻辑与缓存之间进行解耦？"><a href="#如何将业务逻辑与缓存之间进行解耦？" class="headerlink" title="如何将业务逻辑与缓存之间进行解耦？"></a>如何将业务逻辑与缓存之间进行解耦？</h3><p>大部分情况，大家都是把缓存操作和业务逻辑之间的代码交织在一起的，如下图所示：</p>
-<img src="/2017/10/30/Server/Cache/缓存使用技巧/exmaple_code_1.jpg">
-<p>从上面的代码可以看出以下几个问题：</p>
-<ol>
-<li>缓存操作非常繁琐，产生非常多的重复代码；</li>
-<li>缓存操作与业务逻辑耦合度非常高，不利于后期的维护；</li>
-<li>当业务数据为 null 时，无法确定是否已经缓存，会造成缓存无法命中；</li>
-<li>开发阶段，为了排查问题，经常需要来回开关缓存功能，使用上面的代码是无法做到很方便地开关缓存功能；</li>
-<li>当业务越来越复杂，使用缓存的地方越来越多时，很难定位哪些数据要进行主动删除；</li>
-<li>如果不想用 Redis，换用别的缓存技术的话，那是多么痛苦的一件事。</li>
-</ol>
-<p>参考一个缓存管理框架 AutoLoadCache处理方式，借鉴 Spring cache 的思想使用 AOP + Annotation 等技术实现缓存与业务逻辑的解耦。</p>
-<img src="/2017/10/30/Server/Cache/缓存使用技巧/exmaple_code_2.jpg">
-<p>AutoloadCache 在 AOP 拦截到请求后，大概的流程如下：</p>
-<ol>
-<li>获取到拦截方法的 @Cache 注解，并生成缓存 key；</li>
-<li>通过缓存 key，去缓存中获取数据；</li>
-<li><p>如果缓存命中，执行如下流程：<br>如果需要自动加载，则把相关信息保存到自动加载队列中；<br>否则判断缓存是否即将过期，如果即将过期，则会发起异步刷新；<br>最后把数据返回给用户。</p>
-</li>
-<li><p>如果缓存没有命中，执行如下流程：<br>选举出一个 leader回到数据源中去加载数据，加载到数据后通知其它请求从内存中获取数据（拿来主义机制）；<br>leader 负责把数据写入缓存；如果需要自动加载，则把相关信息保存到自动加载队列中；<br>最后把数据返回给用户。</p>
-</li>
-</ol>
-<hr>
-<h3 id="如何解决缓存-key-冲突问题？"><a href="#如何解决缓存-key-冲突问题？" class="headerlink" title="如何解决缓存 key 冲突问题？"></a>如何解决缓存 key 冲突问题？</h3><p>在实际情况中，可能有多个模块共用一个 Redis 服务器或是一个 Redis 集群的情况，那么有可能造成缓存 key 冲突了。</p>
-<p>为了解决这个问题 AutoLoadCache，增加了 namespace。如果设置了 namespace 就会在每个缓存 key 最前面增加 namespace</p>
-<img src="/2017/10/30/Server/Cache/缓存使用技巧/exmaple_code_generate_cache_key.jpg">
-<hr>
-<h3 id="如何减少回源并发数？"><a href="#如何减少回源并发数？" class="headerlink" title="如何减少回源并发数？"></a>如何减少回源并发数？</h3><p>当缓存未命中时，都需要回到数据源去取数据，如果这时有多个并发来请求相同一个数据（即相同缓存 key 请求），都回到数据源加载数据，并写缓存，造成资源极大的浪费，也可能造成数据源负载过高而无法服务。</p>
-<p>AutoLoadCache 使用 <strong>拿来主义机制</strong> 和 <strong>自动加载机制</strong> 来解决这个问题：</p>
-<h4 id="拿来主义机制"><a href="#拿来主义机制" class="headerlink" title="拿来主义机制"></a>拿来主义机制</h4><p>拿来主交机制，指的是当有多个用户请求同一个数据时，会选举出一个 leader 去数据源加载数据，其它用户则等待其拿到的数据。并由 leader 将数据写入缓存。</p>
-<h4 id="自动加载机制"><a href="#自动加载机制" class="headerlink" title="自动加载机制"></a>自动加载机制</h4><p>自动加载机制，将用户请求及缓存时间等信息放到一个队列中，后台使用线程池定期扫这个队列，发现缓存即将过期，则去数据源加载最新的数据放到缓存中，达到将数据长驻内存的效果。从而将这些数据的请求，全部引向了缓存，而不会回到数据源去获取数据。这非常适合用于缓存使用非常频繁的数据，以及非常耗时的数据。</p>
-<p>为了防止自动加载队列过大，设置了容量限制；同时会将超过一定时间没有用户请求的数据从自动加载队列中移除，把服务器资源释放出来，给真正需要的请求。</p>
-<p>往缓存里写数据的性能相比读的性能差非常多，通过上面两种机制，可以减少写缓存的并发，提升缓存服务能力。</p>
-<hr>
-<h3 id="异步刷新"><a href="#异步刷新" class="headerlink" title="异步刷新"></a>异步刷新</h3><p>AutoLoadCache 从缓存中获取到数据后，借助上面提到的 CacheWrapper，能很方便地判断缓存是否即将过期， 如果即将过期，则会把发起异步刷新请求。</p>
-<p>使用异步刷新的目的是提前将数据缓存起来，避免缓存失效后，大量请求穿透到数据源。</p>
-<hr>
-<h3 id="多种缓存操作"><a href="#多种缓存操作" class="headerlink" title="多种缓存操作"></a>多种缓存操作</h3><p>大部分情况下，我们都是对缓存进行读与写操作，可有时，我们只需要从缓存中读取数据，或者只写数据，那么可以通过 @Cache 的 opType 指定缓存操作类型。现支持以下几种操作类型：</p>
+<p>作用：</p>
 <ul>
-<li>READ_WRITE：读写缓存操，如果缓存中有数据，则使用缓存中的数据，如果缓存中没有数据，则加载数据，并写入缓存。默认是 READ_WRITE；</li>
-<li>WRITE：从数据源中加载最新的数据，并写入缓存。对数据源和缓存数据进行同步；</li>
-<li>READ_ONLY： 只从缓存中读取，并不会去数据源加载数据。用于异地读写缓存的场景；</li>
-<li>LOAD：只从数据源加载数据，不读取缓存中的数据，也不写入缓存。</li>
+<li>载入时自动化执行</li>
+<li>避免污染全局变量<br>只要把自己所有的代码都写在这个特殊的函数包装内，那么外部就不能访问，除非你允许(变量前加上window，这样函数或变量成为全局)。各JavaScript库的代码也基本是这种组织形式。</li>
 </ul>
-<hr>
-<h3 id="批量删除缓存"><a href="#批量删除缓存" class="headerlink" title="批量删除缓存"></a>批量删除缓存</h3><p>很多时候，数据查询条件是比较复杂的，我们无法获取或还原要删除的缓存 key。</p>
-<p>AutoLoadCache 为了解决这个问题，使用 Redis 的 hash 表来管理这部分的缓存。把需要批量删除的缓存放在同一个 hash 表中，如果需要需要批量删除这些缓存时，直接把这个 hash 表删除即可。这时只要设计合理粒度的缓存 key 即可。</p>
-<hr>
-<h3 id="双写不一致问题"><a href="#双写不一致问题" class="headerlink" title="双写不一致问题"></a>双写不一致问题</h3><p>使用 updateUser 方法更新用户信息时， 同时会主动删除缓存中的数据。 如果在事务还没提交之前又有一个请求去加载用户数据，这时就会把数据库中旧数据缓存起来，在下次主动删除缓存或缓存过期之前的这一段时间内，缓存中的数据与数据库中的数据是不一致的。</p>
-<p>AutoloadCache 框架为了解决这个问题，引入了一个新的注解：@CacheDeleteTransactional</p>
-<p>使用 @CacheDeleteTransactional 注解后，AutoloadCache 会先使用 ThreadLocal 缓存要删除缓存 key，等事务提交后再去执行缓存删除操作。其实不能说是“解决不一致问题”，而是<strong>缓解</strong>而已。</p>
-<p>缓存数据双写不一致的问题是很难解决的，即使我们只用数据库（单写的情况）也会存在数据不一致的情况（当从数据库中取数据时，同时又被更新了），我们只能是减少不一致情况的发生。对于一些比较重要的数据，我们不能直接使用缓存中的数据进行计算并回写的数据库中，比如扣库存，需要对数据增加版本信息，并通过乐观锁等技术来避免数据不一致问题。</p>
+<p><a href="https://segmentfault.com/q/1010000000135703" target="_blank" rel="noopener">https://segmentfault.com/q/1010000000135703</a></p>
 
           
         
@@ -2051,7 +1916,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/31/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/31/">31</a><span class="page-number current">32</span><a class="page-number" href="/page/33/">33</a><span class="space">&hellip;</span><a class="page-number" href="/page/40/">40</a><a class="extend next" rel="next" href="/page/33/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/31/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/31/">31</a><span class="page-number current">32</span><a class="page-number" href="/page/33/">33</a><span class="space">&hellip;</span><a class="page-number" href="/page/43/">43</a><a class="extend next" rel="next" href="/page/33/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2098,7 +1963,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">395</span>
+                <span class="site-state-item-count">421</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2109,7 +1974,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">182</span>
+                <span class="site-state-item-count">194</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2120,7 +1985,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">444</span>
+                <span class="site-state-item-count">472</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Server/Testing/Stress/jmeter/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Middle/middleware/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/18/Server/Testing/Stress/jmeter/" itemprop="url">jmeter 服务器压力测试</a></h2>
+                <a class="post-title-link" href="/2017/10/27/Python/Django/Middle/middleware/" itemprop="url">Django Middleware</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,513 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
-                2017-10-18
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
+                2017-10-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Middleware是什么？"><a href="#Middleware是什么？" class="headerlink" title="Middleware是什么？"></a>Middleware是什么？</h2><p>Middleware is a framework of hooks into Django’s request/response processing. It’s a light, low-level “plugin” system for globally altering Django’s input or output.</p>
+<h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><p>从浏览器发出一个请求 Request，得到一个响应后的内容 HttpResponse ，这个请求传递到 Django的过程如下：</p>
+<img src="/2017/10/27/Python/Django/Middle/middleware/middleware_processing.svg" title="工作流程">
+<p>process_request 被 process_view 替换</p>
+<p>每一个请求都是先通过中间件中的 process_view 函数，这个函数返回 None 或者 HttpResponse 对象，如果返回前者，继续处理其它中间件，如果返回一个 HttpResponse，就处理中止，返回结果给浏览器。</p>
+<p>process_view: <a href="https://docs.djangoproject.com/en/1.11/topics/http/middleware/#process_view" target="_blank" rel="noopener">https://docs.djangoproject.com/en/1.11/topics/http/middleware/#process_view</a></p>
+<h3 id="自定义Middleware"><a href="#自定义Middleware" class="headerlink" title="自定义Middleware"></a>自定义Middleware</h3><h4 id="开发模式（DEBUG-True）禁用Middleware"><a href="#开发模式（DEBUG-True）禁用Middleware" class="headerlink" title="开发模式（DEBUG=True）禁用Middleware"></a>开发模式（DEBUG=True）禁用Middleware</h4><p>在Middleware class的 <strong>init</strong>() 方法中 raise MiddlewareNotUsed</p>
+<p>Django will then remove that middleware from the middleware process and log a debug message to the django.request logger when DEBUG is True.</p>
+<hr>
+<h4 id="定义方法"><a href="#定义方法" class="headerlink" title="定义方法"></a>定义方法</h4><p>Response类型</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">simple_middleware</span><span class="params">(get_response)</span>:</span></span><br><span class="line">    <span class="comment"># One-time configuration and initialization.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">middleware</span><span class="params">(request)</span>:</span></span><br><span class="line">        <span class="comment"># Code to be executed for each request before</span></span><br><span class="line">        <span class="comment"># the view (and later middleware) are called.</span></span><br><span class="line"></span><br><span class="line">        response = get_response(request)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Code to be executed for each request/response after</span></span><br><span class="line">        <span class="comment"># the view is called.</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> response</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> middleware</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="定义类"><a href="#定义类" class="headerlink" title="定义类"></a>定义类</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SimpleMiddleware</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, get_response)</span>:</span></span><br><span class="line">        self.get_response = get_response</span><br><span class="line">        <span class="comment"># One-time configuration and initialization.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="comment"># Code to be executed for each request before</span></span><br><span class="line">        <span class="comment"># the view (and later middleware) are called.</span></span><br><span class="line"></span><br><span class="line">        response = self.get_response(request)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Code to be executed for each request/response after</span></span><br><span class="line">        <span class="comment"># the view is called.</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
+<h4 id="Django-1-10-定义类"><a href="#Django-1-10-定义类" class="headerlink" title="Django 1.10 定义类"></a>Django 1.10 定义类</h4><p>class django.utils.deprecation.MiddlewareMixin</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MiddlewareMixin</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, get_response=None)</span>:</span></span><br><span class="line">        self.get_response = get_response</span><br><span class="line">        super(MiddlewareMixin, self).__init__()</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        response = <span class="keyword">None</span></span><br><span class="line">        <span class="keyword">if</span> hasattr(self, <span class="string">'process_request'</span>):</span><br><span class="line">            response = self.process_request(request)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> response:</span><br><span class="line">            response = self.get_response(request)</span><br><span class="line">        <span class="keyword">if</span> hasattr(self, <span class="string">'process_response'</span>):</span><br><span class="line">            response = self.process_response(request, response)</span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
+<p><strong>call</strong> 方法会先调用 self.process_request(request)，接着执行 self.get_response(request) 然后调用 self.process_response(request, response)</p>
+<p>创建一个Middleware基类，后续Middleware直接继承重写即可</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseMiddleware</span><span class="params">(MiddlewareMixin)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_request</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_response</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_response</span><span class="params">(self, request, response)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
+<hr>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log/" itemprop="url">Django Log</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
+                2017-10-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Logging"><a href="#Logging" class="headerlink" title="Logging"></a>Logging</h2><p>Python logging 主要有以下四部分组成:</p>
+<ol>
+<li>Loggers</li>
+<li>Handlers</li>
+<li>Filters</li>
+<li>Formatters</li>
+</ol>
+<h3 id="Loggers"><a href="#Loggers" class="headerlink" title="Loggers"></a>Loggers</h3><p>A logger is the entry point into the logging system. Each logger is a named bucket to which messages can be written for processing.</p>
+<p>log leve: DEBUG -&gt; INFO -&gt; WARNING -&gt; ERROR -&gt; CRITICAL</p>
+<ul>
+<li>DEBUG: Low level system information for debugging purposes</li>
+<li>INFO: General system information</li>
+<li>WARNING: Information describing a minor problem that has occurred.</li>
+<li>ERROR: Information describing a major problem that has occurred.</li>
+<li>CRITICAL: Information describing a critical problem that has occurred.</li>
+</ul>
+<p>message log’level &lt;= logger’level 消息才会被logger接收，logger会把消息传递给Handler进行处理</p>
+<hr>
+<h3 id="Handlers"><a href="#Handlers" class="headerlink" title="Handlers"></a>Handlers</h3><p>The handler is the engine that determines what happens to each message in a logger. It describes a particular logging behavior, such as writing a message to the screen, to a file, or to a network socket.</p>
+<p>同Logger一样，Handler也会检查message log’level，Logger可以有多个Handler，例如，</p>
+<hr>
+<h3 id="Filters"><a href="#Filters" class="headerlink" title="Filters"></a>Filters</h3><p>A filter is used to provide additional control over which log records are passed from logger to handler.</p>
+<p>Filters can be installed on loggers or on handlers; multiple filters can be used in a chain to perform multiple filtering actions.</p>
+<hr>
+<h3 id="Formatters"><a href="#Formatters" class="headerlink" title="Formatters"></a>Formatters</h3><p>Formatters describe the exact format of that text.</p>
+<p>logrecord-attributes：<a href="https://docs.python.org/3/library/logging.html#logrecord-attributes" target="_blank" rel="noopener">https://docs.python.org/3/library/logging.html#logrecord-attributes</a></p>
+<h3 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h3><h4 id="disable-existing-loggers"><a href="#disable-existing-loggers" class="headerlink" title="disable_existing_loggers"></a>disable_existing_loggers</h4><p>If the disable_existing_loggers key in the LOGGING dictConfig is set to True (which is the default) then all loggers from the default configuration will be disabled. Disabled loggers are not the same as removed; the logger will still exist, but will silently discard anything logged to it, not even propagating entries to a parent logger. Thus you should be very careful using ‘disable_existing_loggers’: True; it’s probably not what you want. Instead, you can set disable_existing_loggers to False and redefine some or all of the default loggers; or you can set LOGGING_CONFIG to None and handle logging config yourself.</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log-config/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log-config/" itemprop="url">Django Log 配置信息</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
+                2017-10-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>生产环境配置(包含了Sentry配置)，日志分割管理建议使用logrotate</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">LOGGING = &#123;</span><br><span class="line">    'version': 1,</span><br><span class="line">    'disable_existing_loggers': True,</span><br><span class="line">    'root': &#123;</span><br><span class="line">        'level': 'WARNING',</span><br><span class="line">        'handlers': ['sentry']</span><br><span class="line">    &#125;,</span><br><span class="line">    'formatters': &#123;</span><br><span class="line">        'verbose': &#123;</span><br><span class="line">            'format': '[%(levelname)s]%(asctime)s--[module:%(module)s, process:%(process)d, thread:%(thread)d]--'</span><br><span class="line">                      '[filename:%(filename)s][funcName:%(funcName)s]: %(message)s'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'handlers': &#123;</span><br><span class="line">        'sentry': &#123;</span><br><span class="line">            'level': 'ERROR',  # To capture more than ERROR, change to WARNING, INFO, etc.</span><br><span class="line">            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'console': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.StreamHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'file': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'class': 'logging.FileHandler',</span><br><span class="line">            'filename': './log/prod.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'loggers': &#123;</span><br><span class="line">        'root': &#123;</span><br><span class="line">            'level': 'ERROR',</span><br><span class="line">            'handlers': ['sentry']</span><br><span class="line">        &#125;,</span><br><span class="line">        'django': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'handlers': ['file', 'console', 'sentry'],</span><br><span class="line">            'propagate': True</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果日志文件需要自动分割，则file使用下面的配置<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">'file': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.handlers.RotatingFileHandler',</span><br><span class="line">            'maxBytes': 1024 * 1024 * 10,  # 文件大小</span><br><span class="line">            'backupCount': 5,  # 备份份数</span><br><span class="line">            'filename': './log/debug.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Server/Log/elk/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/27/Server/Log/elk/" itemprop="url">ELK日志收集系统</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:08:18+08:00">
+                2017-10-27
               </time>
             
 
@@ -349,19 +854,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/testing/" itemprop="url" rel="index">
-                    <span itemprop="name">testing</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/testing/stress/" itemprop="url" rel="index">
-                    <span itemprop="name">stress</span>
+                  <a href="/categories/server/elk/" itemprop="url" rel="index">
+                    <span itemprop="name">elk</span>
                   </a>
                 </span>
 
@@ -399,332 +893,84 @@
       
         
           
-            <p>参考链接：<a href="https://testerhome.com/topics/4059" target="_blank" rel="noopener">https://testerhome.com/topics/4059</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Nginx/conf/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/18/Nginx/conf/" itemprop="url">conf</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
-                2017-10-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
-                    <span itemprop="name">Nginx</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="常用配置说明"><a href="#常用配置说明" class="headerlink" title="常用配置说明"></a>常用配置说明</h3><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br></pre></td><td class="code"><pre><span class="line">#定义Nginx运行的用户和用户组</span><br><span class="line">user www www;</span><br><span class="line">#nginx进程数，建议设置为等于CPU总核心数。</span><br><span class="line">worker_processes 8;</span><br><span class="line">#全局错误日志定义类型，[ debug | info | notice | warn | error | crit ]</span><br><span class="line">error_log /var/log/nginx/error.log info;</span><br><span class="line">#进程文件</span><br><span class="line">pid /var/run/nginx.pid;</span><br><span class="line">#一个nginx进程打开的最多文件描述符数目，理论值应该是最多打开文件数（系统的值ulimit -n）与nginx进程数相除，但是nginx分配请求并不均匀，所以建议与ulimit -n的值保持一致。</span><br><span class="line">worker_rlimit_nofile 65535;</span><br><span class="line">#工作模式与连接数上限</span><br><span class="line">events</span><br><span class="line">&#123;</span><br><span class="line">    #参考事件模型，use [ kqueue | rtsig | epoll | /dev/poll | select | poll ]; epoll模型是Linux 2.6以上版本内核中的高性能网络I/O模型，如果跑在FreeBSD上面，就用kqueue模型。</span><br><span class="line">    use epoll;</span><br><span class="line">    #单个进程最大连接数（最大连接数=连接数*进程数）</span><br><span class="line">    worker_connections 65535;</span><br><span class="line">&#125;</span><br><span class="line">#设定http服务器</span><br><span class="line">http</span><br><span class="line">&#123;</span><br><span class="line">    include mime.types; #文件扩展名与文件类型映射表</span><br><span class="line">    default_type application/octet-stream; #默认文件类型</span><br><span class="line">    #charset utf-8; #默认编码</span><br><span class="line">    server_names_hash_bucket_size 128; #服务器名字的hash表大小</span><br><span class="line">    client_header_buffer_size 32k; #上传文件大小限制</span><br><span class="line">    large_client_header_buffers 4 64k; #设定请求缓</span><br><span class="line">    client_max_body_size 8m; #设定请求缓</span><br><span class="line">    sendfile on; #开启高效文件传输模式，sendfile指令指定nginx是否调用sendfile函数来输出文件，对于普通应用设为 on，如果用来进行下载等应用磁盘IO重负载应用，可设置为off，以平衡磁盘与网络I/O处理速度，降低系统的负载。注意：如果图片显示不正常把这个改成off。</span><br><span class="line">    autoindex on; #开启目录列表访问，合适下载服务器，默认关闭。</span><br><span class="line">    tcp_nopush on; #防止网络阻塞</span><br><span class="line">    tcp_nodelay on; #防止网络阻塞</span><br><span class="line">    keepalive_timeout 120; #长连接超时时间，单位是秒</span><br><span class="line">    </span><br><span class="line">    #FastCGI相关参数是为了改善网站的性能：减少资源占用，提高访问速度。下面参数看字面意思</span><br><span class="line">    #都能理解。</span><br><span class="line">    fastcgi_connect_timeout 300;</span><br><span class="line">    fastcgi_send_timeout 300;</span><br><span class="line">    fastcgi_read_timeout 300;</span><br><span class="line">    fastcgi_buffer_size 64k;</span><br><span class="line">    fastcgi_buffers 4 64k;</span><br><span class="line">    fastcgi_busy_buffers_size 128k;</span><br><span class="line">    fastcgi_temp_file_write_size 128k;</span><br><span class="line"></span><br><span class="line">    #gzip模块设置</span><br><span class="line">    gzip on; #开启gzip压缩输出</span><br><span class="line">    gzip_min_length 1k; #最小压缩文件大小</span><br><span class="line">    gzip_buffers 4 16k; #压缩缓冲区</span><br><span class="line">    gzip_http_version 1.0; #压缩版本（默认1.1，前端如果是squid2.5请使用1.0）</span><br><span class="line">    gzip_comp_level 2; #压缩等级</span><br><span class="line">    gzip_types text/plain application/x-javascript text/css application/xml;</span><br><span class="line">    #压缩类型，默认就已经包含text/html，所以下面就不用再写了，写上去也不会有问题，</span><br><span class="line">    #但是会有一个warn。</span><br><span class="line">    gzip_vary on;</span><br><span class="line"></span><br><span class="line">    #limit_zone crawler $binary_remote_addr 10m; #开启限制IP连接数的时候需要使用</span><br><span class="line"></span><br><span class="line">    upstream blog.ha97.com &#123;</span><br><span class="line">        #upstream的负载均衡，weight是权重，可以根据机器配置定义权重。weigth参数表示权值，</span><br><span class="line">        #权值越高被分配到的几率越大。</span><br><span class="line">        server 192.168.80.121:80 weight=3;</span><br><span class="line">        server 192.168.80.122:80 weight=2;</span><br><span class="line">        server 192.168.80.123:80 weight=3;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    #虚拟主机的配置</span><br><span class="line">    server</span><br><span class="line">    &#123;</span><br><span class="line">        #监听端口</span><br><span class="line">        listen 80;</span><br><span class="line">        #域名可以有多个，用空格隔开</span><br><span class="line">        server_name www.ha97.com ha97.com;</span><br><span class="line">        index index.html index.htm index.php;</span><br><span class="line">        root /data/www/ha97;</span><br><span class="line">        location ~ .*\.(php|php5)?$</span><br><span class="line">        &#123;</span><br><span class="line">            fastcgi_pass 127.0.0.1:9000;</span><br><span class="line">            fastcgi_index index.php;</span><br><span class="line">            include fastcgi.conf;</span><br><span class="line">        &#125;</span><br><span class="line">        #图片缓存时间设置</span><br><span class="line">        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$</span><br><span class="line">        &#123;</span><br><span class="line">            expires 10d;</span><br><span class="line">        &#125;</span><br><span class="line">        #JS和CSS缓存时间设置</span><br><span class="line">        location ~ .*\.(js|css)?$</span><br><span class="line">        &#123;</span><br><span class="line">            expires 1h;</span><br><span class="line">        &#125;</span><br><span class="line">        #日志格式设定</span><br><span class="line">        log_format access '$remote_addr - $remote_user [$time_local] "$request" '</span><br><span class="line">        '$status $body_bytes_sent "$http_referer" '</span><br><span class="line">        '"$http_user_agent" $http_x_forwarded_for';</span><br><span class="line">        #定义本虚拟主机的访问日志</span><br><span class="line">        access_log /var/log/nginx/ha97access.log access;</span><br><span class="line">        #对 "/" 启用反向代理</span><br><span class="line">        location / &#123;</span><br><span class="line">            proxy_pass http://127.0.0.1:88;</span><br><span class="line">            proxy_redirect off;</span><br><span class="line">            proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">            #后端的Web服务器可以通过X-Forwarded-For获取用户真实IP</span><br><span class="line">            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">            #以下是一些反向代理的配置，可选。</span><br><span class="line">            proxy_set_header Host $host;</span><br><span class="line">            client_max_body_size 10m; #允许客户端请求的最大单文件字节数</span><br><span class="line">            client_body_buffer_size 128k; #缓冲区代理缓冲用户端请求的最大字节数，</span><br><span class="line">            proxy_connect_timeout 90; #nginx跟后端服务器连接超时时间(代理连接超时)</span><br><span class="line">            proxy_send_timeout 90; #后端服务器数据回传时间(代理发送超时)</span><br><span class="line">            proxy_read_timeout 90; #连接成功后，后端服务器响应时间(代理接收超时)</span><br><span class="line">            proxy_buffer_size 4k; #设置代理服务器（nginx）保存用户头信息的缓冲区大小</span><br><span class="line">            proxy_buffers 4 32k; #proxy_buffers缓冲区，网页平均在32k以下的设置</span><br><span class="line">            proxy_busy_buffers_size 64k; #高负荷下缓冲大小（proxy_buffers*2）</span><br><span class="line">            proxy_temp_file_write_size 64k;</span><br><span class="line">            #设定缓存文件夹大小，大于这个值，将从upstream服务器传</span><br><span class="line">        &#125;</span><br><span class="line">        #设定查看Nginx状态的地址</span><br><span class="line">        location /NginxStatus &#123;</span><br><span class="line">            stub_status on;</span><br><span class="line">            access_log on;</span><br><span class="line">            auth_basic "NginxStatus";</span><br><span class="line">            auth_basic_user_file conf/htpasswd;</span><br><span class="line">            #htpasswd文件的内容可以用apache提供的htpasswd工具来产生。</span><br><span class="line">        &#125;</span><br><span class="line">        #本地动静分离反向代理配置</span><br><span class="line">        #所有jsp的页面均交由tomcat或resin处理</span><br><span class="line">        location ~ .(jsp|jspx|do)?$ &#123;</span><br><span class="line">            proxy_set_header Host $host;</span><br><span class="line">            proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">            proxy_pass http://127.0.0.1:8080;</span><br><span class="line">        &#125;</span><br><span class="line">        #所有静态文件由nginx直接读取不经过tomcat或resin</span><br><span class="line">        location ~ .*.(htm|html|gif|jpg|jpeg|png|bmp|swf|ioc|rar|zip|txt|flv|mid|doc|ppt|pdf|xls|mp3|wma)$</span><br><span class="line">        &#123; expires 15d; &#125;</span><br><span class="line">        location ~ .*.(js|css)?$</span><br><span class="line">        &#123; expires 1h; &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="日志输出重定向"><a href="#日志输出重定向" class="headerlink" title="日志输出重定向"></a>日志输出重定向</h3><h4 id="重定向日志输出到console"><a href="#重定向日志输出到console" class="headerlink" title="重定向日志输出到console"></a>重定向日志输出到console</h4><p>方式一：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># main 格式化方式</span><br><span class="line">access_log  /dev/stdout  main;</span><br><span class="line">error_log  /dev/stderr main;</span><br></pre></td></tr></table></figure></p>
+            <h2 id="ELK组成"><a href="#ELK组成" class="headerlink" title="ELK组成"></a>ELK组成</h2><p>参考链接：<a href="https://zhuanlan.zhihu.com/p/26399963" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/26399963</a></p>
+<p>ELK架构</p>
+<img src="/2017/10/27/Server/Log/elk/elk_framework.jpe" title="架构">
+<ol>
+<li>Shipper：负责收集各种来源的日志数据，可以是系统日志、文件、redis、mq等等；</li>
+<li>Broker：作为Shipper与中心Indexer之间的缓冲区（redis，kafka，RabbitMQ），主要是为了可以提高系统的性能和可靠性，当Indexer提取数据失败时，数据保存在redis中，而不至于丢失；</li>
+<li>Indexer：负责从Broker中取出数据，对数据进行格式化和相关处理后，输出到Elasticsearch中存储；</li>
+<li>Elasticsearch：一个分布式搜索引擎和分析引擎，用于数据存储，可提供实时的数据查询。</li>
+<li>Kibana：一个数据可视化服务，根据用户的操作从Elasticsearch中查询数据，形成相应的分析结果，以图表的形式展现给用户。</li>
+</ol>
+<h2 id="部署ELK方案"><a href="#部署ELK方案" class="headerlink" title="部署ELK方案"></a>部署ELK方案</h2><img src="/2017/10/27/Server/Log/elk/elk_deploy_step.png">
+<ol>
+<li>在每台生成日志文件的机器上，部署Logstash，作为Shipper的角色，负责从日志文件中提取数据，但是不做任何处理，直接将数据输出到Redis队列(list)中；</li>
+<li>需要一台机器部署Logstash，作为Indexer的角色，负责从Redis中取出数据，对数据进行格式化和相关处理后，输出到Elasticsearch中存储；</li>
+<li>部署Elasticsearch集群，当然取决于你的数据量了，数据量小的话可以使用单台服务，如果做集群的话，最好是有3个以上节点，同时还需要部署相关的监控插件；</li>
+<li>部署Kibana服务，提供Web服务。</li>
+</ol>
+<p>在上面的部署方案中，我们将Logstash分为Shipper和Indexer两种角色来完成不同的工作，中间通过Redis做数据管道。</p>
+<p>为什么要这样做？为什么不是直接在每台机器上使用Logstash提取数据、处理、存入Elasticsearch？采用这样的架构部署，有三点优势：</p>
+<ol>
+<li>降低对日志所在机器的影响，这些机器上一般都部署着反向代理或应用服务，本身负载就很重了，所以尽可能的在这些机器上少做事；</li>
+<li>如果有很多台机器需要做日志收集，那么让每台机器都向Elasticsearch持续写入数据，必然会对Elasticsearch造成压力，因此需要对数据进行缓冲，同时这样的缓冲也可以一定程度的保护数据不丢失；</li>
+<li>将日志数据的格式化与处理放到Indexer中统一做，可以在一处修改代码、部署，避免需要到多台机器上去修改配置。</li>
+</ol>
+<h2 id="docker部署ELK"><a href="#docker部署ELK" class="headerlink" title="docker部署ELK"></a>docker部署ELK</h2><p>参考链接：<a href="https://logz.io/blog/docker-logging/" target="_blank" rel="noopener">https://logz.io/blog/docker-logging/</a></p>
+<p>推荐docker：<a href="https://github.com/deviantony/docker-elk" target="_blank" rel="noopener">https://github.com/deviantony/docker-elk</a></p>
+<p>端口占用情况：</p>
+<ul>
+<li>5000: Logstash TCP input.</li>
+<li>9200: Elasticsearch HTTP</li>
+<li>9300: Elasticsearch TCP transport</li>
+<li>5601: Kibana</li>
+</ul>
+<h3 id="Logspout"><a href="#Logspout" class="headerlink" title="Logspout"></a>Logspout</h3><p>Logspout是Docker流行和轻量级的（15.2MB）日志路由器，它将附加到主机中的所有容器，并将Docker日志流输出到syslog服务器（除非定义了不同的输出目标）。</p>
+<h4 id="Filebeat"><a href="#Filebeat" class="headerlink" title="Filebeat"></a>Filebeat</h4><p>Filebeat属于Elastic的Beats系列日志收集组件， Filebeat是用Go语言开发的，支持追踪特定文件和日志加密的中间组件，它可以配置将日志导出到Logstash或者直接导出到Elasticsearch。</p>
+<p>如果没有额外指定，容器的stdout和stderr输出（也称为“docker logs”）输出到JSON文件。所以，如果是一个小型Docker环境，使用Filebeat来收集日志将是不错的选择。但如果使用其他日志记录驱动程序，则可能需要考虑其他方法。</p>
+<h4 id="Logging-Driver"><a href="#Logging-Driver" class="headerlink" title="Logging Driver"></a>Logging Driver</h4><p>Docker从1.12开始支持Logging Driver，允许将Docker日志路由到指定的第三方日志转发层，可将日志转发到AWS CloudWatch，Fluentd，GELF或NAT服务器。</p>
+<hr>
+<h2 id="docker应用服务器配置"><a href="#docker应用服务器配置" class="headerlink" title="docker应用服务器配置"></a>docker应用服务器配置</h2><h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p>日志格式化，日志输出重定向</p>
+<p>http {} 节点添加如下配置信息：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">log_format main '[$remote_addr, $request, $status, $body_bytes_sent, ' </span><br><span class="line">                    '$http_user_agent, $http_referer, $http_x_forwarded_for, $request_time, '</span><br><span class="line">                    '$upstream_response_time, $http_cookie, $http_Authorization, $http_token]';</span><br><span class="line"></span><br><span class="line">access_log /dev/stdout main;</span><br><span class="line">error_log /dev/stdout;</span><br></pre></td></tr></table></figure></p>
 <p>注意，在Docker中<br>/var/log/nginx/access.log -&gt; /dev/stdout<br>/var/log/nginx/error.log -&gt; /dev/stderr</p>
-<p>方式二：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ln -sf /dev/stdout /var/<span class="built_in">log</span>/nginx/access.log</span><br><span class="line">ln -sf /dev/stderr /var/<span class="built_in">log</span>/nginx/error.log</span><br></pre></td></tr></table></figure></p>
-<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><p>参考链接：<a href="http://www.oschina.net/translate/nginx-setup?print" target="_blank" rel="noopener">http://www.oschina.net/translate/nginx-setup?print</a></p>
-<h3 id="events"><a href="#events" class="headerlink" title="events"></a>events</h3><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">events &#123;</span><br><span class="line">    worker_connections 65535;</span><br><span class="line">    multi_accept on;</span><br><span class="line">    use epoll;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>worker_connections：一个worker进程同时打开的最大连接数，最大客户数也由系统的可用socket连接数限制（~ 64K）。<br>multi_accept：如果设置为on，告诉nginx收到一个新连接通知后接受尽可能多的连接。</p>
-<h3 id="http"><a href="#http" class="headerlink" title="http"></a>http</h3><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">http &#123;</span><br><span class="line">    server_tokens off;</span><br><span class="line">    sendfile on;</span><br><span class="line">    tcp_nopush on;</span><br><span class="line">    tcp_nodelay on;</span><br><span class="line"></span><br><span class="line">    gzip on;</span><br><span class="line">    gzip_comp_level 4;</span><br><span class="line">    gzip_min_length 1000;</span><br><span class="line">    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>server_tokens 并不会让nginx执行的速度更快，但它可以关闭在错误页面中的nginx版本数字，这样对于安全性是有好处的。</p>
-<p>sendfile可以让sendfile()发挥作用。sendfile()可以在磁盘和TCP socket之间互相拷贝数据(或任意两个文件描述符)。Pre-sendfile是传送数据之前在用户空间申请数据缓冲区。之后用read()将数据从文件拷贝到这个缓冲区，write()将缓冲区数据写入网络。sendfile()是立即将数据从磁盘读到OS缓存。因为这种拷贝是在内核完成的，sendfile()要比组合read()和write()以及打开关闭丢弃缓冲更加有效。</p>
-<p>tcp_nopush 告诉nginx在一个数据包里发送所有头文件，而不一个接一个的发送</p>
-<p>tcp_nodelay 告诉nginx不要缓存数据，而是一段一段的发送–当需要及时发送数据时，就应该给应用设置这个属性，这样发送一小块数据信息时就不能立即得到返回值。</p>
-<p>gzip是告诉nginx采用gzip压缩的形式发送数据。这将会减少我们发送的数据量。</p>
-<p>gzip_min_length设置对数据启用压缩的最少字节数。如果一个请求小于1000字节，我们最好不要压缩它，因为压缩这些小的数据会降低处理此请求的所有进程的速度。</p>
-<p>gzip_comp_level设置数据的压缩等级。这个等级可以是1-9之间的任意数值，9是最慢但是压缩比最大的。我们设置为4，这是一个比较折中的设置。</p>
-<p>gzip_type设置需要压缩的数据格式。</p>
-<h3 id="HTTPS"><a href="#HTTPS" class="headerlink" title="HTTPS"></a>HTTPS</h3><ul>
-<li>HTTP强制跳转HTTPS</li>
+<p>为了方便logstash进行分割，建议使用如下格式：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">log_format main '&#123;"@timestamp":"$time_iso8601",'</span><br><span class="line">                 '"host":"$server_addr",'</span><br><span class="line">                 '"clientip":"$remote_addr",'</span><br><span class="line">                 '"size":$body_bytes_sent,'</span><br><span class="line">                 '"responsetime":$request_time,'</span><br><span class="line">                 '"upstreamtime":"$upstream_response_time",'</span><br><span class="line">                 '"upstreamhost":"$upstream_addr",'</span><br><span class="line">                 '"http_host":"$host",'</span><br><span class="line">                 '"url":"$uri",'</span><br><span class="line">                 '"xff":"$http_x_forwarded_for",'</span><br><span class="line">                 '"referer":"$http_referer",'</span><br><span class="line">                 '"agent":"$http_user_agent",'</span><br><span class="line">                 '"status":"$status"&#125;';</span><br></pre></td></tr></table></figure></p>
+<h4 id="Logstash-配置信息"><a href="#Logstash-配置信息" class="headerlink" title="Logstash 配置信息"></a>Logstash 配置信息</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">input &#123;</span><br><span class="line">        udp &#123;</span><br><span class="line">                port =&gt; 5000</span><br><span class="line">                type =&gt; "nginx"</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">## Add your filters / logstash plugins configuration here</span><br><span class="line">output &#123;</span><br><span class="line">        elasticsearch &#123;</span><br><span class="line">        hosts =&gt; ["elasticsearch:9200"]</span><br><span class="line">        index =&gt; "logstash-%&#123;type&#125;-%&#123;+YYYY.MM.dd&#125;"</span><br><span class="line">        document_type =&gt; "%&#123;type&#125;"</span><br><span class="line">        flush_size =&gt; 20000</span><br><span class="line">        idle_flush_time =&gt; 10</span><br><span class="line">        sniffing =&gt; true</span><br><span class="line">        template_overwrite =&gt; true</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意：这里input默认是使用TCP，现在修改为UDP，则docker-compse.yml需要修改ports为 “port:5000/udp”</p>
+<p><strong>input参数说明</strong></p>
+<p>type</p>
+<ul>
+<li>对应_type</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen  80;</span><br><span class="line">    server_name www.domain.com domain.com;</span><br><span class="line">    return  301 https://$server_name$request_uri;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Nginx/limite/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/18/Nginx/limite/" itemprop="url">Nginx Limite</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
-                2017-10-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
-                    <span itemprop="name">Nginx</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="http://nginx.org/en/docs/http/ngx_http_limit_req_module.html" target="_blank" rel="noopener">http://nginx.org/en/docs/http/ngx_http_limit_req_module.html</a></p>
-<p><a href="https://www.zzxworld.com/posts/61" target="_blank" rel="noopener">https://www.zzxworld.com/posts/61</a></p>
+<p><strong>output参数说明</strong></p>
+<p>flush_size idle_flush_time</p>
+<ul>
+<li>Logstash 会努力攒到 20000 条数据一次性发送出去，但是如果 10 秒钟内也没攒够 20000 条，Logstash 还是会以当前攒到的数据量发一次。</li>
+</ul>
+<p>index</p>
+<ul>
+<li>写入的 ES 索引的名称，这里可以使用变量。为了更贴合日志场景，Logstash 提供了 %{+YYYY.MM.dd} 这种写法。在语法解析的时候，看到以 + 号开头的，就会自动认为后面是时间格式，尝试用时间格式来解析后续字符串。此外，注意索引名中不能有大写字母，否则 ES 在日志中会报 InvalidIndexNameException，但是 Logstash 不会报错，这个错误比较隐晦，也容易掉进这个坑中。</li>
+</ul>
+<p>hosts</p>
+<ul>
+<li>host 可以设置数组，它会从节点列表中选取不同的节点发送数据，达到 Round-Robin 负载均衡的效果。</li>
+</ul>
+<h4 id="Logstas-过滤日志"><a href="#Logstas-过滤日志" class="headerlink" title="Logstas 过滤日志"></a>Logstas 过滤日志</h4><h4 id="Logspout-1"><a href="#Logspout-1" class="headerlink" title="Logspout"></a>Logspout</h4><p>查看收集Logspout收集nginx日志<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://ip:port/logs</span><br></pre></td></tr></table></figure></p>
+<hr>
+<h3 id="docker日志处理"><a href="#docker日志处理" class="headerlink" title="docker日志处理"></a>docker日志处理</h3><p>在部署一个传统的Linux时，应用程序或者架构记录日志的方式通常记录到文件里，一般会记录到/var/log目录下。</p>
+<p>Docker有什么不同呢？不同于以往将所有日志放在主机系统的统一位置，如今日志分散在很多不同容器的相互隔离的环境中。</p>
+<p>典型ELK日志收集流程如下所示：</p>
+<img src="/2017/10/27/Server/Log/elk/elk_process_docker_logs.png" title="处理流程">
+<p>Logstash负责从各种Docker容器和主机中提取日志，这个流程的主要优点是可以更好地用过滤器来解析日志，Logstash将日志转发到Elasticsearch进行索引，Kibana分析和可视化数据。</p>
+<p>这个流程可以有多种不同的实现方式， 例如可以使用不同的日志收集和转发组件, 如Fluentd或Filebeat 将日志发送到Elasticsearch。或者添加一个由Kafka或Redis容器组成的中间层，作为Logstash和Elasticsearch之间的缓冲区。</p>
+<hr>
+<h3 id="docker-compose"><a href="#docker-compose" class="headerlink" title="docker-compose"></a>docker-compose</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/deviantony/docker-elk.git</span><br><span class="line">docker-compose up</span><br></pre></td></tr></table></figure>
+<p>正常情况下, ELK套件的三个服务(Elasticsearch, Logstash, Kibana)会启动成功，默认持久化数据目录 /var/lib/elasticsearch (Elasticsearch 的数据存储目录)</p>
+<p>测试Elasticsearch<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl localhost:9200</span><br></pre></td></tr></table></figure></p>
+<p>返回结果<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span> : <span class="string">"6cU6dcx"</span>,</span><br><span class="line">  <span class="attr">"cluster_name"</span> : <span class="string">"docker-cluster"</span>,</span><br><span class="line">  <span class="attr">"cluster_uuid"</span> : <span class="string">"PGZdqdKdQiKwh67to_2H7g"</span>,</span><br><span class="line">  <span class="attr">"version"</span> : &#123;</span><br><span class="line">    <span class="attr">"number"</span> : <span class="string">"5.6.3"</span>,</span><br><span class="line">    <span class="attr">"build_hash"</span> : <span class="string">"1a2f265"</span>,</span><br><span class="line">    <span class="attr">"build_date"</span> : <span class="string">"2017-10-06T20:33:39.012Z"</span>,</span><br><span class="line">    <span class="attr">"build_snapshot"</span> : <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"lucene_version"</span> : <span class="string">"6.6.1"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"tagline"</span> : <span class="string">"You Know, for Search"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>打开Kibaba web页面 localhost:5601</p>
+<h4 id="Logspout-收集日志"><a href="#Logspout-收集日志" class="headerlink" title="Logspout 收集日志"></a>Logspout 收集日志</h4><p>如果docker服务使用docker-compose管理，则添加如下配置信息<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">logspout:</span><br><span class="line">     image: gliderlabs/logspout:latest</span><br><span class="line">     volumes:</span><br><span class="line">         - /var/run/docker.sock:/var/run/docker.sock</span><br><span class="line">     ports:</span><br><span class="line">         - "10000:80"</span><br><span class="line">     command:</span><br><span class="line">         syslog://Logstash_IP:Logstash_port</span><br></pre></td></tr></table></figure></p>
+<p>查看logsout收集的日志<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://localhost:10000/logs</span><br></pre></td></tr></table></figure></p>
 
           
         
@@ -773,7 +1019,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Nginx/location/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Linux/Command/mkpasswd/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -792,7 +1038,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/18/Nginx/location/" itemprop="url">location 用法</a></h2>
+                <a class="post-title-link" href="/2017/10/27/Linux/Command/mkpasswd/" itemprop="url">mkpasswd 密码生成</a></h2>
         
 
         <div class="post-meta">
@@ -804,334 +1050,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
-                2017-10-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
-                    <span itemprop="name">Nginx</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="语法规则"><a href="#语法规则" class="headerlink" title="语法规则"></a>语法规则</h3><p>location [=|~|~*|^~] /uri/ { … }</p>
-<table>
-<thead>
-<tr>
-<th>规则</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>= /uri</td>
-<td>表示精确匹配，只有完全匹配上才能生效</td>
-</tr>
-<tr>
-<td>^~ /uri</td>
-<td>对URL路径进行前缀匹配，并且在正则之前</td>
-</tr>
-<tr>
-<td>~ pattern</td>
-<td>表示区分大小写的正则匹配</td>
-</tr>
-<tr>
-<td>~* pattern</td>
-<td>表示不区分大小写的正则匹配</td>
-</tr>
-<tr>
-<td>/uri</td>
-<td>不带任何修饰符，也表示前缀匹配，但是在正则匹配之后</td>
-</tr>
-<tr>
-<td>/</td>
-<td>通用匹配，任何未匹配到其它location的请求都会匹配到，相当于switch中的default</td>
-</tr>
-</tbody>
-</table>
-<p>前缀匹配时，Nginx 不对 url 做编码，因此请求为 /static/20%/aa，可以被规则 ^~ /static/ /aa 匹配到（注意是空格）</p>
-<p>匹配顺序</p>
-<ul>
-<li>首先精确匹配 =</li>
-<li>其次前缀匹配 ^~</li>
-<li>其次是按文件中顺序的正则匹配</li>
-<li>然后匹配不带任何修饰的前缀匹配</li>
-<li>最后是交给 / 通用匹配</li>
-</ul>
-<p>当有匹配成功时候，停止匹配，按当前匹配规则处理请求</p>
-<p>注意：前缀匹配，如果有包含关系时，按最大匹配原则进行匹配。比如在前缀匹配 location /dir01 与 location /dir01/dir02，如有请求 <a href="http://localhost/dir01/dir02/file" target="_blank" rel="noopener">http://localhost/dir01/dir02/file</a> 将最终匹配到 location /dir01/dir02</p>
-<h3 id="匹配举例"><a href="#匹配举例" class="headerlink" title="匹配举例"></a>匹配举例</h3><h4 id="示例1：路径匹配"><a href="#示例1：路径匹配" class="headerlink" title="示例1：路径匹配"></a>示例1：路径匹配</h4><p>匹配规则如下</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">location = / &#123;</span><br><span class="line">   echo "规则A";</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">location = /login &#123;</span><br><span class="line">   echo "规则B";</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">location ^~ /static/ &#123;</span><br><span class="line">   echo "规则C";</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">location ^~ /static/files &#123;</span><br><span class="line">    echo "规则X";</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">location ~ \.(gif|jpg|png|js|css)$ &#123;</span><br><span class="line">   echo "规则D";</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">location ~* \.png$ &#123;</span><br><span class="line">   echo "规则E";</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">location /img &#123;</span><br><span class="line">    echo "规则Y";</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">location / &#123;</span><br><span class="line">   echo "规则F";</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<table>
-<thead>
-<tr>
-<th>访问路径</th>
-<th>示例路径</th>
-<th>匹配规则</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>/</td>
-<td>localhost</td>
-<td>规则A</td>
-<td></td>
-</tr>
-<tr>
-<td>/login</td>
-<td>localhost/login</td>
-<td>规则B</td>
-<td></td>
-</tr>
-<tr>
-<td>/static/a.html</td>
-<td>localhost/static/a.html</td>
-<td>规则C</td>
-<td></td>
-</tr>
-<tr>
-<td>/static/files/a.exe</td>
-<td>localhost/static/files/a.exe</td>
-<td>规则X</td>
-<td>虽然 规则C 也能匹配到，但因为最大匹配原则，最终选中了 规则X</td>
-</tr>
-<tr>
-<td>/a.gif</td>
-<td>localhost/a.gif</td>
-<td>规则D</td>
-<td></td>
-</tr>
-<tr>
-<td>/a.PNG</td>
-<td>localhost/a.PNG</td>
-<td>规则E</td>
-<td>规则E 不区分大小写</td>
-</tr>
-<tr>
-<td>/b.png</td>
-<td>localhost/b.png</td>
-<td>规则D</td>
-<td>规则D 顺序优先，规则E 不起作用</td>
-</tr>
-<tr>
-<td>/static/c.png</td>
-<td>localhost/static/c.png</td>
-<td>规则C</td>
-<td>优先匹配到 规则C</td>
-</tr>
-<tr>
-<td>/img/a.gif</td>
-<td>localhost/img/a.gif</td>
-<td>规则D</td>
-<td>规则Y 也可以匹配上，但是因为正则匹配优先，而忽略了规则Y</td>
-</tr>
-<tr>
-<td>/img/a.tiff</td>
-<td>localhost/img/a.tiff</td>
-<td>规则Y</td>
-<td></td>
-</tr>
-<tr>
-<td>/register</td>
-<td>localhost/register</td>
-<td>规则F</td>
-<td></td>
-</tr>
-<tr>
-<td>/category/id/1111</td>
-<td>localhost/category/id/1111</td>
-<td>规则F</td>
-</tr>
-</tbody>
-</table>
-<h4 id="示例2：常用匹配规则"><a href="#示例2：常用匹配规则" class="headerlink" title="示例2：常用匹配规则"></a>示例2：常用匹配规则</h4><p>nginx 作为 http 服务器的强项</p>
-<p>方式一：目录匹配<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">location ^~ /static/ &#123;</span><br><span class="line">    root /webroot/static/;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>方式二：后缀匹配<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">location ~* \.(gif|jpg|jpeg|png|css|js|ico)$ &#123;</span><br><span class="line">    root /webroot/res/;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<hr>
-<p>转发动态请求到后端应用服务器</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">location / &#123;</span><br><span class="line">    proxy_pass http://tomcat:8080/</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>直接匹配网站根，通过域名访问网站首页比较频繁，使用这个会加速处理。这里是直接转发给后端应用服务器了，也可以是一个静态首页</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">location = / &#123;</span><br><span class="line">    proxy_pass http://tomcat:8080/index</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="403-Forbidden"><a href="#403-Forbidden" class="headerlink" title="403 Forbidden"></a>403 Forbidden</h3><p>检查步骤</p>
-<ol>
-<li><p>关闭SELinux</p>
-<ul>
-<li>查看状态 sestatus –v</li>
-<li>临时关闭 setenforce 0 (需要root身份)，修改为permissive模式</li>
-</ul>
-</li>
-</ol>
-<ol start="2">
-<li><p>检查用户权限, 确认配置文件里面的user是否有权限访问路径</p>
-<ul>
-<li>修改目录权限 <chmod 755="" -r="" 目录=""></chmod></li>
-<li>修改目录所属用户 <chown -r="" nginx:nginx="" 目录=""></chown></li>
-</ul>
-</li>
-</ol>
-<ol start="3">
-<li>确认文件存在</li>
-</ol>
-<h3 id="uri末尾-作用"><a href="#uri末尾-作用" class="headerlink" title="uri末尾 / 作用"></a>uri末尾 / 作用</h3><h4 id="反向代理"><a href="#反向代理" class="headerlink" title="反向代理"></a>反向代理</h4><p>测试路径:<a href="http://localhost/proxy/test.html" target="_blank" rel="noopener">http://localhost/proxy/test.html</a></p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> location  /proxy/ &#123;</span><br><span class="line">    proxy_pass http://127.0.0.1:8000/;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>实际访问路径为 <a href="http://127.0.0.1:8000/test.html" target="_blank" rel="noopener">http://127.0.0.1:8000/test.html</a></p>
-<hr>
-<p>如果去掉末尾 / </p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> location  /proxy &#123;</span><br><span class="line">    proxy_pass http://127.0.0.1:8000/;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>实际访问路径为 <a href="http://127.0.0.1:8000/proxy/test.html" target="_blank" rel="noopener">http://127.0.0.1:8000/proxy/test.html</a></p>
-<hr>
-<p>代理地址不包含 /</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> location  /proxy/ &#123;</span><br><span class="line">    proxy_pass http://127.0.0.1:8000/api;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>实际访问路径:<a href="http://127.0.0.1:8000/proxy/api/test.html" target="_blank" rel="noopener">http://127.0.0.1:8000/proxy/api/test.html</a></p>
-<hr>
-<p>代理地址包含 /</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> location  /proxy/ &#123;</span><br><span class="line">    proxy_pass http://127.0.0.1:8000/api/;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>实际访问路径:<a href="http://127.0.0.1:8000/proxy/api/test.html" target="_blank" rel="noopener">http://127.0.0.1:8000/proxy/api/test.html</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/Command/disk/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/18/Linux/Command/disk/" itemprop="url">磁盘命令</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T11:38:57+08:00">
-                2017-10-18
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T11:55:07+08:00">
+                2017-10-27
               </time>
             
 
@@ -1203,8 +1123,14 @@
       
         
           
-            <h2 id="dd"><a href="#dd" class="headerlink" title="dd"></a>dd</h2><p>dd if=path/fedora.iso of=/dev/sdX<br>注意：<br>    if指向的是iso镜像 of指向的是写入目标；<br>    of的指向目标是整个磁盘，比如是/dev/sde，而不是类似/dev/sde1这样的某个磁盘分区；</p>
-
+            <h3 id="命令参数"><a href="#命令参数" class="headerlink" title="命令参数"></a>命令参数</h3><p>-l 标志定义口令长度。缺省值为9</p>
+<ul>
+<li>生成一个20位的密码 mkpasswd -l 20</li>
+</ul>
+<p>-c 标志定义口令必须包含的最少小写字母个数。缺省值为2。</p>
+<p>-C 标志定义口令必须包含的最少大写字母个数。缺省值也是2。</p>
+<p>-p 标志标明设立口令的程序。如果/etc/yppasswd存在的话则它为缺省值，否则就用/bin/passwd。</p>
+<h3 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h3><h4 id="建立一个15位包含至少3位数字和5位大写字符的口令"><a href="#建立一个15位包含至少3位数字和5位大写字符的口令" class="headerlink" title="建立一个15位包含至少3位数字和5位大写字符的口令"></a>建立一个15位包含至少3位数字和5位大写字符的口令</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkpasswd -l 15 -d 3 -C 5</span><br></pre></td></tr></table></figure>
           
         
       
@@ -1252,7 +1178,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/Command/network/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Database/MySQL/Backup/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1271,7 +1197,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/18/Linux/Command/network/" itemprop="url">network 命令</a></h2>
+                <a class="post-title-link" href="/2017/10/27/Database/MySQL/Backup/" itemprop="url">MySQL 备份</a></h2>
         
 
         <div class="post-meta">
@@ -1283,8 +1209,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T11:38:57+08:00">
-                2017-10-18
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T11:55:07+08:00">
+                2017-10-27
               </time>
             
 
@@ -1306,8 +1232,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
                   </a>
                 </span>
 
@@ -1317,8 +1243,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
                   </a>
                 </span>
 
@@ -1356,100 +1282,12 @@
       
         
           
-            <h3 id="nmap"><a href="#nmap" class="headerlink" title="nmap"></a>nmap</h3><p>例如，对指定IP上所有的保留TCP端口做了一次扫描，-v表示用详细模式。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -v IP</span><br></pre></td></tr></table></figure>
-<p>输出结果<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">PORT   STATE SERVICE</span><br><span class="line">22/tcp open  ssh</span><br><span class="line">80/tcp open  http</span><br></pre></td></tr></table></figure></p>
-<p>例如，扫描指定范围</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -p 1024-65535 IP</span><br></pre></td></tr></table></figure>
-<h3 id="Hping"><a href="#Hping" class="headerlink" title="Hping"></a>Hping</h3><p>Hping是一个命令行下使用的TCP/IP数据包组装/分析工具，其命令模式很像Unix下的ping命令，但是它不是只能发送ICMP回应请求，它还可以支持TCP、UDP、ICMP和RAW-IP协议，它有一个路由跟踪模式，能够在两个相互包含的通道之间传送文件。</p>
-<p>Hping常被用于检测网络和主机，其功能非常强大，可在多种操作系统下运行，如Linux，FreeBSD，NetBSD，OpenBSD，Solaris，MacOs X，Windows。</p>
-<p><strong>主要功能</strong></p>
-<ul>
-<li>防火墙测试</li>
-<li>实用的端口扫描</li>
-<li>网络检测，可以用不同的协议、服务类型(TOS)、IP分片</li>
-<li>手工探测MTU(最大传输单元)路径</li>
-<li>先进的路由跟踪，支持所有的协议</li>
-<li>远程操作系统探测</li>
-<li>远程的运行时间探测</li>
-<li>TCP/IP堆栈审计</li>
-</ul>
-<h4 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h4><blockquote>
-<p><a href="https://blog.csdn.net/freeking101/article/details/72582964" target="_blank" rel="noopener">https://blog.csdn.net/freeking101/article/details/72582964</a><br><a href="https://www.hi-linux.com/posts/57862.html" target="_blank" rel="noopener">https://www.hi-linux.com/posts/57862.html</a></p>
-</blockquote>
-<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><p>发送ICMP测试包</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo hping www.baidu.com -1</span><br><span class="line"></span><br><span class="line"><span class="comment"># UDP</span></span><br><span class="line"><span class="comment"># sudo hping www.baidu.com -2</span></span><br></pre></td></tr></table></figure>
-<h3 id="MTR"><a href="#MTR" class="headerlink" title="MTR"></a>MTR</h3><h4 id="Install"><a href="#Install" class="headerlink" title="Install"></a>Install</h4><ul>
-<li>Mac<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">brew install mtr</span><br><span class="line"><span class="built_in">cd</span> /usr/<span class="built_in">local</span>/Cellar/mtr/0.86/sbin</span><br><span class="line">cp mtr /usr/<span class="built_in">local</span>/bin/</span><br><span class="line"></span><br><span class="line"><span class="comment"># If you get a permission error, run:</span></span><br><span class="line">sudo cp mtr /usr/<span class="built_in">local</span>/bin/</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-<h4 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h4><ul>
-<li>追踪路由</li>
-</ul>
-<blockquote>
-<p>mtr ip</p>
-</blockquote>
-<p>输出结果说明</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Host  Loss%   Snt   Last   Avg  Best  Wrst StDev</span><br></pre></td></tr></table></figure>
-<ul>
-<li>Snt：设置每秒发送数据包的数量，默认值是10 可以通过参数 -c来指定。</li>
-<li>Loss% – 丢包率，单位是”%”;</li>
-<li>Last – 最后一个包的延时</li>
-<li>Avg – 所有包的平均延时</li>
-<li>Best – 延时最小的包</li>
-<li>Wrst – 延时最大的包</li>
-<li>StDev – 标准偏差</li>
-</ul>
-<hr>
-<h3 id="ping"><a href="#ping" class="headerlink" title="ping"></a>ping</h3><p>ping命令用来测试主机之间网络的连通性。执行ping指令会使用ICMP传输协议，发出要求回应的信息，若远端主机的网络功能没有问题，就会回应该信息，因而得知该主机运作正常。</p>
-<h4 id="参数说明"><a href="#参数说明" class="headerlink" title="参数说明"></a>参数说明</h4><ul>
-<li>-c 发送次数</li>
-<li>-i 发送间隔，单位秒</li>
-<li>-s 数据包大小，单位byte</li>
-<li>-R 记录路由过程，很多主机会忽略或禁止</li>
-<li>-v 详细显示指令的执行过程</li>
-</ul>
-<hr>
-<h3 id="telnet"><a href="#telnet" class="headerlink" title="telnet"></a>telnet</h3><h4 id="尝试连接"><a href="#尝试连接" class="headerlink" title="尝试连接"></a>尝试连接</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">telnet IP PORT</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="netstat"><a href="#netstat" class="headerlink" title="netstat"></a>netstat</h3><p>打印Linux中网络系统的状态信息，可让你得知整个Linux系统的网络情况。</p>
-<h4 id="参"><a href="#参" class="headerlink" title="参"></a>参</h4><p>数选项</p>
-<h4 id="常用命令-1"><a href="#常用命令-1" class="headerlink" title="常用命令"></a>常用命令</h4><ul>
-<li>查看网络接口</li>
-</ul>
-<p>等价 ifconfig</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -ie</span><br></pre></td></tr></table></figure>
-<ul>
-<li>查看端口</li>
-</ul>
-<p>查看所有端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -a</span><br></pre></td></tr></table></figure>
-<p>查看TCP端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -at</span><br></pre></td></tr></table></figure>
-<p>查看UDP端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -au</span><br></pre></td></tr></table></figure>
-<hr>
-<ul>
-<li>查看监听端口</li>
-</ul>
-<p>查看所有监听端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -l</span><br></pre></td></tr></table></figure>
-<p>查看监听TCP端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -lt</span><br></pre></td></tr></table></figure>
-<p>查看监听UDP端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -lu</span><br></pre></td></tr></table></figure>
-<ul>
-<li>查看监听端口与进程</li>
-</ul>
-<p>查看所有端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">netstat -p</span><br><span class="line"></span><br><span class="line">netstat -lp</span><br></pre></td></tr></table></figure>
-<p>查看TCP端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">netstat -pt</span><br><span class="line"></span><br><span class="line">netstat -lpt</span><br></pre></td></tr></table></figure>
-<ul>
-<li>查看指定端口的进程</li>
-</ul>
-<p>查看80端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -an | grep <span class="string">":80"</span></span><br></pre></td></tr></table></figure>
+            <h2 id="mysqlpump"><a href="#mysqlpump" class="headerlink" title="mysqlpump"></a>mysqlpump</h2><p>命令参考链接</p>
+<p><a href="http://www.ywnds.com/?p=7272" target="_blank" rel="noopener">http://www.ywnds.com/?p=7272</a><br>官方文档</p>
+<p><a href="https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html</a></p>
+<h3 id="备份脚本-1-0"><a href="#备份脚本-1-0" class="headerlink" title="备份脚本 1.0"></a>备份脚本 1.0</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/bin/mysqlpump</span><br><span class="line"><span class="comment"># --databases（-B） 数据库名，多个以“，”间隔;</span></span><br><span class="line"><span class="comment"># --set-charset：备份文件里写SET NAMES default_character_set 到输出，此参默认开启。</span></span><br><span class="line"><span class="comment"># --single-transaction：该参数在事务隔离级别设置成Repeatable Read，并在dump之前发送start transaction 语句给服务端。</span></span><br><span class="line"><span class="comment"># --watch-progress：定期显示进度的完成，包括总数表、行和其他对象。该参数默认开启</span></span><br><span class="line"><span class="comment"># --default-parallelism 指定并行线程数，默认是2，如果设置成0，表示不使用并行备份。</span></span><br><span class="line"><span class="comment"># --exclude-tables=database.table 排除指定表，每次指定一张表，如果需要排除多张表，则使用多次即可</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -databases db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
+<h3 id="服务器centos脚本"><a href="#服务器centos脚本" class="headerlink" title="服务器centos脚本"></a>服务器centos脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/usr/bin/mysqlpump</span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -B db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
+<h3 id="恢复数据库"><a href="#恢复数据库" class="headerlink" title="恢复数据库"></a>恢复数据库</h3><h4 id="Centos7"><a href="#Centos7" class="headerlink" title="Centos7"></a>Centos7</h4><p>解压文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zlib_decompress file.zlip mysql.sql</span><br></pre></td></tr></table></figure></p>
 
           
         
@@ -1498,7 +1336,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/VPN/brook/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/26/Docker/MySQL/error/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1517,7 +1355,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/18/Linux/VPN/brook/" itemprop="url">Brook</a></h2>
+                <a class="post-title-link" href="/2017/10/26/Docker/MySQL/error/" itemprop="url">MySQL Docker Error</a></h2>
         
 
         <div class="post-meta">
@@ -1529,8 +1367,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T10:31:58+08:00">
-                2017-10-18
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-26T10:23:03+08:00">
+                2017-10-26
               </time>
             
 
@@ -1552,8 +1390,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
+                  <a href="/categories/dev-tools/" itemprop="url" rel="index">
+                    <span itemprop="name">dev_tools</span>
                   </a>
                 </span>
 
@@ -1563,8 +1401,19 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/vpn/" itemprop="url" rel="index">
-                    <span itemprop="name">vpn</span>
+                  <a href="/categories/dev-tools/docker/" itemprop="url" rel="index">
+                    <span itemprop="name">docker</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/dev-tools/docker/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
                   </a>
                 </span>
 
@@ -1602,29 +1451,8 @@
       
         
           
-            <h3 id="Brook"><a href="#Brook" class="headerlink" title="Brook"></a>Brook</h3><p>Brook 是一个高效的 Socks5 代理软件，官方支持Windows、Linux、MacOS、IOS、Android、树莓派等设备，同时是使用 Golang 语言编写，安装、使用异常简单。</p>
-<p>Brook 支持 自主研发 Brook 协议+Stream Brook 协议、Shadowsocks 协议、SOCKS5 协议、TCP/UDP 转发、SOCKS5代理转HTTP代理 等功能。</p>
-<p>Brook 支持 UDP转发，无需任何设置。</p>
-<p>支持单端口和多端口(每个端口可以单独设定密码)，这点类似于 Shadowsocks 和 ShadowsocksR 的单用户服务端。</p>
-<p>Github项目：<a href="https://github.com/txthinking/brook" target="_blank" rel="noopener">https://github.com/txthinking/brook</a></p>
-<h4 id="服务器安装"><a href="#服务器安装" class="headerlink" title="服务器安装"></a>服务器安装</h4><p>CentOS 6+ / Debian 6+ / Ubuntu 14.04 +</p>
-<p>推荐 Debian 7 x64，脚本在这个系统上面出错率最低。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget -N --no-check-certificate https://softs.fun/Bash/brook.sh &amp;&amp; chmod +x brook.sh &amp;&amp; bash brook.sh</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 如果上面这个脚本无法下载，尝试使用备用下载：</span></span><br><span class="line">wget -N --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubi/doubi/master/brook.sh &amp;&amp; chmod +x brook.sh &amp;&amp; bash brook.sh</span><br></pre></td></tr></table></figure>
-<h4 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h4><p><a href="https://doub.io/brook-jc2/" target="_blank" rel="noopener">https://doub.io/brook-jc2/</a></p>
-<ol>
-<li>Windows</li>
-</ol>
-<p>运行下载的 Brook客户端后，右下角托盘图标会有一个黑色的钥匙。</p>
-<p>右键托盘图标，选择 Setting 选项，然后浏览器就会就会自动打开一个网页：<a href="http://local.txthinking.com:1980/" target="_blank" rel="noopener">http://local.txthinking.com:1980/</a></p>
-<p>这个网页就是 Brook的控制面板了。</p>
-<ol start="2">
-<li>Linux</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brook client -l 127.0.0.1:1080 -i 127.0.0.1 -s server_address:port -p password</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="GoFlyway"><a href="#GoFlyway" class="headerlink" title="GoFlyway"></a>GoFlyway</h3><p><a href="https://doub.io/goflyway-jc2/" target="_blank" rel="noopener">https://doub.io/goflyway-jc2/</a></p>
-<hr>
-<h3 id="goproxy"><a href="#goproxy" class="headerlink" title="goproxy"></a>goproxy</h3><p><a href="https://blog.kuoruan.com/108.html" target="_blank" rel="noopener">https://blog.kuoruan.com/108.html</a></p>
+            <h3 id="Centos-7-2002-“Can’t-connect-to-local-MySQL-server-through-socket-‘-var-run-mysqld-mysqld-sock’-2-”"><a href="#Centos-7-2002-“Can’t-connect-to-local-MySQL-server-through-socket-‘-var-run-mysqld-mysqld-sock’-2-”" class="headerlink" title="Centos 7 (2002, “Can’t connect to local MySQL server through socket ‘/var/run/mysqld/mysqld.sock’ (2)”)"></a>Centos 7 (2002, “Can’t connect to local MySQL server through socket ‘/var/run/mysqld/mysqld.sock’ (2)”)</h3><p>从错误提示可知，很由可能就是因为程序连接MySQL数据库时，查找不到/var/run/mysqld/mysqld.sock文件</p>
+<p>解决方法：docker增加文件映射 /var/lib/mysql/mysql.sock:/var/run/mysqld/mysqld.sock</p>
 
           
         
@@ -1673,7 +1501,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/VPN/dns/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/25/Python/Django/RestFramework/permission/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1692,7 +1520,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/18/Linux/VPN/dns/" itemprop="url">DNS</a></h2>
+                <a class="post-title-link" href="/2017/10/25/Python/Django/RestFramework/permission/" itemprop="url">Django Rest Permission</a></h2>
         
 
         <div class="post-meta">
@@ -1704,169 +1532,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T10:31:58+08:00">
-                2017-10-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/vpn/" itemprop="url" rel="index">
-                    <span itemprop="name">vpn</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="PaBoDNS"><a href="#PaBoDNS" class="headerlink" title="PaBoDNS"></a>PaBoDNS</h3><p>NS1: 101.200.33.29<br>NS2: 118.89.172.150</p>
-<h3 id="SNI-Proxy"><a href="#SNI-Proxy" class="headerlink" title="SNI Proxy"></a>SNI Proxy</h3><p>前提：海外服务器123.123.123.123上面已经搭建了SNI Proxy，本地host添加 123.123.123.123 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></p>
-<p>访问<a href="http://www.google.com过程" target="_blank" rel="noopener">www.google.com过程</a></p>
-<ol>
-<li>浏览器访问 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></li>
-<li>浏览器访根据host文件，把请求数据转发给123.123.123.123，</li>
-<li>SNI Proxy服务器收到请求后，把数据转发给 <a href="http://www.google.com，然后把获取到的数据返回请求来源" target="_blank" rel="noopener">www.google.com，然后把获取到的数据返回请求来源</a></li>
-<li>浏览器可以看到 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a> 返回的数据</li>
-</ol>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/17/Python/Django/Database/update/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/17/Python/Django/Database/update/" itemprop="url">数据库更新操作</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-17T16:16:38+08:00">
-                2017-10-17
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-25T20:13:03+08:00">
+                2017-10-25
               </time>
             
 
@@ -1910,8 +1577,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/database/" itemprop="url" rel="index">
-                    <span itemprop="name">database</span>
+                  <a href="/categories/python/django/rest/" itemprop="url" rel="index">
+                    <span itemprop="name">rest</span>
                   </a>
                 </span>
 
@@ -1949,13 +1616,10 @@
       
         
           
-            <h3 id="批量更新字段"><a href="#批量更新字段" class="headerlink" title="批量更新字段"></a>批量更新字段</h3><h4 id="更新对象的单个字段"><a href="#更新对象的单个字段" class="headerlink" title="更新对象的单个字段"></a>更新对象的单个字段</h4><p>直接更新数据库</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.filter(pub_date__year=<span class="number">2010</span>).update(comments_on=<span class="keyword">False</span>)</span><br></pre></td></tr></table></figure>
-<hr>
-<p>通过实例对象更新</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">instance.save(update_fields=[</span><br><span class="line">                <span class="string">'field'</span>,</span><br><span class="line">            ])</span><br></pre></td></tr></table></figure>
-<p>save()添加update_fields参数，表示更新指定字段值</p>
-<h4 id="更新对象的多个字段"><a href="#更新对象的多个字段" class="headerlink" title="更新对象的多个字段"></a>更新对象的多个字段</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.filter(pub_date__year=<span class="number">2010</span>).update(comments_on=<span class="keyword">False</span>, headline=<span class="string">'This is old'</span>)</span><br></pre></td></tr></table></figure>
+            <h3 id="API-Permission"><a href="#API-Permission" class="headerlink" title="API Permission"></a>API Permission</h3><h4 id="示例代码1：CRUD权限"><a href="#示例代码1：CRUD权限" class="headerlink" title="示例代码1：CRUD权限"></a>示例代码1：CRUD权限</h4><p>创建API权限管理类</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasePerms</span><span class="params">(BasePermission)</span>:</span></span><br><span class="line">    <span class="comment"># API require permissions</span></span><br><span class="line">    api_perms = []</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">check_user_perms</span><span class="params">(user, perms)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> user <span class="keyword">and</span> perms <span class="keyword">and</span> isinstance(perms, list):</span><br><span class="line">            <span class="keyword">return</span> user.has_perms(perms)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">check_user_perm</span><span class="params">(user, codename)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> user <span class="keyword">and</span> codename:</span><br><span class="line">            <span class="keyword">return</span> user.has_perm(codename)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseModelAPIPerms</span><span class="params">(BasePerms)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">has_permission</span><span class="params">(self, request, view)</span>:</span></span><br><span class="line">        <span class="comment"># is_superuser 超级权限</span></span><br><span class="line">        <span class="keyword">if</span> request.user.is_superuser:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line"></span><br><span class="line">        codename = self.get_codename(request, view)</span><br><span class="line">        <span class="keyword">return</span> self.check_user_perm(request.user, codename)</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_codename</span><span class="params">(request, view)</span>:</span></span><br><span class="line">        req_method = request.method</span><br><span class="line">        serializer_class = view.serializer_class</span><br><span class="line">        codename = <span class="string">''</span></span><br><span class="line">        <span class="keyword">if</span> serializer_class:</span><br><span class="line">            meta = serializer_class.Meta</span><br><span class="line">            <span class="keyword">if</span> meta:</span><br><span class="line">                model = meta.model</span><br><span class="line">                <span class="keyword">if</span> model:</span><br><span class="line">                    model_attr = getattr(model, <span class="string">'_meta'</span>)</span><br><span class="line">                    codename = <span class="string">"%s.&#123;&#125;_%s"</span> % (getattr(model_attr, <span class="string">'app_label'</span>, <span class="string">''</span>),</span><br><span class="line">                                             getattr(model_attr, <span class="string">'model_name'</span>, <span class="string">''</span>))</span><br><span class="line">                    <span class="keyword">if</span> req_method == <span class="string">'GET'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"access"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'POST'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"add"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'PUT'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"change"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'DELETE'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"delete"</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> codename</span><br></pre></td></tr></table></figure>
+<p>API使用权限管理类</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ProjectViewSet</span><span class="params">(CreateProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     RetrieveProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     UpdateProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     DestroyProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     ProjectListPermission,</span></span></span><br><span class="line"><span class="class"><span class="params">                     BaseModelApi)</span>):</span></span><br><span class="line">    permission_classes = [IsAuthenticated, ProjectAPIPerm]</span><br><span class="line">    serializer_class = ProjectWithAttrSerializer</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_class</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">            返回Class对象</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="keyword">return</span> Project</span><br></pre></td></tr></table></figure>
           
         
       
@@ -2003,7 +1667,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/17/Git/commit/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/25/Python/Django/Authentication/authentication-system/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -2022,7 +1686,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/17/Git/commit/" itemprop="url">git commit</a></h2>
+                <a class="post-title-link" href="/2017/10/25/Python/Django/Authentication/authentication-system/" itemprop="url">Django Authentication System</a></h2>
         
 
         <div class="post-meta">
@@ -2034,8 +1698,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-17T10:33:06+08:00">
-                2017-10-17
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-25T08:13:03+08:00">
+                2017-10-25
               </time>
             
 
@@ -2057,8 +1721,30 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/git/" itemprop="url" rel="index">
-                    <span itemprop="name">git</span>
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/authentication/" itemprop="url" rel="index">
+                    <span itemprop="name">authentication</span>
                   </a>
                 </span>
 
@@ -2096,55 +1782,214 @@
       
         
           
-            <h2 id="git-文件状态变化周期说明"><a href="#git-文件状态变化周期说明" class="headerlink" title="git 文件状态变化周期说明"></a>git 文件状态变化周期说明</h2><img src="/2017/10/17/Git/commit/git_file_lifecycle.png" title="lifecycle">
-<p>目录下的文件主要分为两种：已跟踪和未跟踪。</p>
-<ul>
-<li>已跟踪：被纳入版本控制管理。在上次快照中有记录，工作一段时间后，状态可能是未更新，已修改或已放入stage。</li>
-<li>未跟踪：还没有被纳入版本控制管理。</li>
-</ul>
-<h3 id="状态变化说明"><a href="#状态变化说明" class="headerlink" title="状态变化说明"></a>状态变化说明</h3><h4 id="文件未跟踪"><a href="#文件未跟踪" class="headerlink" title="文件未跟踪"></a>文件未跟踪</h4><ol>
-<li>新建一个文件a.txt，此时文件处于untracked（未跟踪），处于该状态的文件是无法提交的。</li>
-<li>git add a.txt，此时文件变为tracked（已跟踪），此时文件可以提交。</li>
-<li>git commit -m “created new file: a.txt”，提交文件。</li>
-</ol>
-<h4 id="文件已跟踪"><a href="#文件已跟踪" class="headerlink" title="文件已跟踪"></a>文件已跟踪</h4><ol>
-<li>git add a.txt，此时文件进入stage区，此时文件可以提交。</li>
-<li>git commit -m “modify file: a.txt”，提交文件。</li>
-</ol>
+            <h2 id="User"><a href="#User" class="headerlink" title="User"></a>User</h2><h3 id="默认属性"><a href="#默认属性" class="headerlink" title="默认属性"></a>默认属性</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">username</span><br><span class="line">password</span><br><span class="line">email</span><br><span class="line">first_name</span><br><span class="line">last_name</span><br></pre></td></tr></table></figure>
+<h3 id="Diagram"><a href="#Diagram" class="headerlink" title="Diagram"></a>Diagram</h3><img src="/2017/10/25/Python/Django/Authentication/authentication-system/django_user_diagram.png" title="User UML">
+<h3 id="所属方法"><a href="#所属方法" class="headerlink" title="所属方法"></a>所属方法</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">is_anonymous()：</span><br><span class="line">　　　　永远返回<span class="keyword">False</span>.用来将User对象和AnonymousUser(未登录的匿名用户)对象作区分用的识别方法。通常，最好用</span><br><span class="line">is_authenticated()方法。</span><br><span class="line"></span><br><span class="line">　　is_authenticated()：</span><br><span class="line">　　　　永远返回<span class="keyword">True</span>。该方法不代表该用户有任何的许可，也不代表该用户是active的，而只是表明该用户提供了正确的username和password。</span><br><span class="line"></span><br><span class="line">　　get_full_name()：</span><br><span class="line">　　　　返回一个字符串，是first_name和last_name中间加一个空格组成。</span><br><span class="line"></span><br><span class="line">　　set_password(raw_password)：</span><br><span class="line">　　　　调用该方法时候传入一个明文密码，该方法会进行hash转换。该方法调用之后并不会保存User对象。</span><br><span class="line"></span><br><span class="line">　　check_password(raw_password)：</span><br><span class="line">　　　　如果传入的明文密码是正确的返回<span class="keyword">True</span>。该方法和set_password是一对，也会考虑hash转换。</span><br><span class="line"></span><br><span class="line">　　set_unusable_password()：</span><br><span class="line">　　　　将用户设置为没有密码的状态。调用该方法后，check_password()方法将会永远返回false。但是如果，调用set_password()方法重新设置密码后，该方法将会失效，has_usable_password()也会返回<span class="keyword">True</span>。</span><br><span class="line"></span><br><span class="line">　　has_usable_password()：</span><br><span class="line">　　　　在调用set_unusable_password()方法之后，该方法返回<span class="keyword">False</span>，正常情况下返回<span class="keyword">True</span>。</span><br><span class="line"></span><br><span class="line">　　get_group_permissions(obj=<span class="keyword">None</span>)：</span><br><span class="line">　　　　返回该用户通过组所拥有的许可（字符串列表每一个代表一个许可）。obj如果指定，将会返回关于该对象的许可，而不是模型。</span><br><span class="line"></span><br><span class="line">　　get_all_permissions(obj=<span class="keyword">None</span>):</span><br><span class="line">　　　　返回该用户所拥有的所有的许可，包括通过组的和通过用户赋予的许可。</span><br><span class="line"></span><br><span class="line">　　has_perm(perm,obj=<span class="keyword">None</span>)：</span><br><span class="line">　　　　如果用户有传入的perm，则返回<span class="keyword">True</span>。perm可以是一个格式为：<span class="string">'&lt;app label&gt;.&lt;permission codename&gt;'</span>的字符串。如果User对象为inactive，该方法永远返回<span class="keyword">False</span>。和前面一样，如果传入obj，则判断该用户对于这个对象是否有这个许可。</span><br><span class="line"></span><br><span class="line">　　has_perms(perm_list,obj=<span class="keyword">None</span>)：</span><br><span class="line">　　　　和has_perm一样，不同的地方是第一个参数是一个perm列表，只有用户拥有传入的每一个perm，返回值才是<span class="keyword">True</span>。</span><br><span class="line"></span><br><span class="line">　　has_module_perms(package_name)：</span><br><span class="line">　　　　传入的是Django app label，按照<span class="string">'&lt;app label&gt;.&lt;permission codename&gt;'</span>格式。当用户拥有该app label下面所有的perm时，返回值为<span class="keyword">True</span>。如果用户为inactive，返回值永远为<span class="keyword">False</span>。</span><br><span class="line"></span><br><span class="line">　　email_user(subject,message,from_email=<span class="keyword">None</span>)：</span><br><span class="line">　　　　发送一封邮件给这个用户，依靠的当然是该用户的email属性。如果from_email不提供的话，Django会使用settings中的DEFAULT_FROM_EMAIL发送。</span><br><span class="line"></span><br><span class="line">　　get_profile()：</span><br><span class="line">　　　　返回一个和Site相关的profile对象，用来存储额外的用户信息。这个返回值会在另一片博文中详细描述。</span><br></pre></td></tr></table></figure>
+<h3 id="创建管理员用户"><a href="#创建管理员用户" class="headerlink" title="创建管理员用户"></a>创建管理员用户</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py createsuperuser --username=joe --email=joe@example.com</span><br></pre></td></tr></table></figure>
+<h3 id="修改User-Ojbect的密码"><a href="#修改User-Ojbect的密码" class="headerlink" title="修改User Ojbect的密码"></a>修改User Ojbect的密码</h3><p>方式一：代码<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">u = User.objects.get(username=<span class="string">'john'</span>)</span><br><span class="line">u.set_password(<span class="string">'new password'</span>)</span><br><span class="line">u.save()</span><br></pre></td></tr></table></figure></p>
+<p>方式二：后台管理</p>
+<p>登陆自带的后台管理系统修改用户密码</p>
+<p><strong>注意：用户修改密码后，根据自己系统的设计，可能需要更新session，否则可能会遇到Session invalidation on password change</strong></p>
+<h3 id="验证用户"><a href="#验证用户" class="headerlink" title="验证用户"></a>验证用户</h3><h4 id="默认验证用户方法"><a href="#默认验证用户方法" class="headerlink" title="默认验证用户方法"></a>默认验证用户方法</h4><p>django.contrib.auth.backends.ModelBackend</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.contrib.auth <span class="keyword">import</span> authenticate</span><br><span class="line">user = authenticate(username=<span class="string">'john'</span>, password=<span class="string">'secret'</span>)</span><br><span class="line"><span class="keyword">if</span> user <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">    <span class="comment"># A backend authenticated the credentials</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    <span class="comment"># No backend authenticated the credentials</span></span><br></pre></td></tr></table></figure>
+<p>如果验证不通过，系统抛出PermissionDenied异常</p>
 <hr>
-<h3 id="commit-m-与-commit-am-区别"><a href="#commit-m-与-commit-am-区别" class="headerlink" title="commit -m 与 commit -am 区别"></a>commit -m 与 commit -am 区别</h3><p>假设此时a.txt文件内容为<strong>hello</strong></p>
-<p>若a.txt是已跟踪状态，此时文件内容修改为<strong>hello world</strong>，再git commit -m提交的不是a.txt最新的内容<strong>hello world</strong>，而是<strong>hello</strong>。</p>
-<p>如果想要提交a.txt最新内容，有两种方式</p>
-<p>方式一：</p>
-<ol>
-<li>git add a.txt.</li>
-<li>git commit -m “message”</li>
+<h4 id="自定义验证"><a href="#自定义验证" class="headerlink" title="自定义验证"></a>自定义验证</h4><hr>
+<h2 id="Permissions-and-Authorization"><a href="#Permissions-and-Authorization" class="headerlink" title="Permissions and Authorization"></a>Permissions and Authorization</h2><h3 id="用户权限类型"><a href="#用户权限类型" class="headerlink" title="用户权限类型"></a>用户权限类型</h3><ol>
+<li><p>Access to view the “add” form and <strong>add an object</strong> is limited to users with the <strong>“add” permission</strong> for that type of object.</p>
+</li>
+<li><p>Access to view the change list, view the “change” form and <strong>change an object</strong> is limited to users with the <strong>“change” permission</strong> for that type of object.</p>
+</li>
+<li><p>Access to <strong>delete an object</strong> is limited to users with the <strong>“delete” permission</strong> for that type of object.</p>
+</li>
 </ol>
-<p>方式二：</p>
-<ol>
-<li>git commit -am “message”</li>
-</ol>
-<p>简单来说，两者的区别在于git add命令。git commit -am可以省略使用git add命令将已跟踪文件放到暂存区的功能</p>
-<p>git add命令是个多功能命令，根据目标文件的状态不同，此命令的效果也不同：可以用它开始跟踪新文件，或者把已跟踪的文件放到暂存区，还能用于合并时把有冲突的文件标记为已解决状态等</p>
-<h2 id="rm"><a href="#rm" class="headerlink" title="rm"></a>rm</h2><h3 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h3><h4 id="列出可取消跟踪的文件列表"><a href="#列出可取消跟踪的文件列表" class="headerlink" title="列出可取消跟踪的文件列表"></a>列出可取消跟踪的文件列表</h4><p>git rm -r -n –cached 目录/文件</p>
-<h4 id="取消跟踪"><a href="#取消跟踪" class="headerlink" title="取消跟踪"></a>取消跟踪</h4><p>git rm -r –cached 目录/文件</p>
+<p>Permissions can be set not only per type of object, but also per specific object instance. </p>
+<p>By using the <strong>has_add_permission()</strong>, <strong>has_change_permission()</strong> and <strong>has_delete_permission()</strong> methods provided by the ModelAdmin class, it is possible to customize permissions for different object instances of the same type.</p>
+<h3 id="User-Fields"><a href="#User-Fields" class="headerlink" title="User Fields"></a>User Fields</h3><p>User objects have two many-to-many fields: <strong>groups and user_permissions</strong>.</p>
+<p>访问这两个属性字段的方法如下:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">myuser.groups.set([group_list])</span><br><span class="line">myuser.groups.add(group, group, ...)</span><br><span class="line">myuser.groups.remove(group, group, ...)</span><br><span class="line">myuser.groups.clear()</span><br><span class="line"></span><br><span class="line">myuser.user_permissions.set([permission_list])</span><br><span class="line">myuser.user_permissions.add(permission, permission, ...)</span><br><span class="line">myuser.user_permissions.remove(permission, permission, ...)</span><br><span class="line">myuser.user_permissions.clear()</span><br></pre></td></tr></table></figure>
+<h3 id="默认权限列表"><a href="#默认权限列表" class="headerlink" title="默认权限列表"></a>默认权限列表</h3><p>当在setting.py的INSTALLED_APPS添加django.contrib.auth时，执行命令**python manager.py migrate后，系统将为每个Model默认生成3种权限：add，change and delete。</p>
+
+<p><strong>注：python manager.py migrate，创建Model权限列表时，会发出 post_migrate 信号。</strong></p>
 <hr>
-<h2 id="git-add"><a href="#git-add" class="headerlink" title="git add"></a>git add</h2><p>git add命令把工作目录下面的有修改的文件添加的index(staging)里面去。</p>
-<p>git add告诉Git你想在下次commit的时候把什么文件包含进去。</p>
-<p>git add没有真正的对仓储有什么大的影响–在commit之前修改没有真正的被记录下来。</p>
-<h3 id="用法-1"><a href="#用法-1" class="headerlink" title="用法"></a>用法</h3><h4 id="git-add-1"><a href="#git-add-1" class="headerlink" title="git add "></a>git add <file></file></h4><p>把文件的所有修改加入到index(staging)中, 为了下次commit</p>
-<h4 id="git-add-2"><a href="#git-add-2" class="headerlink" title="git add "></a>git add <directory></directory></h4><p>把文件夹的所有修改加入到index(staging)中, 为了下次commit</p>
-<h4 id="git-add-p"><a href="#git-add-p" class="headerlink" title="git add -p"></a>git add -p</h4><p>会出现一个交互式的界面供你一个个的选择哪些文件要添加到commit中, 哪些不要。注意了如果文件是untracked的状态, 他不会出现在这个界面中供你选择。</p>
+<h2 id="Groups"><a href="#Groups" class="headerlink" title="Groups"></a>Groups</h2><p>django.contrib.auth.models.Group models are a generic way of categorizing users so you can apply permissions, or some other label, to those users. </p>
+<p>A user can belong to any number of groups.</p>
+<h3 id="用户的Group权限"><a href="#用户的Group权限" class="headerlink" title="用户的Group权限"></a>用户的Group权限</h3><p>A user in a group automatically has the permissions granted to that group. For example, if the group Site editors has the permission can_edit_home_page, any user in that group will have that permission.</p>
+<p>简单来说，隶属用户组的用户，自然拥有该用户组所拥有的权限。</p>
 <hr>
-<h3 id="git-add-与-git-commit-是git的最基本命令组合"><a href="#git-add-与-git-commit-是git的最基本命令组合" class="headerlink" title="git add 与 git commit 是git的最基本命令组合"></a>git add 与 git commit 是git的最基本命令组合</h3><p>开发一个项目使用git始终是围绕着”modify/stage/commit”这个模式</p>
-<p>首先, 在本地工作目录编辑文件，当你准备去保存一个当前项目状态的时候, 使用git add stage修改，接下来你有了一个stage的快照，使用git commit提交项目。</p>
-<p>git add和svn add非常不同，svn add是把文件添加到仓储。git add是把文件的修改添加到仓储，这意味着你每次修改文件后需要使用git add，而svn add只需要为每个文件使用一次就行了。</p>
-<h3 id="Staging区"><a href="#Staging区" class="headerlink" title="Staging区"></a>Staging区</h3><p>staging区是Git一个很独特的特性，你可以把他认为是一个本地工作目录到项目历史中间的一个缓存区。</p>
-<p>stage能让你组织相关的change到一个快照，然后再提交到项目的历史里去，而不是将从上一次commit后的所有change都一次提交。这样你可以在commit之前利用add组织好一个主题的change然后再commit。</p>
-<h2 id="revert-reset"><a href="#revert-reset" class="headerlink" title="revert / reset"></a>revert / reset</h2><h3 id="difference-between-revert-and-reset"><a href="#difference-between-revert-and-reset" class="headerlink" title="difference between revert and reset"></a>difference between revert and reset</h3><p>revert 是将之前的提交反转（新增就删除），然后作为一次新的提交。</p>
-<p>reset 是回滚到指定commit-id，该commit-id之后的提交都会删除。</p>
-<p>在生产环境一般建议用git revert</p>
-<p>参考链接：<a href="https://blog.csdn.net/q358543781/article/details/54708736" target="_blank" rel="noopener">https://blog.csdn.net/q358543781/article/details/54708736</a></p>
+<h2 id="Model"><a href="#Model" class="headerlink" title="Model"></a>Model</h2><h3 id="自定义权限"><a href="#自定义权限" class="headerlink" title="自定义权限"></a>自定义权限</h3><p>To create custom permissions for a given model object, use the permissions model Meta attribute.</p>
+<h4 id="示例代码1-Meta"><a href="#示例代码1-Meta" class="headerlink" title="示例代码1 Meta"></a>示例代码1 Meta</h4><p>在Task自带的权限外，添加额外的权限属性</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Task</span><span class="params">(models.Model)</span>:</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Meta</span>:</span></span><br><span class="line">        permissions = (</span><br><span class="line">            (<span class="string">"view_task"</span>, <span class="string">"Can see available tasks"</span>),</span><br><span class="line">            (<span class="string">"change_task_status"</span>, <span class="string">"Can change the status of tasks"</span>),</span><br><span class="line">            (<span class="string">"close_task"</span>, <span class="string">"Can remove a task by setting its status as closed"</span>),</span><br><span class="line">        )</span><br></pre></td></tr></table></figure>
+<p>检查用户权限代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># codename 查看数据库auth_permission表</span></span><br><span class="line">user.has_perm(<span class="string">'&lt;app label&gt;.&lt;permission codename&gt;'</span>)</span><br></pre></td></tr></table></figure>
+<h4 id="示例代码2-program"><a href="#示例代码2-program" class="headerlink" title="示例代码2 program"></a>示例代码2 program</h4><p>创建一个permission权限属性对象，然后使用 user/group 对象添加这个权限属性对象。</p>
+<p>create the can_publish permission for a BlogPost model in myapp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> myapp.models <span class="keyword">import</span> BlogPost</span><br><span class="line"><span class="keyword">from</span> django.contrib.auth.models <span class="keyword">import</span> Permission</span><br><span class="line"><span class="keyword">from</span> django.contrib.contenttypes.models <span class="keyword">import</span> ContentType</span><br><span class="line"></span><br><span class="line">content_type = ContentType.objects.get_for_model(BlogPost)</span><br><span class="line">permission = Permission.objects.create(</span><br><span class="line">    codename=<span class="string">'can_publish'</span>,</span><br><span class="line">    name=<span class="string">'Can Publish Posts'</span>,</span><br><span class="line">    content_type=content_type,</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>The permission can then be assigned to a User via its user_permissions attribute or to a Group via its permissions attribute.</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/25/Python/Django/Authentication/session/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/25/Python/Django/Authentication/session/" itemprop="url">Django Session</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-25T07:10:03+08:00">
+                2017-10-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/authentication/" itemprop="url" rel="index">
+                    <span itemprop="name">authentication</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="启用-禁止Session"><a href="#启用-禁止Session" class="headerlink" title="启用/禁止Session"></a>启用/禁止Session</h3><h4 id="禁用Session"><a href="#禁用Session" class="headerlink" title="禁用Session"></a>禁用Session</h4><p>you might as well remove the SessionMiddleware line from MIDDLEWARE and ‘django.contrib.sessions’ from your INSTALLED_APPS. </p>
 
           
         
@@ -2184,7 +2029,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/35/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/35/">35</a><span class="page-number current">36</span><a class="page-number" href="/page/37/">37</a><span class="space">&hellip;</span><a class="page-number" href="/page/40/">40</a><a class="extend next" rel="next" href="/page/37/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/35/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/35/">35</a><span class="page-number current">36</span><a class="page-number" href="/page/37/">37</a><span class="space">&hellip;</span><a class="page-number" href="/page/43/">43</a><a class="extend next" rel="next" href="/page/37/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2231,7 +2076,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">395</span>
+                <span class="site-state-item-count">421</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2242,7 +2087,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">182</span>
+                <span class="site-state-item-count">194</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2253,7 +2098,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">444</span>
+                <span class="site-state-item-count">472</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
