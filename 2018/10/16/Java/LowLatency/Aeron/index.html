@@ -101,18 +101,18 @@
 
 
 
-<meta name="description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  Media DriverMedia Driver instances sit on a box an send/receive UDP packets over the network, whilst ensuring that the mapped f">
+<meta name="description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
 <meta name="keywords" content="Java,Low Latency,Aeron">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Java Aeron">
 <meta property="og:url" content="https://sulangsss.github.io/2018/10/16/Java/LowLatency/Aeron/index.html">
 <meta property="og:site_name" content="sulang blog">
-<meta property="og:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  Media DriverMedia Driver instances sit on a box an send/receive UDP packets over the network, whilst ensuring that the mapped f">
+<meta property="og:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-10-31T02:05:54.180Z">
+<meta property="og:updated_time" content="2018-12-05T02:04:39.063Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java Aeron">
-<meta name="twitter:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  Media DriverMedia Driver instances sit on a box an send/receive UDP packets over the network, whilst ensuring that the mapped f">
+<meta name="twitter:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
 
 
 
@@ -390,6 +390,18 @@
       
         <h3 id="Design-Overview"><a href="#Design-Overview" class="headerlink" title="Design Overview"></a>Design Overview</h3><p><a href="https://github.com/real-logic/aeron/wiki/Design-Overview" target="_blank" rel="noopener">https://github.com/real-logic/aeron/wiki/Design-Overview</a></p>
 <hr>
+<h3 id="OS-Related-Considerations"><a href="#OS-Related-Considerations" class="headerlink" title="OS Related Considerations"></a>OS Related Considerations</h3><p>Operating system socket buffers have an impact on some of the settings within Aeron.</p>
+<ul>
+<li><p>SO_RCVBUF can impact loss rates when too small for the given processing. If too large, this buffer can increase latency. Values that tend to work well with Aeron are 2MB to 4MB. This setting must be large enough for the MTU of the sender. If not, persistent loss can result. In addition, the receiver window length should be less than or equal to this value to allow plenty of space for burst traffic from a sender.</p>
+</li>
+<li><p>SO_SNDBUF can impact loss rate. Loss can occur on the sender side due to this buffer being too small. This buffer must be large enough to accommodate the MTU as a minimum. In addition, some systems, most notably Windows, need plenty of buffering on the send side to reach adequate throughput rates. If too large, this buffer can increase latency or cause loss. This usually should be less than 2MB.</p>
+</li>
+</ul>
+<h4 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h4><p>As was mentioned above, changing the location of the buffers for Aeron can be a good thing. For Linux, this means that <strong>/dev/shm</strong> will be the location of the buffers if present.</p>
+<p>Linux normally requires some settings of sysctl values. One is <strong>net.core.rmem_max</strong> to allow larger <strong>SO_RCVBUF</strong> and <strong>net.core.wmem_max</strong> to allow larger <strong>SO_SNDBUF</strong> values to be set.</p>
+<h4 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h4><p>Windows tends to use <strong>SO_SNDBUF</strong> values that are too small. It is recommended to use values more like 1MB or so.</p>
+<h4 id="Mac-Darwin"><a href="#Mac-Darwin" class="headerlink" title="Mac/Darwin"></a>Mac/Darwin</h4><p>Mac tends to use <strong>SO_SNDBUF</strong> values that are too small. It is recommended to use larger values, like <strong>16KB</strong>.</p>
+<hr>
 <h3 id="Media-Driver"><a href="#Media-Driver" class="headerlink" title="Media Driver"></a>Media Driver</h3><p>Media Driver instances sit on a box an send/receive UDP packets over the network, whilst ensuring that the mapped files and cleaned and rotated. </p>
 <p>If you’ve got multiple publishers or subscribers sitting in different processes on the same box then probably your best bet is to run separate a instance of the media driver and have it manage all the processes.</p>
 <p>If you’re going to just have a single process on a machine with the publishers and subscribers inside then its probably easiest to just keep it embedded within the process. Just my opinion of course</p>
@@ -429,6 +441,10 @@
 </blockquote>
 <h4 id="Media-Driver-on-Docker"><a href="#Media-Driver-on-Docker" class="headerlink" title="Media Driver on Docker"></a>Media Driver on Docker</h4><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> java:openjdk-<span class="number">8</span>-alpine</span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> init.sh /init.sh</span></span><br><span class="line"><span class="bash">COPY boot.jar /java/boot.jar</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">RUN chmod +x /init_shm.sh</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">ENTRYPOINT [<span class="string">"/init.sh"</span>]</span></span><br><span class="line"><span class="bash">CMD [<span class="string">"1G"</span>, <span class="string">"/java/boot.jar"</span>]</span></span><br></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"init shm size: <span class="variable">$1</span>"</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"args: <span class="variable">$@</span>"</span></span><br><span class="line"></span><br><span class="line">shm_dir=/dev/shm</span><br><span class="line">umount <span class="variable">$shm_dir</span></span><br><span class="line">mount -t tmpfs -o rw,nosuid,nodev,noexec,relatime,size=<span class="variable">$1</span> shm <span class="variable">$shm_dir</span></span><br><span class="line"></span><br><span class="line"><span class="comment">## running java process</span></span><br><span class="line">java -jar <span class="variable">$2</span></span><br></pre></td></tr></table></figure>
+<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
+<p><a href="https://github.com/real-logic/aeron/wiki/Best-Practices-Guide" target="_blank" rel="noopener">https://github.com/real-logic/aeron/wiki/Best-Practices-Guide</a></p>
+</blockquote>
+
       
     </div>
     
@@ -552,7 +568,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">430</span>
+                <span class="site-state-item-count">434</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -563,7 +579,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">198</span>
+                <span class="site-state-item-count">199</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -574,7 +590,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">483</span>
+                <span class="site-state-item-count">489</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -616,7 +632,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-Overview"><span class="nav-number">1.</span> <span class="nav-text">Design Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Media-Driver"><span class="nav-number">2.</span> <span class="nav-text">Media Driver</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-to-Run-Aeron-Media-Driver"><span class="nav-number">2.1.</span> <span class="nav-text">How to Run Aeron Media Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shm-on-Linux-System"><span class="nav-number">2.2.</span> <span class="nav-text">shm on Linux System</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Media-Driver-on-Docker"><span class="nav-number">2.3.</span> <span class="nav-text">Media Driver on Docker</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-Overview"><span class="nav-number">1.</span> <span class="nav-text">Design Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OS-Related-Considerations"><span class="nav-number">2.</span> <span class="nav-text">OS Related Considerations</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux"><span class="nav-number">2.1.</span> <span class="nav-text">Linux</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Windows"><span class="nav-number">2.2.</span> <span class="nav-text">Windows</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mac-Darwin"><span class="nav-number">2.3.</span> <span class="nav-text">Mac/Darwin</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Media-Driver"><span class="nav-number">3.</span> <span class="nav-text">Media Driver</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-to-Run-Aeron-Media-Driver"><span class="nav-number">3.1.</span> <span class="nav-text">How to Run Aeron Media Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shm-on-Linux-System"><span class="nav-number">3.2.</span> <span class="nav-text">shm on Linux System</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Media-Driver-on-Docker"><span class="nav-number">3.3.</span> <span class="nav-text">Media Driver on Docker</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refer"><span class="nav-number">4.</span> <span class="nav-text">Refer</span></a></li></ol></div>
             
 
           </div>

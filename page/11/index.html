@@ -284,6 +284,511 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/26/Java/Maven/package-kotlin/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/09/26/Java/Maven/package-kotlin/" itemprop="url">mvn package jar of Kotlin</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-26T16:01:22+08:00">
+                2018-09-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Maven/" itemprop="url" rel="index">
+                    <span itemprop="name">Maven</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h3><h4 id="fat-jar"><a href="#fat-jar" class="headerlink" title="fat jar"></a>fat jar</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread <span class="string">"main"</span> java.lang.NoClassDefFoundError: kotlin/jvm/internal/Intrinsics</span><br><span class="line">        at com.fintend.accounting.ApplicationKt.main(Application.kt)</span><br><span class="line">Caused by: java.lang.ClassNotFoundException: kotlin.jvm.internal.Intrinsics</span><br><span class="line">        at java.net.URLClassLoader.findClass(URLClassLoader.java:<span class="number">381</span>)</span><br><span class="line">        at java.lang.ClassLoader.loadClass(ClassLoader.java:<span class="number">424</span>)</span><br><span class="line">        at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:<span class="number">349</span>)</span><br><span class="line">        at java.lang.ClassLoader.loadClass(ClassLoader.java:<span class="number">357</span>)</span><br><span class="line">        ... <span class="number">1</span> more</span><br></pre></td></tr></table></figure>
+<p>Experienced Java developers will quickly recognize this type of exception. By default when Gradle (as well as Maven) packs some Java class files into a JAR file, it is assumed that this JAR file will be referenced by an application, where all of its dependencies are also accessible within the classpath of the loading application. </p>
+<p>To execute a JAR without having to specifiy the path to itse dependencies, one must tell the build system to take all of this JAR’s referenced dependencies and copy them as part of the JAR itself. In the Java community, this is known as a “fat JAR”. In a “fat JAR” all of the dependencies end up within the class path of the loading application, so code can be executed without problems. </p>
+<p>The only downside to creating fat JARs is of course their growing file size (which kind of explains the name), though in most situations, it is not a big concern. In order to tell Gradle to copy all of a JAR’s dependencies, one should simply modify the abovementioned JAR task configuration, by adding the following piece of code:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/POM/4.0.0"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.xxx<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>xxx<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0-SNAPSHOT<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">kotlin.version</span>&gt;</span>1.2.70<span class="tag">&lt;/<span class="name">kotlin.version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">kotlin.compiler.incremental</span>&gt;</span>true<span class="tag">&lt;/<span class="name">kotlin.compiler.incremental</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.jetbrains.kotlin<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>kotlin-stdlib-jdk8<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;kotlin.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.jetbrains.kotlin<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>kotlin-test-junit<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;kotlin.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.jetbrains.kotlin<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>kotlin-reflect<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;kotlin.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.fasterxml.jackson.module<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jackson-module-kotlin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.9.6<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.fasterxml.jackson.core<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jackson-core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.9.6<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>commons-io<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>commons-io<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.6<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.google.guava<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>guava<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>25.1-jre<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.commons<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>commons-pool2<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.6.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>junit<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>junit<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>4.12<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">build</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">sourceDirectory</span>&gt;</span>$&#123;project.basedir&#125;/src/main/java<span class="tag">&lt;/<span class="name">sourceDirectory</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">testSourceDirectory</span>&gt;</span>$&#123;project.basedir&#125;/src/test/java<span class="tag">&lt;/<span class="name">testSourceDirectory</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">resources</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">resource</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">directory</span>&gt;</span>src/main/resources<span class="tag">&lt;/<span class="name">directory</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">filtering</span>&gt;</span>true<span class="tag">&lt;/<span class="name">filtering</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">resource</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">resources</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">testResources</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">testResource</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">directory</span>&gt;</span>src/test/resources<span class="tag">&lt;/<span class="name">directory</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">filtering</span>&gt;</span>true<span class="tag">&lt;/<span class="name">filtering</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">testResource</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">testResources</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">plugins</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-assembly-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.6<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">executions</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">execution</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">id</span>&gt;</span>make-assembly<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">phase</span>&gt;</span>package<span class="tag">&lt;/<span class="name">phase</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">goals</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">goal</span>&gt;</span>single<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">archive</span>&gt;</span></span><br><span class="line">                                <span class="tag">&lt;<span class="name">manifest</span>&gt;</span></span><br><span class="line">                                    <span class="tag">&lt;<span class="name">mainClass</span>&gt;</span>xx.xxx.xxx.ApplicationKt<span class="tag">&lt;/<span class="name">mainClass</span>&gt;</span></span><br><span class="line">                                <span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;/<span class="name">archive</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">descriptorRefs</span>&gt;</span></span><br><span class="line">                                <span class="tag">&lt;<span class="name">descriptorRef</span>&gt;</span>jar-with-dependencies<span class="tag">&lt;/<span class="name">descriptorRef</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;/<span class="name">descriptorRefs</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.jetbrains.kotlin<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>kotlin-maven-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;kotlin.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">args</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">arg</span>&gt;</span>-Xcoroutines=enable<span class="tag">&lt;/<span class="name">arg</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">args</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">executions</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">execution</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">id</span>&gt;</span>compile<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">phase</span>&gt;</span>compile<span class="tag">&lt;/<span class="name">phase</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">goals</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">goal</span>&gt;</span>compile<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">execution</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">id</span>&gt;</span>test-compile<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">phase</span>&gt;</span>test-compile<span class="tag">&lt;/<span class="name">phase</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">goals</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">goal</span>&gt;</span>test-compile<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.liquibase<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>liquibase-maven-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.6.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">propertyFile</span>&gt;</span>$&#123;basedir&#125;/src/main/resources/liquibase/liquibase.properties<span class="tag">&lt;/<span class="name">propertyFile</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">executions</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">execution</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">phase</span>&gt;</span>process-resources<span class="tag">&lt;/<span class="name">phase</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">goals</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">goal</span>&gt;</span>update<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">plugins</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">build</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/Thread-Safety/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/09/16/Java/Thread/Thread-Safety/" itemprop="url">Java Thread Safety</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-16T16:50:22+08:00">
+                2018-09-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Thread/" itemprop="url" rel="index">
+                    <span itemprop="name">Thread</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="什么是进程？"><a href="#什么是进程？" class="headerlink" title="什么是进程？"></a>什么是进程？</h4><p>电脑中时会有很多单独运行的程序，每个程序有一个独立的进程，而进程之间是相互独立存在的。比如下图中的QQ、酷狗播放器、电脑管家等等。</p>
+
+<h4 id="什么是线程？"><a href="#什么是线程？" class="headerlink" title="什么是线程？"></a>什么是线程？</h4><p>进程想要执行任务就需要依赖线程。换句话说，就是进程中的最小执行单位就是线程，并且一个进程中至少有一个线程。</p>
+<p>那什么是多线程？提到多线程这里要说两个概念，就是串行和并行，搞清楚这个，我们才能更好地理解多线程。</p>
+<p>所谓串行，其实是相对于单条线程来执行多个任务来说的，我们就拿下载文件来举个例子：当我们下载多个文件时，在串行中它是按照一定的顺序去进行下载的，也就是说，必须等下载完A之后才能开始下载B，它们在时间上是不可能发生重叠的。</p>
+
+<p>并行：下载多个文件，开启多条线程，多个文件同时进行下载，这里是严格意义上的，在同一时刻发生的，并行在时间上是重叠的。</p>
+
+<h4 id="什么是线程安全？"><a href="#什么是线程安全？" class="headerlink" title="什么是线程安全？"></a>什么是线程安全？</h4><p>既然是线程安全问题，那么毫无疑问，所有的隐患都是在多个线程访问的情况下产生的，也就是我们要确保在多条线程访问的时候，我们的程序还能按照我们预期的行为去执行，我们看一下下面的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Integer count = <span class="number">0</span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">getCount</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    count ++;</span><br><span class="line">    System.out.println(count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很简单的一段代码，下面我们就来统计一下这个方法的访问次数，多个线程同时访问会不会出现什么问题，我开启的3条线程，每个线程循环10次，得到以下结果：</p>
+
+<p>我们可以看到，这里出现了两个26，出现这种情况显然表明这个方法根本就不是线程安全的，出现这种问题的原因有很多。</p>
+<p>最常见的一种，就是我们A线程在进入方法后，拿到了count的值，刚把这个值读取出来，还没有改变count的值的时候，结果线程B也进来的，那么导致线程A和线程B拿到的count值是一样的。</p>
+<p>那么由此我们可以了解到，这确实不是一个线程安全的类，因为他们都需要操作这个共享的变量。其实要对线程安全问题给出一个明确的定义，还是蛮复杂的，我们根据我们这个程序来总结下什么是线程安全。</p>
+<p>当多个线程访问某个方法时，不管你通过怎样的调用方式、或者说这些线程如何交替地执行，我们在主程序中不需要去做任何的同步，这个类的结果行为都是我们设想的正确行为，那么我们就可以说这个类是线程安全的。  </p>
+<p>搞清楚了什么是线程安全，接下来我们看看Java中确保线程安全最常用的两种方式。先来看段代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">threadMethod</span><span class="params">(<span class="keyword">int</span> j)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i = <span class="number">1</span>;</span><br><span class="line">    j = j + i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>大家觉得这段代码是线程安全的吗？</p>
+<p>毫无疑问，它绝对是线程安全的，我们来分析一下，为什么它是线程安全的？</p>
+<p>我们可以看到这段代码是没有任何状态的，就是说我们这段代码，不包含任何的作用域，也没有去引用其他类中的域进行引用，它所执行的作用范围与执行结果只存在它这条线程的局部变量中，并且只能由正在执行的线程进行访问。当前线程的访问，不会对另一个访问同一个方法的线程造成任何的影响。</p>
+<p>两个线程同时访问这个方法，因为没有共享的数据，所以他们之间的行为，并不会影响其他线程的操作和结果，所以说无状态的对象，也是线程安全的。</p>
+<p><strong>进一步分析：添加一个状态呢？</strong></p>
+<p>如果我们给这段代码添加一个状态，添加一个count，来记录这个方法并命中的次数，每请求一次count+1，那么这个时候这个线程还是安全的吗？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ThreadDemo</span> </span>&#123;</span><br><span class="line">   <span class="keyword">int</span> count = <span class="number">0</span>; <span class="comment">// 记录方法的命中次数</span></span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">threadMethod</span><span class="params">(<span class="keyword">int</span> j)</span> </span>&#123;</span><br><span class="line">       count++ ;</span><br><span class="line"></span><br><span class="line">       <span class="keyword">int</span> i = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">       j = j + i;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很明显已经不是了，单线程运行起来确实是没有任何问题的，但是当出现多条线程并发访问这个方法的时候，问题就出现了，我们先来分析下count+1这个操作。</p>
+<p>进入这个方法之后首先要读取count的值，然后修改count的值，最后才把这把值赋值给count，总共包含了三步过程：“读取”一&gt;“修改”一&gt;“赋值”，既然这个过程是分步的，那么我们先来看下面这张图，看看你能不能看出问题：</p>
+
+<p>可以发现，count的值并不是正确的结果，当线程A读取到count的值，但是还没有进行修改的时候，线程B已经进来了，然后线程B读取到的还是count为1的值，正因为如此所以我们的count值已经出现了偏差，那么这样的程序放在我们的代码中，是存在很多的隐患的。</p>
+<h4 id="如何确保线程安全？"><a href="#如何确保线程安全？" class="headerlink" title="如何确保线程安全？"></a>如何确保线程安全？</h4><p>既然存在线程安全的问题，那么肯定得想办法解决这个问题，怎么解决？我们说说常见的几种方式。</p>
+<ol>
+<li>synchronized</li>
+</ol>
+<p>synchronized关键字，就是用来控制线程同步的，保证我们的线程在多线程环境下，不被多个线程同时执行，确保我们数据的完整性，使用方法一般是加在方法上。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ThreadDemo</span> </span>&#123;</span><br><span class="line">   <span class="keyword">int</span> count = <span class="number">0</span>; <span class="comment">// 记录方法的命中次数</span></span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">threadMethod</span><span class="params">(<span class="keyword">int</span> j)</span> </span>&#123;</span><br><span class="line">       count++ ;</span><br><span class="line"></span><br><span class="line">       <span class="keyword">int</span> i = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">       j = j + i;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样就可以确保我们的线程同步了，同时这里需要注意一个大家平时忽略的问题，首先synchronized锁的是括号里的对象，而不是代码，其次，对于非静态的synchronized方法，锁的是对象本身也就是this。</p>
+<p>当synchronized锁住一个对象之后，别的线程如果想要获取锁对象，那么就必须等这个线程执行完释放锁对象之后才可以，否则一直处于等待状态。</p>
+<p>注意点：虽然加synchronized关键字，可以让我们的线程变得安全，但是我们在用的时候，也要注意缩小synchronized的使用范围，如果随意使用时很影响程序的性能，别的对象想拿到锁，结果你没用锁还一直把锁占用，这样就有点浪费资源。</p>
+<ol start="2">
+<li>Lock</li>
+</ol>
+<p>先来说说它跟synchronized有什么区别吧，Lock是在Java1.6被引入进来的，Lock的引入让锁有了可操作性，什么意思？就是我们在需要的时候去手动的获取锁和释放锁，甚至我们还可以中断获取以及超时获取的同步特性，但是从使用上说Lock明显没有synchronized使用起来方便快捷。我们先来看下一般是如何使用的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Lock lock = <span class="keyword">new</span> ReentrantLock(); <span class="comment">// ReentrantLock是Lock的子类</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">method</span><span class="params">(Thread thread)</span></span>&#123;</span><br><span class="line">    lock.lock(); <span class="comment">// 获取锁对象</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">"线程名："</span>+thread.getName() + <span class="string">"获得了锁"</span>);</span><br><span class="line">        <span class="comment">// Thread.sleep(2000);</span></span><br><span class="line">    &#125;<span class="keyword">catch</span>(Exception e)&#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">"线程名："</span>+thread.getName() + <span class="string">"释放了锁"</span>);</span><br><span class="line">        lock.unlock(); <span class="comment">// 释放锁对象</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在Lock还有几种获取锁的方式，我们这里再说一种，就是tryLock()这个方法跟Lock()是有区别的，Lock在获取锁的时候，如果拿不到锁，就一直处于等待状态，直到拿到锁，但是tryLock()却不是这样的，tryLock是有一个Boolean的返回值的，如果没有拿到锁，直接返回false，停止等待，它不会像Lock()那样去一直等待获取锁。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">method</span><span class="params">(Thread thread)</span></span>&#123;</span><br><span class="line">    <span class="comment">// lock.lock(); // 获取锁对象</span></span><br><span class="line">    <span class="keyword">if</span> (lock.tryLock()) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            System.out.println(<span class="string">"线程名："</span>+thread.getName() + <span class="string">"获得了锁"</span>);</span><br><span class="line">            <span class="comment">// Thread.sleep(2000);</span></span><br><span class="line">        &#125;<span class="keyword">catch</span>(Exception e)&#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            System.out.println(<span class="string">"线程名："</span>+thread.getName() + <span class="string">"释放了锁"</span>);</span><br><span class="line">            lock.unlock(); <span class="comment">// 释放锁对象</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/ThreadLocal/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/09/16/Java/Thread/ThreadLocal/" itemprop="url">Java ThreadLocal</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-16T15:01:22+08:00">
+                2018-09-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Thread/" itemprop="url" rel="index">
+                    <span itemprop="name">Thread</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="http://tutorials.jenkov.com/java-concurrency/threadlocal.html" target="_blank" rel="noopener">http://tutorials.jenkov.com/java-concurrency/threadlocal.html</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/Thread-Interrupt/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -459,6 +964,164 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/Future/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/09/16/Java/Thread/Future/" itemprop="url">Java Future</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-16T15:01:22+08:00">
+                2018-09-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Thread/" itemprop="url" rel="index">
+                    <span itemprop="name">Thread</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Future"><a href="#Future" class="headerlink" title="Future"></a>Future</h3><p>JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。</p>
+<p>Future模式是多线程设计常用的一种设计模式。Future模式可以理解成：我有一个任务，提交给了Future，Future替我完成这个任务。期间我自己可以去做任何想做的事情。一段时间之后，我就便可以从Future那儿取出结果。</p>
+<h3 id="CompletableFuture"><a href="#CompletableFuture" class="headerlink" title="CompletableFuture"></a>CompletableFuture</h3><p>Future虽然可以实现获取异步执行结果的需求，但是它没有提供通知的机制，我们无法得知Future什么时候完成。要么使用阻塞，在future.get()的地方等待future返回的结果，这时又变成同步操作。要么使用isDone()轮询地判断Future是否完成，这样会耗费CPU的资源。</p>
+<p>Netty、Guava分别扩展了Java的Future 接口，方便异步编程。Java 8新增的CompletableFuture类正是吸收了所有Google Guava中ListenableFuture和SettableFuture的特征，还提供了其它强大的功能，让Java拥有了完整的非阻塞编程模型：Future、Promise 和 Callback(在Java8之前，只有无Callback 的Future)。</p>
+<p>CompletableFuture能够将回调放到与任务不同的线程中执行，也能将回调作为继续执行的同步函数，在与任务相同的线程中执行。它避免了传统回调最大的问题，那就是能够将控制流分离到不同的事件处理器中。</p>
+<p>CompletableFuture弥补了Future模式的缺点。在异步的任务完成后，需要用其结果继续操作时，无需等待。可以直接通过thenAccept、thenApply、thenCompose等方式将前面异步处理的结果交给另外一个异步事件处理线程来处理。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/Concurrency vs Parallelism/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -575,159 +1238,6 @@
 <p>An application can also be parallel but not concurrent. This means that the application only works on one task at a time, and this task is broken down into subtasks which can be processed in parallel.</p>
 <p>Additionally, an application can be neither concurrent nor parallel. This means that it works on only one task at a time, and the task is never broken down into subtasks for parallel execution.</p>
 <p>Finally, an application can also be both concurrent and parallel, in that it both works on multiple tasks at the same time, and also breaks each task down into subtasks for parallel execution. However, some of the benefits of concurrency and parallelism may be lost in this scenario, as the CPUs in the computer are already kept reasonably busy with either concurrency or parallelism alone. Combining it may lead to only a small performance gain or even performance loss. Make sure you analyze and measure before you adopt a concurrent parallel model blindly.</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/ThreadLocal/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/16/Java/Thread/ThreadLocal/" itemprop="url">Java ThreadLocal</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-16T15:01:22+08:00">
-                2018-09-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Thread/" itemprop="url" rel="index">
-                    <span itemprop="name">Thread</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="http://tutorials.jenkov.com/java-concurrency/threadlocal.html" target="_blank" rel="noopener">http://tutorials.jenkov.com/java-concurrency/threadlocal.html</a></p>
 
           
         
@@ -1081,234 +1591,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/08/DB/MySQL/Optimize/BigTable/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/08/DB/MySQL/Optimize/BigTable/" itemprop="url">MySQL Optimize Big Table</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-08T22:55:07+08:00">
-                2018-09-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
-                    <span itemprop="name">Optimize</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="优化思路"><a href="#优化思路" class="headerlink" title="优化思路"></a>优化思路</h3><h4 id="思路一"><a href="#思路一" class="headerlink" title="思路一"></a>思路一</h4><ul>
-<li>优化SQL和索引。考虑点：引擎类型，数据分布，索引情况，锁策略，业务特点。</li>
-<li>加缓存，比如Redis等等</li>
-<li>主从复制；主主复制；读写分离</li>
-<li>MySQL自带分区表</li>
-<li>垂直拆分，其实就是根据你模块的耦合度，将一个大的系统分为多个小的系统，也就是分布式系统；</li>
-<li>水平拆分，针对数据量大的表，这一步最麻烦，最能考验技术水平，要选择一个合理的sharding key,为了有好的查询效率，表结构也要改动，做一定的冗余，应用也要改，sql中尽量带sharding key，将数据定位到限定的表上去查，而不是扫描全部的表；</li>
-</ul>
-<p>MySQL数据库一般都是按照这个步骤去演化的，成本也是由低到高。</p>
-<h4 id="思路二"><a href="#思路二" class="headerlink" title="思路二"></a>思路二</h4><p>对于一个存储设计，必须考虑业务特点，收集的信息如下：</p>
-<ul>
-<li>数据的容量：1-3年内会大概多少条数据，每条数据大概多少字节；</li>
-<li>数据项：是否有大字段，那些字段的值是否经常被更新；</li>
-<li>数据查询SQL条件：哪些数据项的列名称经常出现在WHERE、GROUP BY、ORDER BY子句中等； </li>
-<li>数据更新类SQL条件：有多少列经常出现UPDATE或DELETE 的WHERE子句中；</li>
-<li>SQL量的统计比，如：SELECT：UPDATE+DELETE：INSERT=多少？</li>
-<li>预计大表及相关联的SQL，每天总的执行量在何数量级？ </li>
-<li>表中的数据：更新为主的业务，还是查询为主的业务 </li>
-<li>打算采用什么数据库物理服务器，以及数据库服务器架构？</li>
-<li>并发如何？</li>
-<li>存储引擎选择InnoDB还是MyISAM？</li>
-</ul>
-<p>大致明白以上10个问题，至于如何设计此类的大表，应该什么都清楚了！</p>
-<p>至于优化若是指创建好的表，不能变动表结构的话，那建议InnoDB引擎，多利用点内存，减轻磁盘IO负载，因为IO往往是数据库服务器的瓶颈。</p>
-<p>另外对优化索引结构去解决性能问题的话，建议优先考虑修改类SQL语句，使他们更快些，不得已只靠索引组织结构的方式，当然此话前提是，<br>索引已经创建的非常好，若是读为主，可以考虑打开query_cache，以及调整一些参数值：sort_buffer_size，read_buffer_size，read_rnd_buffer_size，join_buffer_size</p>
-<h4 id="思路三"><a href="#思路三" class="headerlink" title="思路三"></a>思路三</h4><p>MySQL 数据库设计总结：<a href="https://cloud.tencent.com/developer/article/1004367" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1004367</a></p>
-<ul>
-<li><p>联合索引的建立原则(以下均假设在数据库表的字段a,b,c上建立联合索引(a,b,c))</p>
-</li>
-<li><ul>
-<li>联合索引中的字段应尽量满足过滤数据从多到少的顺序，也就是说差异最大的字段应该房子第一个字段</li>
-</ul>
-</li>
-<li><ul>
-<li>建立索引尽量与SQL语句的条件顺序一致，使SQL语句尽量以整个索引为条件，尽量避免以索引的一部分(特别是首个条件与索引的首个字段不一致时)作为查询的条件</li>
-</ul>
-</li>
-<li><ul>
-<li>Where a=1；where a&gt;=12 and a&lt;15；where a=1 and b<5 ；where="" a="1" and="" b="7" c="">=40为条件可以用到此联合索引；而这些语句where b=10；where c=221；where b&gt;=12 and c=2则无法用到这个联合索引。</5></li>
-</ul>
-</li>
-<li><ul>
-<li>当需要查询的数据库字段全部在索引中体现时，数据库可以直接查询索引得到查询信息无须对整个表进行扫描(这就是所谓的key-only)，能大大的提高查询效率。特别注意，当a，ab，abc与其他表字段关联查询时可以用到索引。</li>
-</ul>
-</li>
-</ul>
-<hr>
-<ul>
-<li><p>合理构造Query语句</p>
-</li>
-<li><ul>
-<li>Insert语句中，根据测试，批量一次插入1000条时效率最高，多于1000条时，要拆分，多次进行同样的插入，应该合并批量进行。注意query语句的长度要小于mysqld的参数 max_allowed_packet</li>
-</ul>
-</li>
-<li><ul>
-<li>查询条件中各种逻辑操作符性能顺序是and &gt; or &gt; in，因此在查询条件中应该尽量避免使用在大集合中使用in</li>
-</ul>
-</li>
-</ul>
-<h4 id="思路四"><a href="#思路四" class="headerlink" title="思路四"></a>思路四</h4><p>背景：有三张表，是5亿的数据，每天张表每天的增量是100w，每张表大概在10个columns左右</p>
-<p>当前使用mysiam，没有做分区。在只读情况下，比innodb的效率要高13％左右。</p>
-<p>在做了partition之后，读一下mysql的官方文档，其实对于partition，专门是对myisam做的优化，对于innodb，所有的数据是存在ibdata里面的，所以即使你可以看到schema变了，其实没有本质的变化。在分区出于同一个physical disk下面的情况下，提升大概只有1％ </p>
-<p>在分区在不同的physical disk下，分到了三个不同的disks下，提升大概在3％，其实所谓的吞吐量，由很多因素决定的，比如你的explain parition时候可以看到，record在那一个分区，如果每个分区都有，其实本质上没有解决读的问题，这样只会提升写的效率。</p>
-<p>另外一个问题在于，分区，你怎么分，如果一张表，有三个column都是经常被用于做查询条件的，其实是一件很悲惨的事情，因为你没有办法对所有的sql做针对性的分区，如果你只是如mysql官方文档上说的，只对时间做一个分区，而且你也只用时间查询的话，恭喜你。</p>
-<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://www.zhihu.com/question/19719997" target="_blank" rel="noopener">https://www.zhihu.com/question/19719997</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/08/DB/MySQL/Optimize/SQL优化之覆盖索引/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1529,7 +1811,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/03/DB/MySQL/Promotion/MySQL-Feature/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/08/DB/MySQL/Optimize/BigTable/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1548,7 +1830,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/09/03/DB/MySQL/Promotion/MySQL-Feature/" itemprop="url">MySQL Feature</a></h2>
+                <a class="post-title-link" href="/2018/09/08/DB/MySQL/Optimize/BigTable/" itemprop="url">MySQL Optimize Big Table</a></h2>
         
 
         <div class="post-meta">
@@ -1560,8 +1842,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-03T22:55:07+08:00">
-                2018-09-03
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-08T22:55:07+08:00">
+                2018-09-08
               </time>
             
 
@@ -1605,8 +1887,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Promotion/" itemprop="url" rel="index">
-                    <span itemprop="name">Promotion</span>
+                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
+                    <span itemprop="name">Optimize</span>
                   </a>
                 </span>
 
@@ -1644,388 +1926,71 @@
       
         
           
-            <h3 id="资源利用特点"><a href="#资源利用特点" class="headerlink" title="资源利用特点"></a>资源利用特点</h3><h4 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h4><ul>
-<li>5.1可以利用4个核；5.5可以利用到24个核；5.6可以利用到64个核</li>
-<li>每个连接一个是一个线程(非thread pool)，每个query只能使用到一个核，随着连接数增加，性能下降</li>
-<li>无执行计划缓存(无SQL执行计划预编译)</li>
-<li>有Result缓存，但比较鸡肋</li>
+            <h3 id="优化思路"><a href="#优化思路" class="headerlink" title="优化思路"></a>优化思路</h3><h4 id="思路一"><a href="#思路一" class="headerlink" title="思路一"></a>思路一</h4><ul>
+<li>优化SQL和索引。考虑点：引擎类型，数据分布，索引情况，锁策略，业务特点。</li>
+<li>加缓存，比如Redis等等</li>
+<li>主从复制；主主复制；读写分离</li>
+<li>MySQL自带分区表</li>
+<li>垂直拆分，其实就是根据你模块的耦合度，将一个大的系统分为多个小的系统，也就是分布式系统；</li>
+<li>水平拆分，针对数据量大的表，这一步最麻烦，最能考验技术水平，要选择一个合理的sharding key,为了有好的查询效率，表结构也要改动，做一定的冗余，应用也要改，sql中尽量带sharding key，将数据定位到限定的表上去查，而不是扫描全部的表；</li>
 </ul>
-<h4 id="内存"><a href="#内存" class="headerlink" title="内存"></a>内存</h4><ul>
-<li>64位系统可利用内存（2的64次方）GB</li>
-<li>在高速并发环境，基本是靠内存缓存来减少对磁盘的IO冲击</li>
-<li>通常内存按实际数据的15%-20%规划，如果特别热的数据，需要考虑更大的比例来缓存数据</li>
-<li>可以根据Query响应时间来做指导分配</li>
-<li>query cache建议关闭或设置很小</li>
-</ul>
-<h4 id="磁盘"><a href="#磁盘" class="headerlink" title="磁盘"></a>磁盘</h4><ul>
-<li>Binlog，redo log，undo log顺序IO</li>
-<li>Datafile 随机IO和顺序IO相结合</li>
-<li>OLTP业务更多的需要随机IO（可以利用内存做缓存，从而减少随机IO）</li>
-<li>OLAP业务更多需要顺序IO（内存缓存作用不大）</li>
-</ul>
-<h3 id="性能特性"><a href="#性能特性" class="headerlink" title="性能特性"></a>性能特性</h3><h4 id="HOT（堆表）和IOT（索引组织表）的区别"><a href="#HOT（堆表）和IOT（索引组织表）的区别" class="headerlink" title="HOT（堆表）和IOT（索引组织表）的区别"></a>HOT（堆表）和IOT（索引组织表）的区别</h4><ul>
-<li>起源</li>
-</ul>
-<p><strong>堆组织表</strong>的存储速度因为不用考虑排序，所以存储速度会比较快。但是要查找符合某个条件的记录，就必须得读取全部的记录以便筛选。而这个时候为了加快查询速度，索引就出现了，索引是针对少量特定字段的值拿出来进行排序存储，并记录在表中的位置，而因为索引是有序的，所以就会很容易通过索引查询到具体的记录位置（普遍使用二分查找法），然后再根据记录位置直接从表中读取该记录。同时因为索引的字段较少，所以索引通常会比其基表小得多。</p>
-<p>从上面通过索引访问表记录的方式可以看出，<strong>当要访问的数据量较大时，通过每一条记录的位置去访问原始记录，每一条符合条件的记录都需要经过索引访问后再访问基表这样一个复杂的过程，这会花费很多时间。</strong>同样，如果不经过索引而直接查询表，也可能因为表字段太多，记录较大的情况下把全部的数据读取进来，这也会花费很多时间。</p>
-<p>那怎么办呢？这个时候就会想到，如果表中数据本身就是有序的，这样查询表的时候就可以快速的找到符合条件的记录位置，而很容易判断符合条件记录的位置，这样只需要读取一小部分数据出来就可以了，不需要全表记录都读取出来进行判断。<strong>索引组织表</strong>就这样产生了，当然索引表中插入，更新的时候可能会因为需要排序而将数据重组，这时候数据插入或更新速度会比堆组织表慢一些。如果堆组织表上有索引，那么对堆组织表的插入也会因为要修改索引而变慢。</p>
+<p>MySQL数据库一般都是按照这个步骤去演化的，成本也是由低到高。</p>
+<h4 id="思路二"><a href="#思路二" class="headerlink" title="思路二"></a>思路二</h4><p>对于一个存储设计，必须考虑业务特点，收集的信息如下：</p>
 <ul>
-<li>堆表</li>
+<li>数据的容量：1-3年内会大概多少条数据，每条数据大概多少字节；</li>
+<li>数据项：是否有大字段，那些字段的值是否经常被更新；</li>
+<li>数据查询SQL条件：哪些数据项的列名称经常出现在WHERE、GROUP BY、ORDER BY子句中等； </li>
+<li>数据更新类SQL条件：有多少列经常出现UPDATE或DELETE 的WHERE子句中；</li>
+<li>SQL量的统计比，如：SELECT：UPDATE+DELETE：INSERT=多少？</li>
+<li>预计大表及相关联的SQL，每天总的执行量在何数量级？ </li>
+<li>表中的数据：更新为主的业务，还是查询为主的业务 </li>
+<li>打算采用什么数据库物理服务器，以及数据库服务器架构？</li>
+<li>并发如何？</li>
+<li>存储引擎选择InnoDB还是MyISAM？</li>
 </ul>
-<p>堆表（heap table）数据插入时时存储位置是随机的，主要是数据库内部块的空闲情况决定，获取数据是按照命中率计算，全表扫表时不见得先插入的数据先查到。</p>
-<p>堆表的特点就是索引和数据分开，所有索引都是二级索引，或叫辅助索引。所以主键索引也是二级索引，没有完整记录，区别只有唯一或非唯一。索引中存储的是key与指针，指针指向具体数据记录。当然，查找key的算法都是一样的，使用二分查找，也叫书签查找。</p>
-<p>两者的查找方式都一样，通过先找到key，然后定位到数据。不论是通过主键还是二级索引，两者的开销都是一样的。</p>
+<p>大致明白以上10个问题，至于如何设计此类的大表，应该什么都清楚了！</p>
+<p>至于优化若是指创建好的表，不能变动表结构的话，那建议InnoDB引擎，多利用点内存，减轻磁盘IO负载，因为IO往往是数据库服务器的瓶颈。</p>
+<p>另外对优化索引结构去解决性能问题的话，建议优先考虑修改类SQL语句，使他们更快些，不得已只靠索引组织结构的方式，当然此话前提是，<br>索引已经创建的非常好，若是读为主，可以考虑打开query_cache，以及调整一些参数值：sort_buffer_size，read_buffer_size，read_rnd_buffer_size，join_buffer_size</p>
+<h4 id="思路三"><a href="#思路三" class="headerlink" title="思路三"></a>思路三</h4><p>MySQL 数据库设计总结：<a href="https://cloud.tencent.com/developer/article/1004367" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1004367</a></p>
 <ul>
-<li>索引表</li>
-</ul>
-<p>索引表（IOT）数据存储是把表按照索引的方式存储的，数据是有序的，数据的位置是预先定好的，与插入的顺序没有关系。</p>
-<p>索引表的查询效率逼堆表高（相当于查询索引的效率），插入数据的速度比堆表慢。</p>
-<p>索引组织表必须要有主键，如果非显式创建，InnoDB存储引擎会默认创建一个ROWID当做主键；而堆表则无强制要求。</p>
-<p>这就是经常有文章说MyISAM比InnoDB快的原因吧，但这个说法并不完全正确，索引组织表由于索引项和数据存储在一起，且InnoDB聚集索引各个叶子节点之间都是同过双向链表组织，且都是根据主键逻辑顺序存放，所以无论是基于主键的等值查询还是范围查询都能大大节省磁盘访问时间。</p>
-<p>特别对于范围查询，只需要定位到开始key的位置，就可以顺着这个位置扫描到结束key。如下SQL语句：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">table</span> <span class="keyword">where</span> <span class="keyword">id</span> <span class="keyword">between</span> <span class="number">1000</span> <span class="keyword">and</span> <span class="number">2000</span></span><br></pre></td></tr></table></figure>
-<h4 id="超大单表问题"><a href="#超大单表问题" class="headerlink" title="超大单表问题"></a>超大单表问题</h4><p>常见的水平切分方式：分库分表；分区表</p>
-<ul>
-<li>什么是分库分表？</li>
-</ul>
-<p>把一个很大的库（表）的数据分到几个库（表）中，每个库（表）的结构都相同，但他们可能分布在不同的mysql实例，甚至不同的物理机器上，以达到降低单库（表）数据量，提高访问性能的目的。分库分表往往是业务层实施的，分库分表后，为了满足某些特定业务功能，往往需要rd修改代码。</p>
-<ul>
-<li>什么是分区表？</li>
-</ul>
-<p>所有数据还在一个表中，但物理存储根据一定的规则放在不同的文件中。这个是mysql支持的功能，业务rd代码无需改动。</p>
-<p>看上去分区表很帅气，为什么大部分互联网还是更多的选择自己分库分表来水平扩展咧？</p>
-<ul>
+<li><p>联合索引的建立原则(以下均假设在数据库表的字段a,b,c上建立联合索引(a,b,c))</p>
+</li>
 <li><ul>
-<li>分区表，分区键设计不太灵活，如果不走分区键，很容易出现全表锁</li>
+<li>联合索引中的字段应尽量满足过滤数据从多到少的顺序，也就是说差异最大的字段应该房子第一个字段</li>
 </ul>
 </li>
 <li><ul>
-<li>旦数据量并发量上来，如果在分区表实施关联，就是一个灾难</li>
+<li>建立索引尽量与SQL语句的条件顺序一致，使SQL语句尽量以整个索引为条件，尽量避免以索引的一部分(特别是首个条件与索引的首个字段不一致时)作为查询的条件</li>
 </ul>
 </li>
 <li><ul>
-<li>自己分库分表，自己掌控业务场景与访问模式，可控。分区表，研发写了一个sql，都不确定mysql是怎么玩的，不太可控</li>
+<li>Where a=1；where a&gt;=12 and a&lt;15；where a=1 and b<5 ；where="" a="1" and="" b="7" c="">=40为条件可以用到此联合索引；而这些语句where b=10；where c=221；where b&gt;=12 and c=2则无法用到这个联合索引。</5></li>
+</ul>
+</li>
+<li><ul>
+<li>当需要查询的数据库字段全部在索引中体现时，数据库可以直接查询索引得到查询信息无须对整个表进行扫描(这就是所谓的key-only)，能大大的提高查询效率。特别注意，当a，ab，abc与其他表字段关联查询时可以用到索引。</li>
 </ul>
 </li>
 </ul>
-<h4 id="水平拆分设计与约束"><a href="#水平拆分设计与约束" class="headerlink" title="水平拆分设计与约束"></a>水平拆分设计与约束</h4><p>缺点</p>
+<hr>
 <ul>
-<li>数据分散，group by ,order by , sum, count等排序，聚 集函数不能支持，如果一定需要，需要某一个地方存全量</li>
-<li>分片过多，会造成维护难度增加，比较定位(要求分区尽可能的简单)</li>
-<li>后期迁移较复杂</li>
+<li><p>合理构造Query语句</p>
+</li>
+<li><ul>
+<li>Insert语句中，根据测试，批量一次插入1000条时效率最高，多于1000条时，要拆分，多次进行同样的插入，应该合并批量进行。注意query语句的长度要小于mysqld的参数 max_allowed_packet</li>
 </ul>
-<p>优点</p>
-<ul>
-<li>同一个功能内的关连，事务操作都可以进行</li>
-<li>不会存在超大规模的表</li>
-<li>应用程序端改动比较小</li>
-<li>拆分规则设计的好的情况，较难触到性能瓶颈，也比较 易扩展</li>
+</li>
+<li><ul>
+<li>查询条件中各种逻辑操作符性能顺序是and &gt; or &gt; in，因此在查询条件中应该尽量避免使用在大集合中使用in</li>
 </ul>
-<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p>堆表与索引表：<a href="http://www.ywnds.com/?p=7702" target="_blank" rel="noopener">http://www.ywnds.com/?p=7702</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/08/28/Java/Advance/OOM/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/08/28/Java/Advance/OOM/" itemprop="url">Java OutOfMemoryError</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-28T18:57:06+08:00">
-                2018-08-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
-                    <span itemprop="name">Advance</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="java-lang-OutOfMemoryError-Requested-array-size-exceeds-VM-limit"><a href="#java-lang-OutOfMemoryError-Requested-array-size-exceeds-VM-limit" class="headerlink" title="java.lang.OutOfMemoryError: Requested array size exceeds VM limit"></a>java.lang.OutOfMemoryError: Requested array size exceeds VM limit</h3><p>原因分析：这个错误是由JVM中的本地代码抛出的. 在真正为数组分配内存之前, JVM会执行一项检查: 要分配的数据结构在该平台是否可以寻址(addressable)。</p>
-<p>一般很少看到这个错误, 因为Java使用 int 类型作为数组的下标(index, 索引)。在Java中, int类型的最大值为 2^31 – 1 = 2,147,483,647。大多数平台的限制都约等于这个值，例如在 64位的 MB Pro 上, Java 1.7 平台可以分配长度为 2,147,483,645, 以及 Integer.MAX_VALUE-2) 的数组。</p>
-<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://blog.csdn.net/renfufei/article/details/78170188" target="_blank" rel="noopener">https://blog.csdn.net/renfufei/article/details/78170188</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/08/21/Java/Advance/Object Pools/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/08/21/Java/Advance/Object Pools/" itemprop="url">Java Object Pools</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-21T18:19:22+08:00">
-                2018-08-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h3><p>一个对象池需要完成哪些功能：</p>
-<ul>
-<li>如果有可用的对象，对象池应当能返回给客户端。</li>
-<li>客户端把对象放回池里后，可以对这些对象进行重用。</li>
-<li>对象池能够创建新的对象来满足客户端不断增长的需求。</li>
-<li>需要有一个正确关闭池的机制来确保关闭后不会发生内存泄露。</li>
+</li>
 </ul>
-<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="http://ifeve.com/generic-concurrent-object-pool/" target="_blank" rel="noopener">http://ifeve.com/generic-concurrent-object-pool/</a></p>
+<h4 id="思路四"><a href="#思路四" class="headerlink" title="思路四"></a>思路四</h4><p>背景：有三张表，是5亿的数据，每天张表每天的增量是100w，每张表大概在10个columns左右</p>
+<p>当前使用mysiam，没有做分区。在只读情况下，比innodb的效率要高13％左右。</p>
+<p>在做了partition之后，读一下mysql的官方文档，其实对于partition，专门是对myisam做的优化，对于innodb，所有的数据是存在ibdata里面的，所以即使你可以看到schema变了，其实没有本质的变化。在分区出于同一个physical disk下面的情况下，提升大概只有1％ </p>
+<p>在分区在不同的physical disk下，分到了三个不同的disks下，提升大概在3％，其实所谓的吞吐量，由很多因素决定的，比如你的explain parition时候可以看到，record在那一个分区，如果每个分区都有，其实本质上没有解决读的问题，这样只会提升写的效率。</p>
+<p>另外一个问题在于，分区，你怎么分，如果一张表，有三个column都是经常被用于做查询条件的，其实是一件很悲惨的事情，因为你没有办法对所有的sql做针对性的分区，如果你只是如mysql官方文档上说的，只对时间做一个分区，而且你也只用时间查询的话，恭喜你。</p>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://www.zhihu.com/question/19719997" target="_blank" rel="noopener">https://www.zhihu.com/question/19719997</a></p>
 
           
         
@@ -2065,7 +2030,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/10/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><span class="page-number current">11</span><a class="page-number" href="/page/12/">12</a><span class="space">&hellip;</span><a class="page-number" href="/page/43/">43</a><a class="extend next" rel="next" href="/page/12/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/10/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><span class="page-number current">11</span><a class="page-number" href="/page/12/">12</a><span class="space">&hellip;</span><a class="page-number" href="/page/44/">44</a><a class="extend next" rel="next" href="/page/12/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2112,7 +2077,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">430</span>
+                <span class="site-state-item-count">434</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2123,7 +2088,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">198</span>
+                <span class="site-state-item-count">199</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2134,7 +2099,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">483</span>
+                <span class="site-state-item-count">489</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
