@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/04/09/DistributedSystem/Log/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/04/09/DB/SQL/index/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/04/09/DistributedSystem/Log/" itemprop="url">Distributed Log</a></h2>
+                <a class="post-title-link" href="/2018/04/09/DB/SQL/index/" itemprop="url">SQL Index</a></h2>
         
 
         <div class="post-meta">
@@ -315,7 +315,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-09T13:52:18+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-09T14:35:44+08:00">
                 2018-04-09
               </time>
             
@@ -338,8 +338,19 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
-                    <span itemprop="name">DistributedSystem</span>
+                  <a href="/categories/Database/" itemprop="url" rel="index">
+                    <span itemprop="name">Database</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/SQL/" itemprop="url" rel="index">
+                    <span itemprop="name">SQL</span>
                   </a>
                 </span>
 
@@ -377,17 +388,170 @@
       
         
           
-            <h3 id="What’s-journal"><a href="#What’s-journal" class="headerlink" title="What’s journal"></a>What’s journal</h3><p>日志就是按照时间顺序追加的、完全有序的记录序列，其实就是一种特殊的文件格式，文件是一个字节数组，而这里日志是一个记录数据，只是相对于文件来说，这里每条记录都是按照时间的相对顺序排列的，可以说日志是最简单的一种存储模型，读取一般都是从左到右，例如消息队列，一般是线性写入log文件，消费者顺序从offset开始读取。</p>
-<p>由于日志本身固有的特性，记录从左向右开始顺序插入，也就意味着左边的记录相较于右边的记录“更老”, 也就是说我们可以不用依赖于系统时钟，这个特性对于分布式系统来说相当重要。</p>
-<h3 id="Application"><a href="#Application" class="headerlink" title="Application"></a>Application</h3><h4 id="DB"><a href="#DB" class="headerlink" title="DB"></a>DB</h4><p>日志是什么时候出现已经无从得知，可能是概念上来讲太简单。在数据库领域中日志更多的是用于在系统crash的时候同步数据以及索引等，例如MySQL中的redo log，redo log是一种基于磁盘的数据结构，用于在系统挂掉的时候保证数据的正确性、完整性，也叫预写日志，例如在一个事物的执行过程中，首先会写redo log，然后才会应用实际的更改，这样当系统crash后恢复时就能够根据redo log进行重放从而恢复数据(在初始化的过程中，这个时候不会还没有客户端的连接)。</p>
-<p>日志也可以用于数据库主从之间的同步，因为本质上，数据库所有的操作记录都已经写入到了日志中，我们只要将日志同步到slave，并在slave重放就能够实现主从同步，这里也可以实现很多其他需要的组件，我们可以通过订阅redo log 从而拿到数据库所有的变更，从而实现个性化的业务逻辑，例如审计、缓存同步等等。</p>
-<h4 id="Distributed-System"><a href="#Distributed-System" class="headerlink" title="Distributed System"></a>Distributed System</h4><p>分布式系统服务本质上就是关于状态的变更，这里可以理解为状态机，两个独立的进程(不依赖于外部环境，例如系统时钟、外部接口等)给定一致的输入将会产生一致的输出并最终保持一致的状态，而日志由于其固有的顺序性并不依赖系统时钟，正好可以用来解决变更有序性的问题。</p>
-<p>我们利用这个特性实现解决分布式系统中遇到的很多问题。例如RocketMQ中的备节点，主broker接收客户端的请求，并记录日志，然后实时同步到salve中，slave在本地重放，当master挂掉的时候，slave可以继续处理请求，例如拒绝写请求并继续处理读请求。日志中不仅仅可以记录数据，也可以直接记录操作，例如SQL语句。</p>
-<p>日志是解决一致性问题的关键数据结构，日志就像是操作序列，每一条记录代表一条指令，例如应用广泛的Paxos、Raft协议，都是基于日志构建起来的一致性协议。</p>
-<h4 id="Message-Queue"><a href="#Message-Queue" class="headerlink" title="Message Queue"></a>Message Queue</h4><p>日志可以很方便的用于处理数据之间的流入流出，每一个数据源都可以产生自己的日志，这里数据源可以来自各个方面，例如某个事件流(页面点击、缓存刷新提醒、数据库binlog变更)，我们可以将日志集中存储到一个集群中，订阅者可以根据offset来读取日志的每条记录，根据每条记录中的数据、操作应用自己的变更。</p>
-<p>这里的日志可以理解为消息队列，消息队列可以起到异步解耦、限流的作用。为什么说解耦呢？因为对于消费者、生产者来说，两个角色的职责都很清晰，就负责生产消息、消费消息，而不用关心下游、上游是谁，不管是来数据库的变更日志、某个事件也好，对于某一方来说我根本不需要关心，我只需要关注自己感兴趣的日志以及日志中的每条记录。</p>
-<p>我们知道数据库的QPS是一定的，而上层应用一般可以横向扩容，这个时候如果到了双11这种请求突然的场景，数据库会吃不消，那么我们就可以引入消息队列，将每个队数据库的操作写到日志中，由另外一个应用专门负责消费这些日志记录并应用到数据库中，而且就算数据库挂了，当恢复的时候也可以从上次消息的位置继续处理(RocketMQ和Kafka都支持Exactly Once语义)，这里即使生产者的速度异于消费者的速度也不会有影响，日志在这里起到了缓冲的作用，它可以将所有的记录存储到日志中，并定时同步到slave节点，这样消息的积压能力能够得到很好的提升，因为写日志都是有master节点处理，读请求这里分为两种，一种是tail-read，就是说消费速度能够跟得上写入速度的，这种读可以直接走缓存，而另一种也就是落后于写入请求的消费者，这种可以从slave节点读取，这样通过IO隔离以及操作系统自带的一些文件策略，例如pagecache、缓存预读等，性能可以得到很大的提升。</p>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://segmentfault.com/a/1190000016576805" target="_blank" rel="noopener">https://segmentfault.com/a/1190000016576805</a></p>
+            <h3 id="什么是索引？"><a href="#什么是索引？" class="headerlink" title="什么是索引？"></a>什么是索引？</h3><p>SQL索引有两种，聚集索引和非聚集索引，索引主要目的是提高了SQL Server系统的性能，加快数据的查询速度与减少系统的响应时间。</p>
+<h4 id="索引的存储机制"><a href="#索引的存储机制" class="headerlink" title="索引的存储机制"></a>索引的存储机制</h4><p>无索引的表，查询时，是按照顺序存续的方法扫描每个记录来查找符合条件的记录，这样效率十分低下。</p>
+<p>聚集索引和非聚集索引的根本区别是表记录的排列顺序和与索引的排列顺序是否一致。</p>
+<p>举字典的例子：如果按照拼音查询，那么都是从a-z的，是具有连续性的，a后面就是b，b后面就是c。</p>
+<p>聚集索引就是这样的，他是和表的物理排列顺序是一样的，例如有id为聚集索引，那么1后面肯定是2,2后面肯定是3，所以说这样的搜索顺序的就是聚集索引。</p>
+<p>非聚集索引就和按照部首查询是一样是，可能按照偏房查询的时候，根据偏旁‘弓’字旁，索引出两个汉字，张和弘，但是这两个其实一个在100页，一个在1000页，<br>（这里只是举个例子），他们的索引顺序和数据库表的排列顺序是不一样的，这个样的就是非聚集索引。</p>
+<h4 id="什么情况下设置索引"><a href="#什么情况下设置索引" class="headerlink" title="什么情况下设置索引"></a>什么情况下设置索引</h4><p><a href="http://www.cnblogs.com/AK2012/archive/2013/01/04/2013-0104.html" target="_blank" rel="noopener">http://www.cnblogs.com/AK2012/archive/2013/01/04/2013-0104.html</a></p>
+<p>建立索引的原则：</p>
+<ol>
+<li><p>定义主键的数据列一定要建立索引。</p>
+</li>
+<li><p>定义有外键的数据列一定要建立索引。</p>
+</li>
+<li><p>对于经常查询的数据列最好建立索引。</p>
+</li>
+<li><p>对于需要在指定范围内的快速或频繁查询的数据列;</p>
+</li>
+<li><p>经常用在WHERE子句中的数据列。</p>
+</li>
+<li><p>经常出现在关键字order by、group by、distinct后面的字段，建立索引。如果建立的是复合索引，索引的字段顺序要<br>和这些关键字后面的字段顺序一致，否则索引不会被使用。</p>
+</li>
+<li><p>对于那些查询中很少涉及的列，重复值比较多的列不要建立索引。</p>
+</li>
+<li><p>对于定义为text、image和bit的数据类型的列不要建立索引。</p>
+</li>
+<li><p>对于经常存取的列避免建立索引 </p>
+</li>
+<li><p>限制表上的索引数目。对一个存在大量更新操作的表，所建索引的数目一般不要超过3个，最多不要超过5个。索引虽说提高了<br>访问速度，但太多索引会影响数据的更新操作。</p>
+</li>
+<li><p>对复合索引，按照字段在查询条件中出现的频度建立索引。在复合索引中，记录首先按照第一个字段排序。对于在第一个字段<br>上取值相同的记录，系统再按照第二个字段的取值排序，</p>
+</li>
+</ol>
+<p>以此类推。因此只有复合索引的第一个字段出现在查询条件中，该索引才可能被使用,因此将应用频度高的字段，放置在复合索引的前面，<br>会使系统最大可能地使用此索引，发挥索引的作用。</p>
+<h3 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h3><p>创建索引有两种方式，一种是直接利用CREATE INDEX进行创建，另外一种则是通过修改表结构来进行添加，则是利用ALTER TABLE语句。</p>
+<h4 id="方式一：CREATE-INDEX"><a href="#方式一：CREATE-INDEX" class="headerlink" title="方式一：CREATE INDEX"></a>方式一：CREATE INDEX</h4><ul>
+<li>语法格式</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> [<span class="keyword">UNIQUE</span>|FULLTEXT|SPATIAL] <span class="keyword">INDEX</span> index_name</span><br><span class="line">[<span class="keyword">USING</span> index_type]</span><br><span class="line"><span class="keyword">ON</span> table_name (index_col_name,...)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>索引类型</p>
+</li>
+<li><ul>
+<li>UNIQUE：唯一索引</li>
+</ul>
+</li>
+<li><ul>
+<li>FULLTEXT：全文索引</li>
+</ul>
+</li>
+<li><ul>
+<li>SPATIAL：空间索引</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>index_type</li>
+</ul>
+<p>索引的具体实现方式，在MySQL中，有两种不同形式的索引——BTREE索引和HASH索引。在存储引擎为MyISAM和InnoDB的表中只能使用BTREE，其默认值就是BTREE；在存储引擎为MEMORY或者HEAP的表中可以使用HASH和BTREE两种类型的索引，其默认值为HASH。</p>
+<ul>
+<li>index_colname</li>
+</ul>
+<p>创建索引的字段名称，我们还可以针对多个字段创建复合索引，只需要在多个字段名称之间以英文逗号隔开即可。</p>
+<p>此外，对于CHAR或VARCHAR类型的字段，我们还可以只使用字段内容前面的一部分来创建索引，只需要在对应的字段名称后面加上形如(length)的指令即可，表示只需要使用字段内容前面的length个字符来创建索引。在这里，我们以customers表的cust_name字段(类型为VARCHAR(50))为例，使用cust_name字段的6个字符前缀来创建索引。</p>
+<ul>
+<li>复合索引</li>
+</ul>
+<p>如果我们的查询where条件只有一个，我们完全可以用单列索引，这样的查询速度较快，索引也比较瘦身。</p>
+<p>如果我们的业务场景是需要经常查询多个组合列，不要试图分别基于单个列建立多个单列索引。</p>
+<p>因为虽然有多个单列索引，但是MySQL只能用到其中的那个它认为似乎最有效率的单列索引</p>
+<p>举例说明，为firstname、lastname和age创建复合索引</p>
+<p>如果要根据这三个索引进行查找，由于索引文件以B+树格式保存，MySQL能够立即转到合适的firstname，然后再转到合适的lastname，最后转到合适的age。</p>
+<p>在没有扫描数据文件任何一个记录的情况下，MySQL就正确地找出了搜索的目标记录!</p>
+<p>那么，如果在firstname、lastname、age这三个列上分别创建单列索引，效果是否和创建一个firstname、lastname、age的多列索引一样呢？</p>
+<p>答案是否定的，两者完全不同。当我们执行查询的时候，MySQL只能使用一个索引。如果你有三个单列的索引，MySQL会试图选择一个限制最严格的索引。但是，即使是限制最严格的单列索引，<strong>它的限制能力也肯定远远低于firstname、lastname、age这三个列上的多列索引</strong>。</p>
+<p>参考链接：<a href="https://blog.csdn.net/xtdhqdhq/article/details/17582779" target="_blank" rel="noopener">https://blog.csdn.net/xtdhqdhq/article/details/17582779</a></p>
+<h4 id="方式二：ALTER-TABLE"><a href="#方式二：ALTER-TABLE" class="headerlink" title="方式二：ALTER TABLE"></a>方式二：ALTER TABLE</h4><ul>
+<li>语法格式</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> table_name</span><br><span class="line"><span class="keyword">ADD</span> [<span class="keyword">UNIQUE</span>|FULLTEXT|SPATIAL] <span class="keyword">INDEX</span> index_name </span><br><span class="line">(index_col_name,...) [<span class="keyword">USING</span> index_type]</span><br></pre></td></tr></table></figure>
+<h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><ul>
+<li>创建简单索引</li>
+</ul>
+<p>在表上创建一个简单的索引。允许使用重复的值，”column_name” 规定需要索引的列。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">INDEX</span> index_name</span><br><span class="line"><span class="keyword">ON</span> table_name (column_name)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>唯一索引</li>
+</ul>
+<p>唯一的索引意味着两个行不能拥有相同的索引值。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">UNIQUE</span> <span class="keyword">INDEX</span> index_name</span><br><span class="line"><span class="keyword">ON</span> table_name (column_name)</span><br></pre></td></tr></table></figure>
+<h3 id="删除索引"><a href="#删除索引" class="headerlink" title="删除索引"></a>删除索引</h3><ul>
+<li>语法格式</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> table_name</span><br><span class="line"><span class="keyword">DROP</span> <span class="keyword">INDEX</span> index_name;</span><br></pre></td></tr></table></figure>
+<h4 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h4><ul>
+<li>删除索引</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> customers</span><br><span class="line"><span class="keyword">DROP</span> <span class="keyword">INDEX</span> idx_cust_name;</span><br></pre></td></tr></table></figure>
+<h3 id="修改索引"><a href="#修改索引" class="headerlink" title="修改索引"></a>修改索引</h3><p>在MySQL中并没有提供修改索引的直接指令，一般情况下，我们需要先删除掉原索引，再根据需要创建一个同名的索引，从而变相地实现修改索引操作。</p>
+<h4 id="示例-2"><a href="#示例-2" class="headerlink" title="示例"></a>示例</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">-先删除</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="keyword">user</span></span><br><span class="line"><span class="keyword">DROP</span> <span class="keyword">INDEX</span> idx_user_username;</span><br><span class="line"><span class="comment">--再以修改后的内容创建同名索引</span></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">INDEX</span> idx_cust_name <span class="keyword">ON</span> customers (cust_name(<span class="number">8</span>));</span><br></pre></td></tr></table></figure>
+<h3 id="查看索引"><a href="#查看索引" class="headerlink" title="查看索引"></a>查看索引</h3><ul>
+<li>语法格式</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">--如果查看索引前，没有使用user db_name等命令指定具体的数据库，则必须加上FROM db_name</span></span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">INDEX</span> <span class="keyword">FROM</span> table_name [<span class="keyword">FROM</span> db_name]</span><br><span class="line"></span><br><span class="line"><span class="comment">--如果查看索引前，没有使用user db_name等命令指定具体的数据库，则必须加上db_name.前缀</span></span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">INDEX</span> <span class="keyword">FROM</span> [db_name.]table_name</span><br></pre></td></tr></table></figure>
+<p>字段解释</p>
+<ul>
+<li>Non_unique：如果索引不能包括重复词，则为0。如果可以，则为1。</li>
+<li>Key_name：索引的名称。</li>
+<li>Seq_in_index：索引中的列序列号，从1开始。</li>
+<li>Column_name</li>
+<li>Collation：列以什么方式存储在索引中。在MySQL中，有值‘A’（升序）或NULL（无分类）</li>
+<li>Cardinality：索引中唯一值的数目的估计值。通过运行ANALYZE TABLE或myisamchk -a可以更新。基数根据被存储为整数的统计数据来计数，<br>所以即使对于小型表，该值也没有必要是精确的。基数越大，当进行联合时，MySQL使用该索引的机会就越大。</li>
+<li>Sub_part：如果列只是被部分地编入索引，则为被编入索引的字符的数目。如果整列被编入索引，则为NULL。</li>
+<li>Packed：指示关键字如何被压缩。如果没有被压缩，则为NULL。</li>
+<li>Null：如果列含有NULL，则含有YES。如果没有，则该列含有NO。</li>
+<li>Index_type：用过的索引方法（BTREE, FULLTEXT, HASH, RTREE）。</li>
+</ul>
+<h3 id="加锁语句"><a href="#加锁语句" class="headerlink" title="加锁语句"></a>加锁语句</h3><p><a href="http://www.fordba.com/locks-set-by-different-sql-statements-in-innodb.html" target="_blank" rel="noopener">http://www.fordba.com/locks-set-by-different-sql-statements-in-innodb.html</a></p>
+<h4 id="举例1"><a href="#举例1" class="headerlink" title="举例1"></a>举例1</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`test`</span> (</span><br><span class="line">  <span class="string">`id`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="string">'0'</span>,</span><br><span class="line">  <span class="string">`name`</span> <span class="built_in">varchar</span>(<span class="number">10</span>) <span class="keyword">DEFAULT</span> <span class="literal">NULL</span>,</span><br><span class="line">  PRIMARY <span class="keyword">KEY</span> (<span class="string">`id`</span>)</span><br><span class="line">) <span class="keyword">ENGINE</span>=<span class="keyword">InnoDB</span> <span class="keyword">DEFAULT</span> <span class="keyword">CHARSET</span>=utf8</span><br><span class="line"></span><br><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">test</span> <span class="keyword">where</span> <span class="keyword">id</span> &gt; <span class="number">3</span> <span class="keyword">and</span> <span class="keyword">name</span> &lt;<span class="string">'A'</span> <span class="keyword">for</span> <span class="keyword">update</span>;</span><br></pre></td></tr></table></figure>
+<p>这条SQL语句的会将所有id&gt;3的记录进行加锁，而不是id&gt;3 and name &lt;’A’ 进行加锁，因为name上面没有索引。</p>
+<h4 id="SQL分析"><a href="#SQL分析" class="headerlink" title="SQL分析"></a>SQL分析</h4><ol>
+<li><p>SELECT … FROM 是一个快照读，通过读取数据库的一个快照，不会加任何锁，除非将隔离级别设置成了 SERIALIZABLE 。在 SERIALIZABLE 隔离级别下，<br>如果索引是非唯一索引，那么将在相应的记录上加上一个共享的next key锁。如果是唯一索引，只需要在相应记录上加index record lock。</p>
+</li>
+<li><p>SELECT … FROM … LOCK IN SHARE MODE 语句在所有索引扫描范围的索引记录上加上共享的next key锁。如果是唯一索引，只需要在相应记录上加index record lock。</p>
+</li>
+<li><p>SELECT … FROM … FOR UPDATE 语句在所有索引扫描范围的索引记录上加上排他的next key锁。如果是唯一索引，只需要在相应记录上加index record lock。<br>这将堵塞其他会话利用SELECT … FROM … LOCK IN SHARE MODE 读取相同的记录，但是快照读将忽略记录上的锁。</p>
+</li>
+<li><p>UPDATE … WHERE …语句在所有索引扫描范围的索引记录上加上排他的next key锁。如果是唯一索引，只需要在相应记录上加index record lock。</p>
+</li>
+</ol>
+<p>当UPDATE 操作修改主键记录的时候，将在相应的二级索引上加上隐式的锁。当进行重复键检测的时候，将会在插入新的二级索引记录之前，在其二级索引上加上一把共享锁。</p>
+<ol start="5">
+<li><p>DELETE FROM … WHERE … 语句在所有索引扫描范围的索引记录上加上排他的next key锁。如果是唯一索引，只需要在相应记录上加index record lock。</p>
+</li>
+<li><p>INSERT 语句将在插入的记录上加一把排他锁，这个锁是一个index-record lock，并不是next-key 锁，因此就没有gap锁，他将不会阻止其他会话在该条记录之前的gap插入记录。</p>
+</li>
+</ol>
+<h3 id="索引分类"><a href="#索引分类" class="headerlink" title="索引分类"></a>索引分类</h3><ul>
+<li>主键</li>
+</ul>
+<p>自带最高效的索引属性</p>
+<ul>
+<li>唯一索引</li>
+</ul>
+<p>该属性值重复率为0，一般可作为业务主键</p>
+<ul>
+<li>普通索引</li>
+</ul>
+<p>属性值的重复率大于0，不能作为唯一指定条件</p>
+<h4 id="普通索引对并发的影响"><a href="#普通索引对并发的影响" class="headerlink" title="普通索引对并发的影响"></a>普通索引对并发的影响</h4><p>mysql 5.6在 update 和 delete 的时候，where 条件如果不存在索引字段，那么这个事务是否会导致表锁？</p>
+<p>针对 “普通索引是表锁” 进行了验证，结果发现普通索引并不一定会引发表锁，在普通索引中，是否引发表锁取决于普通索引的高效程度。</p>
+<p><a href="https://wing324.github.io/2017/03/01/SELECT-%E2%80%A6-FOR-UPDATE%E5%A6%82%E4%BD%95%E5%BD%B1%E5%93%8DINNODB%E7%9A%84%E9%94%81%E7%BA%A7%E5%88%AB/" target="_blank" rel="noopener">https://wing324.github.io/2017/03/01/SELECT-%E2%80%A6-FOR-UPDATE%E5%A6%82%E4%BD%95%E5%BD%B1%E5%93%8DINNODB%E7%9A%84%E9%94%81%E7%BA%A7%E5%88%AB/</a></p>
+<p>小结：</p>
+<ul>
+<li>WHERE条件使用主键，SELECT … FOR UPDATE为<strong>行级锁</strong>；</li>
+<li>WHERE条件使用唯一索引，SELECT … FOR UPDATE为<strong>行级锁</strong>；</li>
+<li>WHERE条件使用普通索引，SELECT … FOR UPDATE为<strong>行级锁</strong>；</li>
+<li>WHERE条件使用联合索引的前缀索引，SELECT … FOR UPDATE为<strong>行级锁</strong>；</li>
+<li>WHERE条件不使用索引，SELECT … FOR UPDATE为<strong>表级锁</strong>；</li>
+</ul>
+<p>即：</p>
+<ul>
+<li>WHERE条件能使用索引时，SELECT … FOR UPDATE表现为<strong>行级锁</strong>；</li>
+<li>WHERE条件不使用索引，SELECT … FOR UPDATE表现为<strong>表级锁</strong>；</li>
+</ul>
 
           
         
@@ -652,6 +816,158 @@
 <li><p>从可靠性角度（从高到低）<br>Zookeeper &gt; 缓存 &gt; 数据库</p>
 </li>
 </ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/04/09/DistributedSystem/Log/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/04/09/DistributedSystem/Log/" itemprop="url">Distributed Log</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-09T13:52:18+08:00">
+                2018-04-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
+                    <span itemprop="name">DistributedSystem</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="What’s-journal"><a href="#What’s-journal" class="headerlink" title="What’s journal"></a>What’s journal</h3><p>日志就是按照时间顺序追加的、完全有序的记录序列，其实就是一种特殊的文件格式，文件是一个字节数组，而这里日志是一个记录数据，只是相对于文件来说，这里每条记录都是按照时间的相对顺序排列的，可以说日志是最简单的一种存储模型，读取一般都是从左到右，例如消息队列，一般是线性写入log文件，消费者顺序从offset开始读取。</p>
+<p>由于日志本身固有的特性，记录从左向右开始顺序插入，也就意味着左边的记录相较于右边的记录“更老”, 也就是说我们可以不用依赖于系统时钟，这个特性对于分布式系统来说相当重要。</p>
+<h3 id="Application"><a href="#Application" class="headerlink" title="Application"></a>Application</h3><h4 id="DB"><a href="#DB" class="headerlink" title="DB"></a>DB</h4><p>日志是什么时候出现已经无从得知，可能是概念上来讲太简单。在数据库领域中日志更多的是用于在系统crash的时候同步数据以及索引等，例如MySQL中的redo log，redo log是一种基于磁盘的数据结构，用于在系统挂掉的时候保证数据的正确性、完整性，也叫预写日志，例如在一个事物的执行过程中，首先会写redo log，然后才会应用实际的更改，这样当系统crash后恢复时就能够根据redo log进行重放从而恢复数据(在初始化的过程中，这个时候不会还没有客户端的连接)。</p>
+<p>日志也可以用于数据库主从之间的同步，因为本质上，数据库所有的操作记录都已经写入到了日志中，我们只要将日志同步到slave，并在slave重放就能够实现主从同步，这里也可以实现很多其他需要的组件，我们可以通过订阅redo log 从而拿到数据库所有的变更，从而实现个性化的业务逻辑，例如审计、缓存同步等等。</p>
+<h4 id="Distributed-System"><a href="#Distributed-System" class="headerlink" title="Distributed System"></a>Distributed System</h4><p>分布式系统服务本质上就是关于状态的变更，这里可以理解为状态机，两个独立的进程(不依赖于外部环境，例如系统时钟、外部接口等)给定一致的输入将会产生一致的输出并最终保持一致的状态，而日志由于其固有的顺序性并不依赖系统时钟，正好可以用来解决变更有序性的问题。</p>
+<p>我们利用这个特性实现解决分布式系统中遇到的很多问题。例如RocketMQ中的备节点，主broker接收客户端的请求，并记录日志，然后实时同步到salve中，slave在本地重放，当master挂掉的时候，slave可以继续处理请求，例如拒绝写请求并继续处理读请求。日志中不仅仅可以记录数据，也可以直接记录操作，例如SQL语句。</p>
+<p>日志是解决一致性问题的关键数据结构，日志就像是操作序列，每一条记录代表一条指令，例如应用广泛的Paxos、Raft协议，都是基于日志构建起来的一致性协议。</p>
+<h4 id="Message-Queue"><a href="#Message-Queue" class="headerlink" title="Message Queue"></a>Message Queue</h4><p>日志可以很方便的用于处理数据之间的流入流出，每一个数据源都可以产生自己的日志，这里数据源可以来自各个方面，例如某个事件流(页面点击、缓存刷新提醒、数据库binlog变更)，我们可以将日志集中存储到一个集群中，订阅者可以根据offset来读取日志的每条记录，根据每条记录中的数据、操作应用自己的变更。</p>
+<p>这里的日志可以理解为消息队列，消息队列可以起到异步解耦、限流的作用。为什么说解耦呢？因为对于消费者、生产者来说，两个角色的职责都很清晰，就负责生产消息、消费消息，而不用关心下游、上游是谁，不管是来数据库的变更日志、某个事件也好，对于某一方来说我根本不需要关心，我只需要关注自己感兴趣的日志以及日志中的每条记录。</p>
+<p>我们知道数据库的QPS是一定的，而上层应用一般可以横向扩容，这个时候如果到了双11这种请求突然的场景，数据库会吃不消，那么我们就可以引入消息队列，将每个队数据库的操作写到日志中，由另外一个应用专门负责消费这些日志记录并应用到数据库中，而且就算数据库挂了，当恢复的时候也可以从上次消息的位置继续处理(RocketMQ和Kafka都支持Exactly Once语义)，这里即使生产者的速度异于消费者的速度也不会有影响，日志在这里起到了缓冲的作用，它可以将所有的记录存储到日志中，并定时同步到slave节点，这样消息的积压能力能够得到很好的提升，因为写日志都是有master节点处理，读请求这里分为两种，一种是tail-read，就是说消费速度能够跟得上写入速度的，这种读可以直接走缓存，而另一种也就是落后于写入请求的消费者，这种可以从slave节点读取，这样通过IO隔离以及操作系统自带的一些文件策略，例如pagecache、缓存预读等，性能可以得到很大的提升。</p>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://segmentfault.com/a/1190000016576805" target="_blank" rel="noopener">https://segmentfault.com/a/1190000016576805</a></p>
 
           
         
@@ -1995,276 +2311,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/12/Server/Cache/分布式缓存设计/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/03/12/Server/Cache/分布式缓存设计/" itemprop="url">分布式缓存设计</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-12T01:48:18+08:00">
-                2018-03-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Cache/" itemprop="url" rel="index">
-                    <span itemprop="name">Cache</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="缓存设计的核心要素"><a href="#缓存设计的核心要素" class="headerlink" title="缓存设计的核心要素"></a>缓存设计的核心要素</h2><hr>
-<h3 id="容量规划"><a href="#容量规划" class="headerlink" title="容量规划"></a>容量规划</h3><ul>
-<li><p>缓存内容的大小/数量</p>
-</li>
-<li><p>淘汰策略</p>
-</li>
-<li><p>缓存的数据结构</p>
-</li>
-<li><p>每秒的读/写峰值</p>
-</li>
-</ul>
-<hr>
-<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><ul>
-<li><p>线程模型</p>
-</li>
-<li><p>预热方法</p>
-</li>
-<li><p>线程模型</p>
-</li>
-<li><p>缓存分片</p>
-</li>
-<li><p>冷热数据的比例</p>
-</li>
-</ul>
-<hr>
-<h3 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h3><ul>
-<li><p>复制模型</p>
-</li>
-<li><p>失效转移</p>
-</li>
-<li><p>持久策略</p>
-</li>
-<li><p>缓存重建</p>
-</li>
-</ul>
-<hr>
-<h3 id="缓存监控"><a href="#缓存监控" class="headerlink" title="缓存监控"></a>缓存监控</h3><ul>
-<li><p>缓存服务监控</p>
-</li>
-<li><p>缓存容量监控</p>
-</li>
-<li><p>缓存请求监控</p>
-</li>
-<li><p>缓存响应时间监控</p>
-</li>
-</ul>
-<hr>
-<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><ul>
-<li><p>是否有可能发生缓存穿透</p>
-</li>
-<li><p>是否有大对象</p>
-</li>
-<li><p>是否使用缓存实现分布式锁</p>
-</li>
-<li><p>是否使用缓存支持的脚本（Lua）</p>
-</li>
-<li><p>是否避免了Race Condition</p>
-</li>
-</ul>
-<h2 id="缓存设计案例汇总"><a href="#缓存设计案例汇总" class="headerlink" title="缓存设计案例汇总"></a>缓存设计案例汇总</h2><ul>
-<li><p>缓存系统主要消耗的是服务器的内存，因此，在使用缓存时必须先对应用需要缓存的数据大小进行评估，包括缓存的数据结构、缓存大小、缓存数量、缓存的失效时间，<br>然后根据业务情况自行推算在未来一定时间内的容量的使用情况，根据容量评估的结果来申请和分配缓存资源，否则会造成资源浪费或者缓存空间不够。</p>
-</li>
-<li><p>建议将使用缓存的业务进行分离，核心业务和非核心业务使用不同的缓存实例，从物理上进行隔离，如果有条件，则请对每个业务使用单独的实例或者集群，以减小应用之间互相影响的可能性<br>。笔者就经常听说有的公司应用了共享缓存，造成缓存数据被覆盖以及缓存数据错乱的线上事故。</p>
-</li>
-<li><p>根据缓存实例提供的内存大小推算应用需要使用的缓存实例数量，一般在公司里会成立一个缓存管理的运维团队，这个团队会将缓存资源虚拟成多个相同内存大小的缓存实例。</p>
-</li>
-</ul>
-<p>例如一个实例有4GB内存，在应用申请时可以按需申请足够的实例数量来使用，对这样的应用需要进行分片，详情请参考《可伸缩服务架构：框架与中间件》中4.4.3的内容。这里需要注意，<br>如果我们使用了RDB备份机制，每个实例使用4GB内存，则我们的系统需要大于8GB内存，因为RDB备份时使用了 copy-on-write 机制，需要fork出一个子进程，并且复制一份内存，因此需要双份的内存存储大小。</p>
-<ul>
-<li><p>缓存一般是用来加速数据库的读操作的，一般先访问缓存后访问数据库，所以缓存的超时时间的设置是很重要的。笔者曾经在一家互联网公司遇到过由于运维操作失误导致缓存超时设置得较长<br>，从而拖垮服务的线程池，最终导致服务雪崩的情况。</p>
-</li>
-<li><p>所有的缓存实例都需要添加监控，这是非常重要的，我们需要对慢查询、大对象、内存使用情况做可靠的监控。</p>
-</li>
-<li><p>我们不推荐多个业务共享一个缓存实例，但是由于成本控制的原因，这种情况经常出现，我们需要通过规范来限制各个应用使用的key有唯一的前缀，并进行隔离设计，避免产生缓存互相覆盖的问题。</p>
-</li>
-<li><p>任何缓存的key都必须设定缓存失效时间，且失效时间不能集中在某一点，否则会导致缓存占满内存或者缓存雪崩。</p>
-</li>
-<li><p>低频访问的数据不要放在缓存中，如我们前面所说的，我们使用缓存的主要目的是提高读取性能。</p>
-</li>
-</ul>
-<p>曾经有个小伙伴设计了一套定时的批处理系统，由于批处理系统需要对一个大的数据模型进行计算，所以该小伙伴把这个数据模型保存在每个节点的本地缓存中，并通过消息队列接收更新的消息<br>来维护本地缓存中模型的实时性，但是这个模型每个月只用了一次，所以这样使用缓存是很浪费的。</p>
-<p>既然是批处理任务，就需要把任务进行分割，进行批量处理，采用分而治之、逐步计算的方法，得出最终的结果即可。</p>
-<ul>
-<li><p>缓存的数据不易过大，尤其是Redis，因为Redis使用的是单线程模型，在单个缓存key的数据过大时，会阻塞其他请求的处理。</p>
-</li>
-<li><p>对于存储较多value的key，尽量不要使用HGETALL等集合操作，该操作会造成请求阻塞，影响其他应用的访问。</p>
-</li>
-<li><p>缓存一般用于在交易系统中加速查询的场景，有大量的更新数据时，尤其是批量处理时，请使用批量模式，但是这种场景较少。</p>
-</li>
-<li><p>如果对性能的要求不是非常高，则尽量使用分布式缓存，而不要使用本地缓存，因为本地缓存在服务的各个节点之间复制，在某一时刻副本之间是不一致的，如果这个缓存代表的是开关，<br>而且分布式系统中的请求有可能会重复，就会导致重复的请求走到两个节点，一个节点的开关是开，一个节点的开关是关，如果请求处理没有做到幂等，就会造成处理重复，在严重情况下<br>会造成资金损失。</p>
-</li>
-<li><p>在写缓存时一定要写入完全正确的数据，如果缓存数据的一部分有效、一部分无效，则宁可放弃缓存，也不要把部分数据写入缓存，否则会造成空指针、程序异常等。</p>
-</li>
-<li><p>在通常情况下，读的顺序是先缓存，后数据库；写的顺序是先数据库，后缓存。</p>
-</li>
-<li><p>在使用本地缓存（如Ehcache）时，一定要严格控制缓存对象的个数及声明周期。由于JVM的特性，过多的缓存对象会极大影响JVM的性能，甚至导致内存溢出等。</p>
-</li>
-<li><p>在使用缓存时，一定要有降级处理，尤其是对关键的业务环节，缓存有问题或者失效时也要能回源到数据库进行处理。</p>
-</li>
-</ul>
-<h2 id="缓存问题案例"><a href="#缓存问题案例" class="headerlink" title="缓存问题案例"></a>缓存问题案例</h2><h3 id="现象：某应用程序的数据库负载瞬时升高"><a href="#现象：某应用程序的数据库负载瞬时升高" class="headerlink" title="现象：某应用程序的数据库负载瞬时升高"></a>现象：某应用程序的数据库负载瞬时升高</h3><p>原因：在应用程序中对使用的大量缓存key设置了同一个固定的失效时间，当缓存失效时，会造成在一段时间内同时访问数据库，造成数据库的压力较大。</p>
-<p>总结：在使用缓存时需要进行缓存设计，要充分考虑如何避免常见的缓存穿透、缓存雪崩、缓存并发等问题，尤其是对于高并发的缓存使用，需要对key的过期时间进行随机设置，<br>例如，将过期时间设置为10秒+random(2)，也就是将过期时间随机设置成10～12秒。</p>
-<h3 id="现象：导致迁移前后两个系统的核心操作重复"><a href="#现象：导致迁移前后两个系统的核心操作重复" class="headerlink" title="现象：导致迁移前后两个系统的核心操作重复"></a>现象：导致迁移前后两个系统的核心操作重复</h3><p>原因：在迁移的过程中，重复的流量进入了不同的节点，由于使用了本地缓存存储迁移开关，而迁移开关在开关打开的瞬间导致各个节点的开关状态不一致，有的是开、有的是关，<br>所以对于不同节点的流量的处理重复，一个走了开关开的逻辑，一个走了开关关的逻辑。</p>
-<p>总结：避免使用本地缓存来存储迁移开关，迁移开关应该在有状态的订单上标记。</p>
-<h3 id="现象：某模块设计使用了缓存加速数据库的读操作的性能，但发现数据库负载并没有明显下降"><a href="#现象：某模块设计使用了缓存加速数据库的读操作的性能，但发现数据库负载并没有明显下降" class="headerlink" title="现象：某模块设计使用了缓存加速数据库的读操作的性能，但发现数据库负载并没有明显下降"></a>现象：某模块设计使用了缓存加速数据库的读操作的性能，但发现数据库负载并没有明显下降</h3><p>原因：由于这个模块的使用方查询请求的数据在数据库中不存在，是非法的数据，所以导致缓存没有命中，每次都穿透到数据库，且量级较大。</p>
-<p>总结：在使用缓存时需要进行缓存设计，要充分考虑如何避免常见的缓存穿透、缓存雪崩、缓存并发等问题，尤其是对高并发的缓存使用，需要对无效的key进行缓存，<br>以抵挡恶意的或者无意的对无效缓存查询的攻击或影响。</p>
-<h3 id="现象：监控系统报警，Redis中单个哈希键占用的空间巨大"><a href="#现象：监控系统报警，Redis中单个哈希键占用的空间巨大" class="headerlink" title="现象：监控系统报警，Redis中单个哈希键占用的空间巨大"></a>现象：监控系统报警，Redis中单个哈希键占用的空间巨大</h3><p>原因：应用系统使用了哈希键，哈希键本身有过期时间，但是哈希键里面的每个键值对没有过期时间。</p>
-<p>总结：在设计Redis的过程中，如果有大量的键值对要保存，则请使用字符串键的数据库类型，并对每个键都设置过期时间，请不要在哈希键内部存储一个没有边界的集合数据。<br>实际上，无论是对缓存、内存还是对数据库的设计，如果使用任意一个集合的数据结构，则都要考虑为它设置最大限制，避免内存用光，最常见的是集合溢出导致的内存溢出的问题。</p>
-<h3 id="现象：某业务项目由于缓存宕机导致业务逻辑中断，数据不一致"><a href="#现象：某业务项目由于缓存宕机导致业务逻辑中断，数据不一致" class="headerlink" title="现象：某业务项目由于缓存宕机导致业务逻辑中断，数据不一致"></a>现象：某业务项目由于缓存宕机导致业务逻辑中断，数据不一致</h3><p>原因：Redis进行主备切换，导致瞬间内应用连接Redis异常，应用并没有对缓存做降级处理。</p>
-<p>总结：对于核心业务，在使用缓存时一定要有降级方案。常见的降级方案是在数据库层次预留足够的容量，在某一部分缓存出现问题时，可以让应用暂时回源到数据库继续业务逻辑，<br>而不应该中断业务逻辑，但是这需要严格的容量评估，请参考《分布式服务架构：原理设计与实战》第3章的内容。</p>
-<h3 id="现象：某应用系统负载升高，响应变慢，发现应用进行频繁GC，甚至出现OutOfMemroyError-GC-overhead-limt-exceed的错误日志"><a href="#现象：某应用系统负载升高，响应变慢，发现应用进行频繁GC，甚至出现OutOfMemroyError-GC-overhead-limt-exceed的错误日志" class="headerlink" title="现象：某应用系统负载升高，响应变慢，发现应用进行频繁GC，甚至出现OutOfMemroyError: GC overhead limt exceed的错误日志"></a>现象：某应用系统负载升高，响应变慢，发现应用进行频繁GC，甚至出现OutOfMemroyError: GC overhead limt exceed的错误日志</h3><p>原因：因为这个项目是个历史项目，使用了Hibernate ORM框架，在Hibernate中开启了二级缓存，使用了Ehcache；但是在Ehcache中没有控制缓存对象的个数，缓存对象增多，<br>导致内存紧张，所以进行了频繁的GC操作。</p>
-<p>总结：使用本地缓存（如Ehcache、OSCache、应用内存）时，一定要严格控制缓存对象的个数及声明周期。</p>
-<h3 id="现象：某个正常运行的应用突然报警线程数过高，之后很快就出现了内存溢出"><a href="#现象：某个正常运行的应用突然报警线程数过高，之后很快就出现了内存溢出" class="headerlink" title="现象：某个正常运行的应用突然报警线程数过高，之后很快就出现了内存溢出"></a>现象：某个正常运行的应用突然报警线程数过高，之后很快就出现了内存溢出</h3><p>原因：由于缓存连接数达到最大限制，应用无法连接缓存，并且超时时间设置得较大，导致访问缓存的服务都在等待缓存操作返回，由于缓存负载较高，处理不完所有的请求，<br>但是这些服务都在等待缓存操作返回，服务这时在等待，并没有超时，就不能降级并继续访问数据库。这在BIO模式下线程池就会撑满，使用方的线程池也都撑满；在NIO模式<br>下一样会使服务的负载增加，服务响应变慢，甚至使服务被压垮。</p>
-<p>总结：在使用远程缓存（如Redis、Memcached）时，一定要对操作超时时间进行设置，这是非常关键的，一般我们设计缓存作为加速数据库读取的手段，也会对缓存操作做<br>降级处理，因此推荐使用更短的缓存超时时间，如果一定要给出一个数字，则希望是100毫秒以内。</p>
-<h3 id="某项目使用缓存存储业务数据，上线后出现错误问题，开发人员束手无策"><a href="#某项目使用缓存存储业务数据，上线后出现错误问题，开发人员束手无策" class="headerlink" title="某项目使用缓存存储业务数据，上线后出现错误问题，开发人员束手无策"></a>某项目使用缓存存储业务数据，上线后出现错误问题，开发人员束手无策</h3><p>原因：开发人员不知道如何发现、排查、定位和解决缓存问题。</p>
-<p>总结：在设计缓存时要有降级方案，在遇到问题时首先使用降级方法，还要设计完善的监控和报警功能，帮助开发人员快速发现缓存问题，进而来定位和解决问题。</p>
-<h3 id="某项目在使用缓存后，开发测试通过，到生产环境后，服务却出现了不可预知的问题"><a href="#某项目在使用缓存后，开发测试通过，到生产环境后，服务却出现了不可预知的问题" class="headerlink" title="某项目在使用缓存后，开发测试通过，到生产环境后，服务却出现了不可预知的问题"></a>某项目在使用缓存后，开发测试通过，到生产环境后，服务却出现了不可预知的问题</h3><p>原因：该应用的缓存key与其他应用缓存 key冲突，导致互相覆盖，出现逻辑错误。</p>
-<p>总结：在使用缓存时一定要有隔离的设计，可以通过不同的缓存实例来做物理隔离，也可以通过各个应用的缓存key使用不同的前缀进行逻辑隔离。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2316,7 +2362,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">439</span>
+                <span class="site-state-item-count">440</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2327,7 +2373,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">201</span>
+                <span class="site-state-item-count">200</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
