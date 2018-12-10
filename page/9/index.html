@@ -284,6 +284,703 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/10/Java/Advance/volatile/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/10/Java/Advance/volatile/" itemprop="url">深入理解 Java volatile</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-10T22:35:06+08:00">
+                2018-10-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h3><p><strong>volatile</strong>这个关键字，不仅仅在Java语言中有，在很多语言中都有的，而且其用法和语义也都是不尽相同的。尤其在C语言、C++以及Java中，都有volatile关键字。都可以用来声明变量或者对象。</p>
+<p>volatile通常被比喻成”轻量级的<strong>synchronized</strong>“，也是Java并发编程中比较重要的一个关键字。和synchronized不同，volatile是一个变量修饰符，只能用来修饰变量。无法修饰方法及代码块等。</p>
+<p><strong>volatile的用法比较简单，只需要在声明一个可能被多线程同时访问的变量时，使用volatile修饰就可以了。</strong></p>
+<p>一个比较典型的使用双重锁校验的形式实现单例的，其中使用volatile关键字修饰可能被多个线程同时访问到的singleton。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;  </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">static</span> Singleton singleton;  </span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="title">Singleton</span> <span class="params">()</span></span>&#123;&#125;  </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getSingleton</span><span class="params">()</span> </span>&#123;  </span><br><span class="line">    <span class="keyword">if</span> (singleton == <span class="keyword">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">synchronized</span> (Singleton.class) &#123;  </span><br><span class="line">        <span class="keyword">if</span> (singleton == <span class="keyword">null</span>) &#123;  </span><br><span class="line">            singleton = <span class="keyword">new</span> Singleton();  </span><br><span class="line">        &#125;  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">    <span class="keyword">return</span> singleton;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为了提高处理器的执行速度，在处理器和内存之间增加了多级缓存来提升。但是由于引入了多级缓存，就存在缓存数据不一致问题。而volatile就可以解决读写数据不一致的问题。</p>
+<p>对于volatile变量，当对volatile变量进行写操作的时候，JVM会向处理器发送一条lock前缀的指令，将这个缓存中的变量回写到系统主存中。但是就算写回到内存，如果其他处理器缓存的值还是旧的，再执行计算操作就会有问题，所以在多处理器下，为了保证各个处理器的缓存是一致的，就会实现<strong>缓存一致性协议</strong>。</p>
+<p>如果一个变量被volatile所修饰的话，在每次数据变化之后，其值都会被强制刷入主存。而其他处理器的缓存由于遵守了缓存一致性协议，也会把这个变量的值从主存加载到自己的缓存中。这就保证了一个volatile在并发编程中，其值在多个缓存中是可见的。</p>
+<blockquote>
+<p>缓存一致性协议：每个处理器通过嗅探在总线上传播的数据来检查自己缓存的值是不是过期了，当处理器发现自己缓存行对应的内存地址被修改，就会将当前处理器的缓存行设置成无效状态，当处理器要对这个数据进行修改操作的时候，会强制重新从系统内存里把数据读到处理器缓存里。</p>
+</blockquote>
+<hr>
+<h3 id="原子性"><a href="#原子性" class="headerlink" title="原子性"></a>原子性</h3><p>线程是CPU调度的基本单位。CPU有时间片的概念，会根据不同的调度算法进行线程调度。当一个线程获得时间片之后开始执行，在时间片耗尽之后，就会失去CPU使用权。所以在多线程场景下，由于时间片在线程间轮换，就会发生原子性问题。</p>
+<p><strong>原子性是指一个操作是不可中断的，要全部执行完成，要不就都不执行。</strong></p>
+<p><strong>volatile是不能保证原子性的。</strong></p>
+<p>volatile应用场景：</p>
+<ul>
+<li>运算结果并不依赖变量的当前值，或者能够确保只有单一的线程会修改变量的值。</li>
+<li>变量不需要与其他状态变量共同参与不变约束。</li>
+</ul>
+<p>除以上场景外，都需要使用其他方式来保证原子性，如synchronized或者concurrent包。</p>
+<p>举例说明</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">volatile</span> <span class="keyword">int</span> inc = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">increase</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        inc++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">final</span> Test test = <span class="keyword">new</span> Test();</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;<span class="number">10</span>;i++)&#123;</span><br><span class="line">            <span class="keyword">new</span> Thread()&#123;</span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">0</span>;j&lt;<span class="number">1000</span>;j++)</span><br><span class="line">                        test.increase();</span><br><span class="line">                &#125;;</span><br><span class="line">            &#125;.start();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span>(Thread.activeCount()&gt;<span class="number">1</span>)  <span class="comment">//保证前面的线程都执行完</span></span><br><span class="line">            Thread.yield();</span><br><span class="line">        System.out.println(test.inc);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上代码比较简单，就是创建10个线程，然后分别执行1000次i++操作。正常情况下，程序的输出结果应该是10000，但是，多次执行的结果都小于10000。这其实就是volatile无法满足原子性的原因。</p>
+<p>为什么会出现这种情况呢，那就是因为虽然volatile可以保证inc在多个线程之间的可见性。但是无法inc++的原子性。</p>
+<p>为什么volatile不能保证原子性呢？因为他不是锁，他没做任何可以保证原子性的处理。当然就不能保证原子性了。</p>
+<blockquote>
+<p>synchronized 为了保证原子性，需要通过字节码指令monitorenter和monitorexit，但是volatile和这两个指令之间是没有任何关系的。volatile是不能保证原子性的。</p>
+</blockquote>
+<hr>
+<h3 id="可见性"><a href="#可见性" class="headerlink" title="可见性"></a>可见性</h3><p>Java内存模型规定了所有的变量都存储在主内存中，每条线程还有自己的工作内存，线程的工作内存中保存了该线程中是用到的变量的主内存副本拷贝，线程对变量的所有操作都必须在工作内存中进行，而不能直接读写主内存。</p>
+<p>不同的线程之间也无法直接访问对方工作内存中的变量，线程间变量的传递均需要自己的工作内存和主存之间进行数据同步进行。所以就可能出现线程1改了某个变量的值，但是线程2不可见的情况。</p>
+<p><strong>可见性是指当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看得到修改的值。</strong>即，被其修饰的变量在被修改后可以立即同步到主内存，被其修饰的变量在每次在用之前都从主内存刷新。</p>
+<p>因此，可以使用volatile来保证多线程操作时变量的可见性。</p>
+<p>volatile对于可见性的实现，内存屏障也起着至关重要的作用。</p>
+<p>因为内存屏障相当于一个数据同步点，他要保证在这个同步点之后的读写操作必须在这个点之前的读写操作都执行完之后才可以执行。并且在遇到内存屏障的时候，缓存数据会和主存进行同步，或者把缓存数据写入主存、或者从主存把数据读取到缓存。</p>
+<h4 id="问题来了：已经有了缓存一致性协议，为什么还需要volatile？"><a href="#问题来了：已经有了缓存一致性协议，为什么还需要volatile？" class="headerlink" title="问题来了：已经有了缓存一致性协议，为什么还需要volatile？"></a>问题来了：已经有了缓存一致性协议，为什么还需要volatile？</h4><ol>
+<li><p>并不是所有的硬件架构都提供了相同的一致性保证，Java作为一门跨平台语言，JVM需要提供一个统一的语义。</p>
+</li>
+<li><p>操作系统中的缓存和JVM中线程的本地内存并不是一回事，通常我们可以认为：MESI（Cache一致性协议）可以解决缓存层面的可见性问题。使用volatile关键字，可以解决JVM层面的可见性问题。</p>
+</li>
+<li><p>缓存可见性问题的延伸：由于传统的MESI协议的执行成本比较大。所以CPU通过Store Buffer和Invalidate Queue组件来解决，但是由于这两个组件的引入，也导致缓存和主存之间的通信并不是实时的。也就是说，缓存一致性模型只能保证缓存变更可以保证其他缓存也跟着改变，但是不能保证立刻、马上执行。</p>
+</li>
+</ol>
+<p>在计算机内存模型中，也是使用内存屏障来解决缓存的可见性问题的（再次强调：缓存可见性和并发编程中的可见性可以互相类比，但是他们并不是一回事儿）。</p>
+<p>写内存屏障（Store Memory Barrier）可以促使处理器将当前store buffer（存储缓存）的值写回主存。读内存屏障（Load Memory Barrier）可以促使处理器处理invalidate queue（失效队列）。进而避免由于Store Buffer和Invalidate Queue的非实时性带来的问题。</p>
+<p>所以，内存屏障也是保证可见性的重要手段，操作系统通过内存屏障保证缓存间的可见性，JVM通过给volatile变量加入内存屏障保证线程之间的可见性。</p>
+<blockquote>
+<p>内存屏障：用于控制特定条件下的重排序和内存可见性问题。Java编译器也会根据内存屏障的规则禁止重排序。</p>
+</blockquote>
+<hr>
+<h3 id="有序性"><a href="#有序性" class="headerlink" title="有序性"></a>有序性</h3><p>由于处理器优化和指令重排等，CPU还可能对输入代码进行乱序执行，比如load-&gt;add-&gt;save 有可能被优化成load-&gt;save-&gt;add 。这就是可能存在有序性问题。</p>
+<p><strong>有序性即程序执行的顺序按照代码的先后顺序执行。</strong></p>
+<p>关键功能：禁止指令重排优化等。</p>
+<p>普通的变量仅仅会保证在该方法的执行过程中所依赖的赋值结果的地方都能获得正确的结果，而不能保证变量的赋值操作的顺序与程序代码中的执行顺序一致。</p>
+<p>volatile禁止指令重排，保证了代码的程序会严格按照代码的先后顺序执行。这就保证了有序性。被volatile修饰的变量的操作，会严格按照代码顺序执行，load-&gt;add-&gt;save 的执行顺序就是：load、add、save。</p>
+<p><strong>volatile是通过内存屏障来来禁止指令重排的。</strong></p>
+<p><strong>内存屏障（Memory Barrier）</strong>是一类同步屏障指令，是CPU或编译器在对内存随机访问的操作中的一个同步点，使得此点之前的所有读写操作都执行后才可以开始执行此点之后的操作。</p>
+<p>具体实现方式是在编译期生成字节码时，会在指令序列中增加内存屏障来保证，下面是基于保守策略的JMM内存屏障插入策略：</p>
+<ul>
+<li><p>在每个volatile写操作的前面插入一个StoreStore屏障</p>
+<ul>
+<li>对于这样的语句Store1; <strong>StoreStore</strong>; Store2，在Store2及后续写入操作执行前，保证Store1的写入操作对其它处理器可见。</li>
+</ul>
+</li>
+<li><p>在每个volatile写操作的后面插入一个StoreLoad屏障</p>
+<ul>
+<li>对于这样的语句Store1; <strong>StoreLoad</strong>; Load2，在Load2及后续所有读取操作执行前，保证Store1的写入对所有处理器可见。</li>
+</ul>
+</li>
+<li><p>在每个volatile读操作的后面插入一个LoadLoad屏障</p>
+<ul>
+<li>对于这样的语句Load1; <strong>LoadLoad</strong>; Load2，在Load2及后续读取操作要读取的数据被访问前，保证Load1要读取的数据被读取完毕。</li>
+</ul>
+</li>
+<li><p>在每个volatile读操作的后面插入一个LoadStore屏障</p>
+<ul>
+<li>对于这样的语句Load1; <strong>LoadStore</strong>; Store2，在Store2及后续写入操作被刷出前，保证Load1要读取的数据被读取完毕。</li>
+</ul>
+</li>
+</ul>
+<p>所以，volatile通过在volatile变量的操作前后插入内存屏障的方式，来禁止指令重排，进而保证多线程情况下对共享变量的有序性。</p>
+<hr>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>synchronized可以保证原子性、有序性和可见性。而volatile却只能保证有序性和可见性。</p>
+<hr>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="http://www.hollischuang.com/archives/2648" target="_blank" rel="noopener">http://www.hollischuang.com/archives/2648</a></p>
+<p>如何正确写单例模式：<a href="http://wuchong.me/blog/2014/08/28/how-to-correctly-write-singleton-pattern/" target="_blank" rel="noopener">http://wuchong.me/blog/2014/08/28/how-to-correctly-write-singleton-pattern/</a></p>
+<p>Cache一致性协议之MESI：<a href="https://blog.csdn.net/muxiqingyang/article/details/6615199" target="_blank" rel="noopener">https://blog.csdn.net/muxiqingyang/article/details/6615199</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/10/Kubenetes/Command/user/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/10/Kubenetes/Command/user/" itemprop="url">kubectl user</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-10T11:13:06+08:00">
+                2018-10-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Admin"><a href="#Admin" class="headerlink" title="Admin"></a>Admin</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$(gcloud info | grep Account | cut -d &apos;[&apos; -f 2 | cut -d &apos;]&apos; -f 1)</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/08/ELK/Fluentd/MicroServiceLogFormat/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/08/ELK/Fluentd/MicroServiceLogFormat/" itemprop="url">Fluentd Microservice Log Format</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-08T19:13:06+08:00">
+                2018-10-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/Fluentd/" itemprop="url" rel="index">
+                    <span itemprop="name">Fluentd</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">log_format  jsonlog <span class="string">'&#123;'</span></span><br><span class="line">    <span class="string">'"host": "$host",'</span></span><br><span class="line">    <span class="string">'"server_addr": "$server_addr",'</span></span><br><span class="line">    <span class="string">'"http_x_forwarded_for":"$http_x_forwarded_for",'</span></span><br><span class="line">    <span class="string">'"remote_addr":"$remote_addr",'</span></span><br><span class="line">    <span class="string">'"time_local":"$time_local",'</span></span><br><span class="line">    <span class="string">'"request_method":"$request_method",'</span></span><br><span class="line">    <span class="string">'"request_uri":"$request_uri",'</span></span><br><span class="line">    <span class="string">'"status":$status,'</span></span><br><span class="line">    <span class="string">'"body_bytes_sent":$body_bytes_sent,'</span></span><br><span class="line">    <span class="string">'"http_referer":"$http_referer",'</span></span><br><span class="line">    <span class="string">'"http_user_agent":"$http_user_agent",'</span></span><br><span class="line">    <span class="string">'"upstream_addr":"$upstream_addr",'</span></span><br><span class="line">    <span class="string">'"upstream_status":"$upstream_status",'</span></span><br><span class="line">    <span class="string">'"upstream_response_time":"$upstream_response_time",'</span></span><br><span class="line">    <span class="string">'"request_time":$request_time'</span></span><br><span class="line"><span class="string">'&#125;'</span>;</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/08/ELK/Kibana/Conf/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/08/ELK/Kibana/Conf/" itemprop="url">Kibana Conf</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-08T17:29:06+08:00">
+                2018-10-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/Kibana/" itemprop="url" rel="index">
+                    <span itemprop="name">Kibana</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="X-Pack"><a href="#X-Pack" class="headerlink" title="X-Pack"></a>X-Pack</h3>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/08/Linux/Zsh/Conf/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -601,6 +1298,366 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Kuberntes/Elasticsearch/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/07/ELK/Kuberntes/Elasticsearch/" itemprop="url">ELK Kuberntes Conf</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-07T19:13:06+08:00">
+                2018-10-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/Kuberntes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kuberntes</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Description"><a href="#Description" class="headerlink" title="Description"></a>Description</h3><h4 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h4><ul>
+<li>Elasticsearch<ul>
+<li>存储数据</li>
+</ul>
+</li>
+<li>Kibana<ul>
+<li>数据可视化</li>
+</ul>
+</li>
+<li>Fluentd<ul>
+<li>Client收集数据</li>
+<li>Server接收Client的数据，并转发到Elasticsearch</li>
+</ul>
+</li>
+<li>Metricbeat<ul>
+<li>收集性能指标数据</li>
+<li>替代方案：Heapster</li>
+</ul>
+</li>
+<li>Kube-state-metrics<ul>
+<li>listens to the Kubernetes API server and generates metrics about the state of the objects</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="Elasticsearch"><a href="#Elasticsearch" class="headerlink" title="Elasticsearch"></a>Elasticsearch</h3><h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><ul>
+<li>Master<ul>
+<li>intended for clustering management only, no data, no HTTP API</li>
+</ul>
+</li>
+<li>Client<ul>
+<li>intended for document pre-processing during ingestion</li>
+</ul>
+</li>
+<li>Data<ul>
+<li>intended for client usage and data</li>
+</ul>
+</li>
+</ul>
+<h3 id="Fluentd"><a href="#Fluentd" class="headerlink" title="Fluentd"></a>Fluentd</h3><h4 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h4><ul>
+<li>Server</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"># Takes the messages sent over TCP</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  port 24224</span><br><span class="line">  bind 0.0.0.0</span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @id fluentd-server</span><br><span class="line">  @type elasticsearch</span><br><span class="line">  @log_level info</span><br><span class="line">  include_tag_key true</span><br><span class="line">  host elasticsearch</span><br><span class="line">  port 9200</span><br><span class="line">  logstash_format true</span><br><span class="line">  index_name fluentd</span><br><span class="line">  type_name fluentd</span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">buffer</span>&gt;</span></span><br><span class="line">    @type file</span><br><span class="line">    path /var/log/fluentd/kubernetes.system.buffer</span><br><span class="line">    flush_mode interval</span><br><span class="line">    retry_type exponential_backoff</span><br><span class="line">    flush_thread_count 2</span><br><span class="line">    flush_interval 5s</span><br><span class="line">    retry_forever</span><br><span class="line">    retry_max_interval 30</span><br><span class="line">    chunk_limit_size 2M</span><br><span class="line">    queue_limit_length 4</span><br><span class="line">    overflow_action block</span><br><span class="line">  <span class="tag">&lt;/<span class="name">buffer</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>Client</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">containers.input.conf: |-</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @id fluentd-containers.log</span><br><span class="line">  @type tail</span><br><span class="line">  path /var/log/containers/*.log</span><br><span class="line">  pos_file /var/log/es-containers.log.pos</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">  tag raw.kubernetes.*</span><br><span class="line">  read_from_head true</span><br><span class="line">  <span class="tag">&lt;<span class="name">parse</span>&gt;</span></span><br><span class="line">    @type multi_format</span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format json          time_key time</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format /^(?<span class="tag">&lt;<span class="name">time</span>&gt;</span>.+) (?<span class="tag">&lt;<span class="name">stream</span>&gt;</span>stdout|stderr) [^ ]* (?<span class="tag">&lt;<span class="name">log</span>&gt;</span>.*)$/</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">parse</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"># Detect exceptions in the log output and forward them as one log entry.</span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> <span class="attr">raw.kubernetes.</span>**&gt;</span></span><br><span class="line">  @id raw.kubernetes</span><br><span class="line">  @type detect_exceptions</span><br><span class="line">  remove_tag_prefix raw</span><br><span class="line">  message log</span><br><span class="line">  stream stream</span><br><span class="line">  multiline_flush_interval 5</span><br><span class="line">  max_bytes 500000</span><br><span class="line">  max_lines 1000</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br><span class="line"></span><br><span class="line">output.conf: |-</span><br><span class="line"># Enriches records with Kubernetes metadata</span><br><span class="line"><span class="tag">&lt;<span class="name">filter</span> <span class="attr">kubernetes.</span>**&gt;</span></span><br><span class="line">  @type kubernetes_metadata</span><br><span class="line"><span class="tag">&lt;/<span class="name">filter</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;<span class="name">server</span>&gt;</span></span><br><span class="line">      host fluentd-service</span><br><span class="line">      port 24224</span><br><span class="line">    <span class="tag">&lt;/<span class="name">server</span>&gt;</span></span><br><span class="line">  flush_interval 1s</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Metricbeat"><a href="#Metricbeat" class="headerlink" title="Metricbeat"></a>Metricbeat</h3><h4 id="配置文件-1"><a href="#配置文件-1" class="headerlink" title="配置文件"></a>配置文件</h4><p>注意：使用该配置文件，Kibana可以直接开启Kuberntes Dashboard（默认配置文件无法开启）</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">metricbeat-daemonset-config</span></span><br><span class="line">  <span class="comment">#  namespace: kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">metricbeat</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="string">metricbeat.yml:</span> <span class="string">|-</span></span><br><span class="line">    <span class="string">metricbeat.config.modules:</span></span><br><span class="line">      <span class="comment"># Mounted `metricbeat-daemonset-modules` configmap:</span></span><br><span class="line"><span class="attr">      path:</span> <span class="string">$&#123;path.config&#125;/modules.d/*.yml</span></span><br><span class="line">      <span class="comment"># Reload module configs as they change:</span></span><br><span class="line">      <span class="string">reload.enabled:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># To enable hints based autodiscover uncomment this:</span></span><br><span class="line">    <span class="comment">#metricbeat.autodiscover:</span></span><br><span class="line">    <span class="comment">#  providers:</span></span><br><span class="line">    <span class="comment">#    - type: kubernetes</span></span><br><span class="line">    <span class="comment">#      host: $&#123;NODE_NAME&#125;</span></span><br><span class="line">    <span class="comment">#      hints.enabled: true</span></span><br><span class="line"></span><br><span class="line"><span class="attr">    processors:</span></span><br><span class="line"><span class="attr">      - add_cloud_metadata:</span></span><br><span class="line"></span><br><span class="line">    <span class="string">cloud.id:</span> <span class="string">$&#123;ELASTIC_CLOUD_ID&#125;</span></span><br><span class="line">    <span class="string">cloud.auth:</span> <span class="string">$&#123;ELASTIC_CLOUD_AUTH&#125;</span></span><br><span class="line"></span><br><span class="line">    <span class="string">output.elasticsearch:</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">['$&#123;ELASTICSEARCH_HOST:elasticsearch&#125;:$&#123;ELASTICSEARCH_PORT:9200&#125;']</span></span><br><span class="line"><span class="attr">      username:</span> <span class="string">$&#123;ELASTICSEARCH_USERNAME&#125;</span></span><br><span class="line"><span class="attr">      password:</span> <span class="string">$&#123;ELASTICSEARCH_PASSWORD&#125;</span></span><br><span class="line">    <span class="string">setup.kibana:</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">kibana-service</span></span><br><span class="line">      <span class="string">setup.kibana.protocol:</span> <span class="string">"http"</span></span><br><span class="line">    <span class="string">setup.dashboards:</span></span><br><span class="line"><span class="attr">      enabled:</span> <span class="literal">true</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">metricbeat-daemonset-modules</span></span><br><span class="line">  <span class="comment">#  namespace: kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">metricbeat</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="string">system.yml:</span> <span class="string">|-</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">system</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">cpu</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">load</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">memory</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">network</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">process</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">process_summary</span></span><br><span class="line">        <span class="comment">#- core</span></span><br><span class="line">        <span class="comment">#- diskio</span></span><br><span class="line">        <span class="comment">#- socket</span></span><br><span class="line"><span class="attr">      processes:</span> <span class="string">['.*']</span></span><br><span class="line">      <span class="string">process.include_top_n:</span></span><br><span class="line"><span class="attr">        by_cpu:</span> <span class="number">5</span>      <span class="comment"># include top 5 processes by CPU</span></span><br><span class="line"><span class="attr">        by_memory:</span> <span class="number">5</span>   <span class="comment"># include top 5 processes by memory</span></span><br><span class="line"></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">system</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">1</span><span class="string">m</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">filesystem</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">fsstat</span></span><br><span class="line"><span class="attr">      processors:</span></span><br><span class="line"><span class="bullet">      -</span> <span class="string">drop_event.when.regexp:</span></span><br><span class="line">          <span class="string">system.filesystem.mount_point:</span> <span class="string">'^/(sys|cgroup|proc|dev|etc|host|lib)($|/)'</span></span><br><span class="line">  <span class="string">kubernetes.yml:</span> <span class="string">|-</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">kubernetes</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">node</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">system</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">pod</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">container</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">volume</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">$&#123;NODE_NAME&#125;</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">["localhost:10255"]</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">kubernetes</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_node</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_deployment</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_replicaset</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_pod</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_container</span></span><br><span class="line">        <span class="comment"># Uncomment this to get k8s events:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">event</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">$&#123;NODE_NAME&#125;</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">["kube-state-metrics:8080"]</span></span><br></pre></td></tr></table></figure>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://github.com/pires/kubernetes-elasticsearch-cluster" target="_blank" rel="noopener">https://github.com/pires/kubernetes-elasticsearch-cluster</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch" target="_blank" rel="noopener">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Fluentd/RegularExp/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/07/ELK/Fluentd/RegularExp/" itemprop="url">Fluentd Regular Expression</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-07T19:13:06+08:00">
+                2018-10-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/Fluentd/" itemprop="url" rel="index">
+                    <span itemprop="name">Fluentd</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h3><h4 id="Example-1"><a href="#Example-1" class="headerlink" title="Example-1"></a>Example-1</h4><p>数据源</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[2013-03-29 07:21:55.483292] router - pid=14615 tid=7a93 fid=5354  DEBUG -- Request body: &#123;"host":"api.vcap.me","stats":[&#123;"response_latency":0,"request_tags":"BAh7BjoOY29tcG9uZW50SSIUQ2xvdWRDb250cm9sbGVyBjoGRVQ=","response_codes":&#123;"responses_2xx":2&#125;,"response_samples":2&#125;]&#125;</span><br></pre></td></tr></table></figure>
+<p>表达式：/(?<time>.∗) (?<name>[^ ]<em>) - (?<pid>[^ ]</pid></em>) (?<tid>[^ ]<em>) (?<fid>[^ ]</fid></em>)  (?<level>[^ ]<em>) – (?<info>[^ ].</info></em>)$/</level></tid></name></time></p>
+<p>存储到mongo结果</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">"_id"</span> : ObjectId(<span class="string">"516d31c415bb53374d000004"</span>), <span class="attr">"name"</span> : <span class="string">"router"</span>, <span class="attr">"pid"</span> : <span class="string">"pid=14615"</span>, <span class="attr">"tid"</span> : <span class="string">"tid=7a93"</span>, <span class="attr">"fid"</span> : <span class="string">"fid=5354"</span>, <span class="attr">"level"</span> : <span class="string">"DEBUG"</span>, <span class="attr">"info"</span> : <span class="string">"Request body: &#123;\"host\":\"api.vcap.me\",\"stats\":[&#123;\"response_latency\":0,\"request_tags\":\"BAh7BjoOY29tcG9uZW50SSIUQ2xvdWRDb250cm9sbGVyBjoGRVQ=\",\"response_codes\":&#123;\"responses_2xx\":2&#125;,\"response_samples\":2&#125;]&#125;"</span>,</span><br><span class="line"> <span class="attr">"time"</span> : ISODate(<span class="string">"2013-04-23T11:21:55Z"</span>) &#125;</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Fluentd/Conf/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -842,366 +1899,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Fluentd/RegularExp/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/07/ELK/Fluentd/RegularExp/" itemprop="url">Fluentd Regular Expression</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-07T19:13:06+08:00">
-                2018-10-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/ELK/" itemprop="url" rel="index">
-                    <span itemprop="name">ELK</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/ELK/Fluentd/" itemprop="url" rel="index">
-                    <span itemprop="name">Fluentd</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h3><h4 id="Example-1"><a href="#Example-1" class="headerlink" title="Example-1"></a>Example-1</h4><p>数据源</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[2013-03-29 07:21:55.483292] router - pid=14615 tid=7a93 fid=5354  DEBUG -- Request body: &#123;"host":"api.vcap.me","stats":[&#123;"response_latency":0,"request_tags":"BAh7BjoOY29tcG9uZW50SSIUQ2xvdWRDb250cm9sbGVyBjoGRVQ=","response_codes":&#123;"responses_2xx":2&#125;,"response_samples":2&#125;]&#125;</span><br></pre></td></tr></table></figure>
-<p>表达式：/(?<time>.∗) (?<name>[^ ]<em>) - (?<pid>[^ ]</pid></em>) (?<tid>[^ ]<em>) (?<fid>[^ ]</fid></em>)  (?<level>[^ ]<em>) – (?<info>[^ ].</info></em>)$/</level></tid></name></time></p>
-<p>存储到mongo结果</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">"_id"</span> : ObjectId(<span class="string">"516d31c415bb53374d000004"</span>), <span class="attr">"name"</span> : <span class="string">"router"</span>, <span class="attr">"pid"</span> : <span class="string">"pid=14615"</span>, <span class="attr">"tid"</span> : <span class="string">"tid=7a93"</span>, <span class="attr">"fid"</span> : <span class="string">"fid=5354"</span>, <span class="attr">"level"</span> : <span class="string">"DEBUG"</span>, <span class="attr">"info"</span> : <span class="string">"Request body: &#123;\"host\":\"api.vcap.me\",\"stats\":[&#123;\"response_latency\":0,\"request_tags\":\"BAh7BjoOY29tcG9uZW50SSIUQ2xvdWRDb250cm9sbGVyBjoGRVQ=\",\"response_codes\":&#123;\"responses_2xx\":2&#125;,\"response_samples\":2&#125;]&#125;"</span>,</span><br><span class="line"> <span class="attr">"time"</span> : ISODate(<span class="string">"2013-04-23T11:21:55Z"</span>) &#125;</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Kuberntes/Elasticsearch/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/07/ELK/Kuberntes/Elasticsearch/" itemprop="url">ELK Kuberntes Conf</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-07T19:13:06+08:00">
-                2018-10-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/ELK/" itemprop="url" rel="index">
-                    <span itemprop="name">ELK</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/ELK/Kuberntes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kuberntes</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Description"><a href="#Description" class="headerlink" title="Description"></a>Description</h3><h4 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h4><ul>
-<li>Elasticsearch<ul>
-<li>存储数据</li>
-</ul>
-</li>
-<li>Kibana<ul>
-<li>数据可视化</li>
-</ul>
-</li>
-<li>Fluentd<ul>
-<li>Client收集数据</li>
-<li>Server接收Client的数据，并转发到Elasticsearch</li>
-</ul>
-</li>
-<li>Metricbeat<ul>
-<li>收集性能指标数据</li>
-<li>替代方案：Heapster</li>
-</ul>
-</li>
-<li>Kube-state-metrics<ul>
-<li>listens to the Kubernetes API server and generates metrics about the state of the objects</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h3 id="Elasticsearch"><a href="#Elasticsearch" class="headerlink" title="Elasticsearch"></a>Elasticsearch</h3><h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><ul>
-<li>Master<ul>
-<li>intended for clustering management only, no data, no HTTP API</li>
-</ul>
-</li>
-<li>Client<ul>
-<li>intended for document pre-processing during ingestion</li>
-</ul>
-</li>
-<li>Data<ul>
-<li>intended for client usage and data</li>
-</ul>
-</li>
-</ul>
-<h3 id="Fluentd"><a href="#Fluentd" class="headerlink" title="Fluentd"></a>Fluentd</h3><h4 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h4><ul>
-<li>Server</li>
-</ul>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"># Takes the messages sent over TCP</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  port 24224</span><br><span class="line">  bind 0.0.0.0</span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @id fluentd-server</span><br><span class="line">  @type elasticsearch</span><br><span class="line">  @log_level info</span><br><span class="line">  include_tag_key true</span><br><span class="line">  host elasticsearch</span><br><span class="line">  port 9200</span><br><span class="line">  logstash_format true</span><br><span class="line">  index_name fluentd</span><br><span class="line">  type_name fluentd</span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">buffer</span>&gt;</span></span><br><span class="line">    @type file</span><br><span class="line">    path /var/log/fluentd/kubernetes.system.buffer</span><br><span class="line">    flush_mode interval</span><br><span class="line">    retry_type exponential_backoff</span><br><span class="line">    flush_thread_count 2</span><br><span class="line">    flush_interval 5s</span><br><span class="line">    retry_forever</span><br><span class="line">    retry_max_interval 30</span><br><span class="line">    chunk_limit_size 2M</span><br><span class="line">    queue_limit_length 4</span><br><span class="line">    overflow_action block</span><br><span class="line">  <span class="tag">&lt;/<span class="name">buffer</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>Client</li>
-</ul>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">containers.input.conf: |-</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @id fluentd-containers.log</span><br><span class="line">  @type tail</span><br><span class="line">  path /var/log/containers/*.log</span><br><span class="line">  pos_file /var/log/es-containers.log.pos</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">  tag raw.kubernetes.*</span><br><span class="line">  read_from_head true</span><br><span class="line">  <span class="tag">&lt;<span class="name">parse</span>&gt;</span></span><br><span class="line">    @type multi_format</span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format json          time_key time</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format /^(?<span class="tag">&lt;<span class="name">time</span>&gt;</span>.+) (?<span class="tag">&lt;<span class="name">stream</span>&gt;</span>stdout|stderr) [^ ]* (?<span class="tag">&lt;<span class="name">log</span>&gt;</span>.*)$/</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">parse</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"># Detect exceptions in the log output and forward them as one log entry.</span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> <span class="attr">raw.kubernetes.</span>**&gt;</span></span><br><span class="line">  @id raw.kubernetes</span><br><span class="line">  @type detect_exceptions</span><br><span class="line">  remove_tag_prefix raw</span><br><span class="line">  message log</span><br><span class="line">  stream stream</span><br><span class="line">  multiline_flush_interval 5</span><br><span class="line">  max_bytes 500000</span><br><span class="line">  max_lines 1000</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br><span class="line"></span><br><span class="line">output.conf: |-</span><br><span class="line"># Enriches records with Kubernetes metadata</span><br><span class="line"><span class="tag">&lt;<span class="name">filter</span> <span class="attr">kubernetes.</span>**&gt;</span></span><br><span class="line">  @type kubernetes_metadata</span><br><span class="line"><span class="tag">&lt;/<span class="name">filter</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;<span class="name">server</span>&gt;</span></span><br><span class="line">      host fluentd-service</span><br><span class="line">      port 24224</span><br><span class="line">    <span class="tag">&lt;/<span class="name">server</span>&gt;</span></span><br><span class="line">  flush_interval 1s</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Metricbeat"><a href="#Metricbeat" class="headerlink" title="Metricbeat"></a>Metricbeat</h3><h4 id="配置文件-1"><a href="#配置文件-1" class="headerlink" title="配置文件"></a>配置文件</h4><p>注意：使用该配置文件，Kibana可以直接开启Kuberntes Dashboard（默认配置文件无法开启）</p>
-<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">metricbeat-daemonset-config</span></span><br><span class="line">  <span class="comment">#  namespace: kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">metricbeat</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="string">metricbeat.yml:</span> <span class="string">|-</span></span><br><span class="line">    <span class="string">metricbeat.config.modules:</span></span><br><span class="line">      <span class="comment"># Mounted `metricbeat-daemonset-modules` configmap:</span></span><br><span class="line"><span class="attr">      path:</span> <span class="string">$&#123;path.config&#125;/modules.d/*.yml</span></span><br><span class="line">      <span class="comment"># Reload module configs as they change:</span></span><br><span class="line">      <span class="string">reload.enabled:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># To enable hints based autodiscover uncomment this:</span></span><br><span class="line">    <span class="comment">#metricbeat.autodiscover:</span></span><br><span class="line">    <span class="comment">#  providers:</span></span><br><span class="line">    <span class="comment">#    - type: kubernetes</span></span><br><span class="line">    <span class="comment">#      host: $&#123;NODE_NAME&#125;</span></span><br><span class="line">    <span class="comment">#      hints.enabled: true</span></span><br><span class="line"></span><br><span class="line"><span class="attr">    processors:</span></span><br><span class="line"><span class="attr">      - add_cloud_metadata:</span></span><br><span class="line"></span><br><span class="line">    <span class="string">cloud.id:</span> <span class="string">$&#123;ELASTIC_CLOUD_ID&#125;</span></span><br><span class="line">    <span class="string">cloud.auth:</span> <span class="string">$&#123;ELASTIC_CLOUD_AUTH&#125;</span></span><br><span class="line"></span><br><span class="line">    <span class="string">output.elasticsearch:</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">['$&#123;ELASTICSEARCH_HOST:elasticsearch&#125;:$&#123;ELASTICSEARCH_PORT:9200&#125;']</span></span><br><span class="line"><span class="attr">      username:</span> <span class="string">$&#123;ELASTICSEARCH_USERNAME&#125;</span></span><br><span class="line"><span class="attr">      password:</span> <span class="string">$&#123;ELASTICSEARCH_PASSWORD&#125;</span></span><br><span class="line">    <span class="string">setup.kibana:</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">kibana-service</span></span><br><span class="line">      <span class="string">setup.kibana.protocol:</span> <span class="string">"http"</span></span><br><span class="line">    <span class="string">setup.dashboards:</span></span><br><span class="line"><span class="attr">      enabled:</span> <span class="literal">true</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">metricbeat-daemonset-modules</span></span><br><span class="line">  <span class="comment">#  namespace: kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">metricbeat</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="string">system.yml:</span> <span class="string">|-</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">system</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">cpu</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">load</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">memory</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">network</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">process</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">process_summary</span></span><br><span class="line">        <span class="comment">#- core</span></span><br><span class="line">        <span class="comment">#- diskio</span></span><br><span class="line">        <span class="comment">#- socket</span></span><br><span class="line"><span class="attr">      processes:</span> <span class="string">['.*']</span></span><br><span class="line">      <span class="string">process.include_top_n:</span></span><br><span class="line"><span class="attr">        by_cpu:</span> <span class="number">5</span>      <span class="comment"># include top 5 processes by CPU</span></span><br><span class="line"><span class="attr">        by_memory:</span> <span class="number">5</span>   <span class="comment"># include top 5 processes by memory</span></span><br><span class="line"></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">system</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">1</span><span class="string">m</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">filesystem</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">fsstat</span></span><br><span class="line"><span class="attr">      processors:</span></span><br><span class="line"><span class="bullet">      -</span> <span class="string">drop_event.when.regexp:</span></span><br><span class="line">          <span class="string">system.filesystem.mount_point:</span> <span class="string">'^/(sys|cgroup|proc|dev|etc|host|lib)($|/)'</span></span><br><span class="line">  <span class="string">kubernetes.yml:</span> <span class="string">|-</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">kubernetes</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">node</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">system</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">pod</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">container</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">volume</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">$&#123;NODE_NAME&#125;</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">["localhost:10255"]</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">kubernetes</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_node</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_deployment</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_replicaset</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_pod</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_container</span></span><br><span class="line">        <span class="comment"># Uncomment this to get k8s events:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">event</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">$&#123;NODE_NAME&#125;</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">["kube-state-metrics:8080"]</span></span><br></pre></td></tr></table></figure>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://github.com/pires/kubernetes-elasticsearch-cluster" target="_blank" rel="noopener">https://github.com/pires/kubernetes-elasticsearch-cluster</a></p>
-<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch" target="_blank" rel="noopener">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/05/Kubenetes/Log/Structure/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1348,768 +2045,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DB/MySQL/Error/CommonError/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/03/DB/MySQL/Error/CommonError/" itemprop="url">MySQL Common Error</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T22:00:18+08:00">
-                2018-10-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Error/" itemprop="url" rel="index">
-                    <span itemprop="name">Error</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h3><h4 id="1-ERROR-1045-28000-Access-denied-for-user-‘testcon‘-’10-24-236-231’-using-password-YES"><a href="#1-ERROR-1045-28000-Access-denied-for-user-‘testcon‘-’10-24-236-231’-using-password-YES" class="headerlink" title="1. ERROR 1045 (28000): Access denied for user ‘testcon‘@’10.24.236.231’ (using password: YES)"></a>1. ERROR 1045 (28000): Access denied for user ‘testcon‘@’10.24.236.231’ (using password: YES)</h4><h4 id="2-ERROR-2005-HY000-Unknown-MySQL-server-host-‘com-mysql-coflodhn1n0y-us-west-1-rds-amazonaws-com’-110"><a href="#2-ERROR-2005-HY000-Unknown-MySQL-server-host-‘com-mysql-coflodhn1n0y-us-west-1-rds-amazonaws-com’-110" class="headerlink" title="2. ERROR 2005 (HY000): Unknown MySQL server host ‘com-mysql.coflodhn1n0y.us-west-1.rds.amazonaws.com’ (110)"></a>2. ERROR 2005 (HY000): Unknown MySQL server host ‘com-mysql.coflodhn1n0y.us-west-1.rds.amazonaws.com’ (110)</h4><h4 id="3-ERROR-1449-HY000-The-user-specified-as-a-definer-‘testcon‘-’10-24-236-231’-does-not-exist-或者-ERROR-1045-28000-user-not-exist"><a href="#3-ERROR-1449-HY000-The-user-specified-as-a-definer-‘testcon‘-’10-24-236-231’-does-not-exist-或者-ERROR-1045-28000-user-not-exist" class="headerlink" title="3. ERROR 1449 (HY000): The user specified as a definer (‘testcon‘@’10.24.236.231’) does not exist 或者 ERROR 1045 (28000): user not exist"></a>3. ERROR 1449 (HY000): The user specified as a definer (‘testcon‘@’10.24.236.231’) does not exist 或者 ERROR 1045 (28000): user not exist</h4><h4 id="4-ERROR-2003-HY000-Can’t-connect-to-MySQL-server-on’test-mysql-rds-aliyuncs-com’-110"><a href="#4-ERROR-2003-HY000-Can’t-connect-to-MySQL-server-on’test-mysql-rds-aliyuncs-com’-110" class="headerlink" title="4. ERROR 2003 (HY000): Can’t connect to MySQL server on’test.mysql.rds.aliyuncs.com’ (110)"></a>4. ERROR 2003 (HY000): Can’t connect to MySQL server on’test.mysql.rds.aliyuncs.com’ (110)</h4><h4 id="5-ERROR-1135-HY000-Can’t-create-a-new-thread-errno-11-if-you-are-not-out-of-available-memory-you-can-consult-the-manual-for-a-possible-OS-dependent-bug"><a href="#5-ERROR-1135-HY000-Can’t-create-a-new-thread-errno-11-if-you-are-not-out-of-available-memory-you-can-consult-the-manual-for-a-possible-OS-dependent-bug" class="headerlink" title="5. ERROR 1135 (HY000): Can’t create a new thread (errno 11); if you are not out of available memory, you can consult the manual for a possible OS-dependent bug"></a>5. ERROR 1135 (HY000): Can’t create a new thread (errno 11); if you are not out of available memory, you can consult the manual for a possible OS-dependent bug</h4><h4 id="6-ERROR-1130-HY000-Host-‘192-168-1-3’-is-not-allowed-to-connect-to-this-MySQL-server"><a href="#6-ERROR-1130-HY000-Host-‘192-168-1-3’-is-not-allowed-to-connect-to-this-MySQL-server" class="headerlink" title="6. ERROR 1130 (HY000): Host ‘192.168.1.3’ is not allowed to connect to this MySQL server"></a>6. ERROR 1130 (HY000): Host ‘192.168.1.3’ is not allowed to connect to this MySQL server</h4><h4 id="7-ERROR-1045-HY000-28000ip-not-in-whitelist"><a href="#7-ERROR-1045-HY000-28000ip-not-in-whitelist" class="headerlink" title="7. ERROR 1045 (HY000): #28000ip not in whitelist"></a>7. ERROR 1045 (HY000): #28000ip not in whitelist</h4><h4 id="8-ERROR-5-HY000-Out-of-memory-Needed-260400-bytes"><a href="#8-ERROR-5-HY000-Out-of-memory-Needed-260400-bytes" class="headerlink" title="8. ERROR 5 (HY000): Out of memory (Needed 260400 bytes)"></a>8. ERROR 5 (HY000): Out of memory (Needed 260400 bytes)</h4><h4 id="9-ERROR-1129-HY000-Host-‘10-24-236-231’-is-blocked-because-of-many-connection-errors-unblock-with-‘mysqladmin-flush-hosts’"><a href="#9-ERROR-1129-HY000-Host-‘10-24-236-231’-is-blocked-because-of-many-connection-errors-unblock-with-‘mysqladmin-flush-hosts’" class="headerlink" title="9. ERROR 1129 (HY000): Host ‘10.24.236.231’ is blocked because of many connection errors; unblock with ‘mysqladmin flush-hosts’"></a>9. ERROR 1129 (HY000): Host ‘10.24.236.231’ is blocked because of many connection errors; unblock with ‘mysqladmin flush-hosts’</h4><h4 id="10-ERROR-1226-42000-User-‘testcon’-has-exceeded-the-‘max-user-connections’-resource-current-value-2"><a href="#10-ERROR-1226-42000-User-‘testcon’-has-exceeded-the-‘max-user-connections’-resource-current-value-2" class="headerlink" title="10. ERROR 1226 (42000): User ‘testcon’ has exceeded the ‘max_user_connections’ resource (current value: 2)"></a>10. ERROR 1226 (42000): User ‘testcon’ has exceeded the ‘max_user_connections’ resource (current value: 2)</h4><h4 id="11-ERROR-1226-42000-User-‘testcon’-has-exceeded-the-‘max-connections-per-hour’-resource-current-value-2"><a href="#11-ERROR-1226-42000-User-‘testcon’-has-exceeded-the-‘max-connections-per-hour’-resource-current-value-2" class="headerlink" title="11. ERROR 1226 (42000): User ‘testcon’ has exceeded the ‘max_connections_per_hour’ resource (current value: 2)"></a>11. ERROR 1226 (42000): User ‘testcon’ has exceeded the ‘max_connections_per_hour’ resource (current value: 2)</h4><h4 id="12-ERROR-1040-HY000-Too-many-connections"><a href="#12-ERROR-1040-HY000-Too-many-connections" class="headerlink" title="12. ERROR 1040 (HY000): Too many connections"></a>12. ERROR 1040 (HY000): Too many connections</h4><h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Solution/ELK/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/03/Kubenetes/Solution/ELK/" itemprop="url">Kubernetes ELK Solution</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T21:13:06+08:00">
-                2018-10-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kubernetes</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/Solution/" itemprop="url" rel="index">
-                    <span itemprop="name">Solution</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="max-virtual-memory-areas-vm-max-map-count-65530-is-too-low-increase-to-at-least-262144"><a href="#max-virtual-memory-areas-vm-max-map-count-65530-is-too-low-increase-to-at-least-262144" class="headerlink" title="max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]"></a>max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">initContainers:</span><br><span class="line">    - name: init-sysctl</span><br><span class="line">    image: busybox</span><br><span class="line">    imagePullPolicy: IfNotPresent</span><br><span class="line">    <span class="built_in">command</span>: [<span class="string">"sysctl"</span>, <span class="string">"-w"</span>, <span class="string">"vm.max_map_count=262144"</span>]</span><br><span class="line">    securityContext:</span><br><span class="line">        privileged: <span class="literal">true</span></span><br><span class="line">containers:</span><br><span class="line">    - name: es-master</span><br><span class="line">    securityContext:</span><br><span class="line">        capabilities:</span><br><span class="line">        add:</span><br><span class="line">        - IPC_LOCK</span><br><span class="line">    image: gcr.io/tokyo-skein-217911/elasticsearch:6.4.0.1</span><br></pre></td></tr></table></figure>
-<h4 id="“xxx”-is-forbidden-attempt-to-grant-extra-privileges"><a href="#“xxx”-is-forbidden-attempt-to-grant-extra-privileges" class="headerlink" title="“xxx” is forbidden: attempt to grant extra privileges"></a>“xxx” is forbidden: attempt to grant extra privileges</h4><ul>
-<li>solution on GKE</li>
-</ul>
-<p>Due to some reason the first character of the username was set to uppercase in Google Cloud/IAM settings, however the above command returned all characters in lowercase.</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gcloud config get-value core/account</span><br><span class="line"></span><br><span class="line">kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=<span class="string">"&lt;case-sensitive-username&gt;@gmail.com"</span></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DB/MySQL/Configuration/Connection/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/03/DB/MySQL/Configuration/Connection/" itemprop="url">MySQL Connection Configuration</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T15:00:18+08:00">
-                2018-10-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Configuration/" itemprop="url" rel="index">
-                    <span itemprop="name">Configuration</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="参数说明"><a href="#参数说明" class="headerlink" title="参数说明"></a>参数说明</h3><ol>
-<li>skip-networking</li>
-</ol>
-<p>开启该选项可以彻底关闭 MySQL 的 TCP/IP 连接方式，如果 WEB 服务器是以远程连接的方式访问MySQL数据库服务器则不要开启该选项！否则将无法正常连接！</p>
-<ol start="2">
-<li>skip-name-resolve</li>
-</ol>
-<p>禁止 MySQL 对外部连接进行 DNS 解析，使用这一选项可以消除 MySQL 进行 DNS 解析的时间。但需要注意，如果开启该选项，则所有远程主机连接授权都要使用 IP 地址方式，否则 MySQL 将无法正常处理连接请求！</p>
-<ol start="3">
-<li>max_connections</li>
-</ol>
-<p>max_connections 是指 MySql 的最大连接数，如果服务器的并发连接请求量比较大，建议调高此值，以增加并行连接数量，当然这建立在服务器能支撑的情况下，因为如果连接数越多，由于 MySQL 会为每个连接提供连接缓冲区，就会开销越多的内存，所以要适当调整该值，不能盲目提高设值。</p>
-<ol start="4">
-<li>max_user_connections</li>
-</ol>
-<p>max_user_connections 是指每个数据库用户的最大连接针对某一个账号的所有客户端并行连接到 MYSQL 服务的最大并行连接数。简单说是指同一个账号能够同时连接到 mysql 服务的最大连接数。设置为 0 表示不限制。</p>
-<ol start="5">
-<li>max_connect_errors</li>
-</ol>
-<p>设置每个主机的连接请求异常中断的最大次数，当超过该次数，MySQL 服务器将禁止 host 的连接请求，直到 mysql 服务器重启或通过 flush hosts 命令清空此 host 的相关信息</p>
-<ol start="6">
-<li>thread_handing</li>
-</ol>
-<p>Mysql 服务中线程处理模式包括两种：</p>
-<ul>
-<li>no-threads(单线程处理，多用于 debug)</li>
-<li>one- thread-per-connection（每个请求对应一个线程，目前被作为默认值 )；</li>
-</ul>
-<ol start="7">
-<li>thread_cache_size</li>
-</ol>
-<p>这个值表示可以重新利用保存在缓存中线程的数量, 当断开连接时如果缓存中还有空间, 那么客户端的线程将被放到缓存中, 如果线程重新被请求，那么请求将从缓存中读取。</p>
-<p>如果缓存中是空的或者是新的请求，那么这个线程将被重新创建, 如果有很多新的线程，增加这个值可以改善系统性能. 因为当应用发起一个对数据库的操作时，在整个应用中是一个不小的开销，从建立连接之初，CPU 要给它划分一定的 thread stack，然后进行用户身份认证，建立上下文信息，最后请求完成，关闭连接，同时释放资源，可以称的上是秒级的过程。</p>
-<p>在高并发的情况下，将给系统带来巨大的压力更不能保证性能。所以，采用线程重用，减小这部分的消耗。通过比较 Connections 和 Threads_created 状态的变量，可以看到这个变量的作用。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show status like <span class="string">'thread%'</span>;</span><br><span class="line">+-------------------+-------+</span><br><span class="line">| Variable_name     | Value |</span><br><span class="line">+-------------------+-------+</span><br><span class="line">| Threads_cached    | 649   | &lt;—当前被缓存的空闲线程的数量</span><br><span class="line">| Threads_connected | 93    | &lt;—正在使用（处于连接状态）的线程</span><br><span class="line">| Threads_created   | 742   | &lt;—服务启动以来，创建了多少个线程</span><br><span class="line">| Threads_running   | 5     | &lt;—正在忙的线程（正在查询数据，传输数据等等操作）</span><br><span class="line">+-------------------+-------+</span><br></pre></td></tr></table></figure>
-<p>查看开机起来数据库被连接了多少次？</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show global status like <span class="string">'%connections%'</span>;</span><br><span class="line">+-----------------------------------+---------------------+</span><br><span class="line">| Variable_name                     | Value               |</span><br><span class="line">+-----------------------------------+---------------------+</span><br><span class="line">| Connection\_errors\_max_connections | 0                   |</span><br><span class="line">| Connections                       | 101395055             |   &lt;–服务启动以来，历史连接数</span><br><span class="line">| Max\_used\_connections              | 742                 |</span><br><span class="line">| Max\_used\_connections_time         | 2018-08-21 15:42:38 |</span><br><span class="line">+-----------------------------------+---------------------+</span><br></pre></td></tr></table></figure>
-<p>通过连接线程池的命中率来判断设置值是否合适？命中率超过90%以上, 设定合理。(Connections - Threads_created) / Connections * 100%</p>
-<ol start="8">
-<li>thread_stack</li>
-</ol>
-<p>每个连接线程被创建时，MySQL给它分配的内存大小。当MySQL创建一个新的连接线程时，需要给它分配一定大小的内存堆栈空间，以便存放客户端的请求的 Query 及自身的各种状态和处理信息。当然如果遇到下面的错误提示就应该考虑增加这个值了。mysql-debug: Thread stack overrun 如:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java.sql.SQLException: Thread stack overrun: 5456 bytes used of a 131072 byte stack, and 128000 bytes needed. Use <span class="string">'mysqld --thread_stack=#'</span> to specify a bigger stack.</span><br></pre></td></tr></table></figure>
-<ol start="9">
-<li>Connect_Timeout</li>
-</ol>
-<p>字面上看意思是连接超时，指的是 MySQL 连接过程中握手的超时时间，在 5.0.52 以后默认为 10 秒，之前版本默认是 5 秒。</p>
-<p>mysql的基本原理是有个监听线程循环接收请求，当有请求来时，创建线程（或者从线程池中取）来处理这个请求。由于 mysql 连接采用 TCP 协议，那么之前势必是需要进行TCP三次握手的。</p>
-<p>TCP三次握手成功之后，客户端会进入阻塞，等待服务端的消息。服务端这个时候会创建一个线程 (或者从线程池中取一个线程) 来处理请求，主要验证部分包括host和用户名密码验证。host验证我们比较熟悉，因为在用grant命令授权用户的时候是有指定host的。用户名密码认证则是服务端先生成一个随机数发送给客户端，客户端用该随机数和密码进行多次 sha1 加密后发送给服务端验证。如果通过，整个连接握手过程完成。</p>
-<p>由此可见，整个连接握手可能会有各种可能出错。所以这个 connect_timeout 值就是指这个超时时间了。可以简单测试下，运行下面的 telnet 命令会发现客户端会在 10 秒后超时返回。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$time</span> telnet mysql\_ip\_addr port</span><br><span class="line">$ time telnet 127.0.0.1 5051</span><br><span class="line">Trying 127.0.0.1...</span><br><span class="line">Connected to 127.0.0.1.</span><br><span class="line">Escape character is <span class="string">'^\]'</span>.</span><br><span class="line">?</span><br><span class="line">Connection closed by foreign</span><br><span class="line">host.</span><br><span class="line">real    0m5.005s <span class="comment">#这里的5秒即mysql默认的连接超时</span></span><br><span class="line">user    0m0.000s</span><br><span class="line">sys 0m0.000s</span><br></pre></td></tr></table></figure>
-<p>Telnet 未退出前通过 show processlist 查看各线程状态可见，当前该连接处于授权认证阶段，此时的用户为“unauthenticated user”。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">256 | unauthenticated user | localhost:60595 | NULL | Connect | NULL | Reading from net | NULL</span><br></pre></td></tr></table></figure>
-<ol start="10">
-<li>wait_timeout&amp;interactive_timeout</li>
-</ol>
-<p>等待超时，那MySQL等什么呢？确切的说是 MySQL 在等用户的请求 (query)，如果发现一个线程已经 sleep 的时间超过 wait_timeout 了那么这个线程将被清理掉，从文档上来看 wait_timeout 和 interactive_timeout 都是指不活跃的连接超时时间，而 interactive_timeout 针对交互式连接，wait_timeout 针对非交互式连接。</p>
-<p>MySQL 连接线程启动的时候 wait_timeout 会根据是交互模式还是非交互模式被设置为这两个值中的一个。如果我们运行 MySQL -uroot -p 命令登陆到 MySQL，wait_timeout 就会被设置为 interactive_timeout 的值。如果我们在 wait_timeout 时间内没有进行任何操作，那么再次操作的时候就会提示超时，这是 MySQL client 会重新连接。</p>
-<ol start="11">
-<li>net_read_timeout</li>
-<li>net_write_timeout</li>
-<li>net_retry_count</li>
-</ol>
-<p>如果 MySQL 服务端在读写数据时，出现连接中断，会重试 net_retry_count 指定的次数。在系统 FreeBSD 中有效，Linux 中只有在 build 的时候指定 NO_ALARM 参数时 net_retry_count 才会起作用。</p>
-<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>connect_timeout在获取连接阶段（authenticate）起作用，interactive_timeout 和 wait_timeout 在连接空闲阶段（sleep）起作用，而net_read_timeout和net_write_timeout则是在连接繁忙阶段（query）起作用。</p>
-<p>获取MySQL连接是多次握手的结果，除了用户名和密码的匹配校验外，还有 IP-&gt;HOST-&gt;DNS-&gt;IP 验证，任何一步都可能因为网络问题导致线程阻塞。为了防止线程浪费在不必要的校验等待上，超过connect_timeout的连接请求将会被拒绝。<br>即使没有网络问题，也不能允许客户端一直占用连接。对于保持 sleep 状态超过了 wait_timeout（或 interactive_timeout，取决于 CLIENT_INTERACTIVE 标志）的客户端，MySQL 会主动断开连接。</p>
-<p>即使连接没有处于 sleep 状态，即客户端忙于计算或者存储数据，MySQL 也选择了有条件的等待。在数据包的分发过程中，客户端可能来不及响应（发送、接收、或者处理数据包太慢）。为了保证连接不被浪费在无尽的等待中，MySQL 也会选择有条件（net_read_timeout 和 net_write_timeout）地主动断开连接。比如我在客户端用 load data infile 的方式导入很大的一个文件到数据库中，然后中途用 iptables 禁用掉 mysql 的 3306 端口，这个时候服务器端该连接状态是 reading from net，在等待 net_read_timeout 后关闭该连接。同理，在程序里面查询一个很大的表时，在查询过程中同样禁用掉端口，制造网络不通的情况，这样该连接状态是 writing to net，然后在 net_write_timeout 后关闭该连接。</p>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>MySQL 连接机制浅析及运维：<a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DB/MySQL/ViewStatus/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/03/DB/MySQL/ViewStatus/" itemprop="url">MySQL View Status</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T15:00:18+08:00">
-                2018-10-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status  <span class="comment"># 输出所有记录的状态</span></span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status like <span class="string">'%xxxx%'</span>  <span class="comment"># 输出记录带有xxx关键字的状态，show global status like ‘thread%’</span></span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Status"><a href="#Status" class="headerlink" title="Status"></a>Status</h3><h4 id="Connection"><a href="#Connection" class="headerlink" title="Connection"></a>Connection</h4><ul>
-<li>Aborted_clients<ul>
-<li>由于客户端没有正确关闭连接导致客户端终止而中断的连接数。 如，客户端和服务端建立连接好之后，等待 wait_time 时间后，客户端和服务器之间的连接自动退出，此时会发现 Aborted_clients 计数器加 1。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Aborted_connects<ul>
-<li>试图连接到 MySQL 服务器而失败的连接数。如:telnet 127.0.0.1 3306， 然后什么都不做，ctrl+]，quit 退出，就会发现 aborted_connects 计数器加 1。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>connections<ul>
-<li>试图连接到 (不管成功与否)MySQL 服务器的连接数计数。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Bytes_received<ul>
-<li>从所有客户端接收到的字节数。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Bytes_sent<ul>
-<li>发送给所有客户端的字节数。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Threads_cached<ul>
-<li>代表当前此时此刻线程缓存中有多少空闲线程。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Threads_connected<ul>
-<li>代表当前已建立连接的数量，因为一个连接就需要一个线程，所以也可以看成当前被使用的线程数。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Threads_created<ul>
-<li>创建用来处理连接的线程数。如果 Threads_created 较大，则需要增加 thread_cached_size 的值。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Threads_running<ul>
-<li>代表当前激活的（非睡眠状态）线程数。</li>
-</ul>
-</li>
-</ul>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2161,7 +2096,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">435</span>
+                <span class="site-state-item-count">439</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2172,7 +2107,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">200</span>
+                <span class="site-state-item-count">201</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2183,7 +2118,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">490</span>
+                <span class="site-state-item-count">494</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
