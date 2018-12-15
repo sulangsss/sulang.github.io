@@ -284,6 +284,484 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/DB/MySQL/Backup/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/27/DB/MySQL/Backup/" itemprop="url">MySQL 备份</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T11:55:07+08:00">
+                2017-10-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="mysqlpump"><a href="#mysqlpump" class="headerlink" title="mysqlpump"></a>mysqlpump</h2><p>命令参考链接</p>
+<p><a href="http://www.ywnds.com/?p=7272" target="_blank" rel="noopener">http://www.ywnds.com/?p=7272</a><br>官方文档</p>
+<p><a href="https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html</a></p>
+<h3 id="备份脚本-1-0"><a href="#备份脚本-1-0" class="headerlink" title="备份脚本 1.0"></a>备份脚本 1.0</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/bin/mysqlpump</span><br><span class="line"><span class="comment"># --databases（-B） 数据库名，多个以“，”间隔;</span></span><br><span class="line"><span class="comment"># --set-charset：备份文件里写SET NAMES default_character_set 到输出，此参默认开启。</span></span><br><span class="line"><span class="comment"># --single-transaction：该参数在事务隔离级别设置成Repeatable Read，并在dump之前发送start transaction 语句给服务端。</span></span><br><span class="line"><span class="comment"># --watch-progress：定期显示进度的完成，包括总数表、行和其他对象。该参数默认开启</span></span><br><span class="line"><span class="comment"># --default-parallelism 指定并行线程数，默认是2，如果设置成0，表示不使用并行备份。</span></span><br><span class="line"><span class="comment"># --exclude-tables=database.table 排除指定表，每次指定一张表，如果需要排除多张表，则使用多次即可</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -databases db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
+<h3 id="服务器centos脚本"><a href="#服务器centos脚本" class="headerlink" title="服务器centos脚本"></a>服务器centos脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/usr/bin/mysqlpump</span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -B db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
+<h3 id="恢复数据库"><a href="#恢复数据库" class="headerlink" title="恢复数据库"></a>恢复数据库</h3><h4 id="Centos7"><a href="#Centos7" class="headerlink" title="Centos7"></a>Centos7</h4><p>解压文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zlib_decompress file.zlip mysql.sql</span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/26/Docker/MySQL/error/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/26/Docker/MySQL/error/" itemprop="url">MySQL Docker Error</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-26T10:23:03+08:00">
+                2017-10-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Centos-7-2002-“Can’t-connect-to-local-MySQL-server-through-socket-‘-var-run-mysqld-mysqld-sock’-2-”"><a href="#Centos-7-2002-“Can’t-connect-to-local-MySQL-server-through-socket-‘-var-run-mysqld-mysqld-sock’-2-”" class="headerlink" title="Centos 7 (2002, “Can’t connect to local MySQL server through socket ‘/var/run/mysqld/mysqld.sock’ (2)”)"></a>Centos 7 (2002, “Can’t connect to local MySQL server through socket ‘/var/run/mysqld/mysqld.sock’ (2)”)</h3><p>从错误提示可知，很由可能就是因为程序连接MySQL数据库时，查找不到/var/run/mysqld/mysqld.sock文件</p>
+<p>解决方法：docker增加文件映射 /var/lib/mysql/mysql.sock:/var/run/mysqld/mysqld.sock</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/25/Python/Django/RestFramework/permission/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/25/Python/Django/RestFramework/permission/" itemprop="url">Django Rest Permission</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-25T20:13:03+08:00">
+                2017-10-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/rest/" itemprop="url" rel="index">
+                    <span itemprop="name">rest</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="API-Permission"><a href="#API-Permission" class="headerlink" title="API Permission"></a>API Permission</h3><h4 id="示例代码1：CRUD权限"><a href="#示例代码1：CRUD权限" class="headerlink" title="示例代码1：CRUD权限"></a>示例代码1：CRUD权限</h4><p>创建API权限管理类</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasePerms</span><span class="params">(BasePermission)</span>:</span></span><br><span class="line">    <span class="comment"># API require permissions</span></span><br><span class="line">    api_perms = []</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">check_user_perms</span><span class="params">(user, perms)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> user <span class="keyword">and</span> perms <span class="keyword">and</span> isinstance(perms, list):</span><br><span class="line">            <span class="keyword">return</span> user.has_perms(perms)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">check_user_perm</span><span class="params">(user, codename)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> user <span class="keyword">and</span> codename:</span><br><span class="line">            <span class="keyword">return</span> user.has_perm(codename)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseModelAPIPerms</span><span class="params">(BasePerms)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">has_permission</span><span class="params">(self, request, view)</span>:</span></span><br><span class="line">        <span class="comment"># is_superuser 超级权限</span></span><br><span class="line">        <span class="keyword">if</span> request.user.is_superuser:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line"></span><br><span class="line">        codename = self.get_codename(request, view)</span><br><span class="line">        <span class="keyword">return</span> self.check_user_perm(request.user, codename)</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_codename</span><span class="params">(request, view)</span>:</span></span><br><span class="line">        req_method = request.method</span><br><span class="line">        serializer_class = view.serializer_class</span><br><span class="line">        codename = <span class="string">''</span></span><br><span class="line">        <span class="keyword">if</span> serializer_class:</span><br><span class="line">            meta = serializer_class.Meta</span><br><span class="line">            <span class="keyword">if</span> meta:</span><br><span class="line">                model = meta.model</span><br><span class="line">                <span class="keyword">if</span> model:</span><br><span class="line">                    model_attr = getattr(model, <span class="string">'_meta'</span>)</span><br><span class="line">                    codename = <span class="string">"%s.&#123;&#125;_%s"</span> % (getattr(model_attr, <span class="string">'app_label'</span>, <span class="string">''</span>),</span><br><span class="line">                                             getattr(model_attr, <span class="string">'model_name'</span>, <span class="string">''</span>))</span><br><span class="line">                    <span class="keyword">if</span> req_method == <span class="string">'GET'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"access"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'POST'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"add"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'PUT'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"change"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'DELETE'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"delete"</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> codename</span><br></pre></td></tr></table></figure>
+<p>API使用权限管理类</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ProjectViewSet</span><span class="params">(CreateProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     RetrieveProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     UpdateProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     DestroyProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     ProjectListPermission,</span></span></span><br><span class="line"><span class="class"><span class="params">                     BaseModelApi)</span>):</span></span><br><span class="line">    permission_classes = [IsAuthenticated, ProjectAPIPerm]</span><br><span class="line">    serializer_class = ProjectWithAttrSerializer</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_class</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">            返回Class对象</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="keyword">return</span> Project</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/25/Python/Django/Authentication/authentication-system/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1995,482 +2473,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/20/Python/Magic/build-in-func/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/20/Python/Magic/build-in-func/" itemprop="url">Python 内置函数</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-20T10:47:38+08:00">
-                2017-10-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/magic/" itemprop="url" rel="index">
-                    <span itemprop="name">magic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="call"><a href="#call" class="headerlink" title="call()"></a><strong>call</strong>()</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DistanceForm</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, origin)</span>:</span></span><br><span class="line">        self.origin = origin</span><br><span class="line">        <span class="keyword">print</span> <span class="string">"origin :"</span>+str(origin)</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, x)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> <span class="string">"x :"</span>+str(x)</span><br><span class="line"> </span><br><span class="line">p = DistanceForm(<span class="number">100</span>)</span><br><span class="line">p(<span class="number">2000</span>)</span><br><span class="line"> </span><br><span class="line">输出 </span><br><span class="line">origin :<span class="number">100</span></span><br><span class="line">x :<span class="number">2000</span></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/20/Python/Django/Tools/django-debug-toolbar/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/20/Python/Django/Tools/django-debug-toolbar/" itemprop="url">Django Debug Panel</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-20T10:47:38+08:00">
-                2017-10-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/tools/" itemprop="url" rel="index">
-                    <span itemprop="name">tools</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="安装配置"><a href="#安装配置" class="headerlink" title="安装配置"></a>安装配置</h3><p>1.安装</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install django-debug-panel</span><br></pre></td></tr></table></figure>
-<p>2.Django配置</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">MIDDLEWARE = [</span><br><span class="line">    <span class="comment"># ...</span></span><br><span class="line">    <span class="string">'debug_toolbar.middleware.DebugToolbarMiddleware'</span>,</span><br><span class="line">    <span class="comment"># ...</span></span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Note:he order of MIDDLEWARE <span class="keyword">and</span> MIDDLEWARE_CLASSES <span class="keyword">is</span> important. You should include the Debug Toolbar middleware <span class="keyword">as</span> early <span class="keyword">as</span> possible <span class="keyword">in</span> the list. However, it must come after any other middleware that encodes the response’s content, such <span class="keyword">as</span> GZipMiddleware.</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">INSTALLED_APPS = [</span><br><span class="line">    <span class="comment"># ...</span></span><br><span class="line">    <span class="string">'django.contrib.staticfiles'</span>, <span class="comment"># 默认情况下会有</span></span><br><span class="line">    <span class="comment"># ...</span></span><br><span class="line">    <span class="string">'debug_toolbar'</span>,</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 参考实际配置</span></span><br><span class="line">MIDDLEWARE = [</span><br><span class="line">    <span class="string">'corsheaders.middleware.CorsMiddleware'</span>,</span><br><span class="line">    <span class="string">'django.middleware.common.CommonMiddleware'</span>,</span><br><span class="line">    <span class="string">'django.middleware.security.SecurityMiddleware'</span>,</span><br><span class="line">    <span class="string">'django.contrib.sessions.middleware.SessionMiddleware'</span>,</span><br><span class="line">    <span class="comment"># 'django.middleware.csrf.CsrfViewMiddleware',</span></span><br><span class="line">    <span class="string">'django.contrib.auth.middleware.AuthenticationMiddleware'</span>,</span><br><span class="line">    <span class="string">'django.contrib.messages.middleware.MessageMiddleware'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.middleware.DebugToolbarMiddleware'</span>,</span><br><span class="line">    <span class="string">'django.middleware.clickjacking.XFrameOptionsMiddleware'</span>,</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">STATIC_URL = <span class="string">'/static/'</span></span><br><span class="line"></span><br><span class="line">INTERNAL_IPS = (<span class="string">'127.0.0.1'</span>,)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 可选</span></span><br><span class="line">DEBUG_TOOLBAR_PANELS = [</span><br><span class="line">    <span class="string">'debug_toolbar.panels.versions.VersionsPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.timer.TimerPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.settings.SettingsPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.headers.HeadersPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.request.RequestPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.sql.SQLPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.staticfiles.StaticFilesPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.templates.TemplatesPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.cache.CachePanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.signals.SignalsPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.logging.LoggingPanel'</span>,</span><br><span class="line">    <span class="string">'debug_toolbar.panels.redirects.RedirectsPanel'</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-<p>urls.py 添加如下代码</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> settings.DEBUG:</span><br><span class="line">    <span class="keyword">import</span> debug_toolbar</span><br><span class="line"></span><br><span class="line">    urlpatterns = [</span><br><span class="line">                      url(<span class="string">r'^__debug__/'</span>, include(debug_toolbar.urls)),</span><br><span class="line">                  ] + urlpatterns</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/20/Docker/Command/docker-compose/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/20/Docker/Command/docker-compose/" itemprop="url">Docker Command</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-20T05:51:12+08:00">
-                2017-10-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/dev-tools/" itemprop="url" rel="index">
-                    <span itemprop="name">dev_tools</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/dev-tools/command/" itemprop="url" rel="index">
-                    <span itemprop="name">command</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="install"><a href="#install" class="headerlink" title="install"></a>install</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ubuntu 18.04</span></span><br><span class="line">sudo curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/<span class="built_in">local</span>/bin/docker-compose</span><br><span class="line">sudo chmod +x /usr/<span class="built_in">local</span>/bin/docker-compose</span><br><span class="line"><span class="comment"># if want to remove it</span></span><br><span class="line">sudo rm /usr/<span class="built_in">local</span>/bin/docker-compose</span><br></pre></td></tr></table></figure>
-<h3 id="restart"><a href="#restart" class="headerlink" title="restart"></a>restart</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">docker-compose restart worker</span><br><span class="line"></span><br><span class="line"><span class="comment"># You can set the time to wait for stop before killing the container (in seconds)</span></span><br><span class="line">docker-compose restart -t 30 worker</span><br></pre></td></tr></table></figure>
-<h3 id="run"><a href="#run" class="headerlink" title="run"></a>run</h3><h3 id="pull"><a href="#pull" class="headerlink" title="pull"></a>pull</h3><p>Pulls an image associated with a service defined in a docker-compose.yml or docker-stack.yml file</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2522,7 +2524,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">453</span>
+                <span class="site-state-item-count">456</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2544,7 +2546,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">509</span>
+                <span class="site-state-item-count">517</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
