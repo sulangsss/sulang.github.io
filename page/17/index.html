@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/19/Linux/Command/find/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/18/Kubenetes/elk/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/06/19/Linux/Command/find/" itemprop="url">Linux Find</a></h2>
+                <a class="post-title-link" href="/2018/07/18/Kubenetes/elk/" itemprop="url">install ELK on Kubernetes</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-19T17:38:57+08:00">
-                2018-06-19
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-18T15:13:06+08:00">
+                2018-07-18
               </time>
             
 
@@ -338,8 +338,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
+                  <a href="/categories/DevTools/" itemprop="url" rel="index">
+                    <span itemprop="name">DevTools</span>
                   </a>
                 </span>
 
@@ -349,8 +349,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
+                  <a href="/categories/DevTools/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
                   </a>
                 </span>
 
@@ -388,7 +388,48 @@
       
         
           
-            <h3 id="find"><a href="#find" class="headerlink" title="find"></a>find</h3><h4 id="查找大文件"><a href="#查找大文件" class="headerlink" title="查找大文件"></a>查找大文件</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">find . -<span class="built_in">type</span> f -size +800M</span><br><span class="line"></span><br><span class="line">find . -<span class="built_in">type</span> f -size +800M  -print0 | xargs -0 ls -l</span><br><span class="line"></span><br><span class="line">find . -<span class="built_in">type</span> f -size +800M  -print0 | xargs -0 du -h</span><br><span class="line"></span><br><span class="line"><span class="comment"># 对查找结果按照文件大小做一个排序</span></span><br><span class="line">find . -<span class="built_in">type</span> f -size +800M  -print0 | xargs -0 du -h | sort -nr</span><br></pre></td></tr></table></figure>
+            <h3 id="ELK"><a href="#ELK" class="headerlink" title="ELK"></a>ELK</h3><h4 id="Elasticsearch"><a href="#Elasticsearch" class="headerlink" title="Elasticsearch"></a>Elasticsearch</h4><p>Elasticsearch best-practices recommend to separate nodes in three roles:</p>
+<ul>
+<li><p>Master nodes - intended for clustering management only, no data, no HTTP API</p>
+</li>
+<li><p>Client nodes - intended for client usage, no data, with HTTP API</p>
+</li>
+<li><p>Data nodes - intended for storing and indexing data, no HTTP API</p>
+</li>
+</ul>
+<p>Elasticsearch 启动时会根据配置文件中设置的集群名字（cluster.name）自动查找并加入集群。Elasctisearch 节点默认使用 9300 端口寻找集群，所以必须开启这个端口。</p>
+<p>一个 Elasticsearch 集群中一般拥有三种角色的节点，master、data 和 client。</p>
+<ul>
+<li><p>master：master 节点负责一些轻量级的集群操作，比如创建、删除数据索引、跟踪记录集群中节点的状态、决定数据分片（shards）在 data 节点之间的分布；</p>
+</li>
+<li><p>data：data 节点上保存了数据分片。它负责数据相关操作，比如分片的 CRUD，以及搜索和整合操作。这些操作都比较消耗 CPU、内存和 I/O 资源；</p>
+</li>
+<li><p>client：client 节点起到路由请求的作用，实际上可以看做负载均衡器。</p>
+</li>
+</ul>
+<p>配置文件中有两个与集群相关的配置：</p>
+<ul>
+<li><p>node.master：默认 true。True 表示该节点是 master 节点；</p>
+</li>
+<li><p>node.data：默认 true。True 表示该节点时 data 节点。如果两个值都为 false，表示是 client 节点。</p>
+</li>
+</ul>
+<p>一个集群中不一定有 client 节点，但是肯定有 master 和 data 节点。默认第一个启动的节点是 master。Master 节点也能起到路由请求和搜索结果整合的作用，所以在小规模的集群中，无需 client 节点。但是如果集群规模很大，则有必要设置专门的 client。</p>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://www.ibm.com/developerworks/cn/opensource/os-cn-elk-filebeat/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/opensource/os-cn-elk-filebeat/index.html</a></p>
+<hr>
+<h3 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h3><p>lasticsearch pods need for an init-container to run in privileged mode, so it can set some VM options. For that to happen, the kubelet should be running with args –allow-privileged, otherwise the init-container will fail to run.</p>
+<h4 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h4><ol>
+<li>max virtual memory areas vm.max_map_count [65530] likely too low, increase to at least [262144]</li>
+</ol>
+<p>临时生效方式，修改宿主机参数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo sysctl -w vm.max_map_count=655360</span><br></pre></td></tr></table></figure>
+<p>永久生效方式</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/sysctl.conf</span><br><span class="line"><span class="comment"># 加入vm.max_map_count=262144</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>max file descriptors [4096] for elasticsearch process likely too low, increase to at least [65536]</li>
+</ol>
+<h3 id="参考链接-1"><a href="#参考链接-1" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://github.com/carlosedp/kubernetes-elasticsearch-cluster" target="_blank" rel="noopener">https://github.com/carlosedp/kubernetes-elasticsearch-cluster</a></p>
+
           
         
       
@@ -436,7 +477,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/19/Linux/Command/file/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/15/Java/GC-Logger/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -455,7 +496,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/06/19/Linux/Command/file/" itemprop="url">Linux File</a></h2>
+                <a class="post-title-link" href="/2018/07/15/Java/GC-Logger/" itemprop="url">JVM GC Logger</a></h2>
         
 
         <div class="post-meta">
@@ -467,8 +508,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-19T17:38:57+08:00">
-                2018-06-19
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-15T20:01:22+08:00">
+                2018-07-15
               </time>
             
 
@@ -490,19 +531,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
                   </a>
                 </span>
 
@@ -540,7 +570,11 @@
       
         
           
-            
+            <h3 id="Configuation"><a href="#Configuation" class="headerlink" title="Configuation"></a>Configuation</h3><h3 id="Analyze-Logger"><a href="#Analyze-Logger" class="headerlink" title="Analyze Logger"></a>Analyze Logger</h3><h4 id="GC格式图解"><a href="#GC格式图解" class="headerlink" title="GC格式图解"></a>GC格式图解</h4><img src="/2018/07/15/Java/GC-Logger/gc-logger-format.png">
+<h4 id="实战分析"><a href="#实战分析" class="headerlink" title="实战分析"></a>实战分析</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">[GC pause (G1 Evacuation Pause) (young) 140.031: [G1Ergonomics (CSet Construction) start choosing CSet, _pending_cards: 19075, predicted base time: 18.50 ms, remaining time: 81.50 ms, target pause time: 100.00 ms]</span><br><span class="line"> 140.031: [G1Ergonomics (CSet Construction) add young regions to CSet, eden: 77 regions, survivors: 6 regions, predicted young region time: 89.12 ms]</span><br><span class="line"> 140.031: [G1Ergonomics (CSet Construction) finish choosing CSet, eden: 77 regions, survivors: 6 regions, old: 0 regions, predicted pause time: 107.62 ms, target pause time: 100.00 ms]</span><br><span class="line">, 0.1151640 secs]</span><br><span class="line">   [Parallel Time: 111.6 ms, GC Workers: 4] <span class="comment"># 标记着并行阶段的汇总信息。总共花费时间以及GC的工作线程数</span></span><br><span class="line">      <span class="comment"># Start时间戳信息 Diff是偏移平均时间的值。Diff越小越好，说明每个工作线程的速度都很均匀</span></span><br><span class="line">      <span class="comment"># Avg代表平均时间值。如果Avg跟Min,Max偏差不大是比较正常的，否则也要详细分析具体的偏差值大的任务。</span></span><br><span class="line">      [GC Worker Start (ms): Min: 140031.5, Avg: 140031.6, Max: 140031.9, Diff: 0.4] </span><br><span class="line">      <span class="comment"># Ext Root Scanning 外部根区扫描。外部根是堆外区。JNI引用，JVM系统目录，Classloaders等。</span></span><br><span class="line">      [Ext Root Scanning (ms): Min: 1.1, Avg: 1.7, Max: 2.2, Diff: 1.2, Sum: 6.7] </span><br><span class="line">      <span class="comment"># RSet</span></span><br><span class="line">      <span class="comment"># UpdateRS:更新RSet的时间信息。-XX:MaxGCPauseMillis参数是限制G1的暂停之间，一般RSet更新的时间小于10%的目标暂停时间是比较可取的。</span></span><br><span class="line">      <span class="comment"># 如果花费在RSetUpdate的时间过长，可以修改其占用总暂停时间的百分比-XX:G1RSetUpdatingPauseTimePercent。这个参数的默认值是10。</span></span><br><span class="line">      [Update RS (ms): Min: 11.1, Avg: 12.9, Max: 16.9, Diff: 5.9, Sum: 51.6] </span><br><span class="line">        <span class="comment"># Processed Buffers:已处理缓冲区。这个阶段处理的是在优化线程中处理dirty card分区扫描时记录的日志缓冲区。</span></span><br><span class="line">         [Processed Buffers: Min: 14, Avg: 25.2, Max: 36, Diff: 22, Sum: 101]</span><br><span class="line">      [Scan RS (ms): Min: 37.4, Avg: 41.9, Max: 44.7, Diff: 7.3, Sum: 167.7]</span><br><span class="line">      <span class="comment"># Code Root Scanning：代码跟的扫描。只有在分区的RSet有强代码根时会检查CSet的对内引用，例如常量池。</span></span><br><span class="line">      [Code Root Scanning (ms): Min: 0.0, Avg: 0.1, Max: 0.5, Diff: 0.5, Sum: 0.5]</span><br><span class="line">      <span class="comment"># Object Copy：该任务主要是对CSet中存活对象进行转移（复制）。对象拷贝的时间一般占用暂停时间的主要部分。</span></span><br><span class="line">      <span class="comment"># 如果拷贝时间和”预测暂停时间“有相差很大，也可以调整年轻代尺寸大小。</span></span><br><span class="line">      [Object Copy (ms): Min: 52.6, Avg: 54.2, Max: 55.1, Diff: 2.5, Sum: 216.9]</span><br><span class="line">      <span class="comment"># Termination </span></span><br><span class="line">      <span class="comment"># 这里的终止主要是终止工作线程。Work线程在工作终止前会检查其他工作线程的任务，如果其他work线程有没完成的任务，会抢活。</span></span><br><span class="line">      <span class="comment"># 如果终止时间较长，额能是某个work线程在某项任务执行时间过长。</span></span><br><span class="line">      [Termination (ms): Min: 0.0, Avg: 0.5, Max: 0.7, Diff: 0.7, Sum: 2.2]</span><br><span class="line">         [Termination Attempts: Min: 1, Avg: 2.0, Max: 4, Diff: 3, Sum: 8]</span><br><span class="line">      <span class="comment"># GC Worker Other</span></span><br><span class="line">      <span class="comment"># 花在GC之外的工作线程的时间，比如因为JVM的某个活动，导致GC线程被停掉。这部分消耗的时间不是真正花在GC上，只是作为log的一部分记录。</span></span><br><span class="line">      [GC Worker Other (ms): Min: 0.0, Avg: 0.0, Max: 0.0, Diff: 0.0, Sum: 0.1]</span><br><span class="line">      <span class="comment"># GC Worker Total</span></span><br><span class="line">      <span class="comment"># 并行阶段的GC汇总，包含了GC以及GC Worker Other的总时间。</span></span><br><span class="line">      [GC Worker Total (ms): Min: 111.1, Avg: 111.4, Max: 111.5, Diff: 0.4, Sum: 445.5]</span><br><span class="line">      <span class="comment"># End时间戳信息</span></span><br><span class="line">      [GC Worker End (ms): Min: 140143.0, Avg: 140143.0, Max: 140143.0, Diff: 0.0] </span><br><span class="line">   [Code Root Fixup: 0.0 ms]</span><br><span class="line">   [Code Root Purge: 0.1 ms]</span><br><span class="line">   [Clear CT: 0.5 ms]</span><br><span class="line">   [Other: 3.0 ms]</span><br><span class="line">      [Choose CSet: 0.0 ms]</span><br><span class="line">      [Ref Proc: 1.0 ms]</span><br><span class="line">      [Ref Enq: 0.0 ms]</span><br><span class="line">      [Redirty Cards: 0.7 ms]</span><br><span class="line">      [Humongous Register: 0.3 ms]</span><br><span class="line">      [Humongous Reclaim: 0.1 ms]</span><br><span class="line">      [Free CSet: 0.3 ms]</span><br><span class="line">   <span class="comment"># 垃圾收集结果统计</span></span><br><span class="line">   <span class="comment">#  Eden分区GC前616.0M，GC后是0；其中括号里面的分别是GC前后Eden分区的总大小</span></span><br><span class="line">   [Eden: 616.0M(616.0M)-&gt;0.0B(616.0M) Survivors: 48.0M-&gt;48.0M Heap: 2742.1M(13.1G)-&gt;2127.1M(13.1G)]</span><br><span class="line">   <span class="comment"># Survivors: 48.0M-&gt;48.0M，这里没有变化，如果Survivors空间的变化，空间增长了，说明有存活对象E区晋升到S区。</span></span><br><span class="line">   <span class="comment"># Heap: 2742.1M(13.1G)-&gt;2127.1M(13.1G)，整个堆区的GC前后空间数据，G1 GC会动态调整堆区，但这次回收中没有改变堆区的容量。</span></span><br><span class="line"> [Times: user=0.33 sys=0.01, real=0.12 secs]</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[GC pause (G1 Evacuation Pause) (young) 144.865: </span><br><span class="line">[G1Ergonomics (CSet Construction) start choosing CSet, _pending_cards: 14697, predicted base time: 15.95 ms, remaining time: 84.05 ms, target pause time: 100.00 ms]</span><br><span class="line">[G1Ergonomics (CSet Construction) add young regions to CSet, eden: 77 regions, survivors: 6 regions, predicted young region time: 93.31 ms]</span><br><span class="line">[G1Ergonomics (CSet Construction) finish choosing CSet, eden: 77 regions, survivors: 6 regions, old: 0 regions, predicted pause time: 109.26 ms, target pause time: 100.00 ms]</span><br></pre></td></tr></table></figure>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://blog.csdn.net/lijingyao8206/article/details/80566384" target="_blank" rel="noopener">https://blog.csdn.net/lijingyao8206/article/details/80566384</a></p>
+
           
         
       
@@ -588,7 +622,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/18/MQ/RocketMQ/Note/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/15/Java/GC/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -607,7 +641,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/06/18/MQ/RocketMQ/Note/" itemprop="url">RocketMQ Note</a></h2>
+                <a class="post-title-link" href="/2018/07/15/Java/GC/" itemprop="url">JVM GC</a></h2>
         
 
         <div class="post-meta">
@@ -619,8 +653,533 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-18T16:48:18+08:00">
-                2018-06-18
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-15T20:01:22+08:00">
+                2018-07-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h3><h4 id="Heap"><a href="#Heap" class="headerlink" title="Heap"></a>Heap</h4><p>Java堆（Heap）是Java虚拟机所管理的内存中最大的一块，它被所有线程共享的，在虚拟机启动时创建。此内存区域唯一的目的是存放对象实例，几乎所有的对象实例都在这里分配内存，且每次分配的空间是不定长的。</p>
+<p>在Heap中分配一定的内存来保存对象实例，实际上只是保存对象实例的属性值，属性的类型和对象本身的类型标记等，并不保存对象的方法（方法是指令，保存在Stack中），在Heap中分配一定的内存保存对象实例和对象的序列化比较类似。</p>
+<p>对象实例在Heap中分配好以后，需要在Stack中保存一个4字节的Heap 内存地址，用来定位该对象实例在Heap中的位置，便于找到该对象实例。</p>
+<p>Java虚拟机规范中描述道：所有的对象实例以及数组都要在堆上分配，但是随着JIT编译器的发展和逃逸分析技术逐渐成熟，栈上分配、标量替换优化技术将会导致一些微妙的变化发生，所有的对象都在堆上分配的定论也并不“绝对”了。</p>
+<p>Java堆是垃圾收集器管理的主要区域，因此也被称为“GC堆（Garbage Collected Heap）”。从内存回收的角度看内存空间可如下划分：</p>
+<img src="/2018/07/15/Java/GC/gc_heap.png">
+<ul>
+<li>新生代（Young）</li>
+</ul>
+<p>新生成的对象优先存放在新生代中，新生代对象朝生夕死，存活率很低。在新生代中，常规应用进行一次垃圾收集一般可以回收70% ~ 95% 的空间，回收效率很高。</p>
+<p>新生代又可细分为Eden空间、From Survivor空间、To Survivor空间，默认比例为8:1:1。</p>
+<hr>
+<ul>
+<li>老年代（Tenured/Old）</li>
+</ul>
+<p>在新生代中经历了多次（具体看虚拟机配置的阀值）GC后仍然存活下来的对象会进入老年代中。老年代中的对象生命周期较长，存活率比较高，在老年代中进行GC的频率相对而言较低，而且回收的速度也比较慢。</p>
+<hr>
+<ul>
+<li>永久代（Perm）</li>
+</ul>
+<p>永久代存储类信息、常量、静态变量、即时编译器编译后的代码等数据，对这一区域而言，Java虚拟机规范指出可以不进行垃圾收集，一般而言不会进行垃圾回收。</p>
+<p><strong>新生代和老年代组成了Java堆的全部内存区域，而永久代不属于堆空间，它在JDK 1.8以前被Sun HotSpot虚拟机用作方法区的实现</strong></p>
+<h4 id="方法区（Method-Area）"><a href="#方法区（Method-Area）" class="headerlink" title="方法区（Method Area）"></a>方法区（Method Area）</h4><p>方法区（Method Area）与Java堆一样，是各个线程共享的内存区域。</p>
+<p>Object Class Data(类定义数据)是存储在方法区的，此外，常量、静态变量、JIT编译后的代码也存储在方法区。正因为方法区所存储的数据与堆有一种类比关系，所以它还被称为 Non-Heap。</p>
+<ul>
+<li>JDK 1.8以前的永久代（PermGen）</li>
+</ul>
+<p>Java虚拟机规范对方法区的限制非常宽松，除了和Java堆一样不需要连续的内存和可以选择固定大小或者可扩展外，还可以选择不实现垃圾收集，也就是说，Java虚拟机规范只是规定了方法区的概念和它的作用，并没有规定如何去实现它。</p>
+<p>对于JDK 1.8之前的版本，HotSpot虚拟机设计团队选择把GC分代收集扩展至方法区，即用永久代来实现方法区，这样HotSpot的垃圾收集器可以像管理Java堆一样管理这部分内存，能够省去专门为方法区编写内存管理代码的工作。对于其他的虚拟机（如Oracle JRockit、IBM J9等）来说是不存在永久代的概念的。</p>
+<p>如果运行时有大量的类产生，可能会导致方法区被填满，直至溢出。常见的应用场景如：</p>
+<ol>
+<li><p>Spring和ORM框架使用CGLib操纵字节码对类进行增强，增强的类越多，就需要越大的方法区来保证动态生成的Class可以加载入内存。</p>
+</li>
+<li><p>大量JSP或动态产生JSP文件的应用（JSP第一次运行时需要编译为Java类）。</p>
+</li>
+<li><p>基于OSGi的应用（即使是同一个类文件，被不同的类加载器加载也会视为不同的类）</p>
+</li>
+</ol>
+<p>这些都会导致方法区溢出，报出java.lang.OutOfMemoryError: PermGen space</p>
+<ul>
+<li>JDK 1.8的元空间（Metaspace）</li>
+</ul>
+<p>在JDK 1.8中，HotSpot虚拟机设计团队为了促进HotSpot与 JRockit的融合，修改了方法区的实现，移除了永久代，选择使用本地化的内存空间（而不是JVM的内存空间）存放类的元数据，这个空间叫做元空间（Metaspace）。</p>
+<p>做了这个改动以后，java.lang.OutOfMemoryError: PermGen的空间问题将不复存在，并且不再需要调整和监控这个内存空间。</p>
+<p>虚拟机需要为方法区设计额外的GC策略：如果类元数据的空间占用达到参数“MaxMetaspaceSize”设置的值，将会触发对死亡对象和类加载器的垃圾回收。</p>
+<p>为了限制垃圾回收的频率和延迟，适当的监控和调优元空间是非常有必要的。元空间过多的垃圾收集可能表示类、类加载器内存泄漏或对你的应用程序来说空间太小了。</p>
+<p>元空间的内存管理由元空间虚拟机来完成。先前，对于类的元数据我们需要不同的垃圾回收器进行处理，现在只需要执行元空间虚拟机的C++代码即可完成。在元空间中，类和其元数据的生命周期和其对应的类加载器是相同的。话句话说，只要类加载器存活，其加载的类的元数据也是存活的，因而不会被回收掉。</p>
+<p>准确的来说，每一个类加载器的存储区域都称作一个元空间，所有的元空间合在一起就是我们一直说的元空间。当一个类加载器被垃圾回收器标记为不再存活，其对应的元空间会被回收。</p>
+<ul>
+<li>运行时常量池（Runtime Constant Pool）</li>
+</ul>
+<p>运行时常量池（Runtime Constant Pool）是方法区的一部分。</p>
+<p>Class文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是常量池（Constant Pool Table），用于存放编译期生成的各种字面量和符号引用，这部分内容将在类加载后进入方法区的运行时常量池存放。</p>
+<p>运行时常量池相对于Class文件常量池的另外一个重要特征是具备动态性，Java语言并不要求常量一定只有编译器才能产生，也就是并非置入Class文件中的常量池的内容才能进入方法区运行时常量池，运行期间也可能将新的常量放入池中，此特性被开发人员利用得比较多的便是String类的intern() 方法。</p>
+<h4 id="直接内存"><a href="#直接内存" class="headerlink" title="直接内存"></a>直接内存</h4><p>直接内存（Direct Memory）并不是虚拟机运行时数据区的一部分，也不是Java虚拟机规范中定义的内存区域。但这部分内存也被频繁运用，而却可能导致OutOfMemoryError异常出现，所以这里放到一起讲解。</p>
+<p>以NIO（New Input/Output）类为例，NIO引入了一种基于通道（Channel）与缓冲区（Buffer）的I/O方式，它可以使用Native函数库直接分配堆外内存，然后通过一个存储在Java堆中的DirectByteBuffer对象作为这块内存的引用进行操作。这样能避免在Java堆和Native堆中来回复制数据，在一些场景里显著提高性能。</p>
+<p>本机直接内存的分配不会受到Java堆大小的限制，但是既然是内存，还是会受到本机总内存（包括RAM以及SWAP区或分页文件）大小以及处理器寻址空间的限制。服务器管理员在配置虚拟机参数时，会根据实际内存设置-Xmx等参数信息，但经常忽略直接内存，使得各个内存区域总和大于物理内存限制（包括物理的和操作系统的限制），从而导致动态扩展时出现OutOfMemoryError异常。</p>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://crowhawk.github.io/2017/08/09/jvm_1/" target="_blank" rel="noopener">https://crowhawk.github.io/2017/08/09/jvm_1/</a></p>
+<p><a href="https://crowhawk.github.io/2017/08/10/jvm_2/" target="_blank" rel="noopener">https://crowhawk.github.io/2017/08/10/jvm_2/</a></p>
+<h3 id="GC是什么？"><a href="#GC是什么？" class="headerlink" title="GC是什么？"></a>GC是什么？</h3><p>GC主要回答了以下三个问题：</p>
+<ol>
+<li><p>哪些内存需要回收？</p>
+</li>
+<li><p>什么时候回收？</p>
+</li>
+<li><p>如何回收？</p>
+</li>
+</ol>
+<h4 id="对象存活判定算法"><a href="#对象存活判定算法" class="headerlink" title="对象存活判定算法"></a>对象存活判定算法</h4><ol>
+<li>引用计数算法</li>
+</ol>
+<p>引用计数算法是在JVM中被摒弃的一种对象存活判定算法，不过它也有一些知名的应用场景（如Python、FlashPlayer）</p>
+<p>用引用计数器判断对象是否存活的过程是这样的：给对象中添加一个引用计数器，每当有一个地方引用它时，计数器加1；当引用失效时，计数器减1；任何时刻计数器为0的对象就是不可能再被使用的。</p>
+<p>引用计数算法的实现简单，判定效率也很高，大部分情况下是一个不错的算法。它没有被JVM采用的原因是它很难解决对象之间循环引用的问题。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** * testGC()方法执行后，objA和objB会不会被GC呢？ */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ReferenceCountingGC</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> Object instance = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> _1MB = <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** * 这个成员属性的唯一意义就是占点内存，以便在能在GC日志中看清楚是否有回收过 */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">byte</span>[] bigSize = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">2</span> * _1MB];</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">testGC</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        ReferenceCountingGC objA = <span class="keyword">new</span> ReferenceCountingGC();</span><br><span class="line">        ReferenceCountingGC objB = <span class="keyword">new</span> ReferenceCountingGC();</span><br><span class="line">        objA.instance = objB;</span><br><span class="line">        objB.instance = objA;</span><br><span class="line"></span><br><span class="line">        objA = <span class="keyword">null</span>;</span><br><span class="line">        objB = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 假设在这行发生GC，objA和objB是否能被回收？</span></span><br><span class="line">        System.gc();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在上面这段代码中，对象objA 和对象objB都有字段instance，赋值令objA.instance = objB;、objB.instance = objA;，除此之外，这两个对象再无引用。如果JVM采用引用计数算法来管理内存，这两个对象不可能再被访问，但是他们互相引用着对方，导致它们引用计数不为0，所以引用计数器无法通知GC收集器回收它们。</p>
+<h4 id="可达性分析算法"><a href="#可达性分析算法" class="headerlink" title="可达性分析算法"></a>可达性分析算法</h4><p>在主流商用程序语言的实现中，都是通过可达性分析（tracing GC）来判定对象是否存活的。</p>
+<p>此算法的基本思路是：通过一系列的称为“GC Roots”的对象作为起点，从这些节点向下搜索，搜索所走过的路径称为引用链（Reference Chain），当一个对象到GC Roots没有任何引用链相连（用图论的话来说，就是GC Roots到这个对象不可达）时，则证明此对象时不可用的。</p>
+<img src="/2018/07/15/Java/GC/gc_roots.png">
+<p>对象object 5、object 6、object 7虽然互有关联，但是它们到GC Roots是不可达的，所以它们将会被判定为是可回收的对象。</p>
+<p>可以看到，GC Roots在对象图之外，是特别定义的“起点”，不可能被对象图内的对象所引用。</p>
+<p>准确地说，GC Roots其实不是一组对象，而通常是一组特别管理的指向引用类型对象的指针，这些指针是tracing GC的trace的起点。它们不是对象图里的对象，对象也不可能引用到这些“外部”的指针，这也是tracing GC算法不会出现循环引用问题的基本保证。因此也容易得出，只有引用类型的变量才被认为是Roots，值类型的变量永远不被认为是Roots。只有深刻理解引用类型和值类型的内存分配和管理的不同，才能知道为什么root只能是引用类型。</p>
+<p>在Java中，可作为GC Roots的对象包括以下几种：</p>
+<ul>
+<li><p>虚拟机栈（栈帧中的局部变量表，Local Variable Table）中引用的对象。</p>
+</li>
+<li><p>方法区中类静态属性引用的对象。</p>
+</li>
+<li><p>方法区中常量引用的对象。</p>
+</li>
+<li><p>本地方法栈中JNI（即一般说的Native方法）引用的对象。</p>
+</li>
+</ul>
+<p>可以概括得出，可作为GC Roots的节点主要在全局性的引用与执行上下文中。要明确的是，tracing gc必须以当前存活的对象集为Roots，因此必须选取确定存活的引用类型对象。</p>
+<p>GC管理的区域是Java堆，虚拟机栈、方法区和本地方法栈不被GC所管理，因此选用这些区域内引用的对象作为GC Roots，是不会被GC所回收的。</p>
+<p>其中虚拟机栈和本地方法栈都是线程私有的内存区域，只要线程没有终止，就能确保它们中引用的对象的存活。</p>
+<p>而方法区中类静态属性引用的对象是显然存活的。常量引用的对象在当前可能存活，因此，也可能是GC roots的一部分。</p>
+<h4 id="两次标记与finalize-方法"><a href="#两次标记与finalize-方法" class="headerlink" title="两次标记与finalize()方法"></a>两次标记与finalize()方法</h4><p>即使在可达性分析算法中不可达的对象，也不是一定会死亡的，它们暂时都处于“缓刑”阶段，要真正宣告一个对象“死亡”，至少要经历两次标记过程：</p>
+<p>如果对象在进行可达性分析后发现没有与GC Roots相连接的引用链，那它将会被第一次标记并且进行一次筛选，筛选的条件是此对象是否有必要执行finaliza()方法。</p>
+<p>当对象没有覆盖finaliza()方法或者finaliza()方法已经被虚拟机调用过，虚拟机将这两种情况都视为“没有必要执行”。</p>
+<p>如果这个对象被判定为有必要执行finaliza()方法，那么此对象将会放置在一个叫做 F-Queue 的队列中，并在稍后由一个虚拟机自动建立的、低优先级的Finalizer线程去执行它。这里所谓的“执行”是指虚拟机会触发此方法，但并不承诺会等待它运行结束，原因是：如果一个对象在finaliza()方法中执行缓慢，或者发生了死循环（更极端的情况），将很可能导致F-Queue 队列中的其它对象永久处于等待，甚至导致整个内存回收系统崩溃。</p>
+<p>finaliza()方法是对象逃脱死亡命运的最后一次机会，稍后GC将对F-Queue 队列中的对象进行第二次小规模的标记。如果对象想在finaliza()方法中成功拯救自己，只要重新与引用链上的任何一个对象建立关联即可，例如把自己（this关键字）赋值给某个类变量或者对象的成员变量，这样在第二次标记时它将被移出“即将回收”的集合；如果对象这时候还没有逃脱，基本上它就真的被回收了</p>
+<p>需要说明的是，使用finalize()方法来“拯救”对象是不值得提倡的，因为它不是C/C++中的析构函数，而是Java刚诞生时为了使C/C++程序员更容易接受它所做的一个妥协。它的运行代价高昂，不确定性大，无法保证各个对象的调用顺序。finalize() 能做的工作，使用try-finally或者其它方法都更适合、及时，所以笔者建议大家可以忘掉此方法存在。</p>
+<h4 id="垃圾收集算法"><a href="#垃圾收集算法" class="headerlink" title="垃圾收集算法"></a>垃圾收集算法</h4><ol>
+<li>标记－清除（Mark-Sweep）算法</li>
+</ol>
+<p>标记－清除（Mark-Sweep）算法是最基础的垃圾收集算法，后续的收集算法都是基于它的思路并对其不足进行改进而得到的。顾名思义，算法分成“标记”、“清除”两个阶段：首先标记出所有需要回收的对象，在标记完成后统一回收所有被标记的对象，标记过程在前一节讲述对象标记判定时已经讲过了。</p>
+<p>缺点：</p>
+<ul>
+<li><p>空间问题，标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后在程序运行过程中需要分配较大对象时，无法找到足够的连续内存而不得不触发另一次垃圾收集动作。</p>
+</li>
+<li><p>效率问题，因为内存碎片的存在，操作会变得更加费时，因为查找下一个可用空闲块已不再是一个简单操作。</p>
+</li>
+</ul>
+<ol start="2">
+<li>标记-复制（Copying）算法</li>
+</ol>
+<p>为了解决标记-清除算法的效率问题，一种称为“复制”（Copying）的收集算法出现了，思想为：它将可用内存按容量分成大小相等的两块，每次只使用其中的一块。当这一块内存用完，就将还存活着的对象复制到另一块上面，然后再把已使用过的内存空间一次清理掉。</p>
+<ol start="3">
+<li>Minor GC与复制算法</li>
+</ol>
+<p>现在的商业虚拟机都使用复制算法来回收新生代。新生代的GC又叫“Minor GC”，IBM公司的专门研究表明：新生代中的对象98%是“朝生夕死”的，所以Minor GC非常频繁，一般回收速度也比较快，同时“朝生夕死”的特性也使得Minor GC使用复制算法时不需要按照1:1的比例来划分新生代内存空间。</p>
+<p>Minor GC过程</p>
+<p>事实上，新生代将内存分为一块较大的Eden空间和两块较小的Survivor空间（From Survivor和To Survivor），每次Minor GC都使用Eden和From Survivor，当回收时，将Eden和From Survivor中还存活着的对象都一次性地复制到另外一块To Survivor空间上，最后清理掉Eden和刚使用的Survivor空间。</p>
+<p>一次Minor GC结束的时候，Eden空间和From Survivor空间都是空的，而To Survivor空间里面存储着存活的对象。在下次MinorGC的时候，两个Survivor空间交换他们的标签，现在是空的“From” Survivor标记成为“To”，“To” Survivor标记为“From”。因此，在MinorGC结束的时候，Eden空间是空的，两个Survivor空间中的一个是空的，而另一个存储着存活的对象。</p>
+<p>HotSpot虚拟机默认的Eden : Survivor的比例是8 : 1，由于一共有两块Survivor，所以每次新生代中可用内存空间为整个新生代容量的90%（80%＋10%），只有10%的容量会被“浪费”。</p>
+<p>分配担保</p>
+<p>上文说的98%的对象可回收只是一般场景下的数据，我们没有办法保证每次回收都只有不多于10%的对象存活，当Survivor空间不够用时，需要依赖老年代内存进行分配担保（Handle Promotion）。如果另外一块Survivor上没有足够空间存放上一次新生代收集下来的存活对象，这些对象将直接通过分配担保机制进入老年代。</p>
+<h4 id="分代"><a href="#分代" class="headerlink" title="分代"></a>分代</h4><p>由于对象的存活时间有长有短，所以对于存活时间长的对象，减少被gc的次数可以避免不必要的开销。</p>
+<p>这样我们就把内存分成新生代和老年代，新生代存放刚创建的和存活时间比较短的对象，老年代存放存活时间比较长的对象。这样每次仅仅清理年轻代，老年代仅在必要时时再做清理可以极大的提高GC效率，节省GC时间。</p>
+<hr>
+<h3 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h3><p>G1 GC是Jdk7的新特性之一、Jdk7+版本都可以自主配置G1作为JVM GC选项</p>
+<h4 id="Getting-Started-with-the-G1-Garbage-Collector"><a href="#Getting-Started-with-the-G1-Garbage-Collector" class="headerlink" title="Getting Started with the G1 Garbage Collector"></a>Getting Started with the G1 Garbage Collector</h4><p><a href="http://www.oracle.com/webfolder/technetwork/tutorials/obe/java/G1GettingStarted/index.html" target="_blank" rel="noopener">http://www.oracle.com/webfolder/technetwork/tutorials/obe/java/G1GettingStarted/index.html</a></p>
+<h4 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h4><p>平时工作中大多数系统都使用CMS、即使静默升级到JDK7默认仍然采用CMS、那么G1相对于CMS的区别在：</p>
+<ul>
+<li><p>G1在压缩空间方面有优势</p>
+</li>
+<li><p>G1通过将内存空间分成区域（Region）的方式避免内存碎片问题</p>
+</li>
+<li><p>Eden, Survivor, Old区不再固定、在内存使用效率上来说更灵活</p>
+</li>
+<li><p>G1可以通过设置预期停顿时间（Pause Time）来控制垃圾收集时间避免应用雪崩现象</p>
+</li>
+<li><p>G1在回收内存后会马上同时做合并空闲内存的工作、而CMS默认是在STW（stop the world）的时候做</p>
+</li>
+<li><p>G1会在Young GC中使用、而CMS只能在O区使用</p>
+</li>
+</ul>
+<h4 id="应用场景条件"><a href="#应用场景条件" class="headerlink" title="应用场景条件"></a>应用场景条件</h4><ol>
+<li><p>服务端多核CPU、JVM内存占用较大的应用（至少大于4G）</p>
+</li>
+<li><p>应用在运行过程中会产生大量内存碎片、需要经常压缩空间</p>
+</li>
+<li><p>想要更可控、可预期的GC停顿周期；防止高并发下应用雪崩现象</p>
+</li>
+</ol>
+<h4 id="回收模式"><a href="#回收模式" class="headerlink" title="回收模式"></a>回收模式</h4><p>G1中提供了三种模式垃圾回收模式，young gc、mixed gc 和 full gc，在不同的条件下被触发。</p>
+<ol>
+<li>young gc</li>
+</ol>
+<p>发生在年轻代的GC算法，一般对象（除了巨型对象）都是在eden region中分配内存，当所有eden region被耗尽无法申请内存时，就会触发一次young gc，这种触发机制和之前的young gc差不多，执行完一次young gc，活跃对象会被拷贝到survivor region或者晋升到old region中，空闲的region会被放入空闲列表中，等待下次被使用。</p>
+<p>相关参数</p>
+<ul>
+<li><p>-XX:G1NewSizePercent：新生代最小值，默认值5%</p>
+</li>
+<li><p>-XX:G1MaxNewSizePercent：新生代最大值，默认值60%</p>
+</li>
+</ul>
+<ol start="2">
+<li>mixed gc</li>
+</ol>
+<p>当越来越多的对象晋升到老年代old region时，为了避免堆内存被耗尽，虚拟机会触发一个混合的垃圾收集器，即mixed gc，该算法并不是一个old gc，除了回收整个young region，还会回收一部分的old region，这里需要注意：是一部分老年代，而不是全部老年代，可以选择哪些old region进行收集，从而可以对垃圾回收的耗时时间进行控制。</p>
+<p>mixed gc什么时候被触发？</p>
+<p>回顾一下cms的触发机制</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-XX:CMSInitiatingOccupancyFraction=80 -XX:+UseCMSInitiatingOccupancyOnly</span><br></pre></td></tr></table></figure>
+<p>当老年代的使用率达到80%时，就会触发一次cms gc。相对的，mixed gc中也有一个阈值参数 -XX:InitiatingHeapOccupancyPercent，当老年代大小占整个堆大小百分比达到该阈值时，会触发一次mixed gc.</p>
+<p>mixed gc的执行过程有点类似cms，主要分为以下几个步骤：</p>
+<ul>
+<li><p>initial mark: 初始标记过程，整个过程STW（Stop The Word），标记了从GC Root可达的对象</p>
+</li>
+<li><p>concurrent marking: 并发标记过程，整个过程gc collector线程与应用线程可以并行执行，标记出GC Root可达对象衍生出去的存活对象，并收集各个Region的存活对象信息</p>
+</li>
+<li><p>remark: 最终标记过程，整个过程STW，标记出那些在并发标记过程中遗漏的，或者内部引用发生变化的对象</p>
+</li>
+<li><p>clean up: 垃圾清除过程，如果发现一个Region中没有存活对象，则把该Region加入到空闲列表中</p>
+</li>
+</ul>
+<ol start="3">
+<li>full gc</li>
+</ol>
+<p>如果对象内存分配速度过快，mixed gc来不及回收，导致老年代被填满，就会触发一次full gc，G1的full gc算法就是单线程执行的serial old gc，会导致异常长时间的暂停时间，需要进行不断的调优，尽可能的避免full gc.</p>
+<h4 id="调优参数（按重要性排序）"><a href="#调优参数（按重要性排序）" class="headerlink" title="调优参数（按重要性排序）"></a>调优参数（按重要性排序）</h4><p>-XX:+UseG1GC </p>
+<p>-Xmx<ng> -Xms<ng> </ng></ng></p>
+<p>-XX:MaxGCPauseMillis=<ms> </ms></p>
+<p>-XX:InitiatingHeapOccupancyPercent=&lt;%&gt;</p>
+<p>-XX:+PrintGCDetails</p>
+<p>-XX:+PrintAdaptiveSizePolicy</p>
+<p>-XX:G1HeapRegionSize</p>
+<p>-XX:+PrintReferenceGC</p>
+<p>-XX:+ParallelRefProcEnabled</p>
+<p>-XX:ParallelGCThreads=n</p>
+<p>-XX:ConcGCThreads=n</p>
+<p>-XX:G1MixedGCCountTarget=n</p>
+<h4 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-XX:+UseG1GC -Xmx32g -XX:MaxGCPauseMillis=200</span><br></pre></td></tr></table></figure>
+<ul>
+<li>-XX:+UseG1GC为开启G1垃圾收集</li>
+<li>-Xmx32g设计堆内存的最大内存为32G</li>
+<li>-XX:MaxGCPauseMillis=200设置GC的最大暂停时间为200ms</li>
+</ul>
+<p>如果我们需要调优，在内存大小一定的情况下，我们只需要修改最大暂停时间即可。</p>
+<h4 id="参考链接-1"><a href="#参考链接-1" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="http://ifeve.com/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3g1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/" target="_blank" rel="noopener">http://ifeve.com/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3g1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/</a></p>
+<p><a href="http://blog.jobbole.com/109170/" target="_blank" rel="noopener">http://blog.jobbole.com/109170/</a></p>
+<p><a href="https://crowhawk.github.io/2017/08/15/jvm_3/" target="_blank" rel="noopener">https://crowhawk.github.io/2017/08/15/jvm_3/</a></p>
+<p><a href="http://www.importnew.com/27793.html" target="_blank" rel="noopener">http://www.importnew.com/27793.html</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/11/Java/JVM/JVM-Analazy/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/07/11/Java/JVM/JVM-Analazy/" itemprop="url">JVM Analazy</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-11T20:01:22+08:00">
+                2018-07-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="jmap"><a href="#jmap" class="headerlink" title="jmap"></a>jmap</h3><h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><p>查看当前存活对象统计</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">jmap -histo:live pid</span><br><span class="line"></span><br><span class="line"><span class="comment"># 仅看前10个</span></span><br><span class="line">jmap -histo:live 42374 | head -10</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jmap -dump:format=b,file=heap.bin pdi</span><br></pre></td></tr></table></figure>
+<h3 id="jstat"><a href="#jstat" class="headerlink" title="jstat"></a>jstat</h3><h4 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h4><ol>
+<li>需要每250毫秒查询一次进程2849 垃圾收集状况，一共查询20次</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jstat -gc 2849 250 20</span><br></pre></td></tr></table></figure>
+<p>输出结果说明</p>
+<ul>
+<li>S0  — Heap上的 Survivor space 0 区已使用空间的百分比</li>
+<li>S1  — Heap上的 Survivor space 1 区已使用空间的百分比</li>
+<li>E   — Heap上的 Eden space 区已使用空间的百分比</li>
+<li>O   — Heap上的 Old space 区已使用空间的百分比</li>
+<li>P   — Perm space 区已使用空间的百分比</li>
+<li>YGC — 从应用程序启动到采样时发生 Young GC 的次数</li>
+<li>YGCT– 从应用程序启动到采样时 Young GC 所用的时间(单位秒)</li>
+<li>FGC — 从应用程序启动到采样时发生 Full GC 的次数</li>
+<li>FGCT– 从应用程序启动到采样时 Full GC 所用的时间(单位秒)</li>
+<li>GCT — 从应用程序启动到采样时用于垃圾回收的总时间(单位秒)</li>
+</ul>
+<h3 id="jstack"><a href="#jstack" class="headerlink" title="jstack"></a>jstack</h3><p>Java Stack Trace，Java堆栈跟踪工具</p>
+<p>这个命令用于查看虚拟机当前时刻的线程快照（一般是threaddump 或者 javacore文件）。线程快照就是当前虚拟机内每一条线程正在执行的方法堆栈的集合。生成线程快照的主要目的是定位线程出现长时间停顿的原因，入线程间死锁、死循环、请求外部资源导致的长时间等待都是导致线程长时间停顿的常见原因。线程出现停顿的时候通过jstack来查看各个线程的调用堆栈，就可以知道没有响应的线程到底在后台做些什么事情。</p>
+<h3 id="jconsole"><a href="#jconsole" class="headerlink" title="jconsole"></a>jconsole</h3><p>一个java GUI监视工具，可以以图表化的形式显示各种数据。并可通过远程连接监视远程的服务器VM。用java写的GUI程序，用来监控VM，并可监控远程的VM，非常易用，而且功能非常强。命令行里打 jconsole，选则进程就可以了</p>
+<h4 id="docker"><a href="#docker" class="headerlink" title="docker"></a>docker</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">CMD [<span class="string">"java"</span>, \</span><br><span class="line"> <span class="string">"-server"</span>, \</span><br><span class="line"> <span class="string">"-Xms1g"</span>, \</span><br><span class="line"> <span class="string">"-Xmx30g"</span>, \</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote=true"</span>,\</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote.port=9000"</span>, \</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote.authenticate=false"</span>,\</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote.ssl=false"</span>, \</span><br><span class="line"> <span class="string">"-Djava.rmi.server.hostname=localhost"</span>, \</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote.rmi.port=9000"</span>, \</span><br><span class="line"> <span class="string">"-jar"</span>, \</span><br><span class="line"> <span class="string">"/root/root.war"</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h3><h4 id="Unable-to-open-socket-file-target-process-not-responding-or-HotSpot-VM-not-loaded"><a href="#Unable-to-open-socket-file-target-process-not-responding-or-HotSpot-VM-not-loaded" class="headerlink" title="Unable to open socket file: target process not responding or HotSpot VM not loaded"></a>Unable to open socket file: target process not responding or HotSpot VM not loaded</h4><p>使用openJDK造成的，改用Oracle JDK即可</p>
+<blockquote>
+<p><a href="https://hub.docker.com/r/anapsix/alpine-java/" target="_blank" rel="noopener">https://hub.docker.com/r/anapsix/alpine-java/</a></p>
+</blockquote>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://www.jianshu.com/p/25e94a1399a0" target="_blank" rel="noopener">https://www.jianshu.com/p/25e94a1399a0</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/11/Server/SpringBoot/ServiceDiscovery/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/07/11/Server/SpringBoot/ServiceDiscovery/" itemprop="url">SpringBoot Service Discovery</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-11T10:22:18+08:00">
+                2018-07-11
               </time>
             
 
@@ -653,19 +1212,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/RocketMQ/" itemprop="url" rel="index">
-                    <span itemprop="name">RocketMQ</span>
+                  <a href="/categories/Server/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
                   </a>
                 </span>
 
@@ -703,116 +1251,7 @@
       
         
           
-            <h3 id="Consumer"><a href="#Consumer" class="headerlink" title="Consumer"></a>Consumer</h3><ol>
-<li><p>consumer数量 &lt; Queue队列数，否则多出的consumer无法消费消息</p>
-</li>
-<li><p>负载均衡策略</p>
-</li>
-</ol>
-<p>AllocateMessageQueueAveragely（默认）</p>
-<p>AllocateMessageQueueByMachineRoom</p>
-<p>AllocateMessageQueueAveragelyByCircle</p>
-<p>AllocateMessageQueueConsistentHash</p>
-<ol start="3">
-<li><p>集群模式下，queue都是只允许分配只一个实例。这是由于如果多个实例同时消费一个queue的消息，由于拉取哪些消息是consumer主动控制的，那样会导致同一个消息在不同的实例下被消费多次，所以算法上都是一个queue只分给一个consumer实例，一个consumer实例可以允许同时分到不同的queue。</p>
-</li>
-<li><p>Consumer如果做广播消费，则一个consumer实例消费这个Topic对应的所有队列，如果做集群消费，则多个Consumer实例平均消费这个topic对应的队列集合</p>
-</li>
-<li><p>单Queue并行消费</p>
-</li>
-<li><p>尽量让consumer group下的consumer的数目和topic的queue的数目一致或成倍数关系。</p>
-</li>
-<li><p>在RocketMQ中，假如一个新消费组订阅了几个topic，按正常人或者正常业务的期望，新消费组应该从订阅topic的最后一个消息开始消费，但是实际情形不是如此，有时候新消费组会从这些topic的开头开始消费。这就是新消费组上线的风险点。</p>
-</li>
-</ol>
-<p>解决方案：</p>
-<p>消费端配置。消费端集群消费时，消费端的默认配置是从topic的最后offset开始消费。具体配置代码在DefaultMQPullConsumerImpl的consumeFromWhere，CONSUME_FROM_LAST_OFFSET的含义是“一个新的订阅组第一次启动从队列的最后位置开始消费”，RocketMQ 3.2.6版本的代码注释中清晰的说明了，但是实际表现却不是如此。</p>
-<ol start="8">
-<li><p>消息消费模式有两种：集群消费（Clustering）和广播消费（Broadcasting）。默认情况下就是集群消费，该模式下一个消费者集群共同消费一个主题的多个队列，一个队列只会被一个消费者消费，如果某个消费者挂掉，分组内其它消费者会接替挂掉的消费者继续消费。而广播消费消息会发给消费者组中的每一个消费者进行消费。</p>
-</li>
-<li><p>消息顺序（Message Order）有两种：顺序消费（Orderly）和并行消费（Concurrently）。顺序消费表示消息消费的顺序同生产者为每个消息队列发送的顺序一致，所以如果正在处理全局顺序是强制性的场景，需要确保使用的主题只有一个消息队列。并行消费不再保证消息顺序，消费的最大并行数量受每个消费者客户端指定的线程池限制。</p>
-</li>
-<li><p>读老数据的问题</p>
-</li>
-</ol>
-<blockquote>
-<p>RocketMQ的数据是要落盘的，一般只有最新写入的数据才会在PageCache中。比如下游消费数据，因为一些原因停了一天之后，又突然起来消费数据。这个时候就需要读磁盘上的数据。然后RocketMQ的消息体是全部存储在一个append only的 commitlog 中的。如果这个集群中混杂了很多不同topic的数据的话，要读的两条消息就很有可能间隔很远。最坏情况就是一次磁盘IO读一条消息。这就基本等价于随机读取了。如果磁盘的IOPS（Input/Output Operations Per Second）扛不住，还会影响数据的写入，这个问题就严重了。<br>值得庆幸的是，RocketMQ提供了自动从Slave读取老数据的功能。这个功能主要由slaveReadEnable这个参数控制。默认是关的（slaveReadEnable = false bydefault）。推荐把它打开，主从都要开。这个参数打开之后，在客户端消费数据时，会判断，当前读取消息的物理偏移量跟最新的位置的差值，是不是超过了内存容量的一个百分比（accessMessageInMemoryMaxRatio= 40 by default）。如果超过了，就会告诉客户端去备机上消费数据。如果采用异步主从，也就是brokerRole等于ASYNC_AMSTER的时候，你的备机IO打爆，其实影响不太大。但是如果你采用同步主从，那还是有影响。所以这个时候，最好挂两个备机。因为RocketMQ的主从同步复制，只要一个备机响应了确认写入就可以了，一台IO打爆，问题不大。</p>
-</blockquote>
-<ol start="11">
-<li>过期数据删除</li>
-</ol>
-<blockquote>
-<p>RocketMQ默认数据保留72个小时（fileReservedTime=72）。然后它默认在凌晨4点开始删过期数据（deleteWhen=”04”）。你可以设置多个值用分号隔开。因为数据都是定时删除的，所以在磁盘充足的情况，数据的最长保留会比你设置的还多一天。又由于默认都是同一时间，删除一整天的数据，如果用了机械硬盘，一般磁盘容量会比较大，需要删除的数据会特别多，这个就会导致在删除数据的时候，磁盘IO被打满。这个时候又要影响写入了。<br>为了解决这个问题，可以尝试多个方法，一个是设置文件删除的间隔，有两个参数可以设置，</p>
-<ul>
-<li>deleteCommitLogFilesInterval = 100（毫秒）。每删除10个commitLog文件的时间间隔；</li>
-<li>deleteConsumeQueueFilesInterval=100（毫秒）。每删除一个ConsumeQueue文件的时间间隔。<br>另外一个就是增加删除频率，把00-23都写到deleteWhen，就可以实现每个小时都删数据。</li>
-</ul>
-</blockquote>
-<ol start="12">
-<li>索引</li>
-</ol>
-<blockquote>
-<p>默认情况下，所有的broker都会建立索引（messageIndexEnable=true）。这个索引功能可以支持按照消息的uniqId，消息的key来查询消息体。索引文件实现的时候，本质上也就是基于磁盘的个一个hashmap。如果broker上消息数量比较多，查询的频率比较高，这也会造成一定的IO负载。所以我们的推荐方案是在Master上关掉了index功能，只在slave上打开。然后所有的index查询全部在slave上进行。当然这个需要简单修改一下MQAdminImpl里的实现。因为默认情况下，它会向Master发出请求。</p>
-</blockquote>
-<h3 id="Producer"><a href="#Producer" class="headerlink" title="Producer"></a>Producer</h3><ol>
-<li><p>每个Producer默认采用Roundbin方式轮训发送给每个Queue</p>
-</li>
-<li><p>可选模式：</p>
-</li>
-</ol>
-<p>Normal：普通，传统模式，不能保证消息的顺序一致性</p>
-<p>Order：顺序，可以严格保证消息顺序进行消费</p>
-<p>Transaction：事务</p>
-<ol start="3">
-<li>如何实现顺序消费</li>
-</ol>
-<p>Producer发送消息到某个Topic的Queue-0，然后Consumer实现MessageOrder接口，指定去Queue-0获取数据，此时其他线程无法去该队列获取数据。</p>
-<ol start="4">
-<li>关于Topic的读写队列数量</li>
-</ol>
-<p>读队列数量和写队列数量可以不一致：当我们使用updateTopic命令创建topic时，会发现新建的topic下会有默认的8个写对列和8个读对列(依赖于配置)，并且读队列的数量和写队列的数量还可以不一致，这是为什么呢？难道在底层读写队列是在物理上分离的吗？抱着这个问题，我分析了相关的源代码，发现底层代码对于读写队列指的都是同一个队列，其中写队列的数量是针对的producer，读队列的数量针对的是consumer。</p>
-<p>假设写队列有8个、读队列有4个，那么producer产生的消息会按轮训的方式写入到8个队列中，但是consumer却只能消费前4个队列，只有把读队列重新设置为8后，consumer可以继续消费后4个队列的历史消息；</p>
-<p>假设写队列有4个、读队列有8个，那么producer产生的消息会按轮训的方式写入到4个队列中，但是consumer却能消费8个队列，只是后4个队列没有消息可以消费罢了。</p>
-<ol start="5">
-<li>集群方案</li>
-</ol>
-<p>例如在2主2从异步架构下，a和b为master，as和bs为slaver，当a机宕机后，producer会将消息全部发往b机，consumer会消费as，b和bs上的消息，理论上只会丢失毫秒级别的消息，不会影响业务的正常使用。</p>
-<h3 id="MQ"><a href="#MQ" class="headerlink" title="MQ"></a>MQ</h3><h4 id="store"><a href="#store" class="headerlink" title="store"></a>store</h4><ol>
-<li><p>RocketMQ选择LinuxExt4文件系统，原因:Ext4文件系统删除1G大小的文件通常耗时小于50ms，而Ext3文件系统耗时约1s左右，且删除文件时，磁盘IO压力极大，会导致IO写入超时。</p>
-</li>
-<li><p>所有topic的数据混在一起进行存储，默认超过1G的话，则重新创建一个新的文件。消息的写入过程即写入该混杂的文件中，然后又有一个线程服务，在不断的读取分析该混杂文件，将消息进行分拣，然后存储在对应队列目录中（存储的是简要信息，如消息在混杂文件中的offset，消息大小等）</p>
-</li>
-<li><p>Consumer将消费的offset定时存储到broker所在的机器上，这个broker优先是master，如果master挂了的话，则会选择slave来存储，broker也是将这些offset定时刷新到本地磁盘上，同时slave会定时的访问master来获取这些offset。</p>
-</li>
-</ol>
-<h4 id="communication"><a href="#communication" class="headerlink" title="communication"></a>communication</h4><ol>
-<li><p>Producer和Name Server：每一个Producer会与Name Server集群中的一台机器建立TCP连接，会从这台Name Server上拉取路由信息。</p>
-</li>
-<li><p>Producer和broker：Producer会和它要发送的topic相关的master类型的broker建立TCP连接，用于发送消息以及定时的心跳信息。broker中会记录该Producer的信息，供查询使用</p>
-</li>
-<li><p>broker与Name Server：broker（不管是master还是slave）会和每一台Name Server机器来建立TCP连接。broker在启动的时候会注册自己配置的topic信息到Name Server集群的每一台机器中。即每一台Name Server都有该broker的topic的配置信息。master与master之间无连接，master与slave之间有连接</p>
-</li>
-<li><p>Consumer和Name Server：每一个Consumer会和Name Server集群中的一台机器建立TCP连接，会从这台Name Server上拉取路由信息，进行负载均衡</p>
-</li>
-<li><p>Consumer和broker：Consumer可以与master或者slave的broker建立TCP连接来进行消费消息，Consumer也会向它所消费的broker发送心跳信息，供broker记录。</p>
-</li>
-</ol>
-<h4 id="broker-高可用"><a href="#broker-高可用" class="headerlink" title="broker 高可用"></a>broker 高可用</h4><p>启动多个 Broker分组 形成 集群 实现高可用。Broker分组 = Master节点x1 + Slave节点xN。类似 MySQL，Master节点 提供读写服务，Slave节点 只提供读服务。</p>
-<p>每个分组，Master节点 不断发送新的 CommitLog 给 Slave节点。 Slave节点 不断上报本地的 CommitLog 已经同步到的位置给 Master节点。</p>
-<p>Broker分组 与 Broker分组 之间没有任何关系，不进行通信与数据同步。</p>
-<p>消费进度 目前不支持 Master/Slave 同步。</p>
-<p>集群内，Master节点 有两种类型：Master_SYNC、Master_ASYNC：前者在 Producer 发送消息时，等待 Slave节点 存储完毕后再返回发送结果，而后者不需要等待。</p>
-<h4 id="commitLog"><a href="#commitLog" class="headerlink" title="commitLog"></a>commitLog</h4><p>commitLog是保存消息元数据的地方，所有消息到达Broker后都会保存到commitLog文件。</p>
-<p>这里需要强调的是所有topic的消息都会统一保存在commitLog中，举个例子：当前集群有TopicA, TopicB，这两个Toipc的消息会按照消息到达的先后顺序保存到同一个commitLog中，而不是每个Topic有自己独立的commitLog。</p>
-<p>每个commitLog大小上限为1G，满1G之后会自动新建CommitLog文件做保存数据用。</p>
-<p>CommitLog的清理机制：按时间清理，rocketmq默认会清理3天前的commitLog文件；按磁盘水位清理，当磁盘使用量到达磁盘容量75%，开始清理最老的commitLog文件。</p>
-<p>文件地址：/store/${commitlog}/${fileName}</p>
-<h4 id="ConsumerQueue"><a href="#ConsumerQueue" class="headerlink" title="ConsumerQueue"></a>ConsumerQueue</h4><p>ConsumerQueue相当于CommitLog的索引文件，消费者消费时会先从ConsumerQueue中查找消息在commitLog中的offset，再去CommitLog中找元数据。如果某个消息只在CommitLog中有数据，没在ConsumerQueue中， 则消费者无法消费，Rocktet的事务消息就是这个原理。</p>
-<p>consumequeue数据结构：消息在commitLog文件实际偏移量(commitLogOffset)；消息大小；消息tag的哈希值</p>
-<p>文件地址：/store/consumequeue/${topicName}/${queueId}/${fileName}</p>
-<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
-<p><a href="http://jm.taobao.org/2018/11/06/%E6%BB%B4%E6%BB%B4%E5%87%BA%E8%A1%8C%E5%9F%BA%E4%BA%8ERocketMQ%E6%9E%84%E5%BB%BA%E4%BC%81%E4%B8%9A%E7%BA%A7%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%AE%9E%E8%B7%B5/" target="_blank" rel="noopener">http://jm.taobao.org/2018/11/06/%E6%BB%B4%E6%BB%B4%E5%87%BA%E8%A1%8C%E5%9F%BA%E4%BA%8ERocketMQ%E6%9E%84%E5%BB%BA%E4%BC%81%E4%B8%9A%E7%BA%A7%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%AE%9E%E8%B7%B5/</a></p>
-</blockquote>
+            <h3 id="Consul（CA）"><a href="#Consul（CA）" class="headerlink" title="Consul（CA）"></a>Consul（CA）</h3><h3 id="Euerka（AP）"><a href="#Euerka（AP）" class="headerlink" title="Euerka（AP）"></a>Euerka（AP）</h3><h3 id="zookeeper（AP）"><a href="#zookeeper（AP）" class="headerlink" title="zookeeper（AP）"></a>zookeeper（AP）</h3><h3 id="etcd（AP）"><a href="#etcd（AP）" class="headerlink" title="etcd（AP）"></a>etcd（AP）</h3><h3 id="Feature（CAP）"><a href="#Feature（CAP）" class="headerlink" title="Feature（CAP）"></a>Feature（CAP）</h3><h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://blog.csdn.net/u013068377/article/details/78933654" target="_blank" rel="noopener">https://blog.csdn.net/u013068377/article/details/78933654</a></p>
 
           
         
@@ -861,7 +1300,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/12/CS/DesignPattern/brief/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/08/DB/MySQL/upgrade/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -880,7 +1319,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/06/12/CS/DesignPattern/brief/" itemprop="url">Brief Of Design Pattern</a></h2>
+                <a class="post-title-link" href="/2018/07/08/DB/MySQL/upgrade/" itemprop="url">MySQL Upgrade</a></h2>
         
 
         <div class="post-meta">
@@ -892,301 +1331,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-12T23:48:18+08:00">
-                2018-06-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DesignPattern/" itemprop="url" rel="index">
-                    <span itemprop="name">DesignPattern</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="观察者模式"><a href="#观察者模式" class="headerlink" title="观察者模式"></a>观察者模式</h3><hr>
-<h3 id="装饰者模式"><a href="#装饰者模式" class="headerlink" title="装饰者模式"></a>装饰者模式</h3><hr>
-<h3 id="工厂模式"><a href="#工厂模式" class="headerlink" title="工厂模式"></a>工厂模式</h3><hr>
-<h3 id="单利模式"><a href="#单利模式" class="headerlink" title="单利模式"></a>单利模式</h3><hr>
-<h3 id="命令模式"><a href="#命令模式" class="headerlink" title="命令模式"></a>命令模式</h3><hr>
-<h3 id="适配器与外观模式"><a href="#适配器与外观模式" class="headerlink" title="适配器与外观模式"></a>适配器与外观模式</h3><hr>
-<h3 id="模板方法模式"><a href="#模板方法模式" class="headerlink" title="模板方法模式"></a>模板方法模式</h3><hr>
-<h3 id="迭代器与组合模式"><a href="#迭代器与组合模式" class="headerlink" title="迭代器与组合模式"></a>迭代器与组合模式</h3><hr>
-<h3 id="状态模式"><a href="#状态模式" class="headerlink" title="状态模式"></a>状态模式</h3><hr>
-<h3 id="代理模式"><a href="#代理模式" class="headerlink" title="代理模式"></a>代理模式</h3><hr>
-<h3 id="复合模式"><a href="#复合模式" class="headerlink" title="复合模式"></a>复合模式</h3><hr>
-<h3 id="工厂模式-1"><a href="#工厂模式-1" class="headerlink" title="工厂模式"></a>工厂模式</h3>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/12/CS/DesignPattern/advice/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/12/CS/DesignPattern/advice/" itemprop="url">Advice Of Design Pattern</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-12T23:48:18+08:00">
-                2018-06-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DesignPattern/" itemprop="url" rel="index">
-                    <span itemprop="name">DesignPattern</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="设计原则"><a href="#设计原则" class="headerlink" title="设计原则"></a>设计原则</h3><h4 id="封装“变化”的部分"><a href="#封装“变化”的部分" class="headerlink" title="封装“变化”的部分"></a>封装“变化”的部分</h4>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/10/DB/Basic/数据库范式/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/10/DB/Basic/数据库范式/" itemprop="url">数据库范式</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-10T23:13:18+08:00">
-                2018-06-10
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-08T23:08:13+08:00">
+                2018-07-08
               </time>
             
 
@@ -1219,8 +1365,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
                   </a>
                 </span>
 
@@ -1258,45 +1404,15 @@
       
         
           
-            <h3 id="什么是范式"><a href="#什么是范式" class="headerlink" title="什么是范式"></a>什么是范式</h3><p>范式是“符合某一种级别的关系模式的集合，表示一个关系内部各属性之间的联系的合理化程度”。</p>
-<p>简单的理解为，一张数据表的表结构所符合的某种设计标准的级别。</p>
-<p>数据库范式也分为1NF，2NF，3NF，BCNF（巴斯-科德范式），4NF，5NF。一般在我们设计关系型数据库的时候，最多考虑到BCNF就够。符合高一级范式的设计，必定符合低一级范式，例如符合2NF的关系模式，必定符合1NF。</p>
-<p>设计关系数据库时，遵从不同的规范要求，设计出合理的关系型数据库，这些不同的规范要求被称为不同的范式，各种范式呈递次规范，越高的范式数据库冗余越小。</p>
-<ul>
-<li>1NF：字段是最小的的单元不可再分</li>
-<li>2NF：满足1NF，表中的字段必须完全依赖于全部主键而非部分主键</li>
-<li>3NF：满足2NF，非主键外的所有字段必须互不依赖</li>
-<li>4NF：满足3NF，消除表中的多值依赖</li>
-</ul>
-<hr>
-<h3 id="范式的目标"><a href="#范式的目标" class="headerlink" title="范式的目标"></a>范式的目标</h3><p>应用数据库范式可以带来许多好处，但是最重要的好处归结为三点：</p>
-<ol>
-<li><p>减少数据冗余（这是最主要的好处，其他好处都是由此而附带的）</p>
-</li>
-<li><p>消除异常（插入异常，更新异常，删除异常）</p>
-</li>
-<li><p>让数据组织的更加和谐。</p>
-</li>
-</ol>
-<hr>
-<h3 id="第一范式-1NF"><a href="#第一范式-1NF" class="headerlink" title="第一范式 1NF"></a>第一范式 1NF</h3><p>第一范式就是每一个属性都不可再分。不符合第一范式则不能称为关系数据库。</p>
-<p>所谓第一范式（1NF）是指数据库表的每一列都是不可分割的基本数据项，同一列中不能有多个值，即实体中的某个属性不能有多个值或者不能有重复的属性。</p>
-<p>在任何一个关系数据库中，第一范式（1NF）是对关系模式的基本要求，不满足第一范式（1NF）的数据库就不是关系数据库。</p>
-<p>数据库表中的字段都是单一属性的，不可再分。这个单一属性由基本类型构成，包括整型、实数、字符型、逻辑型、日期型等。</p>
-<hr>
-<h3 id="第二范式-2NF"><a href="#第二范式-2NF" class="headerlink" title="第二范式 2NF"></a>第二范式 2NF</h3><p>2NF在1NF的基础之上，消除了非主属性对于码的部分函数依赖。</p>
-<p>简单的说，是表中的属性必须完全依赖于全部主键，而不是部分主键。</p>
-<hr>
-<h3 id="第三方式-3NF"><a href="#第三方式-3NF" class="headerlink" title="第三方式 3NF"></a>第三方式 3NF</h3><p>简单的说，第三范式是为了消除数据库中关键字之间的依赖关系</p>
-<p>2NF：非主键列是否完全依赖于主键，还是依赖于主键的一部分；3NF：非主键列是直接依赖于主键，还是直接依赖于非主键列。</p>
-<h4 id="Concept"><a href="#Concept" class="headerlink" title="Concept"></a>Concept</h4><ul>
-<li>函数依赖</li>
-</ul>
-<p>若在一张表中，在属性（或属性组）X的值确定的情况下，必定能确定属性Y的值，那么就可以说Y函数依赖于X，写作X-&gt;Y。</p>
-<p>也就是说，在数据表中，不存在任意两条记录，它们在X属性（或属性组）上的值相同，而在Y属性上的值不同。这也就是“函数依赖”名字的由来，类似于函数关系 y = f(x)，在x的值确定的情况下，y的值一定是确定的。</p>
-<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://www.zhihu.com/question/24696366" target="_blank" rel="noopener">https://www.zhihu.com/question/24696366</a></p>
-<p><a href="http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html" target="_blank" rel="noopener">http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html</a></p>
-
+            <h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><h4 id="safe-updates"><a href="#safe-updates" class="headerlink" title="safe-updates"></a>safe-updates</h4><p>在应用 BUG或者 DBA误操作的情况下，会发生对全表进行更新：update delete 的情况。MySQL提供 sql_safe_updates 来限制次操作。】</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> sql_safe_updates = <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+<p>设置之后，会限制update delete 中不带 where 条件的SQL 执行，较严格。会对已有线上环境带来不利影响。对新系统、应用做严格审核，可以确保不会发生全表更新的问题。</p>
+<p>由此，update 时，在没有 where 条件或者where 后不是索引字段时，必须使用 limit；在有 where 条件时，为索引字段</p>
+<p>相关报错</p>
+<p><strong>Error Code: 1175. You are using safe update mode and you tried to update a table without a WHERE that uses a KEY column To disable safe mode, toggle the option in Preferences -&gt; SQL Queries and reconnect.</strong></p>
+<p>因为MySql运行在safe-updates模式下，该模式会导致非主键条件下无法执行update或者delete命令，执行命令</p>
+<p>修改下数据库模式，SET SQL_SAFE_UPDATES = 0，安全起见，执行完操作后，建议在恢复成默认状态1</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> SQL_SAFE_UPDATES = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">SET</span> SQL_SAFE_UPDATES = <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
           
         
       
@@ -1344,7 +1460,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/08/Language/C++/tutorial/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/06/Server/PrivateKey/generate/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1363,7 +1479,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/06/08/Language/C++/tutorial/" itemprop="url">C++ tutorial</a></h2>
+                <a class="post-title-link" href="/2018/07/06/Server/PrivateKey/generate/" itemprop="url">Generate Private Key</a></h2>
         
 
         <div class="post-meta">
@@ -1375,8 +1491,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-08T20:13:06+08:00">
-                2018-06-08
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-06T20:00:18+08:00">
+                2018-07-06
               </time>
             
 
@@ -1398,159 +1514,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/C/" itemprop="url" rel="index">
-                    <span itemprop="name">C++</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="vector"><a href="#vector" class="headerlink" title="vector"></a>vector</h3><p>vector是一个能够存放任意类型的动态数组，能够增加和压缩数据。</p>
-<h3 id="inherit"><a href="#inherit" class="headerlink" title="inherit"></a>inherit</h3><h4 id="derived-class"><a href="#derived-class" class="headerlink" title="derived class"></a>derived class</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"> </span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 基类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Shape</span> &#123;</span></span><br><span class="line">   <span class="keyword">public</span>:</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">setWidth</span><span class="params">(<span class="keyword">int</span> w)</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">         width = w;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">setHeight</span><span class="params">(<span class="keyword">int</span> h)</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">         height = h;</span><br><span class="line">      &#125;</span><br><span class="line">   <span class="keyword">protected</span>:</span><br><span class="line">      <span class="keyword">int</span> width;</span><br><span class="line">      <span class="keyword">int</span> height;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 派生类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Rectangle</span>:</span> <span class="keyword">public</span> Shape</span><br><span class="line">&#123;</span><br><span class="line">   <span class="keyword">public</span>:</span><br><span class="line">      <span class="function"><span class="keyword">int</span> <span class="title">getArea</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123; </span><br><span class="line">         <span class="keyword">return</span> (width * height); </span><br><span class="line">      &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h3 id="template"><a href="#template" class="headerlink" title="template"></a>template</h3><h4 id="举例：定义类模板"><a href="#举例：定义类模板" class="headerlink" title="举例：定义类模板"></a>举例：定义类模板</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">class</span> <span class="title">Test</span> &#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    T n;</span><br><span class="line">    <span class="keyword">const</span> T i;</span><br><span class="line">    <span class="keyword">static</span> T cnt;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    Test():i(<span class="number">0</span>)&#123;&#125;</span><br><span class="line">    Test(T k);</span><br><span class="line">    ~Test()&#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">print</span><span class="params">()</span></span>;</span><br><span class="line">    T <span class="keyword">operator</span>+(T x);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h4 id="举例：定义函数模板"><a href="#举例：定义函数模板" class="headerlink" title="举例：定义函数模板"></a>举例：定义函数模板</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span>（或<span class="class"><span class="keyword">class</span>) <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">T</span> <span class="title">fuc</span>(<span class="title">T</span> <span class="title">x</span>, <span class="title">T</span> <span class="title">y</span>) &#123;</span></span><br><span class="line">    T x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">double</span> d;</span><br><span class="line">    <span class="keyword">int</span> a;</span><br><span class="line">    fuc(d,a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>系统将用实參d的数据类型double去取代函数模板中的T生成函数</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">double</span> <span class="title">fuc</span><span class="params">(<span class="keyword">double</span> x,<span class="keyword">int</span> y)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">double</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="namespace"><a href="#namespace" class="headerlink" title="namespace"></a>namespace</h3><p>namespace通常用来给类或者函数做个区间定义，以使编译器能准确定位到适合的类或者函数。</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> namespace_name &#123;</span><br><span class="line">    <span class="comment">// code declarations</span></span><br><span class="line">    <span class="comment">// 函数，类名等等</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// first name space</span></span><br><span class="line"><span class="keyword">namespace</span> first_space&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; <span class="string">"Inside first_space"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// second name space</span></span><br><span class="line"><span class="keyword">namespace</span> second_space&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; <span class="string">"Inside second_space"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">    </span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span> <span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Calls function from first name space.</span></span><br><span class="line">    first_space::func();</span><br><span class="line">    <span class="comment">// Calls function from second name space.</span></span><br><span class="line">    second_space::func(); </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// first name space</span></span><br><span class="line"><span class="keyword">namespace</span> first_space&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">"Inside first_space"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// second name space</span></span><br><span class="line"><span class="keyword">namespace</span> second_space&#123;</span><br><span class="line"><span class="comment">//此处func与第一处命名空间内函数名相同</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; <span class="string">"Inside second_space"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// 使用第一个namespace</span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> first_space;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span> <span class="params">()</span> </span>&#123;</span><br><span class="line"><span class="comment">// This calls function from first name space.</span></span><br><span class="line">    func();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/02/Linux/Config/network/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/02/Linux/Config/network/" itemprop="url">Network Config</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-02T16:33:27+08:00">
-                2018-06-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
                   </a>
                 </span>
 
@@ -1560,336 +1525,24 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Config/" itemprop="url" rel="index">
-                    <span itemprop="name">Config</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="host"><a href="#host" class="headerlink" title="host"></a>host</h3><p>/etc/hosts</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/02/Server/SpringBoot/Maven/build/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/02/Server/SpringBoot/Maven/build/" itemprop="url">mvn building</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-02T11:25:18+08:00">
-                2018-06-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/" itemprop="url" rel="index">
-                    <span itemprop="name">server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/Spring-Boot/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Boot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/Spring-Boot/maven/" itemprop="url" rel="index">
-                    <span itemprop="name">maven</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="include-local-jar"><a href="#include-local-jar" class="headerlink" title="include local jar"></a>include local jar</h3><ol>
-<li>配置本地jar</li>
-</ol>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.ctrip.framework.apollo<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>apollo-core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">scope</span>&gt;</span>system<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">systemPath</span>&gt;</span>$&#123;basedir&#125;/src/main/resources/lib/apollo-core-0.11.0-SNAPSHOT.jar<span class="tag">&lt;/<span class="name">systemPath</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li>buiding配置</li>
-</ol>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-maven-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">includeSystemScope</span>&gt;</span>true<span class="tag">&lt;/<span class="name">includeSystemScope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/01/DB/Redis/config/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/01/DB/Redis/config/" itemprop="url">redis Config</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-01T11:31:19+08:00">
-                2018-06-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Database/" itemprop="url" rel="index">
-                    <span itemprop="name">Database</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Database/Redis/" itemprop="url" rel="index">
+                  <a href="/categories/Server/Redis/" itemprop="url" rel="index">
                     <span itemprop="name">Redis</span>
                   </a>
                 </span>
 
                 
                 
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Redis/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
               
             </span>
           
@@ -1922,8 +1575,572 @@
       
         
           
-            <h3 id="配置提示"><a href="#配置提示" class="headerlink" title="配置提示"></a>配置提示</h3><p>you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command ‘echo never &gt; /sys/kernel/mm/transparent_hugepage/enabled’ as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.</p>
-<p>解决方案：echo “echo never &gt; /sys/kernel/mm/transparent_hugepage/enabled” &gt;&gt; /etc/rc.local</p>
+            <h3 id="Generate-Key"><a href="#Generate-Key" class="headerlink" title="Generate Key"></a>Generate Key</h3><h4 id="Private-Key"><a href="#Private-Key" class="headerlink" title="Private Key"></a>Private Key</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t rsa</span><br></pre></td></tr></table></figure>
+<h4 id="Public-Key"><a href="#Public-Key" class="headerlink" title="Public Key"></a>Public Key</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">openssl <span class="comment"># enter openssl command </span></span><br><span class="line">genrsa -out rsa_private_key.pem 2048 <span class="comment"># 生成2048位的私钥</span></span><br><span class="line">pkcs8 -topk8 -inform PEM -<span class="keyword">in</span> rsa_private_key.pem -outform PEM –nocrypt <span class="comment"># 把RSA私钥转换成PKCS8格式</span></span><br><span class="line">rsa -<span class="keyword">in</span> rsa_private_key.pem -pubout -out rsa_public_key.pem <span class="comment"># 生成公钥</span></span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/30/Java/Map/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/06/30/Java/Map/" itemprop="url">Java Map</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-30T11:01:22+08:00">
+                2018-06-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="HashMap"><a href="#HashMap" class="headerlink" title="HashMap"></a>HashMap</h3><h4 id="Class主要成员"><a href="#Class主要成员" class="headerlink" title="Class主要成员"></a>Class主要成员</h4><ul>
+<li><p>transient int size：记录了Map中KV对的个数</p>
+</li>
+<li><p>loadFactor：装载印子，用来衡量HashMap满的程度。loadFactor的默认值为0.75f。（static final float DEFAULT_LOAD_FACTOR = 0.75f）</p>
+</li>
+<li><p>int threshold：临界值，当实际KV个数超过threshold时，HashMap会将容量扩容，threshold＝容量*加载因子</p>
+</li>
+<li><p>capacity：容量，如果不指定，默认容量是16。（static final int DEFAULT_INITIAL_CAPACITY = 1 &lt;&lt; 4）</p>
+</li>
+</ul>
+<ol>
+<li>size和capacity的关系</li>
+</ol>
+<p>HashMap就像一个“桶”，那么capacity就是这个桶“当前”最多可以装多少元素，而size表示这个桶已经装了多少元素。</p>
+<ol>
+<li>动态扩容</li>
+</ol>
+<p>如果你需要存储大量数据，你应该在创建HashMap时指定一个初始的容量，这个容量应该接近你期望的大小。</p>
+<p>默认情况下HashMap的容量是16，但是，如果用户通过构造函数指定了一个数字作为容量，那么Hash会选择大于该数字的第一个2的幂作为容量。(1-&gt;1、7-&gt;8、9-&gt;16)</p>
+<p>HashMap的扩容条件就是当HashMap中的元素个数（size）超过临界值（threshold）时就会自动扩容。</p>
+<p>在HashMap中，threshold = loadFactor * capacity。</p>
+<p>loadFactor是装载因子，表示HashMap满的程度，默认值为0.75f，设置成0.75有一个好处，那就是0.75正好是3/4，而capacity又是2的幂。所以，两个数的乘积都是整数。</p>
+<p>对于一个默认的HashMap来说，默认情况下，当其size大于12(16*0.75)时就会触发扩容，每次扩充为原来的2倍。</p>
+<p>如果数据量不大，重建内部数组的操作会很快，但是数据量很大时，花费的时间可能会从秒级到分钟级。通过初始化时指定Map期望的大小，你可以避免调整大小操作带来的消耗。</p>
+<p>但这里也有一个缺点：如果你将数组设置的非常大，例如2^28，但你只是用了数组中的2^26个桶，那么你将会浪费大量的内存（在这个示例中大约是2^30字节）。</p>
+<ol start="2">
+<li>常见的Hash函数</li>
+</ol>
+<p>直接定址法：直接以关键字k或者k加上某个常数（k+c）作为哈希地址。</p>
+<p>数字分析法：提取关键字中取值比较均匀的数字作为哈希地址。</p>
+<p>除留余数法：用关键字k除以某个不大于哈希表长度m的数p，将所得余数作为哈希表地址。</p>
+<p>分段叠加法：按照哈希表地址位数将关键字分成位数相等的几部分，其中最后一部分可以比较短。然后将这几部分相加，舍弃最高进位后的结果就是该关键字的哈希地址。</p>
+<p>平方取中法：如果关键字各个部分分布都不均匀的话，可以先求出它的平方值，然后按照需求取中间的几位作为哈希地址。</p>
+<p>伪随机数法：采用一个伪随机数当作哈希函数。</p>
+<p>衡量一个哈希函数的好坏的重要指标就是发生碰撞的概率以及发生碰撞的解决方案。任何哈希函数基本都无法彻底避免碰撞，常见的解决碰撞的方法有以下几种：</p>
+<p>开放定址法：开放定址法就是一旦发生了冲突，就去寻找下一个空的散列地址，只要散列表足够大，空的散列地址总能找到，并将记录存入。</p>
+<p>链地址法：将哈希表的每个单元作为链表的头结点，所有哈希地址为i的元素构成一个同义词链表。即发生冲突时就把该关键字链在以该单元为头结点的链表的尾部。</p>
+<p>再哈希法：当哈希地址发生冲突用其他的函数计算另一个哈希函数地址，直到冲突不再产生为止。</p>
+<p>建立公共溢出区：将哈希表分为基本表和溢出表两部分，发生冲突的元素都放入溢出表中。</p>
+<ol start="3">
+<li>数据结构</li>
+</ol>
+<p>数组的特点是：寻址容易，插入和删除困难；链表的特点是：寻址困难，插入和删除容易。</p>
+<img src="/2018/06/30/Java/Map/array-and-list.png">
+<ol start="4">
+<li>为什么使用位运算(&amp;)来实现取模运算(%)？</li>
+</ol>
+<p>位运算(&amp;)效率要比代替取模运算(%)高很多，主要原因是位运算直接对内存数据进行操作，不需要转成十进制。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">X % 2^n = X &amp; (2^n – 1)</span><br><span class="line"></span><br><span class="line">2^n表示2的n次方，也就是说，一个数对2^n取模 == 一个数和(2^n – 1)做按位与运算 。</span><br><span class="line"></span><br><span class="line">假设n为3，则2^3 = 8，表示成2进制就是1000。2^3 = 7 ，即0111。</span><br><span class="line"></span><br><span class="line">此时X &amp; (2^3 – 1) 就相当于取X的2进制的最后三位数。</span><br><span class="line"></span><br><span class="line">从2进制角度来看，X / 8相当于 X &gt;&gt; 3，即把X右移3位，此时得到了X / 8的商，而被移掉的部分(后三位)，则是X % 8，也就是余数。</span><br><span class="line"></span><br><span class="line">6 % 8 = 6 ，6 &amp; 7 = 6</span><br><span class="line"></span><br><span class="line">10 &amp; 8 = 2 ，10 &amp; 7 = 2</span><br></pre></td></tr></table></figure>
+
+<h4 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h4><ol>
+<li>Example JDK1.7</li>
+</ol>
+<p>创建3个HashMap，分别使用默认的容量（16）、使用元素个数的一半（5千万）作为初始容量、使用元素个数（一亿）作为初始容量进行初始化。然后分别向其中put一亿个KV。</p>
+<p>测试结果：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">未初始化容量，耗时 ： 14419</span><br><span class="line">初始化容量5000000，耗时 ： 11916</span><br><span class="line">初始化容量为10000000，耗时 ： 7984</span><br></pre></td></tr></table></figure></p>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="http://www.hollischuang.com/archives/2091" target="_blank" rel="noopener">http://www.hollischuang.com/archives/2091</a></p>
+<hr>
+<h3 id="HashSet"><a href="#HashSet" class="headerlink" title="HashSet"></a>HashSet</h3><p>一般情况下，建议使用默认大小</p>
+<hr>
+<h3 id="ConcurrentSkipListMap"><a href="#ConcurrentSkipListMap" class="headerlink" title="ConcurrentSkipListMap"></a>ConcurrentSkipListMap</h3><p>ConcurrentSkipListMap 一个并发安全, 基于 skip list 实现有序存储的Map</p>
+<p>ConcurrentSkipListMap 的存取时间是log（N），和线程数几乎无关。</p>
+<p>在非多线程的情况下，应当尽量使用TreeMap。</p>
+<h4 id="参考链接-1"><a href="#参考链接-1" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://blog.csdn.net/guangcigeyun/article/details/8278349" target="_blank" rel="noopener">https://blog.csdn.net/guangcigeyun/article/details/8278349</a></p>
+<hr>
+<h3 id="TreeMap"><a href="#TreeMap" class="headerlink" title="TreeMap"></a>TreeMap</h3><h4 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h4><ol>
+<li>java.util.ConcurrentModificationException</li>
+</ol>
+<p>分析：当我们迭代一个ArrayList或者HashMap时，如果尝试对集合做一些修改操作（例如删除元素），可能会抛出java.util.ConcurrentModificationException的异常。</p>
+<p>解决方案：使用ConcurrentSkipListMap；</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/30/Java/Queue/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/06/30/Java/Queue/" itemprop="url">Java Queue</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-30T11:01:22+08:00">
+                2018-06-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="ConcurrentLinkedQueue"><a href="#ConcurrentLinkedQueue" class="headerlink" title="ConcurrentLinkedQueue"></a>ConcurrentLinkedQueue</h3><p>peek操作是获取链表头部一个元素（只读取不移除）</p>
+<p>poll操作是在链表头部获取并且移除一个元素</p>
+<p>它实现了BlockingQueue接口，BlockingQueue接口继承自java.util.Queue接口，并在这个接口的基础上增加了take和put方法，这两个方法正是队列操作的阻塞版本。</p>
+<p>ConcurrentLinkedQueue的API原来.size()是要遍历一遍集合的，难怪那么慢，所以尽量要避免用size而改用isEmpty()</p>
+<h3 id="LinkedBlockingQueue"><a href="#LinkedBlockingQueue" class="headerlink" title="LinkedBlockingQueue"></a>LinkedBlockingQueue</h3><p>默认最大是Integer.MAX_VALUE，其中主要用到put和take方法，put方法在队列满的时候会阻塞直到有队列成员被消费，take方法在队列空的时候会阻塞，直到有队列成员被放进来。</p>
+<h3 id="CopyOnWriteArrayList"><a href="#CopyOnWriteArrayList" class="headerlink" title="CopyOnWriteArrayList"></a>CopyOnWriteArrayList</h3>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/29/Java/Advance/Serializer/BasicSerializer/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/06/29/Java/Advance/Serializer/BasicSerializer/" itemprop="url">Java Basic Serializer</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-29T11:01:22+08:00">
+                2018-06-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/Serializer/" itemprop="url" rel="index">
+                    <span itemprop="name">Serializer</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>序列化其实可以看成是一种机制，按照一定的格式将Java对象的某状态转成介质可接受的形式，以方便存储或传输。</p>
+<p>序列化时将Java对象相关的类信息、属性及属性值等等保存起来，反序列化时再根据这些信息构建出Java对象。而过程可能涉及到其他对象的引用，所以这里引用的对象的相关信息也要参与序列化。</p>
+<p>将Java对象序列化为二进制文件的Java序列化技术是Java系列技术中一个较为重要的技术点，在大部分情况下，开发人员只需要了解被序列化的类需要实现Serializable接口，使用ObjectInputStream和ObjectOutputStream进行对象的读写。</p>
+<p>序列化的作用：</p>
+<ul>
+<li>提供一种简单又可扩展的对象保存恢复机制。</li>
+<li>对于远程调用，能方便对对象进行编码和解码，就像实现对象直接传输。</li>
+<li>可以将对象持久化到介质中，实现对象直接存储。</li>
+<li>允许对象自定义外部存储的格式。</li>
+</ul>
+<p>Attention</p>
+<ul>
+<li>序列化保存的是对象的状态，静态变量属于类的状态，因此序列化并不保存静态变量</li>
+<li>SuperClass不实现Serializable接口，则不会保存SuperClass的状态变量</li>
+<li>通过重写writeObject和readObject实现对敏感数据的加密和解密</li>
+<li>Transient关键字的作用是控制变量的序列化，在变量声明前加上该关键字，可以阻止该变量被序列化到文件中，在被反序列化后transient变量的值被设为初始值，如int型的是0，对象型的是 null。</li>
+</ul>
+<hr>
+<h3 id="SuerperClass-Serializer"><a href="#SuerperClass-Serializer" class="headerlink" title="SuerperClass Serializer"></a>SuerperClass Serializer</h3><p>如果一个子类实现了Serializable接口而父类没有实现该接口，则在序列化子类时，子类的属性状态会被写入而父类的属性状态将不被写入。所以如果想要父类属性状态也一起参与序列化，就要让它也实现 Serializable 接口。</p>
+<p>如果父类未实现Serializable接口，则反序列化生成的对象会再次调用父类的构造函数，以此完成对父类的初始化。所以父类属性初始值一般都是类型的默认值。</p>
+<hr>
+<h3 id="Externalizable-接口作用"><a href="#Externalizable-接口作用" class="headerlink" title="Externalizable 接口作用"></a>Externalizable 接口作用</h3><p>Externalizable接口主要就是提供给用户自己控制序列化内容，虽然transient和ObjectStreamField能定义序列化的字段，但通过Externalizable接口则能更加灵活。</p>
+<p>它其实继承了Serializable 接口，提供了writeExternal和readExternal两个方法，也就是在这两个方法内控制序列化和反序列化的内容。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ExternalizableTest</span> <span class="keyword">implements</span> <span class="title">Externalizable</span> </span>&#123;</span><br><span class="line">	<span class="keyword">public</span> String value = <span class="string">"test"</span>;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="title">ExternalizableTest</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">writeExternal</span><span class="params">(ObjectOutput out)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">		Date d = <span class="keyword">new</span> Date();</span><br><span class="line">		out.writeObject(d);</span><br><span class="line">		out.writeObject(value);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">readExternal</span><span class="params">(ObjectInput in)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException </span>&#123;</span><br><span class="line">		Date d = (Date) in.readObject();</span><br><span class="line">		System.out.println(d);</span><br><span class="line">		System.out.println((String) in.readObject());</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="serialVersionUID"><a href="#serialVersionUID" class="headerlink" title="serialVersionUID"></a>serialVersionUID</h3><p>在序列化操作时，经常会看到实现了Serializable 接口的类会存在一个serialVersionUID属性，并且它是一个固定数值的静态变量。</p>
+<p>这个属性有什么作用？其实它主要用于验证版本一致性，每个类都拥有这么一个ID，在序列化的时候会一起被写入流中，那么在反序列化的时候就被拿出来跟当前类的serialVersionUID 值进行比较，两者相同则说明版本一致，可以序列化成功，而如果不同则序列化失败。</p>
+<h4 id="Example-1"><a href="#Example-1" class="headerlink" title="Example 1"></a>Example 1</h4><p>Case: 两个客户端A和B试图通过网络传递对象数据，A端将对象C序列化为二进制数据再传给B，B反序列化得到C。C对象的全类路径假设为com.abc.model，在A和B端都有这么一个类文件，功能代码完全一致。也都实现了Serializable接口，但是反序列化时总是提示不成功。</p>
+<p>关键点：虚拟机是否允许反序列化，不仅取决于类路径和功能代码是否一致，还有一个非常重要的点是两个类的序列化ID是否一致(serialVersionUID）。</p>
+<hr>
+<h3 id="序列化存储规则"><a href="#序列化存储规则" class="headerlink" title="序列化存储规则"></a>序列化存储规则</h3><h4 id="Example-1-1"><a href="#Example-1-1" class="headerlink" title="Example 1"></a>Example 1</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.*</span><br><span class="line"></span><br><span class="line">class Test : Serializable</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">(args: Array&lt;String&gt;)</span> </span>&#123;</span><br><span class="line">    val out = ObjectOutputStream(FileOutputStream(<span class="string">"result.obj"</span>))</span><br><span class="line">    val test = Test()</span><br><span class="line">    <span class="comment">//试图将对象两次写入文件</span></span><br><span class="line">    out.writeObject(test)</span><br><span class="line">    out.flush()</span><br><span class="line">    System.out.println(File(<span class="string">"result.obj"</span>).length())</span><br><span class="line">    out.writeObject(test)</span><br><span class="line">    out.close()</span><br><span class="line">    System.out.println(File(<span class="string">"result.obj"</span>).length())</span><br><span class="line"></span><br><span class="line">    val oin = ObjectInputStream(FileInputStream(<span class="string">"result.obj"</span>))</span><br><span class="line">    <span class="comment">//从文件依次读出两个文件</span></span><br><span class="line">    val t1 = oin.readObject() as Test</span><br><span class="line">    val t2 = oin.readObject() as Test</span><br><span class="line">    oin.close()</span><br><span class="line">    <span class="comment">//判断两个引用是否指向同一个对象</span></span><br><span class="line">    println(t1 === t2)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出结果</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">42</span><br><span class="line">47</span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>误区：两次写入对象，文件大小会变为两倍的大小，反序列化时，由于从文件读取，生成了两个对象，判断相等时应该是输入false才对。</p>
+<p>Java 序列化机制为了节省磁盘空间，具有特定的存储规则，当写入文件的为同一对象时，并不会再将对象的内容进行存储，而只是再次存储一份引用，上面增加的5字节的存储空间就是新增引用和一些控制信息的空间。</p>
+<p>反序列化时，恢复引用关系，使得代码中的t1和t2指向唯一的对象，二者相等，输出 true。该存储规则极大的节省了存储空间。</p>
+<h4 id="Example-2"><a href="#Example-2" class="headerlink" title="Example 2"></a>Example 2</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.*</span><br><span class="line"></span><br><span class="line">class Test : Serializable &#123;</span><br><span class="line">    var i: Int = <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">(args: Array&lt;String&gt;)</span> </span>&#123;</span><br><span class="line">    val out = ObjectOutputStream(FileOutputStream(<span class="string">"result.obj"</span>))</span><br><span class="line">    val test = Test()</span><br><span class="line">    test.i = <span class="number">1</span></span><br><span class="line">    out.writeObject(test)</span><br><span class="line">    out.flush()</span><br><span class="line">    test.i = <span class="number">2</span></span><br><span class="line">    out.writeObject(test)</span><br><span class="line">    out.close()</span><br><span class="line">    val oin = ObjectInputStream(FileInputStream(<span class="string">"result.obj"</span>))</span><br><span class="line">    val t1 = oin.readObject() as Test</span><br><span class="line">    val t2 = oin.readObject() as Test</span><br><span class="line">    System.out.println(t1.i)</span><br><span class="line">    System.out.println(t2.i)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+<p>误区：写入一次以后修改对象属性值再次保存第二次，然后从result.obj中再依次读出两个对象，输出这两个对象的i属性值，因为保存的状态不一样，因此两个对象的i属性应该不同。</p>
+<p>第一次写入对象以后，第二次再试图写的时候，虚拟机根据引用关系知道已经有一个相同对象已经写入文件，因此只保存第二次写的引用，所以读取时，都是第一次保存的对象。因此在使用一个文件多次writeObject需要特别注意这个问题。</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.ibm.com/developerworks/cn/java/j-lo-serial/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/java/j-lo-serial/index.html</a><br><a href="https://juejin.im/post/5a7111535188257350518592" target="_blank" rel="noopener">https://juejin.im/post/5a7111535188257350518592</a></p>
+</blockquote>
 
           
         
@@ -1963,7 +2180,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/16/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/16/">16</a><span class="page-number current">17</span><a class="page-number" href="/page/18/">18</a><span class="space">&hellip;</span><a class="page-number" href="/page/46/">46</a><a class="extend next" rel="next" href="/page/18/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/16/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/16/">16</a><span class="page-number current">17</span><a class="page-number" href="/page/18/">18</a><span class="space">&hellip;</span><a class="page-number" href="/page/48/">48</a><a class="extend next" rel="next" href="/page/18/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2010,7 +2227,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">456</span>
+                <span class="site-state-item-count">473</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2021,7 +2238,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">210</span>
+                <span class="site-state-item-count">216</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2032,7 +2249,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">517</span>
+                <span class="site-state-item-count">533</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
