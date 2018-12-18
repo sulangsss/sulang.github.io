@@ -1815,7 +1815,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/11/DB/MySQL/Sharding/Sharding-Migration/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/11/DB/MySQL/Lock/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1834,7 +1834,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/05/11/DB/MySQL/Sharding/Sharding-Migration/" itemprop="url">MySQL 分库分表迁移方案</a></h2>
+                <a class="post-title-link" href="/2018/05/11/DB/MySQL/Lock/" itemprop="url">MySQL Lock</a></h2>
         
 
         <div class="post-meta">
@@ -1887,17 +1887,6 @@
 
                 
                 
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Sharding/" itemprop="url" rel="index">
-                    <span itemprop="name">Sharding</span>
-                  </a>
-                </span>
-
-                
-                
               
             </span>
           
@@ -1930,7 +1919,123 @@
       
         
           
-            
+            <h2 id="Innodb"><a href="#Innodb" class="headerlink" title="Innodb"></a>Innodb</h2><h3 id="锁类型"><a href="#锁类型" class="headerlink" title="锁类型"></a>锁类型</h3><ul>
+<li><p>共享锁(S)</p>
+</li>
+<li><p>排他锁(X)</p>
+</li>
+<li><p>意向共享锁(IS)</p>
+</li>
+<li><p>意向排他锁(IX)</p>
+<p>  X            IX            S            IS<br>X    Conflict    Conflict    Conflict    Conflict<br>IX    Conflict    Compatible    Conflict    Compatible<br>S    Conflict    Conflict    Compatible    Compatible<br>IS    Conflict    Compatible    Compatible    Compatible</p>
+</li>
+</ul>
+<p>Innodb的锁是作用于索引上的，因此理解innodb的锁，要先理解innode的索引实现B+树。</p>
+<ol>
+<li>行级锁（Record Locks）</li>
+</ol>
+<p>行级锁只存在于有索引的行上，<strong>SELECT c1 FROM t WHERE c1 = 10 FOR UPDATE;</strong> 锁住C1等于10的索引，此时不能在插入，修改或删除c1=10的行。</p>
+<ol start="2">
+<li>区间锁（Gap Locks）</li>
+</ol>
+<p>区间锁是锁住两个索引的区间，<strong>SELECT c1 FROM t WHERE c1 BETWEEN 10 and 20 FOR UPDATE;</strong>加区间锁，锁住这个区间。则C1=15此时插入不进去。</p>
+<ol start="3">
+<li>间隙锁（next-key locks）</li>
+</ol>
+<ol start="4">
+<li>插入意向锁（Insert Intention Lock）</li>
+</ol>
+<ol start="5">
+<li>自增锁</li>
+</ol>
+<p>自增锁是表锁。如果一个表有一个自增的列，则插入数据的时候，事务需要获得表锁。</p>
+<h3 id="Status报告"><a href="#Status报告" class="headerlink" title="Status报告"></a>Status报告</h3><h4 id="高并发关注点：SEMAPHORES"><a href="#高并发关注点：SEMAPHORES" class="headerlink" title="高并发关注点：SEMAPHORES"></a>高并发关注点：SEMAPHORES</h4><ul>
+<li><p>RW-shared是共享锁</p>
+</li>
+<li><p>RW-excl是排它锁</p>
+</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">----------</span><br><span class="line">SEMAPHORES</span><br><span class="line">----------</span><br><span class="line">OS WAIT ARRAY INFO: reservation count 14281934</span><br><span class="line">OS WAIT ARRAY INFO: signal count 10439402</span><br><span class="line">RW-shared spins 0, rounds 69859, OS waits 16343</span><br><span class="line">RW-excl spins 0, rounds 3820844, OS waits 71314</span><br><span class="line">RW-sx spins 15843, rounds 214137, OS waits 1611</span><br><span class="line">Spin rounds per wait: 69859.00 RW-shared, 3820844.00 RW-excl, 13.52 RW-sx</span><br></pre></td></tr></table></figure>
+<ol>
+<li>OS WAIT</li>
+</ol>
+<p>reservation count表示Innodb产生了多少次OS WAIT, signal count表示，进行OS WAIT的线程，接收到多少次信号（singal）被唤醒。</p>
+<p>如果你看到signal的数值很大，通常是几十万，上百万。就表明，可能是很多I/O的等待，或是Innodb争用(contention)问题。关于争用问题，可能与OS的进程调度有关，你可尝试减少innodb_thread_concurrency参数。</p>
+<ol start="2">
+<li>Innodb如何处理互斥量(Mutexes)和两步获得锁(two-step approach)</li>
+</ol>
+<p>首先进程，试图获得一个锁，如果此锁被它人占用。它就会执行所谓的spin wait,即所谓循环的查询”锁被释放了吗？”。如果在循环过程中，一直未得到锁释放的信息，则其转入OS WAIT，即所谓线程进入挂起(suspended)状态。直到锁被释放后，通过信号(singal)唤醒线程。</p>
+<ul>
+<li><p>Mutex spin waits是线程无法获取锁，而进入的spin wait</p>
+</li>
+<li><p>rounds 是spin wait进行轮询检查Mutextes的次数</p>
+</li>
+<li><p>OS waits 是线程放弃spin-wait进入挂起状态</p>
+</li>
+</ul>
+<p>Spin wait的消耗远小于OS waits。Spinwait利用cpu的空闲时间，检查锁的状态，OS Wait会有所谓content switch，从CPU内核中换出当前执行线程以供其它线程使用。你可以通过innodb_sync_spin_loops参数来平衡spin wait和os wait。</p>
+<h4 id="LATEST-DETECTED-DEADLOCK"><a href="#LATEST-DETECTED-DEADLOCK" class="headerlink" title="LATEST DETECTED DEADLOCK"></a>LATEST DETECTED DEADLOCK</h4><p>当你服务器发生了死锁的情况时，这部分会显示出来。死锁通常的原因很复杂，但是这一部分只会显示最后两个发生死锁的事务，尽管可能也有其它事务也包含在死锁过程中。</p>
+<h4 id="TRANSACTIONS"><a href="#TRANSACTIONS" class="headerlink" title="TRANSACTIONS"></a>TRANSACTIONS</h4><p>包含Innodb 事务（transactions）的统计信息，还有当前活动的事务列表。</p>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="http://blog.51cto.com/louisyang/1379813" target="_blank" rel="noopener">http://blog.51cto.com/louisyang/1379813</a></p>
+<h2 id="性能指标"><a href="#性能指标" class="headerlink" title="性能指标"></a>性能指标</h2><h3 id="TPS"><a href="#TPS" class="headerlink" title="TPS"></a>TPS</h3><p>TPS = (Com_commit + Com_rollback) / seconds</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">global</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'Com_commit'</span>; </span><br><span class="line"><span class="keyword">show</span> <span class="keyword">global</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'Com_rollback'</span>;</span><br></pre></td></tr></table></figure>
+<h3 id="锁定状态"><a href="#锁定状态" class="headerlink" title="锁定状态"></a>锁定状态</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">global</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'%lock%'</span>;</span><br><span class="line">or</span><br><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'%lock%'</span>;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>table_locks_immediate：表示可以立即获取锁的查询次数</p>
+</li>
+<li><p>table_locks_waited：表示不能立即获取锁的次数</p>
+</li>
+<li><p>Innodb_row_lock_current_waits：表示等待行锁定的数量，而与行数无关。</p>
+</li>
+<li><p>Innodb_row_lock_time：系统启动到现在，锁定的总时间长度</p>
+</li>
+<li><p>Innodb_row_lock_time_avg：每次平均锁定的时间</p>
+</li>
+<li><p>Innodb_row_lock_time_max：最长一次锁定时间</p>
+</li>
+<li><p>Innodb_row_lock_waits：系统启动到现在总共锁定的次数</p>
+</li>
+</ul>
+<h4 id="问题：table-locks-immediate和-table-locks-waited，它们保持多大的比例是合适的"><a href="#问题：table-locks-immediate和-table-locks-waited，它们保持多大的比例是合适的" class="headerlink" title="问题：table_locks_immediate和 table_locks_waited，它们保持多大的比例是合适的?"></a>问题：table_locks_immediate和 table_locks_waited，它们保持多大的比例是合适的?</h4><p>table_locks_waited并不容易触发，除非应用主动作lock tables t read。</p>
+<p>Table_locks_waited/Table_locks_immediate=0.3%，如果这个比值比较大的话，说明表锁造成的阻塞比较严重。</p>
+<p>若库中都是InnoDB的表，在5.5以后，table_locks_waited这个值应该很小。在mysqldump导出表时，会执行lock table，可能导致此值增加。</p>
+<p>其他情况下，若这个值有变，说明应用端主动作了lock table，这个在InnoDB表上是不需要的，需要应用修改。</p>
+<h3 id="锁事务"><a href="#锁事务" class="headerlink" title="锁事务"></a>锁事务</h3><ol>
+<li>正在锁</li>
+</ol>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> INFORMATION_SCHEMA.INNODB_LOCKS;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>等待锁</li>
+</ol>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> INFORMATION_SCHEMA.INNODB_LOCK_WAITS;</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>查看锁情况</li>
+</ol>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'%lock%'</span></span><br><span class="line"><span class="keyword">or</span></span><br><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'innodb_row_lock_%'</span>;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>Innodb_row_lock_current_waits 当前等待锁的数量</p>
+</li>
+<li><p>Innodb_row_lock_time 系统启动到现在，锁定的总时间长度</p>
+</li>
+<li><p>Innodb_row_lock_time_avg 每次平均锁定的时间</p>
+</li>
+<li><p>Innodb_row_lock_time_max 最长一次锁定时间</p>
+</li>
+<li><p>Innodb_row_lock_waits 系统启动到现在总共锁定的次数</p>
+</li>
+</ul>
+<h3 id="区别是否锁表"><a href="#区别是否锁表" class="headerlink" title="区别是否锁表"></a>区别是否锁表</h3><ol>
+<li>当Table_locks_waited与Table_locks_immediate的比值较大，则说明我们的表锁造成的阻塞比较严重。</li>
+</ol>
+<h3 id="锁性能"><a href="#锁性能" class="headerlink" title="锁性能"></a>锁性能</h3><p>InnoDB加锁的详细信息，主要用于分析一条语句的详细加锁结构以及加了什么锁。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> <span class="keyword">GLOBAL</span> innodb_status_output=<span class="keyword">ON</span>;</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">GLOBAL</span> innodb_status_output_locks=<span class="keyword">ON</span>;</span><br></pre></td></tr></table></figure>
+<p>查看监控信息，Status字段的监控信息</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">engine</span> <span class="keyword">innodb</span> <span class="keyword">status</span>;</span><br></pre></td></tr></table></figure>
+<p>查看其中一条事务信息</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">---TRANSACTION 10701389, ACTIVE 0 sec</span><br><span class="line">4 lock struct(s), heap size 1136, 2 row lock(s), undo log entries 1</span><br><span class="line">MySQL thread id 161917, OS thread handle 140218872289024, query id 49510107 cloudsqlproxy~35.198.252.157 accounting cleaning up</span><br><span class="line">Trx read view will not see trx with id &gt;= 10701390, sees <span class="tag">&lt; <span class="attr">10701369</span></span></span><br></pre></td></tr></table></figure>
+<p>参考链接:<a href="http://www.ywnds.com/?p=11750" target="_blank" rel="noopener">http://www.ywnds.com/?p=11750</a></p>
+<h3 id="参考链接-1"><a href="#参考链接-1" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://blog.csdn.net/dc666/article/details/78901341" target="_blank" rel="noopener">https://blog.csdn.net/dc666/article/details/78901341</a></p>
+
           
         
       
