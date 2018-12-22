@@ -284,6 +284,523 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/" itemprop="url">JVM CMS Collection Phase</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-22T17:20:22+08:00">
+                2018-12-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>CMS：Concurrent Mark and Sweep，Mostly Concurrent Mark and Sweep Garbage Collector。</p>
+<p>设计目标：年老代收集的时候避免长时间的暂停；</p>
+<ul>
+<li>年轻代：采用 stop-the-world mark-copy 算法；</li>
+<li>年老代：采用 Mostly Concurrent mark-sweep 算法；</li>
+</ul>
+<p>能够达成该目标主要因为以下两个原因：</p>
+<ol>
+<li>它不会花时间整理压缩年老代，而是维护了一个叫做 free-lists 的数据结构，该数据结构用来管理那些回收再利用的内存空间；</li>
+<li>mark-sweep分为多个阶段，其中一大部分阶段GC的工作是和Application threads的工作同时进行的（当然，gc线程会和用户线程竞争CPU的时间），默认的GC的工作线程为你服务器物理CPU核数的1/4；</li>
+</ol>
+<p>当你的服务器是多核同时你的目标是低延时，那该GC的搭配则是你的不二选择。</p>
+<p>JVM测试参数如下标记：</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/intro.jpg">
+<h3 id="Analyze"><a href="#Analyze" class="headerlink" title="Analyze"></a>Analyze</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T02:23:07.219-0200: 64.322: [GC (Allocation Failure) 64.322: [ParNew: 613404K-&gt;68068K(613440K), 0.1020465 secs] 10885349K-&gt;10880154K(12514816K), 0.1021309 secs] [Times: user=0.78 sys=0.01, real=0.11 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>2016-08-23T02:23:07.219-0200：GC发生的时间</li>
+<li>64.322：GC开始，相对JVM启动的相对时间，单位是秒</li>
+<li>GC：区别MinorGC和FullGC的标识，这次代表的是MinorGC</li>
+<li>Allocation Failure：MinorGC的原因，在这个case里边，由于年轻代不满足申请的空间，因此触发了MinorGC</li>
+<li>ParNew：收集器的名称，它预示了年轻代使用一个并行的 mark-copy stop-the-world 垃圾收集器</li>
+<li>613404K-&gt;68068K：收集前后年轻代的使用情况</li>
+<li>(613440K)：整个年轻代的容量</li>
+<li>0.1020465 secs：Duration for the collection w/o final cleanup.</li>
+<li>10885349K-&gt;10880154K：收集前后整个堆的使用情况</li>
+<li>(12514816K)：整个堆的容量</li>
+<li>0.1021309 secs：ParNew收集器标记和复制年轻代活着的对象所花费的时间（包括和老年代通信的开销、对象晋升到老年代时间、垃圾收集周期结束一些最后的清理对象等的开销）</li>
+<li>[Times: user=0.78 sys=0.01, real=0.11 secs]：GC事件在不同维度的耗时</li>
+<li><ul>
+<li>user：Total CPU time that was consumed by Garbage Collector threads during this collection</li>
+</ul>
+</li>
+<li><ul>
+<li>sys：Time spent in OS calls or waiting for system event</li>
+</ul>
+</li>
+<li><ul>
+<li>real：Clock time for which your application was stopped. With Parallel GC this number should be close to (user time + system time) divided by the number of threads used by the Garbage Collector. In this particular case 8 threads were used. Note that due to some activities not being parallelizable, it always exceeds the ratio by a certain amount.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h4 id="年轻代对象-晋升-gt-老年对象"><a href="#年轻代对象-晋升-gt-老年对象" class="headerlink" title="年轻代对象 -晋升-&gt; 老年对象"></a>年轻代对象 -晋升-&gt; 老年对象</h4><img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/eden-to-old.jpg">
+<p>开始的时候：整个堆的大小是10885349K，年轻代大小是613404K，这说明老年代大小是10885349-613404=10271945K</p>
+<p>收集完成之后：整个堆的大小是10880154K，年轻代大小是68068K，这说明老年代大小是10880154-68068=10812086K</p>
+<p>老年代的大小增加了：10812086-10271945=608209K，也就是说年轻代对象晋升到年老代对象的大小为608209K的数据</p>
+<hr>
+<h4 id="Full-Major-GC"><a href="#Full-Major-GC" class="headerlink" title="Full/Major GC"></a>Full/Major GC</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:07.321-0200: 64.425: [GC (CMS Initial Mark)1 [1 CMS-initial-mark: 10812086K(11901376K)] 10887844K(12514816K), 0.0001997 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">2016-08-23T11:23:07.321-0200: 64.425: [CMS-concurrent-mark-start]</span><br><span class="line">2016-08-23T11:23:07.357-0200: 64.460: [CMS-concurrent-mark2: 0.035/0.035 secs] [Times: user=0.07 sys=0.00, real=0.03 secs]</span><br><span class="line">2016-08-23T11:23:07.357-0200: 64.460: [CMS-concurrent-preclean-start]</span><br><span class="line">2016-08-23T11:23:07.373-0200: 64.476: [CMS-concurrent-preclean3: 0.016/0.016 secs] [Times: user=0.02 sys=0.00, real=0.02 secs]</span><br><span class="line">2016-08-23T11:23:07.373-0200: 64.476: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line">2016-08-23T11:23:08.446-0200: 65.550: [CMS-concurrent-abortable-preclean4: 0.167/1.074 secs] [Times: user=0.20 sys=0.00, real=1.07 secs]</span><br><span class="line">2016-08-23T11:23:08.447-0200: 65.550: [GC (CMS Final Remark5)</span><br><span class="line">[YG occupancy: 387920 K (613440 K)]65.550: [Rescan (parallel) , 0.0085125 secs]65.559: </span><br><span class="line">[weak refs processing, 0.0000243 secs]65.559: [class unloading, 0.0013120 secs]65.560: </span><br><span class="line">[scrub symbol table, 0.0008345 secs]65.561: [scrub string table, 0.0001759 secs][1 CMS-remark: 10812086K(11901376K)] 11200006K(12514816K), 0.0110730 secs] </span><br><span class="line">[Times: user=0.06 sys=0.00, real=0.01 secs]</span><br><span class="line">2016-08-23T11:23:08.458-0200: 65.561: [CMS-concurrent-sweep-start]</span><br><span class="line">2016-08-23T11:23:08.485-0200: 65.588: [CMS-concurrent-sweep6: 0.027/0.027 secs] [Times: user=0.03 sys=0.00, real=0.03 secs]</span><br><span class="line">2016-08-23T11:23:08.485-0200: 65.589: [CMS-concurrent-reset-start]</span><br><span class="line">2016-08-23T11:23:08.497-0200: 65.601: [CMS-concurrent-reset7: 0.012/0.012 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]</span><br></pre></td></tr></table></figure>
+<hr>
+<p><strong>Phase 1: Initial Mark</strong></p>
+<p>这是CMS中两次stop-the-world事件中的一次。它有两个目标：</p>
+<ol>
+<li>标记老年代中所有的GC Roots；</li>
+<li>标记被年轻代中活着的对象引用的对象。</li>
+</ol>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/initial-mark.jpg">
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:07.321-0200: 64.425: [GC (CMS Initial Mark)1 [1 CMS-initial-mark: 10812086K(11901376K)] 10887844K(12514816K), 0.0001997 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>CMS Initial Mark：收集阶段，开始收集所有的GC Roots和直接引用到的对象</li>
+<li>10812086K：当前老年代使用情况</li>
+<li>(11901376K)：老年代可用容量</li>
+<li>10887844K：当前整个堆的使用情况</li>
+<li>(12514816K)：整个堆的容量</li>
+</ul>
+<hr>
+<p><strong>Phase 2: Concurrent Mark</strong></p>
+<p>这个阶段会遍历整个老年代并且标记所有存活的对象，从“初始化标记”阶段找到的GC Roots开始。并发标记的特点是和应用程序线程同时运行。并不是老年代的所有存活对象都会被标记，因为标记的同时应用程序会改变一些对象的引用等。</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-mark.jpg">
+<p>在上边的图中，一个引用的箭头已经远离了当前对象（current obj）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:07.321-0200: 64.425: [CMS-concurrent-mark-start]</span><br><span class="line">2016-08-23T11:23:07.357-0200: 64.460: [CMS-concurrent-mark2: 0.035/0.035 secs] [Times: user=0.07 sys=0.00, real=0.03 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>0.035/0.035 secs：展示该阶段持续的时间和时钟时间</li>
+</ul>
+<hr>
+<p><strong>Phase 3: Concurrent Preclean</strong></p>
+<p>这个阶段又是一个并发阶段，和应用线程并行运行，不会中断应用线程。</p>
+<p>前一个阶段在并行运行的时候，一些对象的引用已经发生了变化，当这些引用发生变化的时候，JVM会标记堆的这个区域为Dirty Card(包含被标记但是改变了的对象，被认为”dirty”)，这就是Card Marking。</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-preclean.jpg">
+<p>在pre-clean阶段，那些能够从dirty card对象到达的对象也会被标记，这个标记做完之后，dirty card标记就会被清除了，如下：</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-preclean-after.jpg">
+<p>另外，一些必要的清扫工作也会做，还会做一些final remark阶段需要的准备工作；</p>
+<hr>
+<p><strong>Phase 4: Concurrent Abortable Preclean</strong></p>
+<p>又一个并发阶段不会停止应用程序线程。这个阶段尝试着去承担STW的Final Remark阶段足够多的工作。这个阶段持续的时间依赖好多的因素，由于这个阶段是重复的做相同的事情直到发生aboart的条件（比如：重复的次数、多少量的工作、持续的时间等等）之一才会停止。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:07.373-0200: 64.476: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line">2016-08-23T11:23:08.446-0200: 65.550: [CMS-concurrent-abortable-preclean4: 0.167/1.074 secs] [Times: user=0.20 sys=0.00, real=1.07 secs]</span><br></pre></td></tr></table></figure>
+<p>这个阶段很大程度的影响着即将来临的Final Remark的停顿，有相当一部分重要的configuration options和失败的模式；</p>
+<hr>
+<p><strong>Phase 5: Final Remark</strong></p>
+<p>这个阶段是CMS中第二个并且是最后一个STW的阶段。该阶段的任务是完成标记整个年老代的所有的存活对象。由于之前的预处理是并发的，它可能跟不上应用程序改变的速度，这个时候，STW是非常需要的来完成这个严酷考验的阶段。</p>
+<p>通常CMS尽量运行Final Remark阶段在年轻代是足够干净的时候，目的是消除紧接着的连续的几个STW阶段。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:08.447-0200: 65.550: [GC (CMS Final Remark5)</span><br><span class="line">[YG occupancy: 387920 K (613440 K)]65.550: [Rescan (parallel) , 0.0085125 secs]65.559: </span><br><span class="line">[weak refs processing, 0.0000243 secs]65.559: [class unloading, 0.0013120 secs]65.560: </span><br><span class="line">[scrub symbol table, 0.0008345 secs]65.561: [scrub string table, 0.0001759 secs][1 CMS-remark: 10812086K(11901376K)] 11200006K(12514816K), 0.0110730 secs] </span><br><span class="line">[Times: user=0.06 sys=0.00, real=0.01 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>weak refs processing, 0.0000243 secs：第一个子阶段，随着这个阶段的进行处理弱引用</li>
+<li>class unloading, 0.0013120 secs]65.560：第二个子阶段(that is unloading the unused classes, with the duration and timestamp of the phase)</li>
+<li>scrub string table, 0.0001759 secs：最后一个子阶段（that is cleaning up symbol and string tables which hold class-level metadata and internalized string respectively）</li>
+<li>10812086K(11901376K)：在这个阶段之后老年代占有的内存大小和老年代的容量</li>
+<li>11200006K(12514816K)：在这个阶段之后整个堆的内存大小和整个堆的容量</li>
+<li>0.0110730 secs：这个阶段的持续时间</li>
+</ul>
+<p>通过以上5个阶段的标记，老年代所有存活的对象已经被标记并且现在要通过Garbage Collector采用清扫的方式回收那些不能用的对象了。</p>
+<hr>
+<p><strong>Phase 6: Concurrent Sweep</strong></p>
+<p>和应用线程同时进行，不需要STW。这个阶段的目的就是移除那些不用的对象，回收他们占用的空间并且为将来使用。</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-sweep.jpg">
+<hr>
+<p><strong>Phase 7: Concurrent Reset</strong></p>
+<p>这个阶段并发执行，重新设置CMS算法内部的数据结构，准备下一个CMS生命周期的使用。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.cnblogs.com/zhangxiaoguang/p/5792468.html" target="_blank" rel="noopener">https://www.cnblogs.com/zhangxiaoguang/p/5792468.html</a><br><a href="https://plumbr.io/handbook/what-is-garbage-collection" target="_blank" rel="noopener">https://plumbr.io/handbook/what-is-garbage-collection</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/Minor GC vs Major GC vs Full GC/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/22/Java/JVM/Basic/Minor GC vs Major GC vs Full GC/" itemprop="url">JVM Minor GC vs Major GC vs Full GC</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-22T16:00:22+08:00">
+                2018-12-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>The post expects the reader to be familiar with generic garbage collection principles built into the JVM. Division of Heap into Eden, Survivor and Tenured/Old spaces, generational hypothesis(假设) and different GC algorithms are beyond the scope of this post.</p>
+<img src="/2018/12/22/Java/JVM/Basic/Minor%20GC%20vs%20Major%20GC%20vs%20Full%20GC/jvm-generational.jpg">
+<hr>
+<h3 id="Minor-GC"><a href="#Minor-GC" class="headerlink" title="Minor GC"></a>Minor GC</h3><p>Collecting garbage from Young space (consisting of <strong>Eden</strong> and <strong>Survivor</strong> spaces) is called a Minor GC. </p>
+<p>This definition is both clear(清晰的) and uniformly(统一的) understood. But there are still some interesting take-aways you should be aware of when dealing with Minor Garbage Collection events:</p>
+<ul>
+<li><p>Minor GC is always triggered when JVM is unable to allocate space for a new Object, e.g. the Eden is getting full. So the higher the allocation rate, the more frequently Minor GC is executed.</p>
+</li>
+<li><p>Whenever the pool is filled, its entire content is copied and the pointer can start tracking the free memory from zero again. So instead of(而不是…) classical(传统的) Mark, Sweep and Compact, cleaning Eden and Survivor spaces is carried out with Mark and Copy instead. So, no fragmentation(内存碎片) actually takes place inside Eden or Survivor spaces. The write pointer is always residing on the top of the used pool.</p>
+</li>
+<li><p>During a Minor GC event, Tenured generation is effectively ignored. References from tenured generation to young generation are considered de facto GC roots. References from young generation to Tenured generation are simply ignored during the markup phase.</p>
+</li>
+<li><p>Against common belief, <strong>all Minor GCs do trigger stop-the-world pauses, stopping the application threads</strong>. For most of the applications, the length of the pauses is negligible(微不足道的) latency-wise. This is true if most of the objects in Eden can be considered garbage and are never copied to Survivor/Old spaces. If the opposite is true and most of the newborn objects are not eligible for GC, Minor GC pauses start taking considerably more time.</p>
+</li>
+</ul>
+<blockquote>
+<p>Minor GC并不意味着不会STW，只是Minor GC会比Full GC开销小。</p>
+</blockquote>
+<hr>
+<h3 id="Major-GC-vs-Full-GC"><a href="#Major-GC-vs-Full-GC" class="headerlink" title="Major GC vs Full GC"></a>Major GC vs Full GC</h3><ul>
+<li>Major GC is cleaning the Tenured space.</li>
+<li>Full GC is cleaning the entire Heap – both Young and Tenured spaces.</li>
+</ul>
+<p>This leads us to the point where instead of worrying whether the GC is called Major or Full GC, you should focus to finding out whether the GC at hand stopped all the application threads or was it able to progress concurrently with the application threads.</p>
+<p>This confusion is even built right into the JVM standard tools. What I mean by that is best explained via an example. Lets compare the output of two different tools tracing the GC on a JVM running with <strong>Concurrent Mark</strong> and <strong>Sweep collector</strong> (-XX:+UseConcMarkSweepGC)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jstat -gc -t 4235 1s</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Time    S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC       MU    CCSC   CCSU     YGC     YGCT    FGC    FGCT     GCT   </span><br><span class="line"> 5.7 34048.0 34048.0  0.0   34048.0 272640.0 194699.7 1756416.0   181419.9  18304.0 17865.1 2688.0 2497.6      3    0.275   0      0.000    0.275</span><br><span class="line"> 6.7 34048.0 34048.0 34048.0  0.0   272640.0 247555.4 1756416.0   263447.9  18816.0 18123.3 2688.0 2523.1      4    0.359   0      0.000    0.359</span><br><span class="line"> 7.7 34048.0 34048.0  0.0   34048.0 272640.0 257729.3 1756416.0   345109.8  19072.0 18396.6 2688.0 2550.3      5    0.451   0      0.000    0.451</span><br><span class="line"> 8.7 34048.0 34048.0 34048.0 34048.0 272640.0 272640.0 1756416.0  444982.5  19456.0 18681.3 2816.0 2575.8      7    0.550   0      0.000    0.550</span><br><span class="line"> 9.7 34048.0 34048.0 34046.7  0.0   272640.0 16777.0  1756416.0   587906.3  20096.0 19235.1 2944.0 2631.8      8    0.720   0      0.000    0.720</span><br><span class="line">10.7 34048.0 34048.0  0.0   34046.2 272640.0 80171.6  1756416.0   664913.4  20352.0 19495.9 2944.0 2657.4      9    0.810   0      0.000    0.810</span><br><span class="line">11.7 34048.0 34048.0 34048.0  0.0   272640.0 129480.8 1756416.0   745100.2  20608.0 19704.5 2944.0 2678.4     10    0.896   0      0.000    0.896</span><br><span class="line">12.7 34048.0 34048.0  0.0   34046.6 272640.0 164070.7 1756416.0   822073.7  20992.0 19937.1 3072.0 2702.8     11    0.978   0      0.000    0.978</span><br><span class="line"><span class="comment"># Focus</span></span><br><span class="line">13.7 34048.0 34048.0 34048.0  0.0   272640.0 211949.9 1756416.0   897364.4  21248.0 20179.6 3072.0 2728.1     12    1.087   1      0.004    1.091</span><br><span class="line">14.7 34048.0 34048.0  0.0   34047.1 272640.0 245801.5 1756416.0   597362.6  21504.0 20390.6 3072.0 2750.3     13    1.183   2      0.050    1.233</span><br><span class="line"><span class="comment"># Focus</span></span><br><span class="line">15.7 34048.0 34048.0  0.0   34048.0 272640.0 21474.1  1756416.0   757347.0  22012.0 20792.0 3200.0 2791.0     15    1.336   2      0.050    1.386</span><br><span class="line">16.7 34048.0 34048.0 34047.0  0.0   272640.0 48378.0  1756416.0   838594.4  22268.0 21003.5 3200.0 2813.2     16    1.433   2      0.050    1.484</span><br></pre></td></tr></table></figure>
+<p>This snippet is extracted from the first 17 seconds after the JVM was launched. </p>
+<p>Based on this information we could conclude that after 12 Minor GC runs two Full GC runs were performed, spanning 50ms in total. You would get the same confirmation via GUI-based tools, such as the jconsole or jvisualvm.</p>
+<p>lets look at to the output of the garbage collection logs gathered from the same JVM launch. Apparently -XX:+PrintGCDetails tells us a different and more detailed story:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -XX:+PrintGCDetails -XX:+UseConcMarkSweepGC eu.plumbr.demo.GarbageProducer</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">3.157: [GC (Allocation Failure) 3.157: [ParNew: 272640K-&gt;34048K(306688K), 0.0844702 secs] 272640K-&gt;69574K(2063104K), 0.0845560 secs] [Times: user=0.23 sys=0.03, real=0.09 secs] </span><br><span class="line">4.092: [GC (Allocation Failure) 4.092: [ParNew: 306688K-&gt;34048K(306688K), 0.1013723 secs] 342214K-&gt;136584K(2063104K), 0.1014307 secs] [Times: user=0.25 sys=0.05, real=0.10 secs] </span><br><span class="line">... cut <span class="keyword">for</span> brevity ...</span><br><span class="line">11.292: [GC (Allocation Failure) 11.292: [ParNew: 306686K-&gt;34048K(306688K), 0.0857219 secs] 971599K-&gt;779148K(2063104K), 0.0857875 secs] [Times: user=0.26 sys=0.04, real=0.09 secs] </span><br><span class="line">12.140: [GC (Allocation Failure) 12.140: [ParNew: 306688K-&gt;34046K(306688K), 0.0821774 secs] 1051788K-&gt;856120K(2063104K), 0.0822400 secs] [Times: user=0.25 sys=0.03, real=0.08 secs] </span><br><span class="line">12.989: [GC (Allocation Failure) 12.989: [ParNew: 306686K-&gt;34048K(306688K), 0.1086667 secs] 1128760K-&gt;931412K(2063104K), 0.1087416 secs] [Times: user=0.24 sys=0.04, real=0.11 secs] </span><br><span class="line"><span class="comment"># Focus CMS Initial Mark 0.0041705 secs</span></span><br><span class="line">13.098: [GC (CMS Initial Mark) [1 CMS-initial-mark: 897364K(1756416K)] 936667K(2063104K), 0.0041705 secs] [Times: user=0.02 sys=0.00, real=0.00 secs] </span><br><span class="line">13.102: [CMS-concurrent-mark-start]</span><br><span class="line">13.341: [CMS-concurrent-mark: 0.238/0.238 secs] [Times: user=0.36 sys=0.01, real=0.24 secs] </span><br><span class="line">13.341: [CMS-concurrent-preclean-start]</span><br><span class="line">13.350: [CMS-concurrent-preclean: 0.009/0.009 secs] [Times: user=0.03 sys=0.00, real=0.01 secs] </span><br><span class="line">13.350: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line">13.878: [GC (Allocation Failure) 13.878: [ParNew: 306688K-&gt;34047K(306688K), 0.0960456 secs] 1204052K-&gt;1010638K(2063104K), 0.0961542 secs] [Times: user=0.29 sys=0.04, real=0.09 secs] </span><br><span class="line">14.366: [CMS-concurrent-abortable-preclean: 0.917/1.016 secs] [Times: user=2.22 sys=0.07, real=1.01 secs] </span><br><span class="line"><span class="comment"># Focus CMS Final Remark 0.0462010 secs</span></span><br><span class="line">14.366: [GC (CMS Final Remark) [YG occupancy: 182593 K (306688 K)]14.366: [Rescan (parallel) , 0.0291598 secs]14.395: [weak refs processing, 0.0000232 secs]14.395: [class unloading, 0.0117661 secs]14.407: [scrub symbol table, 0.0015323 secs]14.409: [scrub string table, 0.0003221 secs][1 CMS-remark: 976591K(1756416K)] 1159184K(2063104K), 0.0462010 secs] [Times: user=0.14 sys=0.00, real=0.05 secs] </span><br><span class="line">14.412: [CMS-concurrent-sweep-start]</span><br><span class="line">14.633: [CMS-concurrent-sweep: 0.221/0.221 secs] [Times: user=0.37 sys=0.00, real=0.22 secs] </span><br><span class="line">14.633: [CMS-concurrent-reset-start]</span><br><span class="line">14.636: [CMS-concurrent-reset: 0.002/0.002 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br></pre></td></tr></table></figure>
+<p>Based on this information we can see that indeed after 12 Minor GC runs “something different” started happening. But instead two Full GC runs, this “different thing” was in reality just a single GC running in Tenured generation consisting of different phases:</p>
+<ul>
+<li>Initial Mark phase, spanning for 0.0041705 seconds or approximately 4ms. This phase is a stop-the-world event stopping all application threads for initial marking.</li>
+<li>Concurrenty executed Markup and Preclean phases. These are run concurrently with the application threads</li>
+<li>Final Remark phase, spanning for 0.0462010 seconds or approximately 46ms. This phase is again stop-the-world event.</li>
+<li>Concurrently executed Sweep operation. As the name states, this phase is also carried out concurrently without stopping the application threads.</li>
+</ul>
+<p>So what we see from the actual garbage collection logs is that – instead(而不是) two Full GC operations, just one Major GC cleaning Old space was actually executed.</p>
+<img src="/2018/12/22/Java/JVM/Basic/Minor%20GC%20vs%20Major%20GC%20vs%20Full%20GC/cms-gc-event.png">
+<h3 id="Pertaining-Terms"><a href="#Pertaining-Terms" class="headerlink" title="Pertaining Terms"></a>Pertaining Terms</h3><ul>
+<li>S0C：年轻代中第一个survivor（幸存区）的容量 (kb)</li>
+<li>S1C：年轻代中第二个survivor（幸存区）的容量 (kb)</li>
+<li>S0U：年轻代中第一个survivor（幸存区）目前已使用空间 (kb)</li>
+<li>S1U：年轻代中第二个survivor（幸存区）目前已使用空间 (kb)</li>
+<li>EC：年轻代中Eden（伊甸园）的容量 (kb)</li>
+<li>EU：年轻代中Eden（伊甸园）目前已使用空间 (kb)</li>
+<li>OC：Old代的容量 (kb)</li>
+<li>OU：Old代目前已使用空间 (kb)</li>
+<li>PC：Perm(持久代)的容量 (kb)</li>
+<li>PU：Perm(持久代)目前已使用空间 (kb)</li>
+<li><strong>YGC：从应用程序启动到采样时年轻代中gc次数</strong></li>
+<li><strong>YGCT：从应用程序启动到采样时年轻代中gc所用时间(s)</strong></li>
+<li><strong>FGC：从应用程序启动到采样时old代(全gc)gc次数</strong></li>
+<li><strong>FGCT：从应用程序启动到采样时old代(全gc)gc所用时间(s)</strong></li>
+<li><strong>GCT：从应用程序启动到采样时gc用的总时间(s)</strong></li>
+<li>NGCMN：年轻代(young)中初始化(最小)的大小 (kb)</li>
+<li>NGCMX：年轻代(young)的最大容量 (kb)</li>
+<li>NGC：年轻代(young)中当前的容量 (kb)</li>
+<li>OGCMN：old代中初始化(最小)的大小 (kb)</li>
+<li>OGCMX：old代的最大容量 (kb)</li>
+<li>OGC：old代当前新生成的容量 (kb)</li>
+<li>PGCMN：perm代中初始化(最小)的大小 (kb)</li>
+<li>PGCMX：perm代的最大容量 (kb)</li>
+<li>PGC：perm代当前新生成的容量 (kb)</li>
+<li>S0：年轻代中第一个survivor（幸存区）已使用的占当前容量百分比</li>
+<li>S1：年轻代中第二个survivor（幸存区）已使用的占当前容量百分比</li>
+<li>E：年轻代中Eden（伊甸园）已使用的占当前容量百分比</li>
+<li>O：old代已使用的占当前容量百分比</li>
+<li>P：perm代已使用的占当前容量百分比</li>
+<li>S0CMX：年轻代中第一个survivor（幸存区）的最大容量 (kb)</li>
+<li>S1CMX ：年轻代中第二个survivor（幸存区）的最大容量 (kb)</li>
+<li>ECMX：年轻代中Eden（伊甸园）的最大容量 (kb)</li>
+<li>DSS：当前需要survivor（幸存区）的容量 (kb)（Eden区已满）</li>
+<li>TT：持有次数限制</li>
+<li>MTT ：最大持有次数限制</li>
+</ul>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://plumbr.io/blog/garbage-collection/minor-gc-vs-major-gc-vs-full-gc" target="_blank" rel="noopener">https://plumbr.io/blog/garbage-collection/minor-gc-vs-major-gc-vs-full-gc</a><br><a href="https://www.cnblogs.com/zhangxiaoguang/p/5792468.html" target="_blank" rel="noopener">https://www.cnblogs.com/zhangxiaoguang/p/5792468.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/22/读书笔记/黄宗羲定律/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1702,7 +2219,7 @@
 <li>Decorator：FilterInputStream</li>
 <li>ConcreteDecorator(继承FilterInputStream)：BufferedInputStream，DataInputStream，PushbackInputStream</li>
 </ul>
-<h4 id="Example-1"><a href="#Example-1" class="headerlink" title="Example"></a>Example</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">File file = <span class="keyword">new</span> File(<span class="string">"hello.txt"</span>);</span><br><span class="line">FileInputStream in = <span class="keyword">new</span> FileInputStream(file);</span><br><span class="line">BufferedInputStream inBuffered = <span class="keyword">new</span> BufferedInputStream(in);</span><br></pre></td></tr></table></figure>
+<p>Code Example<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">File file = <span class="keyword">new</span> File(<span class="string">"hello.txt"</span>);</span><br><span class="line">FileInputStream in = <span class="keyword">new</span> FileInputStream(file);</span><br><span class="line">BufferedInputStream inBuffered = <span class="keyword">new</span> BufferedInputStream(in);</span><br></pre></td></tr></table></figure></p>
 <hr>
 <h3 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h3><h4 id="Advantage"><a href="#Advantage" class="headerlink" title="Advantage"></a>Advantage</h4><ul>
 <li><p>使用装饰者模式比使用继承更加灵活，因为它选择通过一种动态的方式来扩展一个对象的功能，在运行时可以选择不同的装饰器，从而实现不同的行为。</p>
@@ -2132,322 +2649,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/18/Network/Socks5/Socks5协议/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/18/Network/Socks5/Socks5协议/" itemprop="url">Socks5协议</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-18T21:56:19+08:00">
-                2018-12-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>SOCKS是一种网络传输协议，主要用于客户端与外网服务器之间通讯的中间传递。SOCKS是”SOCKetS”的缩写。</p>
-<p>当防火墙后的客户端要访问外部的服务器时，就跟SOCKS代理服务器连接。这个代理服务器控制客户端访问外网的资格，允许的话，就将客户端的请求发往外部的服务器。</p>
-<img src="/2018/12/18/Network/Socks5/Socks5协议/tcpip-model.jpg">
-<p>根据OSI模型，SOCKS是会话层的协议，位于表示层与传输层之间。TCP/IP模型的应用层对应OSI的前三层，网络接入层对应OSI的最后两层。</p>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p>shadowsocks实现原理:<a href="https://bingtaoli.github.io/2016/11/23/shadowsocks%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/" target="_blank" rel="noopener">https://bingtaoli.github.io/2016/11/23/shadowsocks%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/</a><br>协议官方规范：<a href="https://www.ietf.org/rfc/rfc1928.txt" target="_blank" rel="noopener">https://www.ietf.org/rfc/rfc1928.txt</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/18/Java/SpringBoot/Resource/ReadResource/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/18/Java/SpringBoot/Resource/ReadResource/" itemprop="url">Spring Bood Read Resource</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-18T12:30:22+08:00">
-                2018-12-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Spring-Boot/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Boot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Spring-Boot/Resource/" itemprop="url" rel="index">
-                    <span itemprop="name">Resource</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  resources/keys/private.pem -&gt; path=/keys/private.pem</span></span><br><span class="line"><span class="function">fun <span class="title">readResourceFile</span><span class="params">(path: String, charset: Charset = Charsets.UTF_8)</span>: String </span>&#123;</span><br><span class="line">    val classResource = ClassPathResource(path)</span><br><span class="line">    <span class="keyword">return</span> classResource.file.readText(charset)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/48/">48</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/49/">49</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2494,7 +2700,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">480</span>
+                <span class="site-state-item-count">482</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2516,7 +2722,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">541</span>
+                <span class="site-state-item-count">542</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

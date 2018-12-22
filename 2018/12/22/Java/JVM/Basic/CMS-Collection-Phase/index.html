@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Java,Basic,JVM,CMS,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="sulang blog" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="IntroductionCMS：Concurrent Mark and Sweep，Mostly Concurrent Mark and Sweep Garbage Collector。 设计目标：年老代收集的时候避免长时间的暂停；  年轻代：采用 stop-the-world mark-copy 算法； 年老代：采用 Mostly Concurrent mark-sweep 算法；  能够达成该">
+<meta name="keywords" content="Java,Basic,JVM,CMS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM CMS Collection Phase">
+<meta property="og:url" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/index.html">
+<meta property="og:site_name" content="sulang blog">
+<meta property="og:description" content="IntroductionCMS：Concurrent Mark and Sweep，Mostly Concurrent Mark and Sweep Garbage Collector。 设计目标：年老代收集的时候避免长时间的暂停；  年轻代：采用 stop-the-world mark-copy 算法； 年老代：采用 Mostly Concurrent mark-sweep 算法；  能够达成该">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/intro.jpg">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/eden-to-old.jpg">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/initial-mark.jpg">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-mark.jpg">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-preclean.jpg">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-preclean-after.jpg">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-sweep.jpg">
+<meta property="og:updated_time" content="2018-12-22T09:42:15.409Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM CMS Collection Phase">
+<meta name="twitter:description" content="IntroductionCMS：Concurrent Mark and Sweep，Mostly Concurrent Mark and Sweep Garbage Collector。 设计目标：年老代收集的时候避免长时间的暂停；  年轻代：采用 stop-the-world mark-copy 算法； 年老代：采用 Mostly Concurrent mark-sweep 算法；  能够达成该">
+<meta name="twitter:image" content="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/intro.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>JVM CMS Collection Phase | sulang blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">sulang blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">python java android django web</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">JVM CMS Collection Phase</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-22T17:20:22+08:00">
+                2018-12-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>CMS：Concurrent Mark and Sweep，Mostly Concurrent Mark and Sweep Garbage Collector。</p>
+<p>设计目标：年老代收集的时候避免长时间的暂停；</p>
+<ul>
+<li>年轻代：采用 stop-the-world mark-copy 算法；</li>
+<li>年老代：采用 Mostly Concurrent mark-sweep 算法；</li>
+</ul>
+<p>能够达成该目标主要因为以下两个原因：</p>
+<ol>
+<li>它不会花时间整理压缩年老代，而是维护了一个叫做 free-lists 的数据结构，该数据结构用来管理那些回收再利用的内存空间；</li>
+<li>mark-sweep分为多个阶段，其中一大部分阶段GC的工作是和Application threads的工作同时进行的（当然，gc线程会和用户线程竞争CPU的时间），默认的GC的工作线程为你服务器物理CPU核数的1/4；</li>
+</ol>
+<p>当你的服务器是多核同时你的目标是低延时，那该GC的搭配则是你的不二选择。</p>
+<p>JVM测试参数如下标记：</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/intro.jpg">
+<h3 id="Analyze"><a href="#Analyze" class="headerlink" title="Analyze"></a>Analyze</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T02:23:07.219-0200: 64.322: [GC (Allocation Failure) 64.322: [ParNew: 613404K-&gt;68068K(613440K), 0.1020465 secs] 10885349K-&gt;10880154K(12514816K), 0.1021309 secs] [Times: user=0.78 sys=0.01, real=0.11 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>2016-08-23T02:23:07.219-0200：GC发生的时间</li>
+<li>64.322：GC开始，相对JVM启动的相对时间，单位是秒</li>
+<li>GC：区别MinorGC和FullGC的标识，这次代表的是MinorGC</li>
+<li>Allocation Failure：MinorGC的原因，在这个case里边，由于年轻代不满足申请的空间，因此触发了MinorGC</li>
+<li>ParNew：收集器的名称，它预示了年轻代使用一个并行的 mark-copy stop-the-world 垃圾收集器</li>
+<li>613404K-&gt;68068K：收集前后年轻代的使用情况</li>
+<li>(613440K)：整个年轻代的容量</li>
+<li>0.1020465 secs：Duration for the collection w/o final cleanup.</li>
+<li>10885349K-&gt;10880154K：收集前后整个堆的使用情况</li>
+<li>(12514816K)：整个堆的容量</li>
+<li>0.1021309 secs：ParNew收集器标记和复制年轻代活着的对象所花费的时间（包括和老年代通信的开销、对象晋升到老年代时间、垃圾收集周期结束一些最后的清理对象等的开销）</li>
+<li>[Times: user=0.78 sys=0.01, real=0.11 secs]：GC事件在不同维度的耗时</li>
+<li><ul>
+<li>user：Total CPU time that was consumed by Garbage Collector threads during this collection</li>
+</ul>
+</li>
+<li><ul>
+<li>sys：Time spent in OS calls or waiting for system event</li>
+</ul>
+</li>
+<li><ul>
+<li>real：Clock time for which your application was stopped. With Parallel GC this number should be close to (user time + system time) divided by the number of threads used by the Garbage Collector. In this particular case 8 threads were used. Note that due to some activities not being parallelizable, it always exceeds the ratio by a certain amount.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h4 id="年轻代对象-晋升-gt-老年对象"><a href="#年轻代对象-晋升-gt-老年对象" class="headerlink" title="年轻代对象 -晋升-&gt; 老年对象"></a>年轻代对象 -晋升-&gt; 老年对象</h4><img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/eden-to-old.jpg">
+<p>开始的时候：整个堆的大小是10885349K，年轻代大小是613404K，这说明老年代大小是10885349-613404=10271945K</p>
+<p>收集完成之后：整个堆的大小是10880154K，年轻代大小是68068K，这说明老年代大小是10880154-68068=10812086K</p>
+<p>老年代的大小增加了：10812086-10271945=608209K，也就是说年轻代对象晋升到年老代对象的大小为608209K的数据</p>
+<hr>
+<h4 id="Full-Major-GC"><a href="#Full-Major-GC" class="headerlink" title="Full/Major GC"></a>Full/Major GC</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:07.321-0200: 64.425: [GC (CMS Initial Mark)1 [1 CMS-initial-mark: 10812086K(11901376K)] 10887844K(12514816K), 0.0001997 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">2016-08-23T11:23:07.321-0200: 64.425: [CMS-concurrent-mark-start]</span><br><span class="line">2016-08-23T11:23:07.357-0200: 64.460: [CMS-concurrent-mark2: 0.035/0.035 secs] [Times: user=0.07 sys=0.00, real=0.03 secs]</span><br><span class="line">2016-08-23T11:23:07.357-0200: 64.460: [CMS-concurrent-preclean-start]</span><br><span class="line">2016-08-23T11:23:07.373-0200: 64.476: [CMS-concurrent-preclean3: 0.016/0.016 secs] [Times: user=0.02 sys=0.00, real=0.02 secs]</span><br><span class="line">2016-08-23T11:23:07.373-0200: 64.476: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line">2016-08-23T11:23:08.446-0200: 65.550: [CMS-concurrent-abortable-preclean4: 0.167/1.074 secs] [Times: user=0.20 sys=0.00, real=1.07 secs]</span><br><span class="line">2016-08-23T11:23:08.447-0200: 65.550: [GC (CMS Final Remark5)</span><br><span class="line">[YG occupancy: 387920 K (613440 K)]65.550: [Rescan (parallel) , 0.0085125 secs]65.559: </span><br><span class="line">[weak refs processing, 0.0000243 secs]65.559: [class unloading, 0.0013120 secs]65.560: </span><br><span class="line">[scrub symbol table, 0.0008345 secs]65.561: [scrub string table, 0.0001759 secs][1 CMS-remark: 10812086K(11901376K)] 11200006K(12514816K), 0.0110730 secs] </span><br><span class="line">[Times: user=0.06 sys=0.00, real=0.01 secs]</span><br><span class="line">2016-08-23T11:23:08.458-0200: 65.561: [CMS-concurrent-sweep-start]</span><br><span class="line">2016-08-23T11:23:08.485-0200: 65.588: [CMS-concurrent-sweep6: 0.027/0.027 secs] [Times: user=0.03 sys=0.00, real=0.03 secs]</span><br><span class="line">2016-08-23T11:23:08.485-0200: 65.589: [CMS-concurrent-reset-start]</span><br><span class="line">2016-08-23T11:23:08.497-0200: 65.601: [CMS-concurrent-reset7: 0.012/0.012 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]</span><br></pre></td></tr></table></figure>
+<hr>
+<p><strong>Phase 1: Initial Mark</strong></p>
+<p>这是CMS中两次stop-the-world事件中的一次。它有两个目标：</p>
+<ol>
+<li>标记老年代中所有的GC Roots；</li>
+<li>标记被年轻代中活着的对象引用的对象。</li>
+</ol>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/initial-mark.jpg">
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:07.321-0200: 64.425: [GC (CMS Initial Mark)1 [1 CMS-initial-mark: 10812086K(11901376K)] 10887844K(12514816K), 0.0001997 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>CMS Initial Mark：收集阶段，开始收集所有的GC Roots和直接引用到的对象</li>
+<li>10812086K：当前老年代使用情况</li>
+<li>(11901376K)：老年代可用容量</li>
+<li>10887844K：当前整个堆的使用情况</li>
+<li>(12514816K)：整个堆的容量</li>
+</ul>
+<hr>
+<p><strong>Phase 2: Concurrent Mark</strong></p>
+<p>这个阶段会遍历整个老年代并且标记所有存活的对象，从“初始化标记”阶段找到的GC Roots开始。并发标记的特点是和应用程序线程同时运行。并不是老年代的所有存活对象都会被标记，因为标记的同时应用程序会改变一些对象的引用等。</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-mark.jpg">
+<p>在上边的图中，一个引用的箭头已经远离了当前对象（current obj）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:07.321-0200: 64.425: [CMS-concurrent-mark-start]</span><br><span class="line">2016-08-23T11:23:07.357-0200: 64.460: [CMS-concurrent-mark2: 0.035/0.035 secs] [Times: user=0.07 sys=0.00, real=0.03 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>0.035/0.035 secs：展示该阶段持续的时间和时钟时间</li>
+</ul>
+<hr>
+<p><strong>Phase 3: Concurrent Preclean</strong></p>
+<p>这个阶段又是一个并发阶段，和应用线程并行运行，不会中断应用线程。</p>
+<p>前一个阶段在并行运行的时候，一些对象的引用已经发生了变化，当这些引用发生变化的时候，JVM会标记堆的这个区域为Dirty Card(包含被标记但是改变了的对象，被认为”dirty”)，这就是Card Marking。</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-preclean.jpg">
+<p>在pre-clean阶段，那些能够从dirty card对象到达的对象也会被标记，这个标记做完之后，dirty card标记就会被清除了，如下：</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-preclean-after.jpg">
+<p>另外，一些必要的清扫工作也会做，还会做一些final remark阶段需要的准备工作；</p>
+<hr>
+<p><strong>Phase 4: Concurrent Abortable Preclean</strong></p>
+<p>又一个并发阶段不会停止应用程序线程。这个阶段尝试着去承担STW的Final Remark阶段足够多的工作。这个阶段持续的时间依赖好多的因素，由于这个阶段是重复的做相同的事情直到发生aboart的条件（比如：重复的次数、多少量的工作、持续的时间等等）之一才会停止。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:07.373-0200: 64.476: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line">2016-08-23T11:23:08.446-0200: 65.550: [CMS-concurrent-abortable-preclean4: 0.167/1.074 secs] [Times: user=0.20 sys=0.00, real=1.07 secs]</span><br></pre></td></tr></table></figure>
+<p>这个阶段很大程度的影响着即将来临的Final Remark的停顿，有相当一部分重要的configuration options和失败的模式；</p>
+<hr>
+<p><strong>Phase 5: Final Remark</strong></p>
+<p>这个阶段是CMS中第二个并且是最后一个STW的阶段。该阶段的任务是完成标记整个年老代的所有的存活对象。由于之前的预处理是并发的，它可能跟不上应用程序改变的速度，这个时候，STW是非常需要的来完成这个严酷考验的阶段。</p>
+<p>通常CMS尽量运行Final Remark阶段在年轻代是足够干净的时候，目的是消除紧接着的连续的几个STW阶段。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T11:23:08.447-0200: 65.550: [GC (CMS Final Remark5)</span><br><span class="line">[YG occupancy: 387920 K (613440 K)]65.550: [Rescan (parallel) , 0.0085125 secs]65.559: </span><br><span class="line">[weak refs processing, 0.0000243 secs]65.559: [class unloading, 0.0013120 secs]65.560: </span><br><span class="line">[scrub symbol table, 0.0008345 secs]65.561: [scrub string table, 0.0001759 secs][1 CMS-remark: 10812086K(11901376K)] 11200006K(12514816K), 0.0110730 secs] </span><br><span class="line">[Times: user=0.06 sys=0.00, real=0.01 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>weak refs processing, 0.0000243 secs：第一个子阶段，随着这个阶段的进行处理弱引用</li>
+<li>class unloading, 0.0013120 secs]65.560：第二个子阶段(that is unloading the unused classes, with the duration and timestamp of the phase)</li>
+<li>scrub string table, 0.0001759 secs：最后一个子阶段（that is cleaning up symbol and string tables which hold class-level metadata and internalized string respectively）</li>
+<li>10812086K(11901376K)：在这个阶段之后老年代占有的内存大小和老年代的容量</li>
+<li>11200006K(12514816K)：在这个阶段之后整个堆的内存大小和整个堆的容量</li>
+<li>0.0110730 secs：这个阶段的持续时间</li>
+</ul>
+<p>通过以上5个阶段的标记，老年代所有存活的对象已经被标记并且现在要通过Garbage Collector采用清扫的方式回收那些不能用的对象了。</p>
+<hr>
+<p><strong>Phase 6: Concurrent Sweep</strong></p>
+<p>和应用线程同时进行，不需要STW。这个阶段的目的就是移除那些不用的对象，回收他们占用的空间并且为将来使用。</p>
+<img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/concurrent-sweep.jpg">
+<hr>
+<p><strong>Phase 7: Concurrent Reset</strong></p>
+<p>这个阶段并发执行，重新设置CMS算法内部的数据结构，准备下一个CMS生命周期的使用。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.cnblogs.com/zhangxiaoguang/p/5792468.html" target="_blank" rel="noopener">https://www.cnblogs.com/zhangxiaoguang/p/5792468.html</a><br><a href="https://plumbr.io/handbook/what-is-garbage-collection" target="_blank" rel="noopener">https://plumbr.io/handbook/what-is-garbage-collection</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/Basic/" rel="tag"># Basic</a>
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+            <a href="/tags/CMS/" rel="tag"># CMS</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/22/Java/JVM/Basic/Minor GC vs Major GC vs Full GC/" rel="next" title="JVM Minor GC vs Major GC vs Full GC">
+                <i class="fa fa-chevron-left"></i> JVM Minor GC vs Major GC vs Full GC
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="sulang">
+          
+            <p class="site-author-name" itemprop="name">sulang</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">482</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">222</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">542</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Analyze"><span class="nav-number">2.</span> <span class="nav-text">Analyze</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#年轻代对象-晋升-gt-老年对象"><span class="nav-number">2.1.</span> <span class="nav-text">年轻代对象 -晋升-&gt; 老年对象</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Full-Major-GC"><span class="nav-number">2.2.</span> <span class="nav-text">Full/Major GC</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">3.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sulang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

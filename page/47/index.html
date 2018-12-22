@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/09/Tools/Nodejs/config/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/09/Tools/Hexo/hexo/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/09/Tools/Nodejs/config/" itemprop="url">Nodejs 配置</a></h2>
+                <a class="post-title-link" href="/2017/10/09/Tools/Hexo/hexo/" itemprop="url">Hexo配置</a></h2>
         
 
         <div class="post-meta">
@@ -349,8 +349,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/dev-tools/nodejs/" itemprop="url" rel="index">
-                    <span itemprop="name">nodejs</span>
+                  <a href="/categories/dev-tools/hexo/" itemprop="url" rel="index">
+                    <span itemprop="name">hexo</span>
                   </a>
                 </span>
 
@@ -388,7 +388,346 @@
       
         
           
-            <h3 id="cnpm"><a href="#cnpm" class="headerlink" title="cnpm"></a>cnpm</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g cnpm --registry=https://registry.npm.taobao.org</span><br></pre></td></tr></table></figure>
+            <h2 id="站点收录"><a href="#站点收录" class="headerlink" title="站点收录"></a>站点收录</h2><h3 id="百度收录"><a href="#百度收录" class="headerlink" title="百度收录"></a>百度收录</h3><p>site:sulangsss.github.io 确认当前网站是否被收录</p>
+<h4 id="1-百度站长管理添加网站地址"><a href="#1-百度站长管理添加网站地址" class="headerlink" title="1.百度站长管理添加网站地址"></a>1.百度站长管理添加网站地址</h4><h4 id="2-选择HTML验证方式"><a href="#2-选择HTML验证方式" class="headerlink" title="2.选择HTML验证方式"></a>2.选择HTML验证方式</h4><p>1.Next主题配置文件添加如下内容：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">google_site_verification: true</span><br><span class="line">baidu_site_verification: true</span><br></pre></td></tr></table></figure></p>
+<p>2.themes/next/layout/_partials/custom-head.swig 添加如下内容</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;% if theme.baidu_site_verification %&#125;</span><br><span class="line"><span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"baidu-site-verification"</span> <span class="attr">content</span>=<span class="string">"xV2vphJ53Q"</span> /&gt;</span></span><br><span class="line">&#123;% endif %&#125;</span><br></pre></td></tr></table></figure>
+<p>3.发布完成后，查看页面源码是否包含xV2vphJ53Q</p>
+<h4 id="3-自动推送"><a href="#3-自动推送" class="headerlink" title="3.自动推送"></a>3.自动推送</h4><p>Next主题的_config.yml中修改</p>
+<p>baidu_push: true</p>
+<p>seo: true</p>
+<h4 id="4-主动推送"><a href="#4-主动推送" class="headerlink" title="4.主动推送"></a>4.主动推送</h4><p>安装插件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-baidu-url-submit --save</span><br></pre></td></tr></table></figure>
+<p>百度站长工具：网页抓取-&gt;链接提交，查看token</p>
+<p>_config.yml 添加如下内容</p>
+<p>baidu_url_submit:<br>  count: 1 ## 提交最新的一个链接<br>  host: <a href="https://sulangsss.github.io">https://sulangsss.github.io</a> ## 在百度站长平台中注册的域名<br>  token: xxx ## 请注意这是您的秘钥， 所以请不要把博客源代码发布在公众仓库里!<br>  path: baidu_urls.txt ## 文本文档的地址， 新链接会保存在此文本文档里</p>
+<h1 id="这里主要修改url即可，其他保留"><a href="#这里主要修改url即可，其他保留" class="headerlink" title="这里主要修改url即可，其他保留"></a>这里主要修改url即可，其他保留</h1><p>url: <a href="https://sulangsss.github.io">https://sulangsss.github.io</a><br>root: /<br>permalink: :year/:month/:day/:title/<br>permalink_defaults:</p>
+<h1 id="修改type"><a href="#修改type" class="headerlink" title="修改type"></a>修改type</h1><p>deploy:</p>
+<ul>
+<li>type: git<br>repository: <a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:sulangsss/sulangsss.github.io.git<br>branch: master</li>
+<li>type: baidu_url_submitter</li>
+</ul>
+<p>推送功能的实现，分为两部分：</p>
+<ul>
+<li>新链接的产生， hexo generate 会产生一个文本文件，里面包含最新的链接</li>
+<li>新链接的提交， hexo deploy 会从上述文件中读取链接，提交至百度搜索引擎</li>
+</ul>
+<p><a href="https://segmentfault.com/a/1190000009254968" target="_blank" rel="noopener">https://segmentfault.com/a/1190000009254968</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/09/Tools/Hexo/hexo-image/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/09/Tools/Hexo/hexo-image/" itemprop="url">Hexo 加载图片</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-09T13:17:27+08:00">
+                2017-10-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/dev-tools/" itemprop="url" rel="index">
+                    <span itemprop="name">dev_tools</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/dev-tools/hexo/" itemprop="url" rel="index">
+                    <span itemprop="name">hexo</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/09/Tools/Hexo/hexo-ci/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/09/Tools/Hexo/hexo-ci/" itemprop="url">Hexo CI</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-09T13:17:27+08:00">
+                2017-10-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/dev-tools/" itemprop="url" rel="index">
+                    <span itemprop="name">dev_tools</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/dev-tools/hexo/" itemprop="url" rel="index">
+                    <span itemprop="name">hexo</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="AppVeyor配置"><a href="#AppVeyor配置" class="headerlink" title="AppVeyor配置"></a>AppVeyor配置</h4><p>1.用Github账号登录AppYevory</p>
+<p>2.添加Github仓库地址</p>
+<p>3.生成access_token</p>
+<p>填入Github AccessToken生成加密Token，<a href="https://ci.appveyor.com/tools/encrypt" target="_blank" rel="noopener">https://ci.appveyor.com/tools/encrypt</a></p>
+<p>4.AppYevory在仓库的的配置文件 appveyory.yml</p>
+<p>在AppYevory对应的项目里面配置静态变量</p>
+<p>TARGET_BRANCH：master</p>
+<p>GIT_USER_NAME</p>
+<p>GIT_USER_EMAIL</p>
+<p>STATIC_SITE_REPO：<a href="https://github.com/sulangsss/sulangsss.github.io" target="_blank" rel="noopener">https://github.com/sulangsss/sulangsss.github.io</a></p>
+
           
         
       
@@ -1340,7 +1679,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/18/DB/MySQL/Optimize-SQL/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/18/DB/Redis/command/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1359,7 +1698,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/09/18/DB/MySQL/Optimize-SQL/" itemprop="url">MySQL SQL语句调优</a></h2>
+                <a class="post-title-link" href="/2017/09/18/DB/Redis/command/" itemprop="url">redis command</a></h2>
         
 
         <div class="post-meta">
@@ -1394,8 +1733,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
+                  <a href="/categories/Database/" itemprop="url" rel="index">
+                    <span itemprop="name">Database</span>
                   </a>
                 </span>
 
@@ -1405,8 +1744,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
+                  <a href="/categories/Database/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
                   </a>
                 </span>
 
@@ -1444,83 +1783,13 @@
       
         
           
-            <h3 id="SQL-优化准则"><a href="#SQL-优化准则" class="headerlink" title="SQL 优化准则"></a>SQL 优化准则</h3><p>在应用层，通过pt工具和慢查询日志的配合，可以轻松地分辨出全表扫描的语句</p>
-<h3 id="基本原则"><a href="#基本原则" class="headerlink" title="基本原则"></a>基本原则</h3><ul>
-<li><p>避免全表扫描</p>
-</li>
-<li><p>建立索引</p>
-</li>
-<li><p>尽量避免向客户端返回大数据量，若数据量过大，应该考虑相应需求是否合理</p>
-</li>
-<li><p>尽量避免大事务操作，提高系统并发能力</p>
-</li>
-<li><p>使用基于游标的方法或临时表方法之前，应先寻找基于集的解决方案来解决问题，基于集的方法通常更有效。尽量避免使用游标，因为游标的效率较差。</p>
-</li>
-</ul>
-<h4 id="关于where-后的条件"><a href="#关于where-后的条件" class="headerlink" title="关于where 后的条件"></a>关于where 后的条件</h4><ul>
-<li><p>应尽量避免在where子句中使用 != 或 &lt;&gt; 操作符，否则引擎将放弃使用索引，而是进行全表扫描。</p>
-</li>
-<li><p>应尽量避免在where子句中使用or来连接条件,可以考虑使用union代替</p>
-</li>
-<li><p>in和not in也要慎用，对于连续的数值，能用between就不要用in，exists 代替 in</p>
-</li>
-<li><p>尽量避免在where子句中对字段进行表达式操作和函数操作</p>
-</li>
-</ul>
-<h4 id="关于数据类型"><a href="#关于数据类型" class="headerlink" title="关于数据类型"></a>关于数据类型</h4><ul>
-<li><p>尽量使用数字型字段，若只含数值信息的字段尽量不要设计为字符型，这会降低查询和连接的性能，并会增加存储开销。</p>
-</li>
-<li><p>尽可能的使用 varchar/nvarchar 代替 char/nchar ，因为变长字段存储空间小，对于查询来说，在一个相对较小的字段内搜索效率显然要高些。</p>
-</li>
-<li><p>最好不要给数据库留NULL，尽可能的使用 NOT NULL填充数据库.备注、描述、评论之类的可以设置为 NULL，其他的，最好不要使用NULL。</p>
-</li>
-<li><p>任何地方都不要使用 select <em> from t ，用具体的字段列表代替“</em>”，不要返回用不到的任何字段。</p>
-</li>
-</ul>
-<h4 id="关于临时表"><a href="#关于临时表" class="headerlink" title="关于临时表"></a>关于临时表</h4><ul>
-<li><p>避免频繁创建和删除临时表，以减少系统表资源的消耗。对于一次性事件，最好使用导出表。</p>
-</li>
-<li><p>在新建临时表时，如果一次性插入数据量很大，那么可以使用 select into 代替 create table，避免造成大量log，以提高速度；<br>如果数据量不大，为了缓和系统表的资源，应先create table，然后insert。</p>
-</li>
-<li><p>如果使用到了临时表，在最后将所有的临时表显式删除时，先truncate table ，然后drop table，这样可以避免系统表的较长时间锁定。</p>
-</li>
-</ul>
-<h4 id="关于索引"><a href="#关于索引" class="headerlink" title="关于索引"></a>关于索引</h4><ul>
-<li><p>先应考虑在 where 及 order by 涉及的列上建立索引。</p>
-</li>
-<li><p>在使用索引字段作为条件时，如果该索引是复合索引，那么必须使用到该索引中的第一个字段作为条件时才能保证系统使用该索引， 否则该索引将不会被使用，<br>并且应尽可能的让字段顺序与索引顺序相一致。</p>
-</li>
-<li><p>索引并不是越多越好，索引固然可以提高相应的select的效率，但同时也降低了insert和update的效率，因为insert或update时有可能会重建索引，所以<br>视具体情况而定。一个表的索引数最好不要超过7个，若太多则应考虑一些不常使用到的列上建的索引是否有必要.</p>
-</li>
-</ul>
-<h4 id="数据库架构调优"><a href="#数据库架构调优" class="headerlink" title="数据库架构调优"></a>数据库架构调优</h4><ul>
-<li>分区分表</li>
-<li>业务分库</li>
-<li>主从同步与读写分离</li>
-<li>数据缓存</li>
-<li>主从热备与HA双活</li>
-</ul>
-<hr>
-<h3 id="SQL-优化实战"><a href="#SQL-优化实战" class="headerlink" title="SQL 优化实战"></a>SQL 优化实战</h3><h4 id="explain"><a href="#explain" class="headerlink" title="explain"></a>explain</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">explain</span> <span class="keyword">select</span> * from.....</span><br></pre></td></tr></table></figure>
-<p>输出结果说明</p>
-<ul>
-<li><p>select_type：查询类型</p>
-</li>
-<li><p>table：查询表名</p>
-</li>
-<li><p>type：扫描方式，all全表</p>
-</li>
-<li><p>possible_keys：可能使用到的索引</p>
-</li>
-<li><p>key：实际使用到的索引</p>
-</li>
-<li><p>rows：sql语句扫描了多少行记录才得到所要的结果</p>
-</li>
-<li><p>extra：附加说明，比如排序方式</p>
-</li>
-</ul>
-<h4 id="group-by"><a href="#group-by" class="headerlink" title="group by"></a>group by</h4><p>在使用group by 分组查询是，默认分组后，还会排序，可能会降低速度。在group by 后面增加 order by null 就可以防止排序。</p>
-<p>有些情况下，可以使用连接来替代子查询。因为使用join，MySQL不需要在内存中创建临时表。</p>
+            <h3 id="常用操作命令"><a href="#常用操作命令" class="headerlink" title="常用操作命令"></a>常用操作命令</h3><h4 id="登录"><a href="#登录" class="headerlink" title="登录"></a>登录</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h <span class="number">127.0</span><span class="number">.0</span><span class="number">.1</span> -p <span class="number">6379</span> -a password</span><br></pre></td></tr></table></figure>
+<h4 id="切换数据库"><a href="#切换数据库" class="headerlink" title="切换数据库"></a>切换数据库</h4><p>默认16个数据库：0-15，进入redis后默认是0库。不建议使用多个数据库</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select dbIndex</span><br></pre></td></tr></table></figure>
+<h4 id="清空数据库"><a href="#清空数据库" class="headerlink" title="清空数据库"></a>清空数据库</h4><p>flushdb只清除当前数据库</p>
+<p>flushall清除所有数据库</p>
+<h4 id="查看状态参数命令"><a href="#查看状态参数命令" class="headerlink" title="查看状态参数命令"></a>查看状态参数命令</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">info clients</span><br></pre></td></tr></table></figure>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://segmentfault.com/a/1190000010999677" target="_blank" rel="noopener">https://segmentfault.com/a/1190000010999677</a></p>
 
           
         
@@ -1710,333 +1979,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/18/DB/Redis/command/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/18/DB/Redis/command/" itemprop="url">redis command</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-18T20:31:19+08:00">
-                2017-09-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Database/" itemprop="url" rel="index">
-                    <span itemprop="name">Database</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Database/Redis/" itemprop="url" rel="index">
-                    <span itemprop="name">Redis</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="常用操作命令"><a href="#常用操作命令" class="headerlink" title="常用操作命令"></a>常用操作命令</h3><h4 id="登录"><a href="#登录" class="headerlink" title="登录"></a>登录</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h <span class="number">127.0</span><span class="number">.0</span><span class="number">.1</span> -p <span class="number">6379</span> -a password</span><br></pre></td></tr></table></figure>
-<h4 id="切换数据库"><a href="#切换数据库" class="headerlink" title="切换数据库"></a>切换数据库</h4><p>默认16个数据库：0-15，进入redis后默认是0库。不建议使用多个数据库</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select dbIndex</span><br></pre></td></tr></table></figure>
-<h4 id="清空数据库"><a href="#清空数据库" class="headerlink" title="清空数据库"></a>清空数据库</h4><p>flushdb只清除当前数据库</p>
-<p>flushall清除所有数据库</p>
-<h4 id="查看状态参数命令"><a href="#查看状态参数命令" class="headerlink" title="查看状态参数命令"></a>查看状态参数命令</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">info clients</span><br></pre></td></tr></table></figure>
-<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://segmentfault.com/a/1190000010999677" target="_blank" rel="noopener">https://segmentfault.com/a/1190000010999677</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/14/Python/yield/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/14/Python/yield/" itemprop="url">yield</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-14T23:14:33+08:00">
-                2017-09-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="generator"><a href="#generator" class="headerlink" title="generator"></a>generator</h4><p>在python的函数（function）定义中，只要出现了yield表达式（Yield expression），那么事实上定义的是一个generator function，调用这个generator function返回值是一个generator。这根普通的函数调用有所区别。</p>
-<h5 id="示例代码1：返回值类型"><a href="#示例代码1：返回值类型" class="headerlink" title="示例代码1：返回值类型"></a>示例代码1：返回值类型</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">gen_generator</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">yield</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">gen_value</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    ret = gen_generator()</span><br><span class="line">    print(ret, type(ret))  <span class="comment"># &lt;generator object gen_generator at 0x02645648&gt; &lt;type 'generator'&gt;</span></span><br><span class="line">    ret = gen_value()</span><br><span class="line">    print(ret, type(ret))  <span class="comment"># 1 &lt;type 'int'&gt;</span></span><br></pre></td></tr></table></figure>
-<p>输出结果</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;generator object gen_generator at <span class="number">0x7f84244ab3b8</span>&gt; &lt;<span class="class"><span class="keyword">class</span> '<span class="title">generator</span>'&gt;</span></span><br><span class="line"><span class="class">1 &lt;<span class="title">class</span> '<span class="title">int</span>'&gt;</span></span><br></pre></td></tr></table></figure>
-<p>两者返回同样的值，但是两者返回的最终类型却不一样，return 返回的是int基本数据类型，yield返回的却是generator</p>
-<hr>
-<h5 id="示例代码2：next调用"><a href="#示例代码2：next调用" class="headerlink" title="示例代码2：next调用"></a>示例代码2：next调用</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">gen_example</span><span class="params">()</span>:</span></span><br><span class="line">    print(<span class="string">'before any yield'</span>)</span><br><span class="line">    <span class="keyword">yield</span> (<span class="string">'first yield'</span>)</span><br><span class="line">    print(<span class="string">'between yields'</span>)</span><br><span class="line">    <span class="keyword">yield</span> (<span class="string">'second yield'</span>)</span><br><span class="line">    print(<span class="string">'no yield anymore'</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试代码</span></span><br><span class="line">gen = gen_example()</span><br><span class="line">print(<span class="string">'第1次调用:'</span>)</span><br><span class="line">next(gen)  <span class="comment"># 第1次调用next</span></span><br><span class="line">print(<span class="string">'第2次调用:'</span>)</span><br><span class="line">next(gen)  <span class="comment"># 第2次调用next</span></span><br><span class="line">print(<span class="string">'第3次调用:'</span>)</span><br><span class="line">next(gen)  <span class="comment"># 第3次调用next</span></span><br></pre></td></tr></table></figure>
-<p>第一次调用 next() 输出：before any yield<br>第二次调用 next() 输出：between yields<br>第三次调用 next() 输出：抛出错误异常</p>
-<p>调用过程分析</p>
-<ul>
-<li>调用gen example方法并没有输出任何内容，说明函数体的代码尚未开始执行。当调用generator的next方法，generator会执行到yield 表达式处，返回yield表达式的内容，然后暂停（挂起）在这个地方，所以第一次调用next打印第一句并返回“first yield”。 暂停意味着方法的局部变量，指针信息，运行环境都保存起来，直到下一次调用next方法恢复。第二次调用next之后就暂停在最后一个yield，再次调用next()方法，则会抛出StopIteration异常。　</li>
-</ul>
-<hr>
-<h5 id="示例代码3：for"><a href="#示例代码3：for" class="headerlink" title="示例代码3：for"></a>示例代码3：for</h5><p>for语句能自动捕获StopIteration异常，所以generator（本质上是任何iterator）较为常用的方法是在循环中使用：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">generator_example</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">yield</span> <span class="number">1</span></span><br><span class="line">    <span class="keyword">yield</span> <span class="number">2</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> e <span class="keyword">in</span> generator_example():</span><br><span class="line">    print(e)</span><br></pre></td></tr></table></figure>
-<p>输出结果：1 2</p>
-<p>小结，generator function产生的generator与普通的function有什么区别呢？</p>
-<ul>
-<li>（1）function每次都是从第一行开始运行，而generator从上一次yield开始的地方运行</li>
-<li>（2）function调用一次返回一个（一组）值，而generator可以多次返回</li>
-<li>（3）function可以被无数次重复调用，而一个generator实例在yield最后一个值 或者return之后就不能继续调用了</li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/46/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/46/">46</a><span class="page-number current">47</span><a class="page-number" href="/page/48/">48</a><a class="extend next" rel="next" href="/page/48/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/46/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/46/">46</a><span class="page-number current">47</span><a class="page-number" href="/page/48/">48</a><a class="page-number" href="/page/49/">49</a><a class="extend next" rel="next" href="/page/48/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2083,7 +2030,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">480</span>
+                <span class="site-state-item-count">482</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2105,7 +2052,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">541</span>
+                <span class="site-state-item-count">542</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
