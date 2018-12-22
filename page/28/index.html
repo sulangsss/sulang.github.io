@@ -284,6 +284,1012 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/12/Server/Cache/分布式缓存设计/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/12/Server/Cache/分布式缓存设计/" itemprop="url">分布式缓存设计</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-12T01:48:18+08:00">
+                2018-03-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Cache/" itemprop="url" rel="index">
+                    <span itemprop="name">Cache</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="缓存设计的核心要素"><a href="#缓存设计的核心要素" class="headerlink" title="缓存设计的核心要素"></a>缓存设计的核心要素</h2><hr>
+<h3 id="容量规划"><a href="#容量规划" class="headerlink" title="容量规划"></a>容量规划</h3><ul>
+<li><p>缓存内容的大小/数量</p>
+</li>
+<li><p>淘汰策略</p>
+</li>
+<li><p>缓存的数据结构</p>
+</li>
+<li><p>每秒的读/写峰值</p>
+</li>
+</ul>
+<hr>
+<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><ul>
+<li><p>线程模型</p>
+</li>
+<li><p>预热方法</p>
+</li>
+<li><p>线程模型</p>
+</li>
+<li><p>缓存分片</p>
+</li>
+<li><p>冷热数据的比例</p>
+</li>
+</ul>
+<hr>
+<h3 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h3><ul>
+<li><p>复制模型</p>
+</li>
+<li><p>失效转移</p>
+</li>
+<li><p>持久策略</p>
+</li>
+<li><p>缓存重建</p>
+</li>
+</ul>
+<hr>
+<h3 id="缓存监控"><a href="#缓存监控" class="headerlink" title="缓存监控"></a>缓存监控</h3><ul>
+<li><p>缓存服务监控</p>
+</li>
+<li><p>缓存容量监控</p>
+</li>
+<li><p>缓存请求监控</p>
+</li>
+<li><p>缓存响应时间监控</p>
+</li>
+</ul>
+<hr>
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><ul>
+<li><p>是否有可能发生缓存穿透</p>
+</li>
+<li><p>是否有大对象</p>
+</li>
+<li><p>是否使用缓存实现分布式锁</p>
+</li>
+<li><p>是否使用缓存支持的脚本（Lua）</p>
+</li>
+<li><p>是否避免了Race Condition</p>
+</li>
+</ul>
+<h2 id="缓存设计案例汇总"><a href="#缓存设计案例汇总" class="headerlink" title="缓存设计案例汇总"></a>缓存设计案例汇总</h2><ul>
+<li><p>缓存系统主要消耗的是服务器的内存，因此，在使用缓存时必须先对应用需要缓存的数据大小进行评估，包括缓存的数据结构、缓存大小、缓存数量、缓存的失效时间，<br>然后根据业务情况自行推算在未来一定时间内的容量的使用情况，根据容量评估的结果来申请和分配缓存资源，否则会造成资源浪费或者缓存空间不够。</p>
+</li>
+<li><p>建议将使用缓存的业务进行分离，核心业务和非核心业务使用不同的缓存实例，从物理上进行隔离，如果有条件，则请对每个业务使用单独的实例或者集群，以减小应用之间互相影响的可能性<br>。笔者就经常听说有的公司应用了共享缓存，造成缓存数据被覆盖以及缓存数据错乱的线上事故。</p>
+</li>
+<li><p>根据缓存实例提供的内存大小推算应用需要使用的缓存实例数量，一般在公司里会成立一个缓存管理的运维团队，这个团队会将缓存资源虚拟成多个相同内存大小的缓存实例。</p>
+</li>
+</ul>
+<p>例如一个实例有4GB内存，在应用申请时可以按需申请足够的实例数量来使用，对这样的应用需要进行分片，详情请参考《可伸缩服务架构：框架与中间件》中4.4.3的内容。这里需要注意，<br>如果我们使用了RDB备份机制，每个实例使用4GB内存，则我们的系统需要大于8GB内存，因为RDB备份时使用了 copy-on-write 机制，需要fork出一个子进程，并且复制一份内存，因此需要双份的内存存储大小。</p>
+<ul>
+<li><p>缓存一般是用来加速数据库的读操作的，一般先访问缓存后访问数据库，所以缓存的超时时间的设置是很重要的。笔者曾经在一家互联网公司遇到过由于运维操作失误导致缓存超时设置得较长<br>，从而拖垮服务的线程池，最终导致服务雪崩的情况。</p>
+</li>
+<li><p>所有的缓存实例都需要添加监控，这是非常重要的，我们需要对慢查询、大对象、内存使用情况做可靠的监控。</p>
+</li>
+<li><p>我们不推荐多个业务共享一个缓存实例，但是由于成本控制的原因，这种情况经常出现，我们需要通过规范来限制各个应用使用的key有唯一的前缀，并进行隔离设计，避免产生缓存互相覆盖的问题。</p>
+</li>
+<li><p>任何缓存的key都必须设定缓存失效时间，且失效时间不能集中在某一点，否则会导致缓存占满内存或者缓存雪崩。</p>
+</li>
+<li><p>低频访问的数据不要放在缓存中，如我们前面所说的，我们使用缓存的主要目的是提高读取性能。</p>
+</li>
+</ul>
+<p>曾经有个小伙伴设计了一套定时的批处理系统，由于批处理系统需要对一个大的数据模型进行计算，所以该小伙伴把这个数据模型保存在每个节点的本地缓存中，并通过消息队列接收更新的消息<br>来维护本地缓存中模型的实时性，但是这个模型每个月只用了一次，所以这样使用缓存是很浪费的。</p>
+<p>既然是批处理任务，就需要把任务进行分割，进行批量处理，采用分而治之、逐步计算的方法，得出最终的结果即可。</p>
+<ul>
+<li><p>缓存的数据不易过大，尤其是Redis，因为Redis使用的是单线程模型，在单个缓存key的数据过大时，会阻塞其他请求的处理。</p>
+</li>
+<li><p>对于存储较多value的key，尽量不要使用HGETALL等集合操作，该操作会造成请求阻塞，影响其他应用的访问。</p>
+</li>
+<li><p>缓存一般用于在交易系统中加速查询的场景，有大量的更新数据时，尤其是批量处理时，请使用批量模式，但是这种场景较少。</p>
+</li>
+<li><p>如果对性能的要求不是非常高，则尽量使用分布式缓存，而不要使用本地缓存，因为本地缓存在服务的各个节点之间复制，在某一时刻副本之间是不一致的，如果这个缓存代表的是开关，<br>而且分布式系统中的请求有可能会重复，就会导致重复的请求走到两个节点，一个节点的开关是开，一个节点的开关是关，如果请求处理没有做到幂等，就会造成处理重复，在严重情况下<br>会造成资金损失。</p>
+</li>
+<li><p>在写缓存时一定要写入完全正确的数据，如果缓存数据的一部分有效、一部分无效，则宁可放弃缓存，也不要把部分数据写入缓存，否则会造成空指针、程序异常等。</p>
+</li>
+<li><p>在通常情况下，读的顺序是先缓存，后数据库；写的顺序是先数据库，后缓存。</p>
+</li>
+<li><p>在使用本地缓存（如Ehcache）时，一定要严格控制缓存对象的个数及声明周期。由于JVM的特性，过多的缓存对象会极大影响JVM的性能，甚至导致内存溢出等。</p>
+</li>
+<li><p>在使用缓存时，一定要有降级处理，尤其是对关键的业务环节，缓存有问题或者失效时也要能回源到数据库进行处理。</p>
+</li>
+</ul>
+<h2 id="缓存问题案例"><a href="#缓存问题案例" class="headerlink" title="缓存问题案例"></a>缓存问题案例</h2><h3 id="现象：某应用程序的数据库负载瞬时升高"><a href="#现象：某应用程序的数据库负载瞬时升高" class="headerlink" title="现象：某应用程序的数据库负载瞬时升高"></a>现象：某应用程序的数据库负载瞬时升高</h3><p>原因：在应用程序中对使用的大量缓存key设置了同一个固定的失效时间，当缓存失效时，会造成在一段时间内同时访问数据库，造成数据库的压力较大。</p>
+<p>总结：在使用缓存时需要进行缓存设计，要充分考虑如何避免常见的缓存穿透、缓存雪崩、缓存并发等问题，尤其是对于高并发的缓存使用，需要对key的过期时间进行随机设置，<br>例如，将过期时间设置为10秒+random(2)，也就是将过期时间随机设置成10～12秒。</p>
+<h3 id="现象：导致迁移前后两个系统的核心操作重复"><a href="#现象：导致迁移前后两个系统的核心操作重复" class="headerlink" title="现象：导致迁移前后两个系统的核心操作重复"></a>现象：导致迁移前后两个系统的核心操作重复</h3><p>原因：在迁移的过程中，重复的流量进入了不同的节点，由于使用了本地缓存存储迁移开关，而迁移开关在开关打开的瞬间导致各个节点的开关状态不一致，有的是开、有的是关，<br>所以对于不同节点的流量的处理重复，一个走了开关开的逻辑，一个走了开关关的逻辑。</p>
+<p>总结：避免使用本地缓存来存储迁移开关，迁移开关应该在有状态的订单上标记。</p>
+<h3 id="现象：某模块设计使用了缓存加速数据库的读操作的性能，但发现数据库负载并没有明显下降"><a href="#现象：某模块设计使用了缓存加速数据库的读操作的性能，但发现数据库负载并没有明显下降" class="headerlink" title="现象：某模块设计使用了缓存加速数据库的读操作的性能，但发现数据库负载并没有明显下降"></a>现象：某模块设计使用了缓存加速数据库的读操作的性能，但发现数据库负载并没有明显下降</h3><p>原因：由于这个模块的使用方查询请求的数据在数据库中不存在，是非法的数据，所以导致缓存没有命中，每次都穿透到数据库，且量级较大。</p>
+<p>总结：在使用缓存时需要进行缓存设计，要充分考虑如何避免常见的缓存穿透、缓存雪崩、缓存并发等问题，尤其是对高并发的缓存使用，需要对无效的key进行缓存，<br>以抵挡恶意的或者无意的对无效缓存查询的攻击或影响。</p>
+<h3 id="现象：监控系统报警，Redis中单个哈希键占用的空间巨大"><a href="#现象：监控系统报警，Redis中单个哈希键占用的空间巨大" class="headerlink" title="现象：监控系统报警，Redis中单个哈希键占用的空间巨大"></a>现象：监控系统报警，Redis中单个哈希键占用的空间巨大</h3><p>原因：应用系统使用了哈希键，哈希键本身有过期时间，但是哈希键里面的每个键值对没有过期时间。</p>
+<p>总结：在设计Redis的过程中，如果有大量的键值对要保存，则请使用字符串键的数据库类型，并对每个键都设置过期时间，请不要在哈希键内部存储一个没有边界的集合数据。<br>实际上，无论是对缓存、内存还是对数据库的设计，如果使用任意一个集合的数据结构，则都要考虑为它设置最大限制，避免内存用光，最常见的是集合溢出导致的内存溢出的问题。</p>
+<h3 id="现象：某业务项目由于缓存宕机导致业务逻辑中断，数据不一致"><a href="#现象：某业务项目由于缓存宕机导致业务逻辑中断，数据不一致" class="headerlink" title="现象：某业务项目由于缓存宕机导致业务逻辑中断，数据不一致"></a>现象：某业务项目由于缓存宕机导致业务逻辑中断，数据不一致</h3><p>原因：Redis进行主备切换，导致瞬间内应用连接Redis异常，应用并没有对缓存做降级处理。</p>
+<p>总结：对于核心业务，在使用缓存时一定要有降级方案。常见的降级方案是在数据库层次预留足够的容量，在某一部分缓存出现问题时，可以让应用暂时回源到数据库继续业务逻辑，<br>而不应该中断业务逻辑，但是这需要严格的容量评估，请参考《分布式服务架构：原理设计与实战》第3章的内容。</p>
+<h3 id="现象：某应用系统负载升高，响应变慢，发现应用进行频繁GC，甚至出现OutOfMemroyError-GC-overhead-limt-exceed的错误日志"><a href="#现象：某应用系统负载升高，响应变慢，发现应用进行频繁GC，甚至出现OutOfMemroyError-GC-overhead-limt-exceed的错误日志" class="headerlink" title="现象：某应用系统负载升高，响应变慢，发现应用进行频繁GC，甚至出现OutOfMemroyError: GC overhead limt exceed的错误日志"></a>现象：某应用系统负载升高，响应变慢，发现应用进行频繁GC，甚至出现OutOfMemroyError: GC overhead limt exceed的错误日志</h3><p>原因：因为这个项目是个历史项目，使用了Hibernate ORM框架，在Hibernate中开启了二级缓存，使用了Ehcache；但是在Ehcache中没有控制缓存对象的个数，缓存对象增多，<br>导致内存紧张，所以进行了频繁的GC操作。</p>
+<p>总结：使用本地缓存（如Ehcache、OSCache、应用内存）时，一定要严格控制缓存对象的个数及声明周期。</p>
+<h3 id="现象：某个正常运行的应用突然报警线程数过高，之后很快就出现了内存溢出"><a href="#现象：某个正常运行的应用突然报警线程数过高，之后很快就出现了内存溢出" class="headerlink" title="现象：某个正常运行的应用突然报警线程数过高，之后很快就出现了内存溢出"></a>现象：某个正常运行的应用突然报警线程数过高，之后很快就出现了内存溢出</h3><p>原因：由于缓存连接数达到最大限制，应用无法连接缓存，并且超时时间设置得较大，导致访问缓存的服务都在等待缓存操作返回，由于缓存负载较高，处理不完所有的请求，<br>但是这些服务都在等待缓存操作返回，服务这时在等待，并没有超时，就不能降级并继续访问数据库。这在BIO模式下线程池就会撑满，使用方的线程池也都撑满；在NIO模式<br>下一样会使服务的负载增加，服务响应变慢，甚至使服务被压垮。</p>
+<p>总结：在使用远程缓存（如Redis、Memcached）时，一定要对操作超时时间进行设置，这是非常关键的，一般我们设计缓存作为加速数据库读取的手段，也会对缓存操作做<br>降级处理，因此推荐使用更短的缓存超时时间，如果一定要给出一个数字，则希望是100毫秒以内。</p>
+<h3 id="某项目使用缓存存储业务数据，上线后出现错误问题，开发人员束手无策"><a href="#某项目使用缓存存储业务数据，上线后出现错误问题，开发人员束手无策" class="headerlink" title="某项目使用缓存存储业务数据，上线后出现错误问题，开发人员束手无策"></a>某项目使用缓存存储业务数据，上线后出现错误问题，开发人员束手无策</h3><p>原因：开发人员不知道如何发现、排查、定位和解决缓存问题。</p>
+<p>总结：在设计缓存时要有降级方案，在遇到问题时首先使用降级方法，还要设计完善的监控和报警功能，帮助开发人员快速发现缓存问题，进而来定位和解决问题。</p>
+<h3 id="某项目在使用缓存后，开发测试通过，到生产环境后，服务却出现了不可预知的问题"><a href="#某项目在使用缓存后，开发测试通过，到生产环境后，服务却出现了不可预知的问题" class="headerlink" title="某项目在使用缓存后，开发测试通过，到生产环境后，服务却出现了不可预知的问题"></a>某项目在使用缓存后，开发测试通过，到生产环境后，服务却出现了不可预知的问题</h3><p>原因：该应用的缓存key与其他应用缓存 key冲突，导致互相覆盖，出现逻辑错误。</p>
+<p>总结：在使用缓存时一定要有隔离的设计，可以通过不同的缓存实例来做物理隔离，也可以通过各个应用的缓存key使用不同的前缀进行逻辑隔离。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/11/DB/MySQL/ACID/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/11/DB/MySQL/ACID/" itemprop="url">MySQL ACID</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-11T22:55:07+08:00">
+                2018-03-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="ACID"><a href="#ACID" class="headerlink" title="ACID"></a>ACID</h3><p>数据库事务有ACID四个属性，分别是原子性、一致性、隔离性、持久性。</p>
+<h4 id="原子性-Atomicity"><a href="#原子性-Atomicity" class="headerlink" title="原子性(Atomicity)"></a>原子性(Atomicity)</h4><p>整个事务最终只能是要么成功要么失败，不能存在中间状态，如果发生错误了就需要回滚回去，就像这个事务从来没有执行过一样。</p>
+<hr>
+<h4 id="一致性-Consistency"><a href="#一致性-Consistency" class="headerlink" title="一致性(Consistency)"></a>一致性(Consistency)</h4><p>指系统要处于一个一致的状态，不能因为并发事务的多少影响到系统的一致性，举个典型的例子就是转帐的情况，假设有ABC三个帐号各有100元，<br>那么不管这三个帐号之间怎么转账，整个系统总的额度是300元这一点是应该是不变的。其实ACID里的一致性更多的是应用程序需要考虑的问题，<br>和分布式系统里的CAP里的一致性完全不是一个概念。</p>
+<hr>
+<h4 id="隔离性-Isolation"><a href="#隔离性-Isolation" class="headerlink" title="隔离性(Isolation)"></a>隔离性(Isolation)</h4><p>本质上是解决并发执行的事务如何保证数据库状态是正确的，抽象描述叫可串行化，就是并发的事务在执行的时候效果要求达到看起来像是一个个事务串行执行的效果。<br>有冲突的事务之间的隔离性如果保证不了会引起前面的一致性(consistency)也无法满足。</p>
+<hr>
+<h4 id="持久性-Durability"><a href="#持久性-Durability" class="headerlink" title="持久性(Durability)"></a>持久性(Durability)</h4><p>在事务完成以后所有的修改可以持久的保存在数据库中，一般会采用WAL的方式，会把操作提前记录到日志中来保证即使操作还没有刷到磁盘就宕机的情况下有日志可以恢复。</p>
+<h3 id="MySQL无法提供严格的分布式事务语义的支持"><a href="#MySQL无法提供严格的分布式事务语义的支持" class="headerlink" title="MySQL无法提供严格的分布式事务语义的支持"></a>MySQL无法提供严格的分布式事务语义的支持</h3><p>如果客户端发送的SQL只涉及到一个节点，那自然是可以保证事务的，但是如果客户端发送的SQL涉及到两个及以上节点的SQL，那就无法保证事务语义了。原因主要是两个：</p>
+<ul>
+<li><p>原子性无法保证，在一个节点commit成功以后，在另外的节点commit失败了，这个事务就处在一个中间状态，此时原子性被打破。</p>
+</li>
+<li><p>隔离性，这个事务的一部分提交了，另一部分未提交，此时该事务正常是不该被读取到的，但是提交成功的部分会被其他事务读到，此时就无法保证隔离性了。</p>
+</li>
+</ul>
+<p>另外就算是涉及多个节点的操作都是成功的，理论上来说也是无法保证隔离性的。因为假设A事务的一个节点先commit成功，其他的节点后commit成功，而此时B事务在读取的<br>时候可能会读取到了A事务最早commit成功的那部分内容，却没有读到后来commit成功的内容，此时依然无法保证隔离性。</p>
+<p>更本质一点的原因是MySQL的事务都是每个实例维护自身的事务ID，而基于MySQL集群的分布式方案没有一个全局的事务ID来标识每个MySQL实例上的事务以及全局事务的元信息<br>的管理，所以无法做到严格的分布式事务语义。</p>
+<p>但实际上绝大多数业务对这个需求未必那么强烈，因为绝大多数的业务逻辑都是可以拆分的，拆成一个个只落在一个分库里的操作在绝大多数场景下是完全可行的，而且拆分完以后<br>也会更可控，所以这个问题在我们支撑业务的过程中也不是一个特别大的问题。</p>
+<h3 id="隔离级别"><a href="#隔离级别" class="headerlink" title="隔离级别"></a>隔离级别</h3><hr>
+<h4 id="READ-UNCOMMITTED"><a href="#READ-UNCOMMITTED" class="headerlink" title="READ UNCOMMITTED"></a>READ UNCOMMITTED</h4><p>事务中的修改，即使没有提交，对其他事务也都是可见的。从性能来说，READ UNCOMMITTED不会比其他的级别好太多，实际应用中很少使用。</p>
+<p>事务可以读取未提交的数据，称为脏读(Dirty Read)。</p>
+<hr>
+<h4 id="READ-COMMITTED"><a href="#READ-COMMITTED" class="headerlink" title="READ COMMITTED"></a>READ COMMITTED</h4><p>大多数数据库默认的级别，这个级别只是满足前面提到的隔离性的简单定义：一个事务开始时，只能“看见”已经提交的事务所做的修改。</p>
+<p>即一个事务从开始直到提交前，所做的任何修改对其他事务是不可见的。</p>
+<p>这个级别也称为不可重复读（nonrepeatable read），因为两次执行同样的查询，可能会得到不一样的结果。</p>
+<hr>
+<h4 id="REPEATABLE-READ"><a href="#REPEATABLE-READ" class="headerlink" title="REPEATABLE READ"></a>REPEATABLE READ</h4><p>该级别解决了脏读问题，保证了在同一个事务中多次读取同样的记录的结果是一致的。</p>
+<p>但是该级别在理论上，还是无法解决另一个问题——幻读（Phantom Read）。</p>
+<p>Phantom Read：当某个事务在读取某个范围内的记录时，另外一个事务又在该范围内插入了新的记录，此时如果之前的事务再次读取该范围的<br>记录时，会产生幻行（Phantom Row）</p>
+<p>注：InnoDB和XtraDB通过多版本并发控制（MVCC，Mutlversion Concurrency Control）解决了幻读问题。</p>
+<p>关于账户转账出问题的参考案例：<a href="http://www.importnew.com/28657.html" target="_blank" rel="noopener">http://www.importnew.com/28657.html</a></p>
+<hr>
+<h4 id="SERIALIZABLE"><a href="#SERIALIZABLE" class="headerlink" title="SERIALIZABLE"></a>SERIALIZABLE</h4><p>最高级别的隔离，通过强制事务串行执行，避免了前面提到的幻读（Phantom Read）问题。</p>
+<p>该级别会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁争用的问题。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>Dirty Read</th>
+<th>Nonrepeatable Read</th>
+<th>Phantom Read</th>
+<th>Locked Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>READ UNCOMMITTED</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>READ COMMITTED</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>REPEATABLE READ</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>SERIALIZABLE</td>
+<td>no</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/11/DB/MySQL/Concurrency-Control/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/11/DB/MySQL/Concurrency-Control/" itemprop="url">MySQL  Concurrency Control</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-11T22:55:07+08:00">
+                2018-03-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="MySQL-并发控制"><a href="#MySQL-并发控制" class="headerlink" title="MySQL 并发控制"></a>MySQL 并发控制</h2><p>无论何时，只要有多个查询需要在同一时刻修改数据，都会产生并发控制的问题。</p>
+<p>MySQL在两个层面的并发控制：</p>
+<ul>
+<li><p>服务器层</p>
+</li>
+<li><p>存储引擎层</p>
+</li>
+</ul>
+<h2 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h2><h3 id="读写锁"><a href="#读写锁" class="headerlink" title="读写锁"></a>读写锁</h3><p>在处理并发读或写时，可以通过实现一个由两种类型的锁组成的锁系统解决问题。</p>
+<p>这两种锁通常被称为共享锁（shared lock）和排他锁（exclusive lock，读锁/写锁）</p>
+<h3 id="锁类型"><a href="#锁类型" class="headerlink" title="锁类型"></a>锁类型</h3><hr>
+<h4 id="表锁（table-lock）"><a href="#表锁（table-lock）" class="headerlink" title="表锁（table lock）"></a>表锁（table lock）</h4><hr>
+<h4 id="行级锁（row-lock）"><a href="#行级锁（row-lock）" class="headerlink" title="行级锁（row lock）"></a>行级锁（row lock）</h4><p>row lock可以最大程度地支持并发处理，但是同时也带来了最大的锁开销。</p>
+<p>在InnoDB和XtraDB，以及其他一些存储引擎实现了行级锁。行级锁只在存储引擎层实现，而MySQL服务层没有实现。服务层完全不了解存储引擎中的锁实现。</p>
+<h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><p>事务：一组原子性的SQL查询，或者一个独立的工作单元。如果其中的任何一条语句因为奔溃或其他原因无法执行，那么所有的语句都不会执行。</p>
+<h2 id="事务日志"><a href="#事务日志" class="headerlink" title="事务日志"></a>事务日志</h2><h3 id="AUTOCOMMIT"><a href="#AUTOCOMMIT" class="headerlink" title="AUTOCOMMIT"></a>AUTOCOMMIT</h3><p>MySQL默认采用自动提交（AUTOCOMMIT）模式。如果不显式地开始一个事务，则每个查询都被当作一个事务执行提交操作。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/08/Server/SpringBoot/MyBatis/config/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/08/Server/SpringBoot/MyBatis/config/" itemprop="url">MyBatis Common Mapper</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-08T11:24:18+08:00">
+                2018-03-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/MyBatis/" itemprop="url" rel="index">
+                    <span itemprop="name">MyBatis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="SpringBoot集成"><a href="#SpringBoot集成" class="headerlink" title="SpringBoot集成"></a>SpringBoot集成</h3><p>springBoot version: 1.5.10</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>tk.mybatis<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>mapper<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.5.3<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>tk.mybatis<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>mapper-spring-boot-starter<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.2.4<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>properties</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"># 数据源基础配置</span><br><span class="line">spring.datasource.type=com.alibaba.druid.pool.DruidDataSource</span><br><span class="line">#数据库</span><br><span class="line">spring.datasource.url=jdbc:mysql://localhost:3306/test?characterEncoding=utf8</span><br><span class="line">spring.datasource.username=root</span><br><span class="line">spring.datasource.password=root</span><br><span class="line">spring.datasource.driver-class-name=com.mysql.jdbc.Driver</span><br><span class="line"># mybatis 配置</span><br><span class="line">mybatis.type-aliases-package=com.mos.quote.model</span><br><span class="line">mybatis.mapper-locations=classpath:mapper/*.xml</span><br><span class="line"># 通用 Mapper 配置</span><br><span class="line">mapper.mappers=com.mos.quote.common.MyMapper</span><br><span class="line">mapper.not-empty=false</span><br><span class="line">mapper.identity=MYSQL</span><br><span class="line"># 分页插件配置</span><br><span class="line">pagehelper.helperDialect=mysql</span><br><span class="line">pagehelper.reasonable=true</span><br><span class="line">pagehelper.supportMethodsArguments=true</span><br><span class="line">pagehelper.params=count=countSql</span><br></pre></td></tr></table></figure>
+<p>PS：此处的坑，pagehelper.reasonable,启用合理化时候，如果pageNo&lt;1，则会返回第一页数据，<br>如果pageNo&gt;pages会查询最后一页，作为接口程序，如果传入的pageNo一直大于pages，则一直会有数据返回，前端还需要校验页码问题。<br>建议：如果普通的分页查询，建议开启该功能，如果作为前后端分离或者提供接口之类的，建议禁用该功能</p>
+<h3 id="Transactional"><a href="#Transactional" class="headerlink" title="Transactional"></a>Transactional</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@EnableTransactionManagement</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AccountApplication</span></span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">@<span class="title">Transactional</span>(<span class="title">timeout</span> </span>= TransConfig.TIMEOUT, rollbackFor = Exception.class, propagation = Propagation.REQUIRED)</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/07/Kubenetes/Deployment/broker-cluster/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/07/Kubenetes/Deployment/broker-cluster/" itemprop="url">Kubernetes Rocket-MQ Broker Master</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-07T13:17:27+08:00">
+                2018-03-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DevTools/" itemprop="url" rel="index">
+                    <span itemprop="name">DevTools</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DevTools/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DevTools/Kubernetes/Deployment/" itemprop="url" rel="index">
+                    <span itemprop="name">Deployment</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: apps/v1beta1</span><br><span class="line">kind: StatefulSet</span><br><span class="line">metadata:</span><br><span class="line">  name: mq-broker-master-deployment</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: mq-broker-master</span><br><span class="line">  serviceName: mq-broker-master-service</span><br><span class="line">  replicas: 1</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: mq-broker-master</span><br><span class="line">    spec:</span><br><span class="line">      initContainers:</span><br><span class="line">      - name: init-broker-master</span><br><span class="line">        image: ubuntu:16.04</span><br><span class="line">        command:</span><br><span class="line">        - bash</span><br><span class="line">        - "-c"</span><br><span class="line">        - |</span><br><span class="line">          set -ex</span><br><span class="line">          cp /mnt/config-map/main.properties /mnt/conf/main.properties</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: config-map</span><br><span class="line">          mountPath: /mnt/config-map</span><br><span class="line">        - name: conf</span><br><span class="line">          mountPath: /mnt/conf</span><br><span class="line">      ############## Broker Container ###############</span><br><span class="line">      containers:</span><br><span class="line">      - name: mq-broker-master</span><br><span class="line">        image: gcr.io/fintend-cloud/mq-broker:4.2.15</span><br><span class="line">        ports:</span><br><span class="line">          - containerPort: 10911</span><br><span class="line">          - containerPort: 10909</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: broker-pvc</span><br><span class="line">          mountPath: /opt/mq</span><br><span class="line">        - name: conf  # relative to init container -&gt; conf volumeMounts</span><br><span class="line">          mountPath: /root/rocketmq/fintend/</span><br><span class="line">      ############# Volumes #############</span><br><span class="line">      volumes:</span><br><span class="line">      - name: config-map</span><br><span class="line">        configMap:</span><br><span class="line">          name: mq-broker-config</span><br><span class="line">      - name: conf</span><br><span class="line">        emptyDir: &#123;&#125;</span><br><span class="line">      nodeSelector:</span><br><span class="line">        node: broker</span><br><span class="line">      tolerations:</span><br><span class="line">        - key: "pod"</span><br><span class="line">          operator: "Equal"</span><br><span class="line">          value: "broker"</span><br><span class="line">          effect: "NoExecute"</span><br><span class="line">  volumeClaimTemplates:</span><br><span class="line">    - metadata:</span><br><span class="line">        name: broker-pvc</span><br><span class="line">      spec:</span><br><span class="line">        accessModes: [ "ReadWriteOnce" ]</span><br><span class="line">        storageClassName: "pd-standard"</span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            storage: 200Gi</span><br></pre></td></tr></table></figure>
+<p>关键点，init containers如何把初始化好的配置文件传递给boot container</p>
+<ol>
+<li><p>在volumes，声明一个空的临时目录conf</p>
+</li>
+<li><p>init container 生成的配置文件存在conf目录里面</p>
+</li>
+<li><p>boot container 映射conf作为配置文件的路径</p>
+</li>
+</ol>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/07/Kubenetes/Deployment/kafka-depoyment/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1092,839 +2098,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/27/读书笔记/关键词/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/02/27/读书笔记/关键词/" itemprop="url">关键词</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-27T15:07:07+08:00">
-                2018-02-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
-                    <span itemprop="name">读书笔记</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="黑天鹅"><a href="#黑天鹅" class="headerlink" title="黑天鹅"></a>黑天鹅</h3><p>比喻小概率而影响巨大的事件</p>
-<hr>
-<h3 id="灰犀牛"><a href="#灰犀牛" class="headerlink" title="灰犀牛"></a>灰犀牛</h3><p>比喻大概率且影响巨大的潜在危机。</p>
-<hr>
-<h3 id="房间里的大象"><a href="#房间里的大象" class="headerlink" title="房间里的大象"></a>房间里的大象</h3><p>指某种巨大到不可能被忽视的真相，而事实上如此巨大的大象常常被集体忽略。</p>
-<hr>
-<h3 id="倒U曲线"><a href="#倒U曲线" class="headerlink" title="倒U曲线"></a>倒U曲线</h3><ul>
-<li><p>美国,经济学家,1955年,库兹涅茨</p>
-</li>
-<li><p>收入分配状况随经济发展过程而变化的曲线，是发展经济学中重要的概念，又称作“库兹涅茨曲线”（Kuznets curve）</p>
-</li>
-<li><p>该曲线表明：在经济发展过程开始的时候，尤其是在国民人均收入从最低上升到中等水平时，收入分配状况先趋于恶化，继而随着经济发展，逐步改善，<br>最后达到比较公平的收入分配状况，呈颠倒过来的U的形状。Y轴表示是基尼系数或分配状况，X轴是时间或收入状况。</p>
-</li>
-</ul>
-<p>关联术语说明:</p>
-<ul>
-<li>基尼系数(Gini coefficient):在0和1之间,在民众收入中，如基尼系数最大为“1”，最小为“0”。前者表示居民之间的年收入分配绝对不平均（即该年所有收入都集中在一个人手里，其余的国民没有收入），而后者则表示居民之间的该年收入分配绝对平均，即人与人之间收入绝对平等，这基尼系数的实际数值只能介于这两种极端情况，即0～1之间。<br>基尼系数越小，年收入分配越平均，基尼系数越大，年收入分配越不平均。<strong>要注意基尼系数只计算某一时段，如一年的收入，不计算已有财产，因此它不能反映国民的总积累财富分配情况。</strong></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/26/Server/SpringBoot/Zuul/zuul-tutorial/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/02/26/Server/SpringBoot/Zuul/zuul-tutorial/" itemprop="url">Spring Boot Zuul</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-26T20:48:18+08:00">
-                2018-02-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="基本配置文件"><a href="#基本配置文件" class="headerlink" title="基本配置文件"></a>基本配置文件</h3><h4 id="Application-Class"><a href="#Application-Class" class="headerlink" title="Application Class"></a>Application Class</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="meta">@EnableZuulProxy</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ApigatewayApplication</span></span></span><br><span class="line"><span class="class"></span></span><br><span class="line">fun main(args: Array&lt;String&gt;) &#123;</span><br><span class="line">    SpringApplication.run(ApigatewayApplication::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>, *<span class="title">args</span>)</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
-<p>@EnableZuulProxy 与 @EnableZuulServer 区别</p>
-<p>@EnableZuulServer,不加载任何反向代理过滤器，不使用Eureka的服务发现来发现其他服务。@EnableZuulServer只在搭建自己的路由服务并不使用Zuul的预构建功能时使用。<br>比如需要使用Zuul来配合其它不是Eureka的服务发现引擎，如Consul。</p>
-<h4 id="application-properties"><a href="#application-properties" class="headerlink" title="application.properties"></a>application.properties</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">server.port=8080</span><br><span class="line"></span><br><span class="line">## remove prefix from URL</span><br><span class="line">zuul.routes.api.stripPrefix=false</span><br><span class="line">## connection limit</span><br><span class="line">zuul.host.max-total-connections=200000</span><br><span class="line">zuul.host.max-per-route-connections=2000</span><br><span class="line"></span><br><span class="line">## 添加静态路由配置</span><br><span class="line">zuul.routes.api-sso.path=/api/sso/gateway/**</span><br><span class="line">zuul.routes.api-sso.url=http://sso-gateway-service</span><br></pre></td></tr></table></figure>
-<p>如果部署在kubernetes上,则不需要eureka,直接使用kube自带发现服务</p>
-<h4 id="route优先级问题"><a href="#route优先级问题" class="headerlink" title="route优先级问题"></a>route优先级问题</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># Email</span><br><span class="line">zuul.routes.api-email.path=/email/**</span><br><span class="line">zuul.routes.api-email.url=http://email-service</span><br><span class="line"># Root</span><br><span class="line">zuul.routes.root.path=/**</span><br><span class="line">zuul.routes.root.url=http://ethex-frontend</span><br></pre></td></tr></table></figure>
-<p>路及匹配的顺序是从上到下</p>
-<h4 id="查看当前route-path配置"><a href="#查看当前route-path配置" class="headerlink" title="查看当前route path配置"></a>查看当前route path配置</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">management.security.enabled=false</span><br></pre></td></tr></table></figure>
-<p>访问 <a href="http://ip/routes/" target="_blank" rel="noopener">http://ip/routes/</a></p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zuul.routes.stripPrefix=false</span><br><span class="line">zuul.routes.root.path=/gateway/**</span><br></pre></td></tr></table></figure>
-<p>访问/gateway/xxx，此时转发的请求是/xx；如果修改为true，则是/gateway/xx</p>
-<p>跳转到本地URL<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zuul.routes.user.path=/user/**</span><br><span class="line">zuul.routes.user.url=forward:/user</span><br></pre></td></tr></table></figure></p>
-<h4 id="跨域问题"><a href="#跨域问题" class="headerlink" title="跨域问题"></a>跨域问题</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function">fun <span class="title">getCORSFilter</span><span class="params">()</span>: CorsFilter </span>&#123;</span><br><span class="line">    val source = UrlBasedCorsConfigurationSource()</span><br><span class="line">    val config = CorsConfiguration()</span><br><span class="line">    <span class="comment">//允许跨域</span></span><br><span class="line">    config.allowCredentials = <span class="keyword">true</span></span><br><span class="line">    <span class="comment">//允许向该服务器提交请求的URI,*表示全部</span></span><br><span class="line">    config.addAllowedOrigin(<span class="string">"*"</span>)</span><br><span class="line">    <span class="comment">//允许访问的头信息,*表示全部</span></span><br><span class="line">    config.addAllowedHeader(<span class="string">"*"</span>)</span><br><span class="line">    <span class="comment">//允许的method</span></span><br><span class="line">    config.addAllowedMethod(<span class="string">"OPTIONS"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"HEAD"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"GET"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"PUT"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"POST"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"DELETE"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"PATCH"</span>)</span><br><span class="line">    source.registerCorsConfiguration(<span class="string">"/**"</span>, config)</span><br><span class="line">    <span class="keyword">return</span> CorsFilter(source)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>报错：The ‘Access-Control-Allow-Origin’ header contains multiple values</p>
-<p>解决方案：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zuul.ignored-headers=Access-Control-Allow-Credentials, Access-Control-Allow-Origin</span><br></pre></td></tr></table></figure></p>
-<h4 id="sensitiveHeaders与ignoredHeaders的区别"><a href="#sensitiveHeaders与ignoredHeaders的区别" class="headerlink" title="sensitiveHeaders与ignoredHeaders的区别"></a>sensitiveHeaders与ignoredHeaders的区别</h4><ul>
-<li>sensitiveHeaders会过滤客户端附带的headers</li>
-</ul>
-<p>例如：sensitiveHeaders: X-ABC如果客户端在发请求是带了X-ABC，那么X-ABC不会传递给下游服务。</p>
-<ul>
-<li>ignoredHeaders会过滤服务之间通信附带的headers</li>
-</ul>
-<p>例如：ignoredHeaders: X-ABC如果客户端在发请求是带了X-ABC，那么X-ABC依然会传递给下游服务。但是如果下游服务再转发就会被过滤。</p>
-<h4 id="Read-Timeout"><a href="#Read-Timeout" class="headerlink" title="Read Timeout"></a>Read Timeout</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zuul.host.max-total-connections=3000</span><br><span class="line">zuul.host.max-per-route-connections=1000</span><br><span class="line">zuul.host.socket-timeout-millis=30000</span><br><span class="line">zuul.host.connect-timeout-millis=30000</span><br><span class="line">hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=30000</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/26/Server/SpringBoot/Error/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/02/26/Server/SpringBoot/Error/" itemprop="url">Spring Boot Error</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-26T20:48:18+08:00">
-                2018-02-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="java-lang-ClassNotFoundException-kotlin-reflect-KotlinReflectionInternalError"><a href="#java-lang-ClassNotFoundException-kotlin-reflect-KotlinReflectionInternalError" class="headerlink" title="java.lang.ClassNotFoundException: kotlin.reflect.KotlinReflectionInternalError"></a>java.lang.ClassNotFoundException: kotlin.reflect.KotlinReflectionInternalError</h3><p>注释旧的库,使用更新版本库,可以解决问题</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.fasterxml.jackson.module<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jackson-module-kotlin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.9.4.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h3 id="because-it-is-a-JDK-dynamic-proxy-that-xxxxx"><a href="#because-it-is-a-JDK-dynamic-proxy-that-xxxxx" class="headerlink" title="because it is a JDK dynamic proxy that xxxxx"></a>because it is a JDK dynamic proxy that xxxxx</h3><p>在单元测试中出现该问题</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@EnableAspectJAutoProxy</span>(proxyTargetClass = <span class="keyword">true</span>)</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AccountApplication</span></span></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/26/Tools/GoogleCloud/gcloud-command/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/02/26/Tools/GoogleCloud/gcloud-command/" itemprop="url">gcloud 常用命令</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-26T18:37:06+08:00">
-                2018-02-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DevTools/" itemprop="url" rel="index">
-                    <span itemprop="name">DevTools</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DevTools/GCP/" itemprop="url" rel="index">
-                    <span itemprop="name">GCP</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="gsutil"><a href="#gsutil" class="headerlink" title="gsutil"></a>gsutil</h3><h4 id="copy-bucket-to-another-bucket"><a href="#copy-bucket-to-another-bucket" class="headerlink" title="copy bucket to another bucket"></a>copy bucket to another bucket</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -L https://xx/xxx.rar | gsutil cp - gs://your/folder/xx.rar</span><br></pre></td></tr></table></figure>
-<h3 id="update"><a href="#update" class="headerlink" title="update"></a>update</h3><h4 id="升级组件"><a href="#升级组件" class="headerlink" title="升级组件"></a>升级组件</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud components update</span><br></pre></td></tr></table></figure>
-<h3 id="Docker"><a href="#Docker" class="headerlink" title="Docker"></a>Docker</h3><h4 id="构建运行docker"><a href="#构建运行docker" class="headerlink" title="构建运行docker"></a>构建运行docker</h4><ul>
-<li>Dockerfile</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">FROM java:openjdk-8-jdk-alpine</span><br><span class="line">ADD ./root.war /root/root.war</span><br><span class="line">CMD ["java", "-jar", "/root/root.war"]</span><br><span class="line">EXPOSE 8080</span><br></pre></td></tr></table></figure>
-<ul>
-<li>Depoly</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 默认美国服务器</span></span><br><span class="line">gcloud container builds submit --tag gcr.io/[PROJECT_ID]/quickstart-image .</span><br><span class="line"></span><br><span class="line"><span class="comment"># 选择亚洲服务器</span></span><br><span class="line">gcloud container builds submit --tag asia.gcr.io/[PROJECT_ID]/quickstart-image .</span><br></pre></td></tr></table></figure>
-<p><strong>注意PROJECT_ID不是自定义的，而是自动生成的</strong></p>
-<p>官方参考文档</p>
-<ul>
-<li><a href="https://cloud.google.com/container-builder/docs/quickstart-docker" target="_blank" rel="noopener">https://cloud.google.com/container-builder/docs/quickstart-docker</a></li>
-</ul>
-<h4 id="Push-Docker"><a href="#Push-Docker" class="headerlink" title="Push Docker"></a>Push Docker</h4><ol>
-<li>命令格式：docker tag [IMAGE] [HOSTNAME]/[PROJECT-ID]/[IMAGE]</li>
-</ol>
-<p>例如，docker tag quickstart-image gcr.io/my-project/quickstart-image</p>
-<ol start="2">
-<li>命令格式：gcloud docker – push [HOSTNAME]/[PROJECT-ID]/[IMAGE]</li>
-</ol>
-<p>例如，gcloud docker – push gcr.io/my-project/quickstart-image</p>
-<ol start="3">
-<li>查看Image</li>
-</ol>
-<p><a href="https://console.cloud.google.com/gcr" target="_blank" rel="noopener">https://console.cloud.google.com/gcr</a></p>
-<h4 id="Pull-Docker"><a href="#Pull-Docker" class="headerlink" title="Pull Docker"></a>Pull Docker</h4><ul>
-<li>命令格式：gcloud docker – pull [HOSTNAME]/[PROJECT-ID]/[IMAGE]</li>
-</ul>
-<h4 id="View-Docker"><a href="#View-Docker" class="headerlink" title="View Docker"></a>View Docker</h4><ul>
-<li>命令格式：gcloud container images list [HOSTNAME]/[PROJECT-ID]/[IMAGE]</li>
-</ul>
-<h4 id="Delete-Docker"><a href="#Delete-Docker" class="headerlink" title="Delete Docker"></a>Delete Docker</h4><ul>
-<li>命令格式：gcloud container images delete [HOSTNAME]/[PROJECT-ID]/[IMAGE]</li>
-</ul>
-<h4 id="转换成Google构建脚本"><a href="#转换成Google构建脚本" class="headerlink" title="转换成Google构建脚本"></a>转换成Google构建脚本</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">steps:</span><br><span class="line">- name: 'gcr.io/cloud-builders/docker'</span><br><span class="line">    args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/quickstart-image', '.' ]</span><br><span class="line">images:</span><br><span class="line">- 'gcr.io/$PROJECT_ID/quickstart-image'</span><br></pre></td></tr></table></figure>
-<p>构建命令</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container builds submit --config cloudbuild.yaml .</span><br></pre></td></tr></table></figure>
-<p><strong>注意：在使用上述命令打包本地文件到GCP时候，会检查本地ignore配置文件，对于忽略的文件及文件夹不会被打包到GCP进行构建</strong></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/08/Server/SpringBoot/InterruptException/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/02/08/Server/SpringBoot/InterruptException/" itemprop="url">Spring Boot 拦截异常</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-08T15:06:18+08:00">
-                2018-02-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Spring-Boot/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Boot</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="拦截异常，统一处理"><a href="#拦截异常，统一处理" class="headerlink" title="拦截异常，统一处理"></a>拦截异常，统一处理</h3>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1976,7 +2149,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">475</span>
+                <span class="site-state-item-count">480</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1987,7 +2160,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">219</span>
+                <span class="site-state-item-count">222</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1998,7 +2171,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">536</span>
+                <span class="site-state-item-count">541</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

@@ -284,6 +284,781 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/09/Nginx/certbot/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/09/Nginx/certbot/" itemprop="url">certbot docker Let's Encrypt</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-09T13:33:06+08:00">
+                2018-11-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Nginx/" itemprop="url" rel="index">
+                    <span itemprop="name">Nginx</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Step"><a href="#Step" class="headerlink" title="Step"></a>Step</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --rm -p 80:80 -p 443:443 \</span><br><span class="line">    -v $(<span class="built_in">pwd</span>)/letsencrypt:/etc/letsencrypt \</span><br><span class="line">    quay.io/letsencrypt/letsencrypt auth</span><br></pre></td></tr></table></figure>
+<p>运行成功后，如下提示</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">How would you like to authenticate with the ACME CA?</span><br><span class="line">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br><span class="line">1: Spin up a temporary webserver (standalone)</span><br><span class="line">2: Place files <span class="keyword">in</span> webroot directory (webroot)</span><br><span class="line">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br><span class="line">Select the appropriate number [1-2] <span class="keyword">then</span> [enter] (press <span class="string">'c'</span> to cancel):</span><br></pre></td></tr></table></figure>
+<p>选择1，然后输入Email地址</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Plugins selected: Authenticator standalone, Installer None</span><br><span class="line">Enter email address (used <span class="keyword">for</span> urgent renewal and security notices) (Enter <span class="string">'c'</span> to</span><br><span class="line">cancel):</span><br></pre></td></tr></table></figure>
+<p>同意协议</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br><span class="line">Please <span class="built_in">read</span> the Terms of Service at</span><br><span class="line">https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf. You must</span><br><span class="line">agree <span class="keyword">in</span> order to register with the ACME server at</span><br><span class="line">https://acme-v02.api.letsencrypt.org/directory</span><br><span class="line">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br></pre></td></tr></table></figure>
+<p>最后接着输入你的domain，然后生成证书</p>
+<h3 id="One-Step"><a href="#One-Step" class="headerlink" title="One Step"></a>One Step</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run --rm -p 80:80 -p 443:443 \</span><br><span class="line">    -v $(<span class="built_in">pwd</span>)/letsencrypt:/etc/letsencrypt \</span><br><span class="line">    quay.io/letsencrypt/letsencrypt auth \</span><br><span class="line">    --standalone -m someone@email.com --agree-tos \</span><br><span class="line">    -d your.domain1.com -d your.domain2.com</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/08/SpringBoot/API-Gateway/Error/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/08/SpringBoot/API-Gateway/Error/" itemprop="url">Spring Cloud Api Gateway Error</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-08T23:00:06+08:00">
+                2018-11-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/SpringBoot/ApiGateway/" itemprop="url" rel="index">
+                    <span itemprop="name">ApiGateway</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Unable-to-start-reactive-web"><a href="#Unable-to-start-reactive-web" class="headerlink" title="Unable to start reactive web"></a>Unable to start reactive web</h3>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/08/SpringBoot/API-Gateway/CORS/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/08/SpringBoot/API-Gateway/CORS/" itemprop="url">Spring Cloud Api Gateway 跨域问题</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-08T23:00:06+08:00">
+                2018-11-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/SpringBoot/ApiGateway/" itemprop="url" rel="index">
+                    <span itemprop="name">ApiGateway</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Java"><a href="#Java" class="headerlink" title="Java"></a>Java</h3><h3 id="Kotlin"><a href="#Kotlin" class="headerlink" title="Kotlin"></a>Kotlin</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RouteConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function">fun <span class="title">allowCORS</span><span class="params">()</span>: WebFilter </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> WebFilter &#123; webExchange, chains -&gt;</span><br><span class="line">            val request = webExchange.request</span><br><span class="line">            val requestHeaders = request.headers</span><br><span class="line">            val response = webExchange.response</span><br><span class="line">            val respHeaders = response.headers</span><br><span class="line"></span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, <span class="string">"*"</span>)</span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, <span class="string">"*"</span>)</span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_MAX_AGE, MAX_AGE)</span><br><span class="line">            respHeaders.addAll(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, requestHeaders.accessControlRequestHeaders)</span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, <span class="string">"*"</span>)</span><br><span class="line">            respHeaders.add(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, <span class="string">"true"</span>)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (request.method == HttpMethod.OPTIONS) &#123;</span><br><span class="line">                response.statusCode = HttpStatus.OK</span><br><span class="line">                Mono.empty()</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                chains.filter(webExchange)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    companion object &#123;</span><br><span class="line">        <span class="keyword">const</span> val MAX_AGE = <span class="string">"18000L"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
+<p><a href="http://springcloud.cn/view/343" target="_blank" rel="noopener">http://springcloud.cn/view/343</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/08/SpringBoot/Eureka/conf/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/08/SpringBoot/Eureka/conf/" itemprop="url">Eureka Conf</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-08T12:13:06+08:00">
+                2018-11-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
+<p><a href="https://yq.aliyun.com/articles/138261" target="_blank" rel="noopener">https://yq.aliyun.com/articles/138261</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/07/Kubenetes/Attributes/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/07/Kubenetes/Attributes/" itemprop="url">Attribute</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-07T10:13:06+08:00">
+                2018-11-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: <span class="built_in">command</span>-demo</span><br><span class="line">  labels:</span><br><span class="line">    purpose: demonstrate-command</span><br><span class="line">spec:</span><br><span class="line">  containers:</span><br><span class="line">  - name: <span class="built_in">command</span>-demo-container</span><br><span class="line">    image: debian</span><br><span class="line">    <span class="built_in">command</span>: [<span class="string">"printenv"</span>]</span><br><span class="line">    args: [<span class="string">"HOSTNAME"</span>, <span class="string">"KUBERNETES_PORT"</span>]</span><br><span class="line">  restartPolicy: OnFailure</span><br></pre></td></tr></table></figure>
+<h3 id="Access-Modes"><a href="#Access-Modes" class="headerlink" title="Access Modes"></a>Access Modes</h3><ul>
+<li>ReadWriteOnce – the volume can be mounted as read-write by a single node</li>
+<li>ReadOnlyMany – the volume can be mounted read-only by many nodes</li>
+<li>ReadWriteMany – the volume can be mounted as read-write by many nodes</li>
+</ul>
+<p>In the CLI, the access modes are abbreviated to:</p>
+<ul>
+<li>RWO - ReadWriteOnce</li>
+<li>ROX - ReadOnlyMany</li>
+<li>RWX - ReadWriteMany</li>
+</ul>
+<h3 id="Deployment"><a href="#Deployment" class="headerlink" title="Deployment"></a>Deployment</h3><h3 id="StatefulSet"><a href="#StatefulSet" class="headerlink" title="StatefulSet"></a>StatefulSet</h3><p><strong>应用场景</strong></p>
+<ul>
+<li>Stable, unique network identifiers.</li>
+<li>Stable, persistent storage.</li>
+<li>Ordered, graceful deployment and scaling.</li>
+<li>Ordered, automated rolling updates.</li>
+</ul>
+<h4 id="updateStrategy"><a href="#updateStrategy" class="headerlink" title="updateStrategy"></a>updateStrategy</h4><p>spec.updateStrategy.type</p>
+<ul>
+<li>OnDelete：不会自动更新StatefulSet中的Pod，用户必须手动删除Pods以使控制器创建新的Pod。</li>
+<li>RollingUpdate：删除并重新创建StatefulSet中的每个Pod。它将以与Pod终止相同的顺序进行（从最大的序数到最小的顺序）来更新每个Pod。</li>
+</ul>
+<p>spe.updateStrategy.rollingUpdate.partition 金丝雀策略</p>
+<h4 id="volumeClaimTemplates"><a href="#volumeClaimTemplates" class="headerlink" title="volumeClaimTemplates"></a>volumeClaimTemplates</h4><ul>
+<li>persistentVolume：用来向真正的存储服务器申请真正的存储资源的一个object，至于这个存储资源谁来用，那就是接下来说的pvc的职责所在。</li>
+<li>persistentVolumeClaim：用来关联pv和pod的一个桥梁。</li>
+</ul>
+<p>通过volumeClaimTemplates关联创建PV，volumeMounts使用PV</p>
+<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
+<p><a href="http://docs.kubernetes.org.cn/" target="_blank" rel="noopener">http://docs.kubernetes.org.cn/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/06/Network/HTTP-Hijack/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1181,816 +1956,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/29/读书笔记/传记/可口可乐传/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/29/读书笔记/传记/可口可乐传/" itemprop="url">马克·彭德格拉斯特 - For God,Country &Coca-Cola 可口可乐传</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-29T13:07:07+08:00">
-                2018-10-29
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
-                    <span itemprop="name">读书笔记</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="核心内容"><a href="#核心内容" class="headerlink" title="核心内容"></a>核心内容</h3><img src="/2018/10/29/读书笔记/传记/可口可乐传/core.png">
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/28/Architecture/FMEA/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/28/Architecture/FMEA/" itemprop="url">FMEA（Failure mode and effects analysis）</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-28T22:01:22+08:00">
-                2018-10-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Architecture/" itemprop="url" rel="index">
-                    <span itemprop="name">Architecture</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Term"><a href="#Term" class="headerlink" title="Term"></a>Term</h3><p>FEMA：故障模式与影响分析，一种在各行各业都有广泛应用的可用性分析方法，通过对系统范围内潜在的故障模式加以分析，并按照严重程度进行分类，以确定失效对于系统的最终影响。<strong>它是一套分析和思考的方法，而不是某个领域的技能或工具。</strong></p>
-<h3 id="应用于架构领域"><a href="#应用于架构领域" class="headerlink" title="应用于架构领域"></a>应用于架构领域</h3><p>FMEA分析方法：</p>
-<ul>
-<li>给出初始的架构设计图</li>
-<li>假设架构中某个部件发生故障</li>
-<li>分析次故障对系统功能造成的影响</li>
-<li>根据分析结果，判断架构是否需要进行优化</li>
-</ul>
-<p>FMEA分析方法，其实是一个分析表，表格包含部分</p>
-<ul>
-<li>功能点：从用户的角度来看的功能点。比如用户管理系统，FEMA分析的是”登录“，”注册“功能点。</li>
-<li>故障模式：系统会出现什么样的故障，包括故障点和故障形式。故障模式描述尽量精确，多用量化描述，避免使用泛华的描述。</li>
-<li>故障影响：当发生故障模式中描述的故障时，功能点具体会受到什么影响。常见的影响：功能点偶尔不可用、功能点完全不可用、部分用户功能点不可用、功能点响应缓慢、功能点出错等等</li>
-<li>严重程度：站在业务的角度看，故障影响程度一般分为：致命、高、中、低、无。严重程度 = 功能点重要程度 <em> 故障影响范围 </em> 功能点受损程度</li>
-<li>故障原因</li>
-<li>故障概率：某个具体故障原因发生的概率。一般分为：高、中、低。</li>
-<li>风险程度：综合严重程度和故障概率一起判断某个故障的最终等级，风险程度 = 严重程度 * 故障概率。</li>
-<li>已有措施：针对具体的故障原因，系统现在是否提供了某些措施来应对，包括检测告警、容错、自恢复等等。</li>
-<li>规避措施：为了降低故障发生概率而做的一些事情，可以是技术手段，也可以是管理手段。<ul>
-<li>为了避免新引入的MongoDB丢失数据，在MySQL中冗余一份</li>
-<li>为了降低某些疑难bug的出现，每天凌晨重启机器</li>
-</ul>
-</li>
-<li>解决措施：为了能够解决问题而做的一些事情，一般都是技术手段。<ul>
-<li>为了解决密码暴力破解，增加密码重试次数限制</li>
-<li>为了解决拖库导致密码泄露，将数据库中的敏感数据加密保存</li>
-</ul>
-</li>
-<li>后续规划</li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/26/DS/Tree/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/26/DS/Tree/" itemprop="url">DS Tree</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-26T10:28:19+08:00">
-                2018-10-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DS/" itemprop="url" rel="index">
-                    <span itemprop="name">DS</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Tree-Feature"><a href="#Tree-Feature" class="headerlink" title="Tree Feature"></a>Tree Feature</h3><ul>
-<li>一个节点，即只有根节点，也可以是一棵树</li>
-<li>其中任何一个节点与下面所有节点构成的树称为子树</li>
-<li>根节点没有父节点，而子叶节点没有子节点</li>
-<li>除根节点外，任何节点有且仅有一个父节点</li>
-<li>任何节点可以有0~n个子节点</li>
-<li>高度与深度的区别：叶子节点定义高度为1<ul>
-<li>高度：从节点到其子叶节点经过的最长路径</li>
-<li>深度：从根节点往下到叶节点最长路径（根节点为1）</li>
-<li>相同深度的节点，高度不一定相同</li>
-</ul>
-</li>
-</ul>
-<h3 id="Binary-Search-Tree（二叉查找树）"><a href="#Binary-Search-Tree（二叉查找树）" class="headerlink" title="Binary Search Tree（二叉查找树）"></a>Binary Search Tree（二叉查找树）</h3><p>遍历方式</p>
-<ul>
-<li>前序遍历</li>
-<li>中序遍历</li>
-<li>后序遍历</li>
-</ul>
-<h3 id="AVL-平衡二叉树"><a href="#AVL-平衡二叉树" class="headerlink" title="AVL(平衡二叉树)"></a>AVL(平衡二叉树)</h3><p>一种平衡二叉查找树，增加和删除节点后通过树形旋转重新达到平衡。</p>
-<p>一颗完美平衡的树查找树中，所有空节点到根节点的距离应该是相同的。</p>
-<p>特性：</p>
-<ul>
-<li>树的左右高度差不能超过1</li>
-<li>任何往下递归的左子树与右子树，必须符合第一条性质</li>
-<li>没有任何节点的空树或只有根节点的树也是平衡二叉树</li>
-</ul>
-<p>在每一次插入数值之后，树的平衡性都可能被破坏，这时可以通过一个简单的操作来矫正平衡–旋转。</p>
-<p>旋转的目的就是减少高度，通过降低整棵树的高度来平衡。哪边的树高，就把那边的树向上旋转。</p>
-<p>旋转操作</p>
-<ul>
-<li>所谓的左旋和右旋都是以子树为原点的：如b是a的子树，那么旋转就围绕b来进行。</li>
-<li>如果b是a的左子树，那么就围绕b将a向右旋转，看着就像是a直接掉下来了，掉成了b的右子树。</li>
-<li>如果b是a的右子树，那么就围绕b将a向左旋转，看着就像是a直接掉下来了，掉成了b的左子树。</li>
-</ul>
-<p>旋转类型</p>
-<ul>
-<li>LL：在a的左子树根节点的左子树上插入节点而破坏平衡，旋转方式-右旋转</li>
-<li>RR：在a的右子树根节点的右子树上插入节点而破坏平衡，旋转方式-左旋转</li>
-<li>LR：在a的左子树根节点的右子树上插入节点而破坏平衡，旋转方式-先左后右</li>
-<li>RL：在a的右子树根节点的左子树上插入节点而破坏平衡，旋转方式-先右后左</li>
-</ul>
-<h4 id="LL"><a href="#LL" class="headerlink" title="LL"></a>LL</h4><img src="/2018/10/26/DS/Tree/example-ll.png">
-<p>此时，节点7的左子树高度为2，右子树为0，则两边的差值超过1。</p>
-<p>围绕节点5进行右旋转，因为节点5没有右子节点，此时可以直接把节点7设置为节点5的右子节点。需要注意的是，当调节完当前节点的平衡后，需要向上检查是否有节点出现不平衡的现象。</p>
-<p>如果节点5已经存在右子树（节点7是节点5的父节点，肯定比节点5大，即也比节点5的右子节点大），此时节点7如何处理？请看下图</p>
-<img src="/2018/10/26/DS/Tree/example-2-ll.png">
-<p>仍然针对节点5进行右旋，节点7仍然为节点5的右子树，节点6成为节点7的左子树，此时节点5已经平衡。但是当我们再看节点8的时候，节点8却失衡了。</p>
-<h4 id="RR"><a href="#RR" class="headerlink" title="RR"></a>RR</h4><img src="/2018/10/26/DS/Tree/example-rr.png">
-<p>如果节点13已经有左子树，怎么办？</p>
-<h4 id="LR"><a href="#LR" class="headerlink" title="LR"></a>LR</h4><img src="/2018/10/26/DS/Tree/example-lr.png">
-<p>如果节点5已经有左子树，怎么办？</p>
-<h3 id="红黑树"><a href="#红黑树" class="headerlink" title="红黑树"></a>红黑树</h3><h3 id="应用场景对比"><a href="#应用场景对比" class="headerlink" title="应用场景对比"></a>应用场景对比</h3><h4 id="红黑树与AVL树"><a href="#红黑树与AVL树" class="headerlink" title="红黑树与AVL树"></a>红黑树与AVL树</h4><ul>
-<li>频繁的插入和删除，红黑树更加适合</li>
-<li>低频修改和大量查询，AVL树更加适合</li>
-</ul>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><blockquote>
-<p><a href="https://blog.csdn.net/qq_25806863/article/details/74755131" target="_blank" rel="noopener">https://blog.csdn.net/qq_25806863/article/details/74755131</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/26/DS/AVL-Tree/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/26/DS/AVL-Tree/" itemprop="url">DS AVL Tree</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-26T10:28:19+08:00">
-                2018-10-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DS/" itemprop="url" rel="index">
-                    <span itemprop="name">DS</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/25/Java/Performance/JMH/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/25/Java/Performance/JMH/" itemprop="url">Java Performance JMH</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-25T17:01:22+08:00">
-                2018-10-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Performance/" itemprop="url" rel="index">
-                    <span itemprop="name">Performance</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Usega"><a href="#Usega" class="headerlink" title="Usega"></a>Usega</h3><ul>
-<li>创建测试工程</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mvn archetype:generate </span><br><span class="line"> -DinteractiveMode=<span class="literal">false</span> </span><br><span class="line"> -DarchetypeGroupId=org.openjdk.jmh </span><br><span class="line"> -DarchetypeArtifactId=jmh-java-benchmark-archetype </span><br><span class="line"> -DgroupId=com.afei.jmh </span><br><span class="line"> -DartifactId=jmh </span><br><span class="line"> -Dversion=1.0.0-SNAPSHOT</span><br></pre></td></tr></table></figure>
-<h3 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h3><h4 id="Unable-to-find-the-resource-META-INF-BenchmarkList"><a href="#Unable-to-find-the-resource-META-INF-BenchmarkList" class="headerlink" title="Unable to find the resource: /META-INF/BenchmarkList"></a>Unable to find the resource: /META-INF/BenchmarkList</h4>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2042,7 +2007,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">475</span>
+                <span class="site-state-item-count">480</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2053,7 +2018,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">219</span>
+                <span class="site-state-item-count">222</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2064,7 +2029,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">536</span>
+                <span class="site-state-item-count">541</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
