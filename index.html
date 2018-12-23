@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/" itemprop="url">JVM CMS Collection Phase</a></h2>
+                <a class="post-title-link" href="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/" itemprop="url">JVM CMS Phases</a></h2>
         
 
         <div class="post-meta">
@@ -413,7 +413,7 @@
 <p>当你的服务器是多核同时你的目标是低延时，那该GC的搭配则是你的不二选择。</p>
 <p>JVM测试参数如下标记：</p>
 <img src="/2018/12/22/Java/JVM/Basic/CMS-Collection-Phase/intro.jpg">
-<h3 id="Analyze"><a href="#Analyze" class="headerlink" title="Analyze"></a>Analyze</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T02:23:07.219-0200: 64.322: [GC (Allocation Failure) 64.322: [ParNew: 613404K-&gt;68068K(613440K), 0.1020465 secs] 10885349K-&gt;10880154K(12514816K), 0.1021309 secs] [Times: user=0.78 sys=0.01, real=0.11 secs]</span><br></pre></td></tr></table></figure>
+<h3 id="Analyze"><a href="#Analyze" class="headerlink" title="Analyze"></a>Analyze</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">2016-08-23T02:23:07.219-0200: 64.322: [GC (Allocation Failure) 64.322: </span><br><span class="line">[ParNew: 613404K-&gt;68068K(613440K), 0.1020465 secs] </span><br><span class="line">10885349K-&gt;10880154K(12514816K), 0.1021309 secs] </span><br><span class="line">[Times: user=0.78 sys=0.01, real=0.11 secs]</span><br></pre></td></tr></table></figure>
 <ul>
 <li>2016-08-23T02:23:07.219-0200：GC发生的时间</li>
 <li>64.322：GC开始，相对JVM启动的相对时间，单位是秒</li>
@@ -898,7 +898,7 @@
 <hr>
 <h3 id="Why"><a href="#Why" class="headerlink" title="Why?"></a>Why?</h3><p>黄宗羲定律谈的主要是赋税问题，说起来很复杂，但核心的观点就一个：税越改革越多。</p>
 <p>税赋只是表象，分权才是根本，而中央和地方有限争权又是中央集权制的必然。</p>
-<p>古代税赋分为杂税（包括贪腐）和正税，前者重，后者轻。正税归中央，杂税归地方，杂税属于地方搭车，中央默认的状态。税赋改革无非是把杂税并入正税，也归中央，这时会赋税降低。此时即便地方没有任何贪腐现象，纯为维持庶政考虑，也必须重新征收杂税，然后本来已经并入正税的名目，在新的杂税中又重复征收，加上摊派贪腐的反弹，税赋自然更重。</p>
+<p>古代税赋分为杂税（包括贪腐）和正税，前者重，后者轻。正税归中央，杂税归地方，杂税属于地方搭车，中央默认的状态。税赋改革无非是把杂税并入正税，也归中央，这时赋税会降低。此时即便地方没有任何贪腐现象，纯为维持庶政考虑，也必须重新征收杂税，然后本来已经并入正税的名目，在新的杂税中又重复征收，加上贪腐的反弹，税赋自然更重。</p>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
 <p><a href="https://www.zhihu.com/question/22796484" target="_blank" rel="noopener">https://www.zhihu.com/question/22796484</a></p>
 </blockquote>
@@ -1086,18 +1086,17 @@
 <p>Heap是垃圾收集器管理的主要区域。</p>
 <img src="/2018/12/21/Java/JVM/Basic/Quick-Start/head-structure.png">
 <ul>
-<li>新生代(New/Young)：新建的对象都由新生代分配内存。常常又被划分为Eden区和Survivor区。Eden空间不足时会把存活的对象转移到Survivor。</li>
-<li><blockquote>
-<p>新生代的大小可由-Xmn控制，也可用-XX:SurvivorRatio控制Eden和Survivor的比例。</p>
+<li><p>新生代(New/Young)：新建的对象都由新生代分配内存。</p>
+<blockquote>
+<p>常常又被划分为Eden区和Survivor区。Eden空间不足时会把存活的对象转移到Survivor。<br>新生代的大小可由-Xmn控制，也可用-XX:SurvivorRatio控制Eden和Survivor的比例。</p>
 </blockquote>
 </li>
 <li><p>旧生代/年老代(Old/Tenured)：存放经过多次垃圾回收仍然存活的对象。</p>
+<blockquote>
+<p>持久代（Permanent）在方法区，不属于Heap。<br>持久代：存放静态文件，如今Java类、方法等。持久代在方法区，对垃圾回收没有显著影响。</p>
+</blockquote>
 </li>
 </ul>
-<p>持久代（Permanent）在方法区，不属于Heap。</p>
-<blockquote>
-<p>持久代：存放静态文件，如今Java类、方法等。持久代在方法区，对垃圾回收没有显著影响。</p>
-</blockquote>
 <hr>
 <h4 id="Direct-Memory"><a href="#Direct-Memory" class="headerlink" title="Direct Memory"></a>Direct Memory</h4><p>特点：</p>
 <ul>
@@ -1120,17 +1119,8 @@
 <ul>
 <li>字节码文件（.class）是平台无关的</li>
 <li>Java中字符只以一种形式存在：Unicode，字符转换发生在JVM和OS交界处（Reader/Writer）</li>
-<li>class文件组成：结构信息，元数据和方法信息</li>
-<li><blockquote>
-<p>结构信息：包括class文件格式版本号及各部分的数量与大小的信息</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>元数据：对应于Java源码中声明与常量的信息。包含类/继承的超类/实现的接口的声明信息、域与方法声明信息和常量池</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>方法信息：对应Java源码中语句和表达式对应的信息。包含字节码、异常处理器表、求值栈与局部变量区大小、求值栈的类型记录、调试符号信息</p>
+<li>class文件组成：结构信息，元数据和方法信息<blockquote>
+<p>结构信息：包括class文件格式版本号及各部分的数量与大小的信息<br>元数据：对应于Java源码中声明与常量的信息。包含类/继承的超类/实现的接口的声明信息、域与方法声明信息和常量池<br>方法信息：对应Java源码中语句和表达式对应的信息。包含字节码、异常处理器表、求值栈与局部变量区大小、求值栈的类型记录、调试符号信息</p>
 </blockquote>
 </li>
 </ul>
@@ -1139,40 +1129,29 @@
 <p>JVM的类加载是通过 ClassLoader 及其子类来完成的，类的层次关系和加载顺序可以由下图来描述：</p>
 <img src="/2018/12/21/Java/JVM/Basic/Quick-Start/class-loading.png">
 <ul>
-<li>Bootstrap ClassLoader</li>
-<li><ul>
-<li>JVM的根ClassLoader，由C++实现</li>
-</ul>
-</li>
-<li><ul>
-<li>JVM启动时即初始化此ClassLoader</li>
-</ul>
-</li>
-<li><ul>
-<li>加载rt.jar，它包含了Java规范定义的所有接口以及实现</li>
-</ul>
+<li>Bootstrap ClassLoader<blockquote>
+<p>JVM的根ClassLoader，由C++实现<br>JVM启动时即初始化此ClassLoader<br>加载rt.jar，它包含了Java规范定义的所有接口以及实现</p>
+</blockquote>
 </li>
 </ul>
 <blockquote>
 <p>The VM implements the bootstrap class loader, which loads classes from the BOOTPATH, including for example rt.jar. For faster startup, the VM can also process preloaded classes via Class Data Sharing.<br>Class Data Sharing：Class data sharing (CDS) is a feature introduced in J2SE 5.0 that is intended to reduce the startup time for Java programming language applications, in particular smaller applications, as well as reduce footprint. When the JRE is installed on 32-bit platforms using the Sun provided installer, <strong>the installer loads a set of classes from the system jar file into a private internal representation, and dumps that representation to a file, called a “shared archive”.</strong></p>
 </blockquote>
 <ul>
-<li>Extension ClassLoader</li>
-<li><ul>
-<li>加载Java扩展 API（lib/ext 中的类）</li>
-</ul>
+<li><p>Extension ClassLoader</p>
+<blockquote>
+<p>加载Java扩展 API（lib/ext 中的类）</p>
+</blockquote>
 </li>
 <li><p>App ClassLoader</p>
-</li>
-<li><ul>
-<li>加载Classpath目录下定义的class</li>
-</ul>
+<blockquote>
+<p>加载Classpath目录下定义的class</p>
+</blockquote>
 </li>
 <li><p>Custom ClassLoader</p>
-</li>
-<li><ul>
-<li>属于应用程序根据自身需要自定义的ClassLoader，如tomcat、jboss都会根据J2EE规范自行实现ClassLoader</li>
-</ul>
+<blockquote>
+<p>属于应用程序根据自身需要自定义的ClassLoader，如tomcat、jboss都会根据J2EE规范自行实现ClassLoader</p>
+</blockquote>
 </li>
 </ul>
 <p>加载过程中会先检查类是否被已加载，检查顺序是自底向上，从Custom ClassLoader到BootStrap ClassLoader逐层检查，只要某个classloader已加载就视为已加载此类，保证此类只所有ClassLoader加载一次。而加载的顺序是自顶向下，也就是由上层来逐层尝试加载此类。</p>
@@ -1253,28 +1232,25 @@
 </ul>
 <p>The reason for triggering Full GC:</p>
 <ul>
-<li>旧生代空间不足</li>
-<li><ul>
-<li>尽量让对象在新生代被GC回收、不要创建过大的对象及数组避免直接在旧生代创建对象。</li>
-</ul>
+<li><p>旧生代空间不足</p>
+<blockquote>
+<p>尽量让对象在新生代被GC回收、不要创建过大的对象及数组避免直接在旧生代创建对象。</p>
+</blockquote>
 </li>
 <li><p>持久代（Pemanet Generation）空间不足</p>
-</li>
-<li><ul>
-<li>增大Perm Gen空间和避免太多静态对象。</li>
-</ul>
+<blockquote>
+<p>增大Perm Gen空间和避免太多静态对象。</p>
+</blockquote>
 </li>
 <li><p>System.gc()被显示调用</p>
-</li>
-<li><ul>
-<li>垃圾回收不要手动触发，尽量依靠JVM自身的机制。</li>
-</ul>
+<blockquote>
+<p>垃圾回收不要手动触发，尽量依靠JVM自身的机制。</p>
+</blockquote>
 </li>
 <li><p>从新生代晋升到旧生代的对象所需内存空间，大于旧生代剩余可用内存空间</p>
-</li>
-<li><ul>
-<li>控制好新生代和旧生代的比例，避免新生代晋升到旧生代时，旧生代内存不够用，进而触发Full GC回收内存。</li>
-</ul>
+<blockquote>
+<p>控制好新生代和旧生代的比例，避免新生代晋升到旧生代时，旧生代内存不够用，进而触发Full GC回收内存。</p>
+</blockquote>
 </li>
 </ul>
 <hr>
@@ -1294,93 +1270,33 @@
 <hr>
 <p>JVM Configuration:</p>
 <ul>
-<li>堆设置</li>
-<li><ul>
-<li>-Xms: 堆初始大小</li>
-</ul>
-</li>
-<li><ul>
-<li>-Xmx: 堆最大大小</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:NewSize=n: 设置年轻代大小</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:NewRatio=n: 设置年轻代和年老代的比值。如果设为3，表示年轻代与年老代比值为1:3，年轻代占整个年轻代年老代和的1/4。</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:SurvivorRatio=n: 年轻代中Eden区与两个Survivor区的比值。注意Survivor区有两个。如果设为3，表示Eden:Survivor=3:2，一个Survivor区占整个年轻代的1/5。</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:MaxPermSize=n: 设置持久代大小</li>
-</ul>
+<li>堆设置<blockquote>
+<p>-Xms: 堆初始大小<br>-Xmx: 堆最大大小<br>-XX:NewSize=n: 设置年轻代大小<br>-XX:NewRatio=n: 设置年轻代和年老代的比值。如果设为3，表示年轻代与年老代比值为1:3，年轻代占整个年轻代年老代和的1/4。<br>-XX:SurvivorRatio=n: 年轻代中Eden区与两个Survivor区的比值。注意Survivor区有两个。如果设为3，表示Eden:Survivor=3:2，一个Survivor区占整个年轻代的1/5。<br>-XX:MaxPermSize=n: 设置持久代大小</p>
+</blockquote>
 </li>
 </ul>
 <ul>
-<li>收集器设置</li>
-<li><ul>
-<li>-XX:+UseSerialGC: 设置串行收集器</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:+UseParallelGC: 设置并行收集器</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:+UseParalledlOldGC: 设置并行年老代收集器</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:+UseConcMarkSweepGC: 设置并发收集器</li>
-</ul>
+<li>收集器设置<blockquote>
+<p>-XX:+UseSerialGC: 设置串行收集器<br>-XX:+UseParallelGC: 设置并行收集器<br>-XX:+UseParalledlOldGC: 设置并行年老代收集器<br>-XX:+UseConcMarkSweepGC: 设置并发收集器</p>
+</blockquote>
 </li>
 </ul>
 <ul>
-<li>垃圾回收统计信息</li>
-<li><ul>
-<li>-XX:+PrintGC</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:+PrintGCDetails</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:+PrintGCTimeStamps</li>
-</ul>
-</li>
-<li><ul>
-<li>-Xloggc:filename</li>
-</ul>
-</li>
-<li><p>并行收集器设置</p>
-</li>
-<li><ul>
-<li>-XX:ParallelGCThreads=n: 设置并行收集器收集时使用的CPU数，并行收集线程数</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:MaxGCPauseMillis=n: 设置并行收集最大暂停时间</li>
-</ul>
-</li>
-<li><ul>
-<li>-XX:GCTimeRatio=n: 设置垃圾回收时间占程序运行时间的百分比。公式为 1/(1+n)</li>
-</ul>
+<li>垃圾回收统计信息<blockquote>
+<p>-XX:+PrintGC<br>-XX:+PrintGCDetails<br>-XX:+PrintGCTimeStamps<br>-Xloggc:filename</p>
+</blockquote>
 </li>
 </ul>
 <ul>
-<li>并发收集器设置</li>
-<li><ul>
-<li>-XX:+CMSIncrementalMode: 设置为增量模式，适用于单CPU情况。</li>
-</ul>
+<li>并行收集器设置<blockquote>
+<p>-XX:ParallelGCThreads=n: 设置并行收集器收集时使用的CPU数，并行收集线程数<br>-XX:MaxGCPauseMillis=n: 设置并行收集最大暂停时间<br>-XX:GCTimeRatio=n: 设置垃圾回收时间占程序运行时间的百分比。公式为 1/(1+n)</p>
+</blockquote>
 </li>
-<li><ul>
-<li>-XX:ParallelGCThreads=n: 设置并发收集器年轻代收集方式为并行收集时，使用的CPU数，并行收集线程数。</li>
 </ul>
+<ul>
+<li>并发收集器设置<blockquote>
+<p>-XX:+CMSIncrementalMode: 设置为增量模式，适用于单CPU情况。<br>-XX:ParallelGCThreads=n: 设置并发收集器年轻代收集方式为并行收集时，使用的CPU数，并行收集线程数。</p>
+</blockquote>
 </li>
 </ul>
 <hr>
