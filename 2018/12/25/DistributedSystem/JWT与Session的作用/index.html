@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="DistributedSystem,JWT,Session,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="sulang blog" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="IntroductionWhat’s SessionIn computer science, in particular networking, a session is a temporary and interactive information interchange between two or more communicating devices, or between a comput">
+<meta name="keywords" content="DistributedSystem,JWT,Session">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JWT与Session的作用">
+<meta property="og:url" content="https://sulangsss.github.io/2018/12/25/DistributedSystem/JWT与Session的作用/index.html">
+<meta property="og:site_name" content="sulang blog">
+<meta property="og:description" content="IntroductionWhat’s SessionIn computer science, in particular networking, a session is a temporary and interactive information interchange between two or more communicating devices, or between a comput">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/25/DistributedSystem/JWT与Session的作用/session-theory.png">
+<meta property="og:image" content="https://sulangsss.github.io/2018/12/25/DistributedSystem/JWT与Session的作用/request-jwt-token.png">
+<meta property="og:updated_time" content="2018-12-27T07:30:07.432Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JWT与Session的作用">
+<meta name="twitter:description" content="IntroductionWhat’s SessionIn computer science, in particular networking, a session is a temporary and interactive information interchange between two or more communicating devices, or between a comput">
+<meta name="twitter:image" content="https://sulangsss.github.io/2018/12/25/DistributedSystem/JWT与Session的作用/session-theory.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2018/12/25/DistributedSystem/JWT与Session的作用/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>JWT与Session的作用 | sulang blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">sulang blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">python java android django web</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/25/DistributedSystem/JWT与Session的作用/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">JWT与Session的作用</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-25T12:29:18+08:00">
+                2018-12-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Distributed/" itemprop="url" rel="index">
+                    <span itemprop="name">Distributed</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="What’s-Session"><a href="#What’s-Session" class="headerlink" title="What’s Session"></a>What’s Session</h4><p>In computer science, in particular networking, a session is a temporary and interactive information interchange between two or more communicating devices, or between a computer and user (see login session).</p>
+<p>sessions consist of three phases:</p>
+<ol>
+<li>The client establishes a TCP connection (or the appropriate connection if the transport layer is not TCP).</li>
+<li>The client sends its request, and waits for the answer.</li>
+<li>The server processes the request, sending back its answer, providing a status code and appropriate data.</li>
+</ol>
+<p>As of HTTP/1.1, <strong>the connection is no longer closed after completing the third phase</strong>, and the client is now granted a further request: this means the second and third phases can now be performed any number of times.</p>
+<p><strong>Theory</strong></p>
+<img src="/2018/12/25/DistributedSystem/JWT与Session的作用/session-theory.png">
+<p>当client通过用户名密码请求server并通过身份认证后，server就会生成身份认证相关的session数据，并且保存在内存或者内存数据库。并将对应的sesssion_id返回给client，client会把保存session_id（可以加密签名下防止篡改在cookie。</p>
+<p>此后client的所有请求都会附带该session_id（毕竟默认会把cookie传给server），以确定server是否存在对应的session数据以及检验登录状态以及拥有什么权限，如果通过校验就该干嘛干嘛，否则重新登录。</p>
+<p>对比JWT的优势：</p>
+<ul>
+<li>最大的优势就在于可以主动清除session了；</li>
+<li>session保存在服务器端，相对较为安全；</li>
+<li>结合cookie使用，较为灵活，兼容性较好；</li>
+</ul>
+<p>劣势：</p>
+<ul>
+<li>cookie + session在跨域场景表现并不好；</li>
+<li>如果是分布式部署，需要做多机共享session机制，实现方法可将session存储到数据库中或者redis中；</li>
+<li>基于cookie的机制很容易被CSRF；</li>
+<li>查询session信息可能会有数据库查询操作；</li>
+<li>服务之间依赖访问不好处理。每个服务需要有单独的cookies。</li>
+</ul>
+<h4 id="What’s-JWT"><a href="#What’s-JWT" class="headerlink" title="What’s JWT"></a>What’s JWT</h4><p>JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact(契约) and self-contained way for securely transmitting information between parties as a JSON object. This information can be verified and trusted because it is digitally signed. JWTs can be signed using a secret (with the HMAC algorithm) or a public/private key pair using RSA or ECDSA.</p>
+<p>if the token is sent in the Authorization header, Cross-Origin Resource Sharing (CORS) won’t be an issue as it doesn’t use cookies.</p>
+<p>The following diagram shows how a JWT is obtained and used to access APIs or resources:</p>
+<img src="/2018/12/25/DistributedSystem/JWT与Session的作用/request-jwt-token.png">
+<ol>
+<li>The application or client requests authorization to the authorization server. This is performed through one of the different authorization flows. For example, a typical OpenID Connect compliant web application will go through the /oauth/authorize endpoint using the authorization code flow.</li>
+<li>When the authorization is granted, the authorization server returns an access token to the application.</li>
+<li>The application uses the access token to access a protected resource (like an API).</li>
+</ol>
+<blockquote>
+<p>using it on HTTP Headers, Authorization: Bearer <token></token></p>
+</blockquote>
+<p>对比Session的优势：</p>
+<ul>
+<li>可扩展性，方便服务进行扩展。</li>
+<li>安全性</li>
+<li>RESTful API服务</li>
+</ul>
+<p>劣势：</p>
+<ul>
+<li>传输开销比Session大，特别是大量数据编码在JWT里面的时候。</li>
+<li>实效性，无状态JWT的实效性相比session太差，只有等到过期才可销毁，而session则可手动销毁。</li>
+</ul>
+<hr>
+<p>JSON Web Token structure:</p>
+<ul>
+<li><p>Header</p>
+<blockquote>
+<p>The header typically consists of two parts: the <strong>type</strong> of the token, which is JWT, and the <strong>signing algorithm</strong> being used, such as HMAC SHA256 or RSA</p>
+</blockquote>
+</li>
+<li><p>Payload</p>
+<blockquote>
+<p>The second part of the token is the payload, which contains the <strong>claims</strong>. Claims are statements about an entity (typically, the user) and additional data. There are three types of claims: registered, public, and private claims.</p>
+</blockquote>
+</li>
+<li><p>Signature</p>
+<blockquote>
+<p>To create the signature part you have to take the encoded header, the encoded payload, a secret, the algorithm specified in the header, and sign that.</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="当用户注销时，如何使该Token失效"><a href="#当用户注销时，如何使该Token失效" class="headerlink" title="当用户注销时，如何使该Token失效"></a>当用户注销时，如何使该Token失效</h4><p>因为JWT无状态，不保存用户设备信息，没法单纯使用它完成以上问题，因此需要利用数据库保存一些状态完成。</p>
+<ul>
+<li>session: 只需要把user_id对应的token清掉即可</li>
+<li>JWT: 使用Redis，维护一张黑名单，用户注销时加入黑名单(签名)，其中key的过期时间与JWT的过期时间保持一致，确保注销后的Token不能再被使用。</li>
+</ul>
+<hr>
+<h4 id="如何允许用户只能在一个设备登录，如微信"><a href="#如何允许用户只能在一个设备登录，如微信" class="headerlink" title="如何允许用户只能在一个设备登录，如微信"></a>如何允许用户只能在一个设备登录，如微信</h4><ul>
+<li>session: 假设使用MySQL，对用户数据库表添加token字段并加索引，每次登陆重置token字段。每次请求需要权限接口时，根据token查找user_id。</li>
+<li>JWT: 假设使用MySQL，对用户数据库表添加token字段(不需要添加索引)，每次登陆重置token字段。每次请求需要权限接口时，根据JWT获取user_id，根据user_id查用户表获取token判断token是否一致。另外也可以使用计数器的方法。</li>
+</ul>
+<hr>
+<h4 id="如何允许用户只能在最近五个设备登录"><a href="#如何允许用户只能在最近五个设备登录" class="headerlink" title="如何允许用户只能在最近五个设备登录"></a>如何允许用户只能在最近五个设备登录</h4><ul>
+<li>session: 假设使用MySQL，创建token数据库表，有id、token和user_id三个字段，user与token表为1:m关系。每次登录添加一行记录。根据token获取user_id，再根据user_id获取该用户有多少设备登录，超过5个，则删除最小id一行。</li>
+<li>JWT: 假设使用MySQL，使用计数器，在用户表中添加字段count，默认值为0，每次登录count字段自增1，每次登录创建的JWT的Payload中携带数据current_count为用户的count值。每次请求权限接口时，根据JWT获取count以及current_count，根据user_id查用户表获取count，判断与current_count差值是否小于5。</li>
+</ul>
+<hr>
+<h4 id="如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备"><a href="#如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备" class="headerlink" title="如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备"></a>如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备</h4><ul>
+<li>session: 在上一个问题的基础上，删掉该设备以外其它所有的token记录。</li>
+<li>JWT: 在上一个问题的基础上，对count+5，并对该设备重新赋值为新的count。</li>
+</ul>
+<hr>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>从以上问题得知，如果不需要控制登录设备数量以及设备信息，无状态的JWT是一个不错的选择。一旦涉及到了设备信息，就需要对JWT添加额外的状态支持，增加了认证的复杂度，此时选用session是一个不错的选择。JWT不是万能的，是否采用JWT，需要根据业务需求来确定。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p>A typical HTTP session: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Session" target="_blank" rel="noopener">https://developer.mozilla.org/en-US/docs/Web/HTTP/Session</a><br>Session (computer science): <a href="https://en.wikipedia.org/wiki/Session_(computer_science)" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Session_(computer_science)</a><br>What is JSON Web Token: <a href="https://jwt.io/introduction/" target="_blank" rel="noopener">https://jwt.io/introduction/</a><br>jwt 实践以及与 session 对比: <a href="https://juejin.im/post/5b532492e51d455d6825c0cc" target="_blank" rel="noopener">https://juejin.im/post/5b532492e51d455d6825c0cc</a><br>聊一聊JWT与session: <a href="https://juejin.im/post/5a437441f265da43294e54c3" target="_blank" rel="noopener">https://juejin.im/post/5a437441f265da43294e54c3</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/DistributedSystem/" rel="tag"># DistributedSystem</a>
+          
+            <a href="/tags/JWT/" rel="tag"># JWT</a>
+          
+            <a href="/tags/Session/" rel="tag"># Session</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/24/DistributedSystem/RegisterAndDiscover/" rel="next" title="Register And Discover Centra">
+                <i class="fa fa-chevron-left"></i> Register And Discover Centra
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/26/Mac/Solution/PerformanceTesting/" rel="prev" title="MacOS Performance Testing">
+                MacOS Performance Testing <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="sulang">
+          
+            <p class="site-author-name" itemprop="name">sulang</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">493</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">227</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">554</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#What’s-Session"><span class="nav-number">1.1.</span> <span class="nav-text">What’s Session</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#What’s-JWT"><span class="nav-number">1.2.</span> <span class="nav-text">What’s JWT</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Usage"><span class="nav-number">2.</span> <span class="nav-text">Usage</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#当用户注销时，如何使该Token失效"><span class="nav-number">2.1.</span> <span class="nav-text">当用户注销时，如何使该Token失效</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何允许用户只能在一个设备登录，如微信"><span class="nav-number">2.2.</span> <span class="nav-text">如何允许用户只能在一个设备登录，如微信</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何允许用户只能在最近五个设备登录"><span class="nav-number">2.3.</span> <span class="nav-text">如何允许用户只能在最近五个设备登录</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备"><span class="nav-number">2.4.</span> <span class="nav-text">如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#小结"><span class="nav-number">2.5.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">3.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sulang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
