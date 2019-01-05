@@ -284,343 +284,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Nginx/forward-socts5/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/18/Nginx/forward-socts5/" itemprop="url">Nginx转发Socts5</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
-                2017-10-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
-                    <span itemprop="name">Nginx</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="代理服务原理"><a href="#代理服务原理" class="headerlink" title="代理服务原理"></a>代理服务原理</h3><p>代理服务器有很多种，大体来说有http，ftp，socks代理三种，其中又分透明代理和不透明代理。其中透明代理一般是网关，是硬件。所以这里讨论不透明代理。</p>
-<p>当机器通过代理服务器上网时。通讯是分两次的，先是机器和代理服务器通讯，再是代理服务器和目的地址通讯。</p>
-<ul>
-<li>机器和代理服务器通讯时，目的IP是代理服务器的IP。</li>
-<li>代理服务器和目的地址通讯时，源IP是代理服务器的IP。</li>
-</ul>
-<h4 id="HTTP代理过程"><a href="#HTTP代理过程" class="headerlink" title="HTTP代理过程"></a>HTTP代理过程</h4><p>用http代理上网的过程如下：</p>
-<ol>
-<li><p>机器和代理服务器建立TCP连接。</p>
-</li>
-<li><p>机器发出GET命令给代理服务器（这时GET命令中包含URL或IP地址，数据是明文）。</p>
-</li>
-<li><p>代理服务器将其中的URL转换为IP地址，可能会有DNS。将源数据包中的数据拷贝下来。去掉URL，重新组包，再发出去。</p>
-</li>
-</ol>
-<h4 id="代理方式对比"><a href="#代理方式对比" class="headerlink" title="代理方式对比"></a>代理方式对比</h4><p>http (get)<br>http (connect)<br>ftp (user user@host:port)<br>ftp (user user@host port)<br>ftp (open host)<br>ftp (site host)<br>ftp (site user@host)<br>socks5<br>socks4</p>
-<p>这些代理方式都有一个特点：在连接时，都会先和代理服务器连接，发出请求，一般为 command url，command就是get，connect，user 等。http和ftp都一样，可以通过关键字来识别。而且url是明文。Socks有些特别。它不是明文的，而是十六进制数据。要获得IP地址，还要经过转换。</p>
-<h3 id="Nginx代理Socts5"><a href="#Nginx代理Socts5" class="headerlink" title="Nginx代理Socts5"></a>Nginx代理Socts5</h3><p>Nginx版本 &gt;= 1.13，但是并不会默认安装，需要在编译时通过指定 –with-stream 参数来激活这个模块。</p>
-<h4 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">user  root;</span><br><span class="line"># 处理请求的进程数量，CPU核心数量决定</span><br><span class="line">worker_processes 1;</span><br><span class="line"></span><br><span class="line">error_log /var/log/nginx/error.log;</span><br><span class="line"></span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections  1024;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stream &#123;</span><br><span class="line">    upstream backend &#123;</span><br><span class="line">        hash $remote_addr consistent;</span><br><span class="line">        server 转发IP:PORT max_fails=3 fail_timeout=30s;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        listen 0.0.0.0:8000;</span><br><span class="line">        proxy_connect_timeout 30s;</span><br><span class="line">        proxy_timeout 30s;</span><br><span class="line">        proxy_pass backend;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FROM nginx</span><br><span class="line">COPY ./nginx.conf /etc/nginx/nginx.conf</span><br></pre></td></tr></table></figure>
-<h4 id="运行Docker"><a href="#运行Docker" class="headerlink" title="运行Docker"></a>运行Docker</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run --name nginx_proxy -d --rm -p 8000:8000 image:nginx</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Server/Testing/Stress/jmeter/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/18/Server/Testing/Stress/jmeter/" itemprop="url">jmeter 服务器压力测试</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
-                2017-10-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/" itemprop="url" rel="index">
-                    <span itemprop="name">server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/testing/" itemprop="url" rel="index">
-                    <span itemprop="name">testing</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/testing/stress/" itemprop="url" rel="index">
-                    <span itemprop="name">stress</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>参考链接：<a href="https://testerhome.com/topics/4059" target="_blank" rel="noopener">https://testerhome.com/topics/4059</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Nginx/conf/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -745,160 +408,6 @@
 <li>HTTP强制跳转HTTPS</li>
 </ul>
 <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen  80;</span><br><span class="line">    server_name www.domain.com domain.com;</span><br><span class="line">    return  301 https://$server_name$request_uri;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Nginx/limite/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/18/Nginx/limite/" itemprop="url">Nginx Limite</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
-                2017-10-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
-                    <span itemprop="name">Nginx</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="http://nginx.org/en/docs/http/ngx_http_limit_req_module.html" target="_blank" rel="noopener">http://nginx.org/en/docs/http/ngx_http_limit_req_module.html</a></p>
-<p><a href="https://www.zzxworld.com/posts/61" target="_blank" rel="noopener">https://www.zzxworld.com/posts/61</a></p>
-
           
         
       
@@ -1272,6 +781,650 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Server/Testing/Stress/jmeter/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/18/Server/Testing/Stress/jmeter/" itemprop="url">jmeter 服务器压力测试</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
+                2017-10-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/server/" itemprop="url" rel="index">
+                    <span itemprop="name">server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/server/testing/" itemprop="url" rel="index">
+                    <span itemprop="name">testing</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/server/testing/stress/" itemprop="url" rel="index">
+                    <span itemprop="name">stress</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>参考链接：<a href="https://testerhome.com/topics/4059" target="_blank" rel="noopener">https://testerhome.com/topics/4059</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Nginx/limite/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/18/Nginx/limite/" itemprop="url">Nginx Limite</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
+                2017-10-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
+                    <span itemprop="name">Nginx</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="http://nginx.org/en/docs/http/ngx_http_limit_req_module.html" target="_blank" rel="noopener">http://nginx.org/en/docs/http/ngx_http_limit_req_module.html</a></p>
+<p><a href="https://www.zzxworld.com/posts/61" target="_blank" rel="noopener">https://www.zzxworld.com/posts/61</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Nginx/forward-socts5/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/18/Nginx/forward-socts5/" itemprop="url">Nginx转发Socts5</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T21:58:18+08:00">
+                2017-10-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Nginx/" itemprop="url" rel="index">
+                    <span itemprop="name">Nginx</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="代理服务原理"><a href="#代理服务原理" class="headerlink" title="代理服务原理"></a>代理服务原理</h3><p>代理服务器有很多种，大体来说有http，ftp，socks代理三种，其中又分透明代理和不透明代理。其中透明代理一般是网关，是硬件。所以这里讨论不透明代理。</p>
+<p>当机器通过代理服务器上网时。通讯是分两次的，先是机器和代理服务器通讯，再是代理服务器和目的地址通讯。</p>
+<ul>
+<li>机器和代理服务器通讯时，目的IP是代理服务器的IP。</li>
+<li>代理服务器和目的地址通讯时，源IP是代理服务器的IP。</li>
+</ul>
+<h4 id="HTTP代理过程"><a href="#HTTP代理过程" class="headerlink" title="HTTP代理过程"></a>HTTP代理过程</h4><p>用http代理上网的过程如下：</p>
+<ol>
+<li><p>机器和代理服务器建立TCP连接。</p>
+</li>
+<li><p>机器发出GET命令给代理服务器（这时GET命令中包含URL或IP地址，数据是明文）。</p>
+</li>
+<li><p>代理服务器将其中的URL转换为IP地址，可能会有DNS。将源数据包中的数据拷贝下来。去掉URL，重新组包，再发出去。</p>
+</li>
+</ol>
+<h4 id="代理方式对比"><a href="#代理方式对比" class="headerlink" title="代理方式对比"></a>代理方式对比</h4><p>http (get)<br>http (connect)<br>ftp (user user@host:port)<br>ftp (user user@host port)<br>ftp (open host)<br>ftp (site host)<br>ftp (site user@host)<br>socks5<br>socks4</p>
+<p>这些代理方式都有一个特点：在连接时，都会先和代理服务器连接，发出请求，一般为 command url，command就是get，connect，user 等。http和ftp都一样，可以通过关键字来识别。而且url是明文。Socks有些特别。它不是明文的，而是十六进制数据。要获得IP地址，还要经过转换。</p>
+<h3 id="Nginx代理Socts5"><a href="#Nginx代理Socts5" class="headerlink" title="Nginx代理Socts5"></a>Nginx代理Socts5</h3><p>Nginx版本 &gt;= 1.13，但是并不会默认安装，需要在编译时通过指定 –with-stream 参数来激活这个模块。</p>
+<h4 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">user  root;</span><br><span class="line"># 处理请求的进程数量，CPU核心数量决定</span><br><span class="line">worker_processes 1;</span><br><span class="line"></span><br><span class="line">error_log /var/log/nginx/error.log;</span><br><span class="line"></span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections  1024;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stream &#123;</span><br><span class="line">    upstream backend &#123;</span><br><span class="line">        hash $remote_addr consistent;</span><br><span class="line">        server 转发IP:PORT max_fails=3 fail_timeout=30s;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        listen 0.0.0.0:8000;</span><br><span class="line">        proxy_connect_timeout 30s;</span><br><span class="line">        proxy_timeout 30s;</span><br><span class="line">        proxy_pass backend;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FROM nginx</span><br><span class="line">COPY ./nginx.conf /etc/nginx/nginx.conf</span><br></pre></td></tr></table></figure>
+<h4 id="运行Docker"><a href="#运行Docker" class="headerlink" title="运行Docker"></a>运行Docker</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run --name nginx_proxy -d --rm -p 8000:8000 image:nginx</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/Command/disk/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/18/Linux/Command/disk/" itemprop="url">磁盘命令</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T11:38:57+08:00">
+                2017-10-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="dd"><a href="#dd" class="headerlink" title="dd"></a>dd</h2><p>dd if=path/fedora.iso of=/dev/sdX<br>注意：<br>    if指向的是iso镜像 of指向的是写入目标；<br>    of的指向目标是整个磁盘，比如是/dev/sde，而不是类似/dev/sde1这样的某个磁盘分区；</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/Command/network/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1504,7 +1657,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/Command/disk/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/VPN/dns/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1523,7 +1676,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/18/Linux/Command/disk/" itemprop="url">磁盘命令</a></h2>
+                <a class="post-title-link" href="/2017/10/18/Linux/VPN/dns/" itemprop="url">DNS</a></h2>
         
 
         <div class="post-meta">
@@ -1535,7 +1688,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T11:38:57+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T10:31:58+08:00">
                 2017-10-18
               </time>
             
@@ -1558,8 +1711,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
                   </a>
                 </span>
 
@@ -1569,8 +1722,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
+                  <a href="/categories/linux/vpn/" itemprop="url" rel="index">
+                    <span itemprop="name">vpn</span>
                   </a>
                 </span>
 
@@ -1608,7 +1761,15 @@
       
         
           
-            <h2 id="dd"><a href="#dd" class="headerlink" title="dd"></a>dd</h2><p>dd if=path/fedora.iso of=/dev/sdX<br>注意：<br>    if指向的是iso镜像 of指向的是写入目标；<br>    of的指向目标是整个磁盘，比如是/dev/sde，而不是类似/dev/sde1这样的某个磁盘分区；</p>
+            <h3 id="PaBoDNS"><a href="#PaBoDNS" class="headerlink" title="PaBoDNS"></a>PaBoDNS</h3><p>NS1: 101.200.33.29<br>NS2: 118.89.172.150</p>
+<h3 id="SNI-Proxy"><a href="#SNI-Proxy" class="headerlink" title="SNI Proxy"></a>SNI Proxy</h3><p>前提：海外服务器123.123.123.123上面已经搭建了SNI Proxy，本地host添加 123.123.123.123 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></p>
+<p>访问<a href="http://www.google.com过程" target="_blank" rel="noopener">www.google.com过程</a></p>
+<ol>
+<li>浏览器访问 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></li>
+<li>浏览器访根据host文件，把请求数据转发给123.123.123.123，</li>
+<li>SNI Proxy服务器收到请求后，把数据转发给 <a href="http://www.google.com，然后把获取到的数据返回请求来源" target="_blank" rel="noopener">www.google.com，然后把获取到的数据返回请求来源</a></li>
+<li>浏览器可以看到 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a> 返回的数据</li>
+</ol>
 
           
         
@@ -1784,167 +1945,6 @@
 <h3 id="GoFlyway"><a href="#GoFlyway" class="headerlink" title="GoFlyway"></a>GoFlyway</h3><p><a href="https://doub.io/goflyway-jc2/" target="_blank" rel="noopener">https://doub.io/goflyway-jc2/</a></p>
 <hr>
 <h3 id="goproxy"><a href="#goproxy" class="headerlink" title="goproxy"></a>goproxy</h3><p><a href="https://blog.kuoruan.com/108.html" target="_blank" rel="noopener">https://blog.kuoruan.com/108.html</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/18/Linux/VPN/dns/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/18/Linux/VPN/dns/" itemprop="url">DNS</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T10:31:58+08:00">
-                2017-10-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/vpn/" itemprop="url" rel="index">
-                    <span itemprop="name">vpn</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="PaBoDNS"><a href="#PaBoDNS" class="headerlink" title="PaBoDNS"></a>PaBoDNS</h3><p>NS1: 101.200.33.29<br>NS2: 118.89.172.150</p>
-<h3 id="SNI-Proxy"><a href="#SNI-Proxy" class="headerlink" title="SNI Proxy"></a>SNI Proxy</h3><p>前提：海外服务器123.123.123.123上面已经搭建了SNI Proxy，本地host添加 123.123.123.123 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></p>
-<p>访问<a href="http://www.google.com过程" target="_blank" rel="noopener">www.google.com过程</a></p>
-<ol>
-<li>浏览器访问 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></li>
-<li>浏览器访根据host文件，把请求数据转发给123.123.123.123，</li>
-<li>SNI Proxy服务器收到请求后，把数据转发给 <a href="http://www.google.com，然后把获取到的数据返回请求来源" target="_blank" rel="noopener">www.google.com，然后把获取到的数据返回请求来源</a></li>
-<li>浏览器可以看到 <a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a> 返回的数据</li>
-</ol>
 
           
         
