@@ -284,6 +284,422 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/07/Network/Socket/What's socket/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/07/Network/Socket/What's socket/" itemprop="url">认识Socket</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-07T22:52:18+08:00">
+                2018-12-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/Socket/" itemprop="url" rel="index">
+                    <span itemprop="name">Socket</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="What’s-socket"><a href="#What’s-socket" class="headerlink" title="What’s socket"></a>What’s socket</h3><p>socket是计算机网络中用于在节点内发送或接收数据的内部端点。</p>
+<p>具体来说，它是网络软件 (协议栈) 中这个端点的一种表示，包含通信协议、目标地址、状态等，是系统资源的一种形式。</p>
+<p>socket所处的位置大致就是下面的黑色部分，应用层与传输层之间：</p>
+<img src="/2018/12/07/Network/Socket/What%27s%20socket/tcp-1.png">
+<p>其中的传输层就是TCP/IP所在的地方，socket在这里起到就是连接应用层与传输层的作用。</p>
+<p>socket的诞生是为了应用程序能够更方便的将数据经由传输层来传输，所以它本质上就是对TCP/IP的运用进行了一层封装，然后应用程序直接调用socket API即可进行通信。</p>
+<p>那么它是如何工作的呢？它分为2个部分，服务端需要建立socket来监听指定的地址，然后等待客户端来连接。而客户端则需要建立socket并与服务端的socket地址进行连接。</p>
+<img src="/2018/12/07/Network/Socket/What%27s%20socket/tcp-client-server.png">
+<p>上图展示的就是建立TCP/IP连接的过程，<strong>经典的叫法为“三次握手”的过程</strong>。顾名思义，这个过程中来回产生了三次网络通信。</p>
+<p>接下来的数据传输过程就简单很多，发送数据就是客户端往服务端通信，服务端处理完之后的数据返回则相反。</p>
+<img src="/2018/12/07/Network/Socket/What%27s%20socket/tcp-communication.png">
+<p>值得注意的是，传输的过程涉及到数据Copy，不过这些Copy是必不可少的。其中的发送缓冲区和接收缓冲区就是套接字缓存 (socket buffer)。</p>
+<p>连接使用完之后需要关闭，不过 TCP/IP 连接关闭过程比创建更复杂一些，次数多了一次，这就是<strong>经典的“四次握手”过程</strong>。</p>
+<p>socket是进程间数据传输的媒介，为了保证连接的可靠，你需要特别注意建立连接和关闭连接的过程。为了确保准确、完整的数据传输，客户端和服务端来回进行了多次网络通信才得以完成连接的创建和关闭，这同时也是你在运用一个连接时所花费的额外成本。</p>
+<h3 id="长短连接"><a href="#长短连接" class="headerlink" title="长短连接"></a>长短连接</h3><h4 id="两者区别"><a href="#两者区别" class="headerlink" title="两者区别"></a>两者区别</h4><p>长连接意味着进行一次数据传输后，不关闭连接，长期保持连通状态。如果两个应用程序之间有新的数据需要传输，则直接复用这个连接，无需再建立一个新的连接。就像下图这样。</p>
+<img src="/2018/12/07/Network/Socket/What%27s%20socket/long-connection.png">
+<p>它的优势是在多次通信中可以省去连接建立和关闭连接的开销，并且从总体上来看，进行多次数据传输的总耗时更少。缺点是需要花费额外的精力来保持这个连接一直是可用的，因为网络抖动、服务器故障等都会导致这个连接不可用，甚至是由于防火墙的原因。</p>
+<p>所以，一般我们会通过下面这几种方式来做“保活”工作，确保连接在被使用的时候是可用状态：</p>
+<ul>
+<li><p>利用TCP自身的保活（Keepalive）机制来实现，保活机制会定时发送探测报文来识别对方是否可达。一般的默认定时间隔是2小时，你可以根据自己的需要在操作系统层面去调整这个间隔，不管是Linux还是Windows系统。</p>
+</li>
+<li><p>上层应用主动的定时发送一个小数据包作为“心跳”，探测是否能成功送达到另外一端。 保活功能大多数情况下用于服务端探测客户端的场景，一旦识别客户端不可达，则断开连接，缓解服务端压力。</p>
+</li>
+</ul>
+<p>如果在做了高可用的分布式系统场景中运用长连接会更麻烦一些。因为高可用必然包含自动故障转移、故障隔离等机制。这恰恰导致了一旦发生故障，客户端需要及时发现哪些连接已处于不可用状态，并进行相应的重连，包括重新做负载均衡等工作。</p>
+<hr>
+<p>短连接意味着每一次的数据传输都需要建立一个新的连接，用完再马上关闭它。下次再用的时候重新建立一个新的连接，如此反复。</p>
+<img src="/2018/12/07/Network/Socket/What%27s%20socket/short-connection.png">
+<p>它的优势是由于每次使用的连接都是新建的，所以基本上只要能够建立连接，数据就大概率能送达到对方。并且哪怕这次传输出现异常也不用担心影响后续新的数据传输，因为届时又是一个新的连接。缺点是每个连接都需要经过三次握手和四次握手的过程，耗时大大增加。</p>
+<p><strong>此外，短连接还有一个致命的缺点。</strong>前面提到的维基百科对socket的定义，其中说到socket包含通信协议、目标地址、状态等。实际当你在基于socket 进行开发的时候，这些包含的具体资源主要就是这5个：</p>
+<ul>
+<li>源IP</li>
+<li>源端口</li>
+<li>目的IP</li>
+<li>目的端口</li>
+<li>协议</li>
+</ul>
+<p>有个专业的叫法称之为“五元组”。在一台计算机上只要这五元组的值不重复，那么连接就可以被建立。然而一台计算机最多只能开启65535个端口，如果现在两个进程之间需要通信，作为服务端的IP和端口必然是固定的，因此单个客户端理论上最多只能与服务端同时建立65535个socket连接。</p>
+<p>如果除去操作系统和其它进程所占用的端口，实际还会更少。所以，一旦使用不当，在很短的时间内建立了大量连接，端口很容易被占用完。这不但会导致自身无法正常工作，还会影响到同一台计算机上的其它进程。</p>
+<h4 id="Application-Scenarios"><a href="#Application-Scenarios" class="headerlink" title="Application Scenarios"></a>Application Scenarios</h4><p>一些监控或者实时报价类系统，比如股票软件，它需要在几秒之内刷新最新的价格。像这种场景中同时包含了需要运用长连接的三个主要因素：</p>
+<ul>
+<li><p>高频</p>
+<blockquote>
+<p>因为频次越高的话，使用短连接带来的建立连接和关闭连接的总开销越大。</p>
+</blockquote>
+</li>
+<li><p>服务端主动推送</p>
+<blockquote>
+<p>而服务端主动推送也需要长连接的原因是，由于服务端往往是“中心化”的，一般都是1个服务端为多个客户端提供服务。所以，如果使用短连接的方式，那么在客户端未主动连接到服务端的情况下，服务端并不知道需要往哪些客户端去推送数据，这是原因之一。所以此时，长连接成为了一个很好的选择。另外一个原因是，哪怕客户端通过定时的短连接轮询方式进行主动连接，除了增加了额外的建立连接和关闭连接的开销外，还可能遇到通信完成后结果数据并未发生变化，做了无用功。</p>
+</blockquote>
+</li>
+<li><p>有状态</p>
+<blockquote>
+<p>成熟股票软件的服务端，为了支撑更多的用户以及做高可用，必然部署了多台。但是这个业务场景，用户无法容忍由于多个服务端之间数据同步的误差导致他在客户端看到的价格刷新产生“回退”现象。所以，只能尽量保持一直连接在同一台服务器上，才能避免这个情况。这种场景被称之为“有状态”，也可以理解为是“串行”的，因为多次请求的前后需要保持“连续性”。</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<p>短连接则更适用于诸如阅读类软件的场景中，例如，很多时候用户点开一篇文章后需要花一些时间进行阅读，这个时间有长有短，并且直到用户下一次操作之前都没有数据传输发生。这个场景中包含了运用短连接的两个主要因素：</p>
+<ul>
+<li><p>低频</p>
+<blockquote>
+<p>因为低频，所以更能容忍建立连接和关闭连接的开销。</p>
+</blockquote>
+</li>
+<li><p>无状态</p>
+<blockquote>
+<p>用户的下一次点击往往跳转到了其它文章，并且新打开的与当前文章并不需要具有“连续性”，所以这种场景我们称之为“无状态”的。另外，理论上同一时刻打开几篇文章也不会存在什么不妥。</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<p>通过这两个案例我们可以总结出一个决定何时运用长连接和短连接的最佳实践。</p>
+<ul>
+<li><p>长连接适用于：两个进程之间需要高频通信并且具备服务端主动推送或者有状态（需串行）两者之一的场景，否则并不是必选项。</p>
+</li>
+<li><p>短连接适用于：两个进程之间通信频率较低，或者属于无状态（可并行）的场景，否则并不是必选项。</p>
+</li>
+</ul>
+<p>其它情况就根据所需的侧重点来，比如侧重性能就长连接，侧重编码的便捷性就选择短连接。</p>
+<p>不过有时候我们可能需要一个中庸的方案来作为默认选择，因为很多场景中的请求并不是平稳的，甚至波动会较大，而且可能同时存在有状态和无状态的场景，此时如果单方面的选择长连接或者短连接都会产生较多的资源浪费。</p>
+<p>那么我们可以通过增加一些复杂度来实现一个能够综合长连接和短连接各自优点的方案：<strong>建立多个长连接，每次数据传输的时候独占使用，用完之后放回，再给后续使用。这种方案被称之为“连接池”。</strong></p>
+<p>例如, 很多的数据库访问框架都内置了连接池机制，因为作为底层框架的它不知道会被使用到何种场景的系统中，所以提供了这个选项。</p>
+<p>一般都会在应用程序启动时预先建立好指定数据量的连接，以更好应对冷启动后请求数快速上升带来的资源竞争问题，这个数量一般称之为最小连接数。另外，如果新的请求进来时，所有已建立的连接都在使用中，但是连接数的上限未达到指定数量，可以再建立新的长连接来使用，用完依旧放回到空闲池，相当于把连接池扩大了，这个上限数量一般称之为最大连接数。</p>
+<img src="/2018/12/07/Network/Socket/What%27s%20socket/connection-pools.png">
+<hr>
+<h3 id="TCP三次握手"><a href="#TCP三次握手" class="headerlink" title="TCP三次握手"></a>TCP三次握手</h3><p>TCP作为一种可靠传输控制协议，其核心思想：<strong>既要保证数据可靠传输，又要提高传输的效率，而用三次恰恰可以满足以上两方面的需求</strong>。</p>
+<h4 id="TCP可靠传输的精髓"><a href="#TCP可靠传输的精髓" class="headerlink" title="TCP可靠传输的精髓"></a>TCP可靠传输的精髓</h4><p>TCP连接的一方A，由操作系统动态随机选取一个32位长的序列号（Initial Sequence Number），假设A的初始序列号为1000，以该序列号为原点，对自己将要发送的每个字节的数据进行编号，1001，1002，1003…，并把自己的初始序列号ISN告诉B，让B有一个思想准备，什么样编号的数据是合法的，什么编号是非法的，比如编号900就是非法的，同时B还可以对A每一个编号的字节数据进行确认。如果A收到B确认编号为2001，则意味着字节编号为1001-2000，共1000个字节已经安全到达。</p>
+<p>同理B也是类似的操作，假设B的初始序列号ISN为2000，以该序列号为原点，对自己将要发送的每个字节的数据进行编号，2001，2002，2003…，并把自己的初始序列号ISN告诉A，以便A可以确认B发送的每一个字节。如果B收到A确认编号为4001，则意味着字节编号为2001-4000，共2000个字节已经安全到达。</p>
+<h3 id="TCP握手过程"><a href="#TCP握手过程" class="headerlink" title="TCP握手过程"></a>TCP握手过程</h3><p>A <--> B 的TCP握手过程：</--></p>
+<ol>
+<li>A 发送同步信号SYN + A’s Initial sequence number</li>
+<li>B 确认收到A的同步信号，并记录 A’s ISN 到本地，命名 B’s ACK sequence number</li>
+<li>B 发送同步信号SYN + B’s Initial sequence number</li>
+<li>A 确认收到B的同步信号，并记录 B’s ISN 到本地，命名 A’s ACK sequence number</li>
+</ol>
+<p>其中2和3可以合并成一个步骤</p>
+<p>为什么是三次握手，而不是四次，甚至五次？</p>
+<blockquote>
+<p>在Google Groups的TopLanguage中看到一帖讨论TCP“三次握手”觉得很有意思。贴主提出“TCP建立连接为什么是三次握手？”的问题，在众多回复中，有一条回复写道：“这个问题的本质是, 信道不可靠, 但是通信双发需要就某个问题达成一致. 而要解决这个问题, 无论你在消息中包含什么信息, 三次通信是理论上的最小值. 所以三次握手不是TCP本身的要求, 而是为了满足”在不可靠信道上可靠地传输信息”这一需求所导致的. 请注意这里的本质需求,信道不可靠, 数据传输要可靠. 三次达到了, 那后面你想接着握手也好, 发数据也好, 跟进行可靠信息传输的需求就没关系了. 因此,如果信道是可靠的, 即无论什么时候发出消息, 对方一定能收到, 或者你不关心是否要保证对方收到你的消息, 那就能像UDP那样直接发送消息就可以了.”。这可视为对“三次握手”目的的另一种解答思路。</p>
+</blockquote>
+<img src="/2018/12/07/Network/Socket/What%27s%20socket/tcp-three-times.png">
+<ul>
+<li><p>第一次握手 - 建立连接</p>
+<blockquote>
+<p>客户端发送连接请求报文段，将SYN位置为1，<strong>Sequence Number为X</strong>。然后，客户端进入SYN_SEND状态，等待服务器的确认；</p>
+</blockquote>
+</li>
+<li><p>第二次握手 - 服务器收到SYN</p>
+<blockquote>
+<p>服务器收到客户端的SYN报文段，需要对这个SYN报文段进行确认，<strong>设置Acknowledgment Number为X+1(Sequence Number+1)</strong>，同时，自己还要发送SYN请求信息，将SYN位置为1，<strong>Sequence Number为Y</strong>。服务器端将上述所有信息放到一个报文段（即SYN+ACK报文段）中，一并发送给客户端，此时服务器进入SYN_RECV状态。</p>
+</blockquote>
+</li>
+<li><p>第三次握手 - 客户端收到服务器的SYN</p>
+<blockquote>
+<p>客户端收到服务器的SYN+ACK报文段。然后将<strong>Acknowledgment Number设置为Y+1</strong>，向服务器发送ACK报文段，这个报文段发送完毕以后，客户端和服务器端都进入ESTABLISHED状态，完成TCP三次握手。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.zhihu.com/question/24853633" target="_blank" rel="noopener">https://www.zhihu.com/question/24853633</a><br><a href="https://github.com/jawil/blog/issues/14" target="_blank" rel="noopener">https://github.com/jawil/blog/issues/14</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/07/Kubenetes/Timezone/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/07/Kubenetes/Timezone/" itemprop="url">Kuberntes timezone</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-07T11:11:22+08:00">
+                2018-12-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kuberntes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kuberntes</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h4><h3 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h3><p>部署应用时，单独读取主机的“/etc/localtime”文件，即创建pod时同步时区，无需修改镜像，但是每个应用都要单独设置。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">extensions/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">myweb</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  replicas:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      labels:</span></span><br><span class="line"><span class="attr">        app:</span> <span class="string">myweb</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      containers:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">myweb</span></span><br><span class="line"><span class="attr">        image:</span> </span><br><span class="line"><span class="attr">        volumeMounts:</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">HostTime</span></span><br><span class="line"><span class="attr">          mountPath:</span> <span class="string">/etc/localtime</span></span><br><span class="line"><span class="attr">      volumes:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">HostTime</span></span><br><span class="line"><span class="attr">        hostPath:</span></span><br><span class="line"><span class="attr">          path:</span> <span class="string">/etc/localtime</span></span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/05/Mac/Solution/ShareMem/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -906,6 +1322,152 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/03/DB/KV-System/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/03/DB/KV-System/" itemprop="url">Key-Value Database System</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-03T00:30:18+08:00">
+                2018-12-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Leveldb"><a href="#Leveldb" class="headerlink" title="Leveldb"></a>Leveldb</h3><hr>
+<h3 id="Rocksdb"><a href="#Rocksdb" class="headerlink" title="Rocksdb"></a>Rocksdb</h3><hr>
+<h3 id="BadgerDB"><a href="#BadgerDB" class="headerlink" title="BadgerDB"></a>BadgerDB</h3><p>BadgerDB is an embeddable, persistent, simple and fast key-value (KV) database written in pure Go. It’s meant to be a performant alternative to non-Go-based key-value stores like RocksDB.</p>
+<hr>
+<h3 id="Berkerlydb"><a href="#Berkerlydb" class="headerlink" title="Berkerlydb"></a>Berkerlydb</h3><hr>
+<h3 id="Accumulo"><a href="#Accumulo" class="headerlink" title="Accumulo"></a>Accumulo</h3>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/03/BlockChain/Terms/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1033,152 +1595,6 @@
 <p><a href="https://www.zhihu.com/question/46729645" target="_blank" rel="noopener">https://www.zhihu.com/question/46729645</a></p>
 </blockquote>
 
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/03/DB/KV-System/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/03/DB/KV-System/" itemprop="url">Key-Value Database System</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-03T00:30:18+08:00">
-                2018-12-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Leveldb"><a href="#Leveldb" class="headerlink" title="Leveldb"></a>Leveldb</h3><hr>
-<h3 id="Rocksdb"><a href="#Rocksdb" class="headerlink" title="Rocksdb"></a>Rocksdb</h3><hr>
-<h3 id="BadgerDB"><a href="#BadgerDB" class="headerlink" title="BadgerDB"></a>BadgerDB</h3><p>BadgerDB is an embeddable, persistent, simple and fast key-value (KV) database written in pure Go. It’s meant to be a performant alternative to non-Go-based key-value stores like RocksDB.</p>
-<hr>
-<h3 id="Berkerlydb"><a href="#Berkerlydb" class="headerlink" title="Berkerlydb"></a>Berkerlydb</h3><hr>
-<h3 id="Accumulo"><a href="#Accumulo" class="headerlink" title="Accumulo"></a>Accumulo</h3>
           
         
       
@@ -1553,205 +1969,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/01/Rust/Basic/Scopes/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/01/Rust/Basic/Scopes/" itemprop="url">Rust Scopes and Ownership</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-01T13:24:03+08:00">
-                2018-12-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/" itemprop="url" rel="index">
-                    <span itemprop="name">Rust</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Scopes play an important part in ownership, borrowing, and lifetimes. </p>
-<p>That is, they indicate to the compiler when borrows are valid, when resources can be freed, and when variables are created or destroyed.</p>
-<h3 id="What’s-RAII"><a href="#What’s-RAII" class="headerlink" title="What’s RAII"></a>What’s RAII</h3><p> Rust enforces RAII, so whenever an object goes out of scope, its destructor is called and its owned resources are freed.</p>
-<blockquote>
-<p> RAII: Resource Acquisition Is Initialization</p>
-</blockquote>
-<p> This behavior shields against resource leak bugs, so you’ll never have to manually free memory or worry about memory leaks again! </p>
-<p> Here’s a quick showcase:</p>
- <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function"><span class="keyword">fn</span> <span class="title">create_box</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Allocate an integer on the heap</span></span><br><span class="line">    <span class="keyword">let</span> _box1 = <span class="built_in">Box</span>::new(<span class="number">3i32</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `_box1` is destroyed here, and memory gets freed</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Allocate an integer on the heap</span></span><br><span class="line">    <span class="keyword">let</span> _box2 = <span class="built_in">Box</span>::new(<span class="number">5i32</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A nested scope:</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Allocate an integer on the heap</span></span><br><span class="line">        <span class="keyword">let</span> _box3 = <span class="built_in">Box</span>::new(<span class="number">4i32</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// `_box3` is destroyed here, and memory gets freed</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Creating lots of boxes just for fun</span></span><br><span class="line">    <span class="comment">// There's no need to manually free memory!</span></span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="number">0u32</span>..<span class="number">1_000</span> &#123;</span><br><span class="line">        create_box();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `_box2` is destroyed here, and memory gets freed</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>memory analyzer：rustc main.rs &amp;&amp; valgrind ./main</p>
-<h3 id="Destructor"><a href="#Destructor" class="headerlink" title="Destructor"></a>Destructor</h3><p>The notion of a destructor in Rust is provided through the <strong>Drop</strong> trait. The destructor is called when the resource goes out of scope. </p>
-<p>This trait is not required to be implemented for every type, only implement it for your type if you require its own destructor logic.</p>
-<p>showcase:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ToDrop</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="built_in">Drop</span> <span class="keyword">for</span> ToDrop &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">drop</span></span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"ToDrop is being dropped"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> x = ToDrop;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Made a ToDrop!"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Made a ToDrop!</span><br><span class="line">ToDrop is being dropped</span><br></pre></td></tr></table></figure>
-<h3 id="Ownership"><a href="#Ownership" class="headerlink" title="Ownership"></a>Ownership</h3><p>Because variables are in charge of freeing their own resources, <strong>resources can only have one owner</strong>.</p>
-<p>This also prevents resources from being freed more than once. Note that not all variables own resources (e.g. references).</p>
-<p>When doing assignments (let x = y) or passing function arguments by value (foo(x)), the ownership of the resources is transferred. <strong>In Rust-speak, this is known as a move.</strong></p>
-<p><strong>After moving resources, the previous owner can no longer be used. This avoids creating dangling pointers.</strong></p>
-<p>Example:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// This function takes ownership of the heap allocated memory</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">destroy_box</span></span>(c: <span class="built_in">Box</span>&lt;<span class="built_in">i32</span>&gt;) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Destroying a box that contains &#123;&#125;"</span>, c);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `c` is destroyed and the memory freed</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// _Stack_ allocated integer</span></span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">5u32</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// *Copy* `x` into `y` - no resources are moved</span></span><br><span class="line">    <span class="keyword">let</span> y = x;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Both values can be independently used</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"x is &#123;&#125;, and y is &#123;&#125;"</span>, x, y);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `a` is a pointer to a _heap_ allocated integer</span></span><br><span class="line">    <span class="keyword">let</span> a = <span class="built_in">Box</span>::new(<span class="number">5i32</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"a contains: &#123;&#125;"</span>, a);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// *Move* `a` into `b`</span></span><br><span class="line">    <span class="keyword">let</span> b = a;</span><br><span class="line">    <span class="comment">// The pointer address of `a` is copied (not the data) into `b`.</span></span><br><span class="line">    <span class="comment">// Both are now pointers to the same heap allocated data, but</span></span><br><span class="line">    <span class="comment">// `b` now owns it.</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Error! `a` can no longer access the data, because it no longer owns the</span></span><br><span class="line">    <span class="comment">// heap memory</span></span><br><span class="line">    <span class="comment">//println!("a contains: &#123;&#125;", a);</span></span><br><span class="line">    <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// This function takes ownership of the heap allocated memory from `b`</span></span><br><span class="line">    destroy_box(b);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Since the heap memory has been freed at this point, this action would</span></span><br><span class="line">    <span class="comment">// result in dereferencing freed memory, but it's forbidden by the compiler</span></span><br><span class="line">    <span class="comment">// Error! Same reason as the previous Error</span></span><br><span class="line">    <span class="comment">//println!("b contains: &#123;&#125;", b);</span></span><br><span class="line">    <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line">    <span class="comment">// error[E0382]: use of moved value: `a`</span></span><br><span class="line">    <span class="comment">// println!("a contains: &#123;&#125;", a)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到，不论是b，还是a，在调用destroy_box()后，都失去了ownership。</p>
-<h3 id="Borrowing"><a href="#Borrowing" class="headerlink" title="Borrowing"></a>Borrowing</h3><p>Most of the time, we’d like to access data without taking ownership over it. To accomplish this, Rust uses a <strong>borrowing</strong> mechanism. Instead of passing objects by value (T), objects can be passed by reference (&amp;T).</p>
-<p>Example:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// This function takes ownership of a box and destroys it</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">eat_box_i32</span></span>(boxed_i32: <span class="built_in">Box</span>&lt;<span class="built_in">i32</span>&gt;) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Destroying box that contains &#123;&#125; on eat_box_i32 function"</span>, boxed_i32);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function borrows an i32</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">borrow_i32</span></span>(borrowed_i32: &amp;<span class="built_in">i32</span>) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"This int is: &#123;&#125; on borrow_i32 function"</span>, borrowed_i32);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Create a boxed i32, and a stacked i32</span></span><br><span class="line">    <span class="keyword">let</span> boxed_i32 = <span class="built_in">Box</span>::new(<span class="number">5_i32</span>);</span><br><span class="line">    <span class="keyword">let</span> stacked_i32 = <span class="number">6_i32</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Borrow the contents of the box. Ownership is not taken,</span></span><br><span class="line">    <span class="comment">// so the contents can be borrowed again.</span></span><br><span class="line">    borrow_i32(&amp;boxed_i32);</span><br><span class="line">    borrow_i32(&amp;stacked_i32);</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Take a reference to the data contained inside the box</span></span><br><span class="line">        <span class="keyword">let</span> _ref_to_i32: &amp;<span class="built_in">i32</span> = &amp;boxed_i32;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error!</span></span><br><span class="line">        <span class="comment">// Can't destroy `boxed_i32` while the inner value is borrowed.</span></span><br><span class="line">        <span class="comment">// eat_box_i32(boxed_i32);</span></span><br><span class="line">        <span class="comment">// FIXME ^ Comment out this line</span></span><br><span class="line">        borrow_i32(&amp;_ref_to_i32);</span><br><span class="line">        <span class="comment">// `_ref_to_i32` goes out of scope and is no longer borrowed.</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `boxed_i32` can now give up ownership to `eat_box` and be destroyed</span></span><br><span class="line">     eat_box_i32(boxed_i32);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在block里面，调用eat_box_i32()尝试destroy boxed_i32前，boxed_i32已经被_ref_to_i32借用了，而且eat_box_i32()被包含在_ref_to_i32的scope里面，此时，eat_box_i32()试图destroy boxed_i32是不可能的事情。</p>
-<h4 id="Mutability"><a href="#Mutability" class="headerlink" title="Mutability"></a>Mutability</h4><p>Mutable data can be mutably borrowed using &amp;mut T. This is called a mutable reference and gives read/write access to the borrower. </p>
-<p>In contrast, &amp;T borrows the data via an immutable reference, and the borrower can read the data but not modify it:</p>
-<p>Example:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#[allow(dead_code)]</span></span><br><span class="line"><span class="meta">#[derive(Clone, Copy)]</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Book</span></span> &#123;</span><br><span class="line">    <span class="comment">// `&amp;'static str` is a reference to a string allocated in read only memory</span></span><br><span class="line">    author: &amp;<span class="symbol">'static</span> <span class="built_in">str</span>,</span><br><span class="line">    title: &amp;<span class="symbol">'static</span> <span class="built_in">str</span>,</span><br><span class="line">    year: <span class="built_in">u32</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function takes a reference to a book</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">borrow_book</span></span>(book: &amp;Book) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"I immutably borrowed &#123;&#125; - &#123;&#125; edition"</span>, book.title, book.year);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function takes a reference to a mutable book and changes `year` to 2014</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">new_edition</span></span>(book: &amp;<span class="keyword">mut</span> Book) &#123;</span><br><span class="line">    book.year = <span class="number">2014</span>;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"I mutably borrowed &#123;&#125; - &#123;&#125; edition"</span>, book.title, book.year);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Create an immutable Book named `immutabook`</span></span><br><span class="line">    <span class="keyword">let</span> immutabook = Book &#123;</span><br><span class="line">        <span class="comment">// string literals have type `&amp;'static str`</span></span><br><span class="line">        author: <span class="string">"Douglas Hofstadter"</span>,</span><br><span class="line">        title: <span class="string">"Gödel, Escher, Bach"</span>,</span><br><span class="line">        year: <span class="number">1979</span>,</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create a mutable copy of `immutabook` and call it `mutabook`</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> mutabook = immutabook;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Immutably borrow an immutable object</span></span><br><span class="line">    borrow_book(&amp;immutabook);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Immutably borrow a mutable object</span></span><br><span class="line">    borrow_book(&amp;mutabook);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Borrow a mutable object as mutable</span></span><br><span class="line">    new_edition(&amp;<span class="keyword">mut</span> mutabook);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Error! Cannot borrow an immutable object as mutable</span></span><br><span class="line">    <span class="comment">// new_edition(&amp;mut immutabook);</span></span><br><span class="line">    <span class="comment">// FIXME ^ Comment out this line</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> modify_immute_book = immutabook;</span><br><span class="line">    new_edition(&amp;<span class="keyword">mut</span> modify_immute_book)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="Freezing"><a href="#Freezing" class="headerlink" title="Freezing"></a>Freezing</h4><p>When data is immutably borrowed, it also freezes. Frozen data can’t be modified via the original object until all references to it go out of scope:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> _mutable_integer = <span class="number">7i32</span>;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Borrow `_mutable_integer`</span></span><br><span class="line">        <span class="keyword">let</span> <span class="keyword">mut</span> _large_integer = &amp;_mutable_integer;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error! `_mutable_integer` is frozen in this scope</span></span><br><span class="line">        <span class="comment">// cannot assign to `_mutable_integer` because it is borrowed</span></span><br><span class="line">        <span class="comment">// _mutable_integer = 50;</span></span><br><span class="line">        <span class="comment">// FIXME ^ Comment out this line</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"before :&#123;&#125;"</span>, _large_integer);</span><br><span class="line">        _large_integer = &amp;<span class="number">30i32</span>;</span><br><span class="line">        <span class="comment">// `_large_integer` goes out of scope</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"after :&#123;&#125;"</span>, _large_integer)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Ok! `_mutable_integer` is not frozen in this scope</span></span><br><span class="line">    _mutable_integer = <span class="number">3</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="Aliasing"><a href="#Aliasing" class="headerlink" title="Aliasing"></a>Aliasing</h4><p>Data can be immutably borrowed any number of times, but while immutably borrowed, the original data can’t be mutably borrowed. On the other hand, only one mutable borrow is allowed at a time. The original data can be borrowed again only after the mutable reference goes out of scope.</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Point</span></span> &#123; x: <span class="built_in">i32</span>, y: <span class="built_in">i32</span>, z: <span class="built_in">i32</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> point = Point &#123; x: <span class="number">0</span>, y: <span class="number">0</span>, z: <span class="number">0</span> &#125;;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">let</span> borrowed_point = &amp;point;</span><br><span class="line">        <span class="keyword">let</span> another_borrow = &amp;point;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Data can be accessed via the references and the original owner</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"Point has coordinates: (&#123;&#125;, &#123;&#125;, &#123;&#125;)"</span>,</span><br><span class="line">                 borrowed_point.x, another_borrow.y, point.z);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error! Can't borrow point as mutable because it's currently</span></span><br><span class="line">        <span class="comment">// borrowed as immutable.</span></span><br><span class="line">        <span class="comment">//let mutable_borrow = &amp;mut point;</span></span><br><span class="line">        <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Immutable references go out of scope</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">let</span> mutable_borrow = &amp;<span class="keyword">mut</span> point;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Change data via mutable reference</span></span><br><span class="line">        mutable_borrow.x = <span class="number">5</span>;</span><br><span class="line">        mutable_borrow.y = <span class="number">2</span>;</span><br><span class="line">        mutable_borrow.z = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error! Can't borrow `point` as immutable because it's currently</span></span><br><span class="line">        <span class="comment">// borrowed as mutable.</span></span><br><span class="line">        <span class="comment">//let y = &amp;point.y;</span></span><br><span class="line">        <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error! Can't print because `println!` takes an immutable reference.</span></span><br><span class="line">        <span class="comment">//println!("Point Z coordinate is &#123;&#125;", point.z);</span></span><br><span class="line">        <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Ok! Mutable references can be passed as immutable to `println!`</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"Point has coordinates: (&#123;&#125;, &#123;&#125;, &#123;&#125;)"</span>,</span><br><span class="line">                 mutable_borrow.x, mutable_borrow.y, mutable_borrow.z);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Mutable reference goes out of scope</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Immutable references to point are allowed again</span></span><br><span class="line">    <span class="keyword">let</span> borrowed_point = &amp;point;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Point now has coordinates: (&#123;&#125;, &#123;&#125;, &#123;&#125;)"</span>,</span><br><span class="line">             borrowed_point.x, borrowed_point.y, borrowed_point.z);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li><p>在第一个block里面，point已经被borrowed_point借用，此时如果试图进行mutable borrow是禁止的，但是immutable是可以多次的。即，如果一个对象已经被borrow了，都不能再进行mutable borrrow，除非borrow已经结束。</p>
-</li>
-<li><p>在第二个block里面，point已经被mutable borrow，此时即使是immutable borrow也是不允许的。</p>
-</li>
-</ul>
-<h3 id="The-Ref-Pattern"><a href="#The-Ref-Pattern" class="headerlink" title="The Ref Pattern"></a>The Ref Pattern</h3><p>When doing pattern matching or destructuring via the let binding, the ref keyword can be used to take references to the fields of a struct/tuple. </p>
-<p>The example below shows a few instances where this can be useful:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#[derive(Clone, Copy)]</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Point</span></span> &#123; x: <span class="built_in">i32</span>, y: <span class="built_in">i32</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> c = <span class="string">'Q'</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A `ref` borrow on the left side of an assignment is equivalent to</span></span><br><span class="line">    <span class="comment">// an `&amp;` borrow on the right side.</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">ref</span> ref_c1 = c;</span><br><span class="line">    <span class="keyword">let</span> ref_c2 = &amp;c;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"ref_c1 equals ref_c2: &#123;&#125;"</span>, *ref_c1 == *ref_c2);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> point = Point &#123; x: <span class="number">1</span>, y: <span class="number">0</span> &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `ref` is also valid when destructuring a struct.</span></span><br><span class="line">    <span class="keyword">let</span> _copy_of_x = &#123;</span><br><span class="line">        <span class="comment">// `ref_to_x` is a reference to the `x` field of `point`.</span></span><br><span class="line">        <span class="keyword">let</span> Point &#123; x: <span class="keyword">ref</span> ref_to_x, y: _ &#125; = point;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Return a copy of the `x` field of `point`.</span></span><br><span class="line">        *ref_to_x</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"copy_of_x: &#123;&#125;"</span>, _copy_of_x);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A mutable copy of `point`</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> mutable_point = point;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// `ref` can be paired with `mut` to take mutable references.</span></span><br><span class="line">        <span class="keyword">let</span> Point &#123; x: _, y: <span class="keyword">ref</span> <span class="keyword">mut</span> mut_ref_to_y &#125; = mutable_point;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Mutate the `y` field of `mutable_point` via a mutable reference.</span></span><br><span class="line">        *mut_ref_to_y = <span class="number">3</span>;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"point is (&#123;&#125;, &#123;&#125;)"</span>, point.x, point.y);</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"mutable_point is (&#123;&#125;, &#123;&#125;)"</span>, mutable_point.x, mutable_point.y);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A mutable tuple that includes a pointer</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> mutable_tuple = (<span class="built_in">Box</span>::new(<span class="number">5u32</span>), <span class="number">3u32</span>);</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"original tuple is &#123;:?&#125;"</span>, mutable_tuple);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Destructure `mutable_tuple` to change the value of `last`.</span></span><br><span class="line">        <span class="keyword">let</span> (_, <span class="keyword">ref</span> <span class="keyword">mut</span> last) = mutable_tuple;</span><br><span class="line">        *last = <span class="number">2u32</span>;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"tuple is &#123;:?&#125;"</span>, mutable_tuple);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ref_c1 equals ref_c2: <span class="literal">true</span></span><br><span class="line">copy_of_x: 1</span><br><span class="line">point is (1, 0)</span><br><span class="line">mutable_point is (1, 3)</span><br><span class="line">original tuple is (5, 3)</span><br><span class="line">tuple is (5, 2)</span><br></pre></td></tr></table></figure>
-<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
-<p><a href="https://doc.rust-lang.org/stable/rust-by-example" target="_blank" rel="noopener">https://doc.rust-lang.org/stable/rust-by-example</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/01/Rust/Basic/Lifetimes/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1915,158 +2132,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/01/Rust/Basic/HigherOrderFunctions/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/01/Rust/Basic/HigherOrderFunctions/" itemprop="url">Rust Higher Order Functions</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-01T12:24:03+08:00">
-                2018-12-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/" itemprop="url" rel="index">
-                    <span itemprop="name">Rust</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="Case-1"><a href="#Case-1" class="headerlink" title="Case 1"></a>Case 1</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">is_odd</span></span>(n: <span class="built_in">u32</span>) -&gt; <span class="built_in">bool</span> &#123;</span><br><span class="line">    n % <span class="number">2</span> == <span class="number">1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Find the sum of all the squared odd numbers under 1000"</span>);</span><br><span class="line">    <span class="keyword">let</span> upper = <span class="number">1000</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Imperative approach</span></span><br><span class="line">    <span class="comment">// Declare accumulator variable</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> acc = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// Iterate: 0, 1, 2, ... to infinity</span></span><br><span class="line">    <span class="keyword">for</span> n <span class="keyword">in</span> <span class="number">0</span>.. &#123;</span><br><span class="line">        <span class="comment">// Square the number</span></span><br><span class="line">        <span class="keyword">let</span> n_squared = n * n;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> n_squared &gt;= upper &#123;</span><br><span class="line">            <span class="comment">// Break loop if exceeded the upper limit</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> is_odd(n_squared) &#123;</span><br><span class="line">            <span class="comment">// Accumulate value, if it's odd</span></span><br><span class="line">            acc += n_squared;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"imperative style: &#123;&#125;"</span>, acc);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Functional approach</span></span><br><span class="line">    <span class="keyword">let</span> sum_of_squared_odd_numbers: <span class="built_in">u32</span> =</span><br><span class="line">        (<span class="number">0</span>..).map(|n| n * n)                             <span class="comment">// All natural numbers squared</span></span><br><span class="line">             .take_while(|&amp;n_squared| n_squared &lt; upper) <span class="comment">// Below upper limit</span></span><br><span class="line">             .filter(|&amp;n_squared| is_odd(n_squared))     <span class="comment">// That are odd</span></span><br><span class="line">             .fold(<span class="number">0</span>, |acc, n_squared| acc + n_squared); <span class="comment">// Sum them</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"functional style: &#123;&#125;"</span>, sum_of_squared_odd_numbers);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2118,7 +2183,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">496</span>
+                <span class="site-state-item-count">497</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2140,7 +2205,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">556</span>
+                <span class="site-state-item-count">558</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

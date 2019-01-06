@@ -83,7 +83,7 @@
 <link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
 
 
-  <meta name="keywords" content="Java,">
+  <meta name="keywords" content="Java,Basic,JVM,G1,">
 
 
 
@@ -101,18 +101,21 @@
 
 
 
-<meta name="description" content="LinuxManjaroOpenJdk 更新软件库 1sudo pacman -Syyu  选择安装jdk 12# 例如 jdk8-openjdk sudo yaourt jdk">
-<meta name="keywords" content="Java">
+<meta name="description" content="Introduction在G1提出之前，经典的垃圾收集器主要有三种类型：串行收集器、并行收集器和并发标记清除收集器，这三种收集器分别可以是满足Java应用三种不同的需求：内存占用及并发开销最小化、应用吞吐量最大化和应用GC暂停时间最小化。但是，上述三种垃圾收集器都有几个共同的问题：  所有针对老年代的操作必须扫描整个老年代空间； 年轻地和老年代是独立的连续的内存块，必须先决定年轻代和老年代在虚拟地">
+<meta name="keywords" content="Java,Basic,JVM,G1">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Java 环境配置">
-<meta property="og:url" content="https://sulangsss.github.io/2018/01/12/Java/environment/index.html">
+<meta property="og:title" content="Introduction to G1">
+<meta property="og:url" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/index.html">
 <meta property="og:site_name" content="sulang blog">
-<meta property="og:description" content="LinuxManjaroOpenJdk 更新软件库 1sudo pacman -Syyu  选择安装jdk 12# 例如 jdk8-openjdk sudo yaourt jdk">
+<meta property="og:description" content="Introduction在G1提出之前，经典的垃圾收集器主要有三种类型：串行收集器、并行收集器和并发标记清除收集器，这三种收集器分别可以是满足Java应用三种不同的需求：内存占用及并发开销最小化、应用吞吐量最大化和应用GC暂停时间最小化。但是，上述三种垃圾收集器都有几个共同的问题：  所有针对老年代的操作必须扫描整个老年代空间； 年轻地和老年代是独立的连续的内存块，必须先决定年轻代和老年代在虚拟地">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-09-28T12:45:02.824Z">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/g1-heap-allocation.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/rset-example.jpg">
+<meta property="og:updated_time" content="2019-01-05T15:26:15.223Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Java 环境配置">
-<meta name="twitter:description" content="LinuxManjaroOpenJdk 更新软件库 1sudo pacman -Syyu  选择安装jdk 12# 例如 jdk8-openjdk sudo yaourt jdk">
+<meta name="twitter:title" content="Introduction to G1">
+<meta name="twitter:description" content="Introduction在G1提出之前，经典的垃圾收集器主要有三种类型：串行收集器、并行收集器和并发标记清除收集器，这三种收集器分别可以是满足Java应用三种不同的需求：内存占用及并发开销最小化、应用吞吐量最大化和应用GC暂停时间最小化。但是，上述三种垃圾收集器都有几个共同的问题：  所有针对老年代的操作必须扫描整个老年代空间； 年轻地和老年代是独立的连续的内存块，必须先决定年轻代和老年代在虚拟地">
+<meta name="twitter:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/g1-heap-allocation.png">
 
 
 
@@ -142,7 +145,7 @@
 
 
 
-  <link rel="canonical" href="https://sulangsss.github.io/2018/01/12/Java/environment/">
+  <link rel="canonical" href="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/">
 
 
 
@@ -151,7 +154,7 @@
 <meta name="baidu-site-verification" content="xV2vphJ53Q">
 
 
-  <title>Java 环境配置 | sulang blog</title>
+  <title>Introduction to G1 | sulang blog</title>
   
 
 
@@ -288,7 +291,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/12/Java/environment/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -305,7 +308,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">Java 环境配置</h2>
+          <h2 class="post-title" itemprop="name headline">Introduction to G1</h2>
         
 
         <div class="post-meta">
@@ -317,8 +320,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-12T11:01:22+08:00">
-                2018-01-12
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-05T16:20:22+08:00">
+                2019-01-05
               </time>
             
 
@@ -351,8 +354,19 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Environment/" itemprop="url" rel="index">
-                    <span itemprop="name">Environment</span>
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
                   </a>
                 </span>
 
@@ -388,13 +402,42 @@
       
 
       
-        <h2 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h2><h3 id="Manjaro"><a href="#Manjaro" class="headerlink" title="Manjaro"></a>Manjaro</h3><h4 id="OpenJdk"><a href="#OpenJdk" class="headerlink" title="OpenJdk"></a>OpenJdk</h4><ul>
-<li><p>更新软件库</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pacman -Syyu</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>选择安装jdk</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 例如 jdk8-openjdk</span></span><br><span class="line"> sudo yaourt jdk</span><br></pre></td></tr></table></figure>
-</li>
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>在G1提出之前，经典的垃圾收集器主要有三种类型：串行收集器、并行收集器和并发标记清除收集器，这三种收集器分别可以是满足Java应用三种不同的需求：内存占用及并发开销最小化、应用吞吐量最大化和应用GC暂停时间最小化。但是，上述三种垃圾收集器都有几个共同的问题：</p>
+<ul>
+<li>所有针对老年代的操作必须扫描整个老年代空间；</li>
+<li>年轻地和老年代是独立的连续的内存块，必须先决定年轻代和老年代在虚拟地址空间的位置。</li>
+</ul>
+<p>G1的目标：用在多核、大内存的机器上，它在大多数情况下可以实现指定的GC暂停时间，同时还能保持较高的吞吐量。</p>
+<p>G1的适用场景：</p>
+<ul>
+<li>可以像CMS收集器一样，允许垃圾收集线程和应用线程并行执行，即需要额外的CPU资源；</li>
+<li>压缩空闲空间不会延长GC的暂停时间；</li>
+<li>需要更易预测的GC暂停时间；</li>
+<li>不需要实现很高的吞吐量。</li>
+</ul>
+<h3 id="Terms"><a href="#Terms" class="headerlink" title="Terms"></a>Terms</h3><h4 id="Region"><a href="#Region" class="headerlink" title="Region"></a>Region</h4><img src="/2019/01/05/Java/JVM/Basic/G1/g1-heap-allocation.png">
+<p>G1采取了不同的策略来解决并行、串行和CMS收集器的碎片、暂停时间不可控制等问题——G1将整个堆分成相同大小的Region。</p>
+<p>每个分区都可能是年轻代也可能是老年代，但是在同一时刻只能属于某个代。年轻代、幸存区、老年代这些概念还存在，成为逻辑上的概念，这样方便复用之前分代框架的逻辑。</p>
+<p>在物理上不需要连续，则带来了额外的好处 —— 有的分区内垃圾对象特别多，有的分区内垃圾对象很少，G1会优先回收垃圾对象特别多的分区，这样可以花费较少的时间来回收这些分区的垃圾，这也就是G1名字的由来，即<strong>首先收集垃圾最多的分区</strong>。</p>
+<p>新生代其实并不是适用于这种算法的，依然是在新生代满了的时候，对整个新生代进行回收 —— 整个新生代中的对象，要么被回收、要么晋升，至于新生代也采取分区机制的原因，则是因为这样跟老年代的策略统一，方便调整代的大小。</p>
+<p>G1还是一种带压缩的收集器，在回收老年代的分区时，是将存活的对象从一个分区拷贝到另一个可用分区，这个拷贝的过程就实现了局部的压缩。每个分区的大小从1M到32M不等，但是都是2的冥次方。</p>
+<hr>
+<h4 id="CSet-收集集合"><a href="#CSet-收集集合" class="headerlink" title="CSet - 收集集合"></a>CSet - 收集集合</h4><p>一组可被回收的分区的集合。在CSet中存活的数据会在GC过程中被移动到另一个可用分区，CSet中的分区可以来自Eden空间、survivor空间、或者老年代。CSet会占用不到整个堆空间的1%大小。</p>
+<hr>
+<h4 id="RSet-已记忆集合"><a href="#RSet-已记忆集合" class="headerlink" title="RSet - 已记忆集合"></a>RSet - 已记忆集合</h4><p>RSet记录了其他Region中的对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。RSet的价值在于使得垃圾收集器不需要扫描整个堆找到谁引用了当前分区中的对象，只需要扫描RSet即可。</p>
+<img src="/2019/01/05/Java/JVM/Basic/G1/rset-example.jpg">
+<p>Region1和Region3中的对象都引用了Region2中的对象，因此在Region2的RSet中记录了这两个引用。</p>
+<blockquote>
+<p>G1 GC是在points-out的card table之上再加了一层结构来构成points-into RSet：每个region会记录下到底哪些别的region有指向自己的指针，而这些指针分别在哪些card的范围内。<br>这个RSet其实是一个hash table，key是别的region的起始地址，value是一个集合，里面的元素是card table的index。<br>举例来说，如果region A的RSet里有一项的key是region B，value里有index为1234的card，它的意思就是region B的一个card里有引用指向region A。所以对region A来说，该RSet记录的是points-into的关系；而card table仍然记录了points-out的关系。</p>
+</blockquote>
+<hr>
+<h4 id="Snapshot-At-The-Beginning-SATB"><a href="#Snapshot-At-The-Beginning-SATB" class="headerlink" title="Snapshot-At-The-Beginning(SATB)"></a>Snapshot-At-The-Beginning(SATB)</h4><hr>
+<h3 id="Phase"><a href="#Phase" class="headerlink" title="Phase"></a>Phase</h3><p>G1收集器的收集活动主要有四种操作：</p>
+<ul>
+<li>新生代垃圾收集</li>
+<li>后台收集、并发周期</li>
+<li>混合式垃圾收集</li>
+<li>必要时候的Full GC</li>
 </ul>
 
       
@@ -415,6 +458,12 @@
           
             <a href="/tags/Java/" rel="tag"># Java</a>
           
+            <a href="/tags/Basic/" rel="tag"># Basic</a>
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+            <a href="/tags/G1/" rel="tag"># G1</a>
+          
         </div>
       
 
@@ -426,8 +475,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/12/23/Java/Android/mipmap和drawable的区别/" rel="next" title="Android mipmap和drawable的区别">
-                <i class="fa fa-chevron-left"></i> Android mipmap和drawable的区别
+              <a href="/2018/12/28/Java/JVM/Case/ResizeMetaspaceCauseOfFullGC/" rel="next" title="Resize Metaspace Cause Of Full GC">
+                <i class="fa fa-chevron-left"></i> Resize Metaspace Cause Of Full GC
               </a>
             
           </div>
@@ -436,8 +485,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/01/12/Server/SpringBoot/Scheduled/" rel="prev" title="Spring Boot Scheduled">
-                Spring Boot Scheduled <i class="fa fa-chevron-right"></i>
+              <a href="/2019/01/05/Java/Advance/堆外内存/" rel="prev" title="堆外内存(off-heap memory)">
+                堆外内存(off-heap memory) <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -516,7 +565,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">496</span>
+                <span class="site-state-item-count">497</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -538,7 +587,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">556</span>
+                <span class="site-state-item-count">558</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -580,7 +629,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux"><span class="nav-number">1.</span> <span class="nav-text">Linux</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Manjaro"><span class="nav-number">1.1.</span> <span class="nav-text">Manjaro</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#OpenJdk"><span class="nav-number">1.1.1.</span> <span class="nav-text">OpenJdk</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Terms"><span class="nav-number">2.</span> <span class="nav-text">Terms</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Region"><span class="nav-number">2.1.</span> <span class="nav-text">Region</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CSet-收集集合"><span class="nav-number">2.2.</span> <span class="nav-text">CSet - 收集集合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RSet-已记忆集合"><span class="nav-number">2.3.</span> <span class="nav-text">RSet - 已记忆集合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Snapshot-At-The-Beginning-SATB"><span class="nav-number">2.4.</span> <span class="nav-text">Snapshot-At-The-Beginning(SATB)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Phase"><span class="nav-number">3.</span> <span class="nav-text">Phase</span></a></li></ol></div>
             
 
           </div>

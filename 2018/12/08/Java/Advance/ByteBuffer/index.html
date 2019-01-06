@@ -101,18 +101,18 @@
 
 
 
-<meta name="description" content="QADirect buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？JVM进程的Java堆外申请的内存，是用户空间的，DirectByteBuffer的创建就是使用了malloc申请的内存。 为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？ Given a direct byte buffer, the Java virtual machine will make a">
+<meta name="description" content="HeapByteBufferHeapByteBuffer分配在Java Heap内。 当向NIO Channel写入HeapByteBuffer数据时，需要先把HeapByteBuffer数据拷贝到DirectMemory后，才能把数据发送出去。 Usage12//  capacity为字节的数量ByteBuffer.allocate(int capacity);  DirectByteBuff">
 <meta name="keywords" content="Java,ByteBuffer,HeapByteBuffer,DirectByteBuffer">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Java ByteBuffer的区别">
+<meta property="og:title" content="Java ByteBuffer 与 HeapByteBuffer 的区别">
 <meta property="og:url" content="https://sulangsss.github.io/2018/12/08/Java/Advance/ByteBuffer/index.html">
 <meta property="og:site_name" content="sulang blog">
-<meta property="og:description" content="QADirect buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？JVM进程的Java堆外申请的内存，是用户空间的，DirectByteBuffer的创建就是使用了malloc申请的内存。 为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？ Given a direct byte buffer, the Java virtual machine will make a">
+<meta property="og:description" content="HeapByteBufferHeapByteBuffer分配在Java Heap内。 当向NIO Channel写入HeapByteBuffer数据时，需要先把HeapByteBuffer数据拷贝到DirectMemory后，才能把数据发送出去。 Usage12//  capacity为字节的数量ByteBuffer.allocate(int capacity);  DirectByteBuff">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-12-09T04:51:12.693Z">
+<meta property="og:updated_time" content="2019-01-06T03:09:31.608Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Java ByteBuffer的区别">
-<meta name="twitter:description" content="QADirect buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？JVM进程的Java堆外申请的内存，是用户空间的，DirectByteBuffer的创建就是使用了malloc申请的内存。 为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？ Given a direct byte buffer, the Java virtual machine will make a">
+<meta name="twitter:title" content="Java ByteBuffer 与 HeapByteBuffer 的区别">
+<meta name="twitter:description" content="HeapByteBufferHeapByteBuffer分配在Java Heap内。 当向NIO Channel写入HeapByteBuffer数据时，需要先把HeapByteBuffer数据拷贝到DirectMemory后，才能把数据发送出去。 Usage12//  capacity为字节的数量ByteBuffer.allocate(int capacity);  DirectByteBuff">
 
 
 
@@ -151,7 +151,7 @@
 <meta name="baidu-site-verification" content="xV2vphJ53Q">
 
 
-  <title>Java ByteBuffer的区别 | sulang blog</title>
+  <title>Java ByteBuffer 与 HeapByteBuffer 的区别 | sulang blog</title>
   
 
 
@@ -305,7 +305,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">Java ByteBuffer的区别</h2>
+          <h2 class="post-title" itemprop="name headline">Java ByteBuffer 与 HeapByteBuffer 的区别</h2>
         
 
         <div class="post-meta">
@@ -388,7 +388,16 @@
       
 
       
-        <h3 id="QA"><a href="#QA" class="headerlink" title="QA"></a>QA</h3><h4 id="Direct-buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？"><a href="#Direct-buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？" class="headerlink" title="Direct buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？"></a>Direct buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？</h4><p>JVM进程的Java堆外申请的内存，是用户空间的，DirectByteBuffer的创建就是使用了malloc申请的内存。</p>
+        <hr>
+<h3 id="HeapByteBuffer"><a href="#HeapByteBuffer" class="headerlink" title="HeapByteBuffer"></a>HeapByteBuffer</h3><p>HeapByteBuffer分配在Java Heap内。</p>
+<p>当向NIO Channel写入HeapByteBuffer数据时，需要先把HeapByteBuffer数据拷贝到DirectMemory后，才能把数据发送出去。</p>
+<h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  capacity为字节的数量</span></span><br><span class="line">ByteBuffer.allocate(<span class="keyword">int</span> capacity);</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="DirectByteBuffer"><a href="#DirectByteBuffer" class="headerlink" title="DirectByteBuffer"></a>DirectByteBuffer</h3><p>DirectByteBuffer分配在Java Heap外。</p>
+<p>当向NIO Channel写入DirectByteBuffer数据时，不需要拷贝，直接把数据发送出去。这样的话，无疑DirectByteBuffer的IO性能肯定强于使用HeapByteBuffer，因为它省去了临时buffer的拷贝开销，这也是为什么各个NIO框架大多使用DirectByteBuffer的原因。</p>
+<h4 id="Usage-1"><a href="#Usage-1" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  可以看到分配内存是通过unsafe.allocateMemory()来实现的，这个unsafe默认情况下java代码是没有能力可以调用到的，</span></span><br><span class="line"><span class="comment">//  不过你可以通过反射的手段得到实例进而做操作，当然你需要保证的是程序的稳定性，既然叫unsafe的，就是告诉你这不是安全的，</span></span><br><span class="line"><span class="comment">//  其实并不是不安全，而是交给程序员来操作，它可能会因为程序员的能力而导致不安全，而并非它本身不安全。</span></span><br><span class="line">ByteBuffer.allocateDirect(<span class="keyword">int</span> capacity);</span><br><span class="line"></span><br><span class="line"><span class="comment">//  free</span></span><br><span class="line"><span class="keyword">if</span> (byteBuffer.isDirect()) &#123;</span><br><span class="line">    ((DirectBuffer)byteBuffer).cleaner().clean();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="QA"><a href="#QA" class="headerlink" title="QA"></a>QA</h3><h4 id="Direct-buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？"><a href="#Direct-buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？" class="headerlink" title="Direct buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？"></a>Direct buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？</h4><p>JVM进程的Java堆外申请的内存，是用户空间的，DirectByteBuffer的创建就是使用了malloc申请的内存。</p>
 <h4 id="为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？"><a href="#为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？" class="headerlink" title="为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？"></a>为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？</h4><blockquote>
 <p>Given a direct byte buffer, the Java virtual machine will make a best effort to perform native I/O operations directly upon it. That is, it will attempt to avoid copying the buffer’s content to (or from) an intermediate buffer before (or after) each invocation of one of the underlying operating system’s native I/O operations.</p>
 </blockquote>
@@ -399,11 +408,6 @@
 <p><strong>需要特别注意的是，DirectBuffer直接分配在JVM之外的物理内存，而不是JVM中的逻辑内存，需要往Socket或其他接口写的时候，不需要将数据从JVM复制到物理内存，直接输出即可。缺点是当你需要对这些数据进行额外处理的时候，如编码，过滤等，数据还是会复制到 JVM，所以请确保你不需要对数据进行这些额外操作，只是从一个文件复制数据到另一个文件，一个Socket到另一个的时候才使用。</strong></p>
 </blockquote>
 <hr>
-<h3 id="HeapByteBuffer"><a href="#HeapByteBuffer" class="headerlink" title="HeapByteBuffer"></a>HeapByteBuffer</h3><h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  capacity为字节的数量</span></span><br><span class="line">ByteBuffer.allocate(<span class="keyword">int</span> capacity);</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="DirectByteBuffer"><a href="#DirectByteBuffer" class="headerlink" title="DirectByteBuffer"></a>DirectByteBuffer</h3><p>HeapByteBuffer与DirectByteBuffer的区别在于HeapByteBuffer是在JavaHeap上分配的，但是Java NIO在读写到相应的Channel的时候，会先将Java Heap的buffer内容拷贝至直接内存——Direct Memory。</p>
-<p>这样的话，无疑DirectByteBuffer的IO性能肯定强于使用HeapByteBuffer，它省去了临时buffer的拷贝开销，这也是为什么各个NIO框架大多使用DirectByteBuffer的原因。</p>
-<h4 id="Usage-1"><a href="#Usage-1" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  可以看到分配内存是通过unsafe.allocateMemory()来实现的，这个unsafe默认情况下java代码是没有能力可以调用到的，</span></span><br><span class="line"><span class="comment">//  不过你可以通过反射的手段得到实例进而做操作，当然你需要保证的是程序的稳定性，既然叫unsafe的，就是告诉你这不是安全的，</span></span><br><span class="line"><span class="comment">//  其实并不是不安全，而是交给程序员来操作，它可能会因为程序员的能力而导致不安全，而并非它本身不安全。</span></span><br><span class="line">ByteBuffer.allocateDirect(<span class="keyword">int</span> capacity);</span><br><span class="line"></span><br><span class="line"><span class="comment">//  free</span></span><br><span class="line"><span class="keyword">if</span> (byteBuffer.isDirect()) &#123;</span><br><span class="line">    ((DirectBuffer)byteBuffer).cleaner().clean();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
 <p><a href="https://blog.csdn.net/xieyuooo/article/details/7547435" target="_blank" rel="noopener">https://blog.csdn.net/xieyuooo/article/details/7547435</a><br><a href="https://www.zhihu.com/question/60892134" target="_blank" rel="noopener">https://www.zhihu.com/question/60892134</a></p>
 </blockquote>
@@ -453,8 +457,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/12/09/Books/HTTP/" rel="prev" title="HTTP Books">
-                HTTP Books <i class="fa fa-chevron-right"></i>
+              <a href="/2018/12/09/Books/Git/" rel="prev" title="Git Books">
+                Git Books <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -533,7 +537,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">496</span>
+                <span class="site-state-item-count">497</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -555,7 +559,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">556</span>
+                <span class="site-state-item-count">558</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -597,7 +601,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#QA"><span class="nav-number">1.</span> <span class="nav-text">QA</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Direct-buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？"><span class="nav-number">1.1.</span> <span class="nav-text">Direct buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？"><span class="nav-number">1.2.</span> <span class="nav-text">为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HeapByteBuffer"><span class="nav-number">2.</span> <span class="nav-text">HeapByteBuffer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Usage"><span class="nav-number">2.1.</span> <span class="nav-text">Usage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DirectByteBuffer"><span class="nav-number">3.</span> <span class="nav-text">DirectByteBuffer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Usage-1"><span class="nav-number">3.1.</span> <span class="nav-text">Usage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HeapByteBuffer"><span class="nav-number">1.</span> <span class="nav-text">HeapByteBuffer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Usage"><span class="nav-number">1.1.</span> <span class="nav-text">Usage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DirectByteBuffer"><span class="nav-number">2.</span> <span class="nav-text">DirectByteBuffer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Usage-1"><span class="nav-number">2.1.</span> <span class="nav-text">Usage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#QA"><span class="nav-number">3.</span> <span class="nav-text">QA</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Direct-buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？"><span class="nav-number">3.1.</span> <span class="nav-text">Direct buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？"><span class="nav-number">3.2.</span> <span class="nav-text">为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
             
 
           </div>
