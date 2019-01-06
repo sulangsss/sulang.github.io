@@ -111,9 +111,8 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/g1-heap-allocation.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/g1_gc_layout.png">
-<meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/conventional_gc_layout.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/rset-example.jpg">
-<meta property="og:updated_time" content="2019-01-06T05:34:23.688Z">
+<meta property="og:updated_time" content="2019-01-06T05:47:54.669Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Introduction to G1">
 <meta name="twitter:description" content="Introduction在G1提出之前，经典的垃圾收集器主要有三种类型：串行收集器、并行收集器和并发标记清除收集器，这三种收集器分别可以是满足Java应用三种不同的需求：内存占用及并发开销最小化、应用吞吐量最大化和应用GC暂停时间最小化。但是，上述三种垃圾收集器都有几个共同的问题：  所有针对老年代的操作必须扫描整个老年代空间； 年轻地和老年代是独立的连续的内存块，必须先决定年轻代和老年代在虚拟地">
@@ -436,6 +435,8 @@
 <img src="/2019/01/05/Java/JVM/Basic/G1/g1-heap-allocation.png">
 <p>而G1的各代存储地址是不连续的，每一代都使用了n个不连续的大小相同的Region，每个Region占有一块连续的虚拟内存地址。如下图所示：</p>
 <img src="/2019/01/05/Java/JVM/Basic/G1/g1_gc_layout.png">
+<p>每个分区都可能是年轻代也可能是老年代，但是在同一时刻只能属于某个代。年轻代、幸存区、老年代这些概念还存在，成为逻辑上的概念，这样方便复用之前分代框架的逻辑。</p>
+<p>在物理上不需要连续，则带来了额外的好处 —— 有的分区内垃圾对象特别多，有的分区内垃圾对象很少，G1会优先回收垃圾对象特别多的分区，这样可以花费较少的时间来回收这些分区的垃圾，这也就是G1名字的由来，即<strong>首先收集垃圾最多的分区</strong>。</p>
 <p>在上图中，我们注意到还有一些Region标明了H，它代表Humongous，这表示这些Region存储的是巨大对象（humongous object，H-obj），即大小大于等于region一半的对象。H-obj有如下几个特征：</p>
 <ul>
 <li>H-obj直接分配到了old gen，防止了反复拷贝移动。</li>
@@ -444,12 +445,6 @@
 </ul>
 <p>为了减少连续H-objs分配对GC的影响，需要把大对象变为普通的对象，建议增大Region size。</p>
 <p>一个Region的大小可以通过参数-XX:G1HeapRegionSize设定，取值范围从1M到32M，且是2的指数。如果不设定，那么G1会根据Heap大小自动决定。</p>
-<img src="/2019/01/05/Java/JVM/Basic/G1/conventional_gc_layout.png">
-<p>G1采取了不同的策略来解决并行、串行和CMS收集器的碎片、暂停时间不可控制等问题——G1将整个堆分成相同大小的Region。</p>
-<p>每个分区都可能是年轻代也可能是老年代，但是在同一时刻只能属于某个代。年轻代、幸存区、老年代这些概念还存在，成为逻辑上的概念，这样方便复用之前分代框架的逻辑。</p>
-<p>在物理上不需要连续，则带来了额外的好处 —— 有的分区内垃圾对象特别多，有的分区内垃圾对象很少，G1会优先回收垃圾对象特别多的分区，这样可以花费较少的时间来回收这些分区的垃圾，这也就是G1名字的由来，即<strong>首先收集垃圾最多的分区</strong>。</p>
-<p>新生代其实并不是适用于这种算法的，依然是在新生代满了的时候，对整个新生代进行回收 —— 整个新生代中的对象，要么被回收、要么晋升，至于新生代也采取分区机制的原因，则是因为这样跟老年代的策略统一，方便调整代的大小。</p>
-<p>G1还是一种带压缩的收集器，在回收老年代的分区时，是将存活的对象从一个分区拷贝到另一个可用分区，这个拷贝的过程就实现了局部的压缩。每个分区的大小从1M到32M不等，但是都是2的冥次方。</p>
 <hr>
 <h4 id="CSet-收集集合"><a href="#CSet-收集集合" class="headerlink" title="CSet - 收集集合"></a>CSet - 收集集合</h4><p>一组可被回收的分区的集合。在CSet中存活的数据会在GC过程中被移动到另一个可用分区，CSet中的分区可以来自Eden空间、survivor空间、或者老年代。CSet会占用不到整个堆空间的1%大小。</p>
 <hr>
@@ -540,8 +535,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/12/28/Java/JVM/Case/ResizeMetaspaceCauseOfFullGC/" rel="next" title="Resize Metaspace Cause Of Full GC">
-                <i class="fa fa-chevron-left"></i> Resize Metaspace Cause Of Full GC
+              <a href="/2019/01/05/Java/JVM/Basic/Collectors/" rel="next" title="Introduction to JVM Collectors">
+                <i class="fa fa-chevron-left"></i> Introduction to JVM Collectors
               </a>
             
           </div>
@@ -641,7 +636,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">226</span>
+                <span class="site-state-item-count">225</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -652,7 +647,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">558</span>
+                <span class="site-state-item-count">559</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
