@@ -284,6 +284,354 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Command/nohup/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/30/Linux/Command/nohup/" itemprop="url">nohup 命令</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T14:17:57+08:00">
+                2017-10-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><img src="/2017/10/30/Linux/Command/nohup/process_session.png">
+<h4 id="进程组"><a href="#进程组" class="headerlink" title="进程组"></a>进程组</h4><p>进程组是一个或多个进程的集合，进程组方便了对多个进程的控制，在进程数较多的情况下，向进程组发送信号就行了。</p>
+<p>它的 ID 由它的组长进程的进程 ID 决定。组长进程创建了进程组，但它并不能决定进程组的存活时间，只要进程组内还有一个进程存在，进程就存在，与组长进程是否已终止无关。</p>
+<h4 id="会话"><a href="#会话" class="headerlink" title="会话"></a>会话</h4><p>会话(session)是一个或多个进程组的集合，它开始于用户登陆终端，结束于用户退出登陆。其义如其名，就是指用户与系统的一次对话的全程。</p>
+<p>会话包括控制进程（与终端建立连接的领头进程），一个前台进程组和任意后台进程组。一个会话只能有一个控制终端，通常是登录到其上的终端设备或伪终端设备，产生在控制终端上的输入和信号将发送给会话的前台进程组中的所有进程。</p>
+<h4 id="控制终端"><a href="#控制终端" class="headerlink" title="控制终端"></a>控制终端</h4><p>每当我们使用终端工具打开一个本地或远程 shell，我们便打开了一个控制终端，通过 ps 命令可以查看到 command 为 ttyn 的就是它对应的进程了，同时它对应 linux /dev/ 目录下的一个文件。</p>
+<h4 id="作业"><a href="#作业" class="headerlink" title="作业"></a>作业</h4><p>作业的概念与进程组类似，同样由一个或多个进程组成，它分为前台作业和后台作业，一个会话会有一个前台作业和多个后台作业，与进程组不同的是，作业内的某个进程产生的子进程并不属于这个作业。</p>
+<h4 id="后台执行"><a href="#后台执行" class="headerlink" title="后台执行"></a>后台执行</h4><p>我们每次在终端窗口执行命令的时候，进程总会一直占用着终端，直到进程结束。这段时间内，我们在终端的输入是没有用的。而且，当终端窗口关闭或网络连接失败后，再次打开终端，会发现进程已经中断了。这是因为用户注销或者网络断开时，SIGHUP信号会被发送到会话所属的子进程，而此 SIGHUP 的默认处理方式是终止收到该信号的进程。所以若程序中没有捕捉该信号，当终端关闭后，会话所属进程就会退出。</p>
+<h3 id="nohup"><a href="#nohup" class="headerlink" title="nohup"></a>nohup</h3><p>我们要实现后台执行的目的，实际上是要完成如下两个目标：</p>
+<ul>
+<li>使进程让出前台终端，让我们可以继续通过终端与系统进行交互。</li>
+<li>使进程不再受终端关闭的影响，即系统在终端关闭后不再向进程发送 SIGHUP 信号或即使发送了信号程序也不会退出。</li>
+</ul>
+<p>涉及两个指令 &amp; 和 nohup</p>
+<ul>
+<li>&amp;：将它附在命令后面可以使进程在后台执行，不会占用前台界面。它实际上是在会话中开启了一个后台作业。但我们会发现，如果此时终端被关闭后，进程还是会退出。这是因为，&amp; 符号只有让进程让出前台终端的功能，无法让进程不受 SIGHUP 信号的影响。</li>
+<li>nohup：使进程不受 SIGHUP 信号的影响。但我们在使用 nohup php test.php 后会发现，进程还会一直占用前台终端，但即使终端被关闭或连接断开了，程序还是会执行，另外我们会发现在当前文件夹下多了个名为 nohup.out 的文件。这是因为 nohup 的功能仅仅是让进程不受 SIGHUP 信号的影响，并不会让出前台终端，而且它还会在命令执行目录下建立 nohup.out 用以存储进程的输出。如果进程不需要输出，且不想让 nohup 创建文件，可以将标准输出和标准错误输出重定向。</li>
+</ul>
+<p>我们常将 nohup 和 &amp; 搭配到一块使用，执行命令如下 nohup command &gt;/dev/null 2&gt;&amp;1 &amp; 这样，就可以放心的等待进程运行结果了。</p>
+<p>参考链接：<a href="http://www.cnblogs.com/zhenbianshu/p/7152327.html" target="_blank" rel="noopener">http://www.cnblogs.com/zhenbianshu/p/7152327.html</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Tools/aria2/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sulang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sulang blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/30/Linux/Tools/aria2/" itemprop="url">aria2</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T12:26:27+08:00">
+                2017-10-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/tools/" itemprop="url" rel="index">
+                    <span itemprop="name">tools</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="aria2-yaaw-实现离线下载"><a href="#aria2-yaaw-实现离线下载" class="headerlink" title="aria2 + yaaw 实现离线下载"></a>aria2 + yaaw 实现离线下载</h2><hr>
+<h2 id="Centos-7"><a href="#Centos-7" class="headerlink" title="Centos 7"></a>Centos 7</h2><h3 id="aria2"><a href="#aria2" class="headerlink" title="aria2"></a>aria2</h3><h4 id="安装aria2"><a href="#安装aria2" class="headerlink" title="安装aria2"></a>安装aria2</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#安装epel源</span></span><br><span class="line">yum -y install epel-release</span><br><span class="line"><span class="comment">#安装aria2</span></span><br><span class="line">yum -y install aria2</span><br><span class="line"><span class="comment">#查看aria2版本</span></span><br><span class="line">aria2c -v</span><br></pre></td></tr></table></figure>
+<p>-o:下载并重命名<br>-x:需要使用的线程数，后面跟数字，线程数越多速度越快(最多16)<br>-c:断点续传</p>
+<p>#使用16线程下载一个文件<br>aria2c -x 16 <a href="http://soft.xiaoz.top/windows/ChromeStandaloneSetup.exe" target="_blank" rel="noopener">http://soft.xiaoz.top/windows/ChromeStandaloneSetup.exe</a></p>
+<hr>
+<h4 id="配置aria2"><a href="#配置aria2" class="headerlink" title="配置aria2"></a>配置aria2</h4><p>创建相关文件及目录</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir aria2</span><br><span class="line">touch aria2/aria2.session</span><br><span class="line"></span><br><span class="line">mkdir download</span><br></pre></td></tr></table></figure>
+<p>通过WEB界面的方式离线下载需要开启 JSON-RPC 支持，将下面的规则适当修改并另存为/root/aria2/aria2.conf</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"># 文件的保存路径(可使用绝对路径或相对路径), 默认: 当前启动位置</span><br><span class="line">dir=/root/download</span><br><span class="line"># 启用磁盘缓存, 0为禁用缓存, 需1.16以上版本, 默认:16M</span><br><span class="line">#disk-cache=32M</span><br><span class="line"># 文件预分配方式, 能有效降低磁盘碎片, 默认:prealloc</span><br><span class="line"># 预分配所需时间: none &lt; falloc ? trunc &lt; prealloc</span><br><span class="line"># falloc和trunc则需要文件系统和内核支持</span><br><span class="line"># NTFS建议使用falloc, EXT3/4建议trunc, MAC 下需要注释此项</span><br><span class="line">file-allocation=trunc</span><br><span class="line"># 断点续传</span><br><span class="line">continue=true</span><br><span class="line"> </span><br><span class="line">## 下载连接相关 ##</span><br><span class="line"># 最大同时下载任务数, 运行时可修改, 默认:5</span><br><span class="line">max-concurrent-downloads=5</span><br><span class="line"># 同一服务器连接数, 添加时可指定, 默认:1</span><br><span class="line">max-connection-per-server=5</span><br><span class="line"># 最小文件分片大小, 添加时可指定, 取值范围1M -1024M, 默认:20M</span><br><span class="line"># 假定size=10M, 文件为20MiB 则使用两个来源下载; 文件为15MiB 则使用一个来源下载</span><br><span class="line">min-split-size=10M</span><br><span class="line"># 单个任务最大线程数, 添加时可指定, 默认:5</span><br><span class="line">split=32</span><br><span class="line"># 整体下载速度限制, 运行时可修改, 默认:0</span><br><span class="line">#max-overall-download-limit=0</span><br><span class="line"># 单个任务下载速度限制, 默认:0</span><br><span class="line">#max-download-limit=0</span><br><span class="line"># 整体上传速度限制, 运行时可修改, 默认:0</span><br><span class="line">#max-overall-upload-limit=0</span><br><span class="line"># 单个任务上传速度限制, 默认:0</span><br><span class="line">#max-upload-limit=0</span><br><span class="line"># 禁用IPv6, 默认:false</span><br><span class="line">disable-ipv6=true</span><br><span class="line"> </span><br><span class="line">## 进度保存相关 ##</span><br><span class="line"> </span><br><span class="line"># 从会话文件中读取下载任务</span><br><span class="line">input-file=/root/aria2/aria2.session</span><br><span class="line"># 在Aria2退出时保存`错误/未完成`的下载任务到会话文件</span><br><span class="line">save-session=/root/aria2/aria2.session</span><br><span class="line"># 定时保存会话, 0为退出时才保存, 需1.16.1以上版本, 默认:0</span><br><span class="line">#save-session-interval=60</span><br><span class="line"> </span><br><span class="line">## RPC相关设置 ##</span><br><span class="line"> </span><br><span class="line"># 启用RPC, 默认:false</span><br><span class="line">enable-rpc=true</span><br><span class="line"># 允许所有来源, 默认:false</span><br><span class="line">rpc-allow-origin-all=true</span><br><span class="line"># 允许非外部访问, 默认:false</span><br><span class="line">rpc-listen-all=true</span><br><span class="line"># 事件轮询方式, 取值:[epoll, kqueue, port, poll, select], 不同系统默认值不同</span><br><span class="line">#event-poll=select</span><br><span class="line"># RPC监听端口, 端口被占用时可以修改, 默认:6800</span><br><span class="line">#rpc-listen-port=6800</span><br><span class="line"># 设置的RPC授权令牌, v1.18.4新增功能, 取代 --rpc-user 和 --rpc-passwd 选项</span><br><span class="line">#rpc-secret=</span><br><span class="line"># 设置的RPC访问用户名, 此选项新版已废弃, 建议改用 --rpc-secret 选项</span><br><span class="line">#rpc-user=</span><br><span class="line"># 设置的RPC访问密码, 此选项新版已废弃, 建议改用 --rpc-secret 选项</span><br><span class="line">#rpc-passwd=</span><br><span class="line"> </span><br><span class="line">## BT/PT下载相关 ##</span><br><span class="line"> </span><br><span class="line"># 当下载的是一个种子(以.torrent结尾)时, 自动开始BT任务, 默认:true</span><br><span class="line">#follow-torrent=true</span><br><span class="line"># BT监听端口, 当端口被屏蔽时使用, 默认:6881-6999</span><br><span class="line">listen-port=51413</span><br><span class="line"># 单个种子最大连接数, 默认:55</span><br><span class="line">#bt-max-peers=55</span><br><span class="line"># 打开DHT功能, PT需要禁用, 默认:true</span><br><span class="line">enable-dht=false</span><br><span class="line"># 打开IPv6 DHT功能, PT需要禁用</span><br><span class="line">#enable-dht6=false</span><br><span class="line"># DHT网络监听端口, 默认:6881-6999</span><br><span class="line">#dht-listen-port=6881-6999</span><br><span class="line"># 本地节点查找, PT需要禁用, 默认:false</span><br><span class="line">#bt-enable-lpd=false</span><br><span class="line"># 种子交换, PT需要禁用, 默认:true</span><br><span class="line">enable-peer-exchange=false</span><br><span class="line"># 每个种子限速, 对少种的PT很有用, 默认:50K</span><br><span class="line">#bt-request-peer-speed-limit=50K</span><br><span class="line"># 客户端伪装, PT需要</span><br><span class="line">peer-id-prefix=-TR2770-</span><br><span class="line">user-agent=Transmission/2.77</span><br><span class="line"># 当种子的分享率达到这个数时, 自动停止做种, 0为一直做种, 默认:1.0</span><br><span class="line"># seed-ratio=0</span><br><span class="line"># 强制保存会话, 即使任务已经完成, 默认:false</span><br><span class="line"># 较新的版本开启后会在任务完成后依然保留.aria2文件</span><br><span class="line">#force-save=false</span><br><span class="line"># BT校验相关, 默认:true</span><br><span class="line">#bt-hash-check-seed=true</span><br><span class="line"># 继续之前的BT任务时, 无需再次校验, 默认:false</span><br><span class="line">bt-seed-unverified=true</span><br><span class="line"># 保存磁力链接元数据为种子文件(.torrent文件), 默认:false</span><br><span class="line">bt-save-metadata=true</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="运行aria2c"><a href="#运行aria2c" class="headerlink" title="运行aria2c"></a>运行aria2c</h4><p>测试运行命令<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aria2c --conf-path=/root/aria2/aria2.conf</span><br></pre></td></tr></table></figure></p>
+<p>开机启动<br>/etc/rc.d/rc.local文件下面加入下面这一行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aria2c --conf-path=/root/aria2/aria2.conf -D &amp;</span><br></pre></td></tr></table></figure>
+<h3 id="yaaw"><a href="#yaaw" class="headerlink" title="yaaw"></a>yaaw</h3><h4 id="安装yaaw"><a href="#安装yaaw" class="headerlink" title="安装yaaw"></a>安装yaaw</h4><p>yaaw是一个为aria2提供WEB界面的管理工具，完全使用HTML + javascript实现，因此不需要任何脚本环境，直接下载到您本地或部署到您的WEB服务中使用。</p>
+<p>安装Nginx<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y nginx</span><br></pre></td></tr></table></figure></p>
+<p>安装yaaw<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /usr/share/nginx/html</span><br><span class="line">wget https://github.com/binux/yaaw/archive/master.zip</span><br><span class="line">unzip master</span><br><span class="line">mv yaaw-master yaaw</span><br><span class="line"></span><br><span class="line">systemctl restart nginx</span><br></pre></td></tr></table></figure></p>
+<p>测试访问yaaw，<a href="http://ip/yaaw/index.html" target="_blank" rel="noopener">http://ip/yaaw/index.html</a></p>
+<hr>
+<h4 id="设置yaaw"><a href="#设置yaaw" class="headerlink" title="设置yaaw"></a>设置yaaw</h4><p>点击右上角Settings按钮，填写WEB接口，没有设置密码的情况下接口地址为<a href="http://IP:6800/jsonrpc" target="_blank" rel="noopener">http://IP:6800/jsonrpc</a></p>
+<p>如果您启用了rpc-secret=，那么接口地址为<a href="http://token:kye@IP:6800/jsonrpc" target="_blank" rel="noopener">http://token:kye@IP:6800/jsonrpc</a></p>
+<p>注意防火墙还需要放行6800端口，以免出现无法下载的情况，正式环境中请为aria2设置密码，以免被恶意下载。</p>
+<hr>
+<h4 id="chrome插件"><a href="#chrome插件" class="headerlink" title="chrome插件"></a>chrome插件</h4><p>yaaw有对应的chrome插件，建议配置使用</p>
+<h3 id="webui-aria2"><a href="#webui-aria2" class="headerlink" title="webui-aria2"></a>webui-aria2</h3><p><a href="https://github.com/ziahamza/webui-aria2" target="_blank" rel="noopener">https://github.com/ziahamza/webui-aria2</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Tools/logrotate/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1320,340 +1668,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log-config/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log-config/" itemprop="url">Django Log 配置信息</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
-                2017-10-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>生产环境配置(包含了Sentry配置)，日志分割管理建议使用logrotate</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">LOGGING = &#123;</span><br><span class="line">    'version': 1,</span><br><span class="line">    'disable_existing_loggers': True,</span><br><span class="line">    'root': &#123;</span><br><span class="line">        'level': 'WARNING',</span><br><span class="line">        'handlers': ['sentry']</span><br><span class="line">    &#125;,</span><br><span class="line">    'formatters': &#123;</span><br><span class="line">        'verbose': &#123;</span><br><span class="line">            'format': '[%(levelname)s]%(asctime)s--[module:%(module)s, process:%(process)d, thread:%(thread)d]--'</span><br><span class="line">                      '[filename:%(filename)s][funcName:%(funcName)s]: %(message)s'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'handlers': &#123;</span><br><span class="line">        'sentry': &#123;</span><br><span class="line">            'level': 'ERROR',  # To capture more than ERROR, change to WARNING, INFO, etc.</span><br><span class="line">            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'console': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.StreamHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'file': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'class': 'logging.FileHandler',</span><br><span class="line">            'filename': './log/prod.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'loggers': &#123;</span><br><span class="line">        'root': &#123;</span><br><span class="line">            'level': 'ERROR',</span><br><span class="line">            'handlers': ['sentry']</span><br><span class="line">        &#125;,</span><br><span class="line">        'django': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'handlers': ['file', 'console', 'sentry'],</span><br><span class="line">            'propagate': True</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果日志文件需要自动分割，则file使用下面的配置<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">'file': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.handlers.RotatingFileHandler',</span><br><span class="line">            'maxBytes': 1024 * 1024 * 10,  # 文件大小</span><br><span class="line">            'backupCount': 5,  # 备份份数</span><br><span class="line">            'filename': './log/debug.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="sulang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sulang blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log/" itemprop="url">Django Log</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
-                2017-10-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="Logging"><a href="#Logging" class="headerlink" title="Logging"></a>Logging</h2><p>Python logging 主要有以下四部分组成:</p>
-<ol>
-<li>Loggers</li>
-<li>Handlers</li>
-<li>Filters</li>
-<li>Formatters</li>
-</ol>
-<h3 id="Loggers"><a href="#Loggers" class="headerlink" title="Loggers"></a>Loggers</h3><p>A logger is the entry point into the logging system. Each logger is a named bucket to which messages can be written for processing.</p>
-<p>log leve: DEBUG -&gt; INFO -&gt; WARNING -&gt; ERROR -&gt; CRITICAL</p>
-<ul>
-<li>DEBUG: Low level system information for debugging purposes</li>
-<li>INFO: General system information</li>
-<li>WARNING: Information describing a minor problem that has occurred.</li>
-<li>ERROR: Information describing a major problem that has occurred.</li>
-<li>CRITICAL: Information describing a critical problem that has occurred.</li>
-</ul>
-<p>message log’level &lt;= logger’level 消息才会被logger接收，logger会把消息传递给Handler进行处理</p>
-<hr>
-<h3 id="Handlers"><a href="#Handlers" class="headerlink" title="Handlers"></a>Handlers</h3><p>The handler is the engine that determines what happens to each message in a logger. It describes a particular logging behavior, such as writing a message to the screen, to a file, or to a network socket.</p>
-<p>同Logger一样，Handler也会检查message log’level，Logger可以有多个Handler，例如，</p>
-<hr>
-<h3 id="Filters"><a href="#Filters" class="headerlink" title="Filters"></a>Filters</h3><p>A filter is used to provide additional control over which log records are passed from logger to handler.</p>
-<p>Filters can be installed on loggers or on handlers; multiple filters can be used in a chain to perform multiple filtering actions.</p>
-<hr>
-<h3 id="Formatters"><a href="#Formatters" class="headerlink" title="Formatters"></a>Formatters</h3><p>Formatters describe the exact format of that text.</p>
-<p>logrecord-attributes：<a href="https://docs.python.org/3/library/logging.html#logrecord-attributes" target="_blank" rel="noopener">https://docs.python.org/3/library/logging.html#logrecord-attributes</a></p>
-<h3 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h3><h4 id="disable-existing-loggers"><a href="#disable-existing-loggers" class="headerlink" title="disable_existing_loggers"></a>disable_existing_loggers</h4><p>If the disable_existing_loggers key in the LOGGING dictConfig is set to True (which is the default) then all loggers from the default configuration will be disabled. Disabled loggers are not the same as removed; the logger will still exist, but will silently discard anything logged to it, not even propagating entries to a parent logger. Thus you should be very careful using ‘disable_existing_loggers’: True; it’s probably not what you want. Instead, you can set disable_existing_loggers to False and redefine some or all of the default loggers; or you can set LOGGING_CONFIG to None and handle logging config yourself.</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Middle/middleware/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1825,7 +1839,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Server/Log/elk/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log-config/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="sulang">
@@ -1844,7 +1858,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/27/Server/Log/elk/" itemprop="url">ELK日志收集系统</a></h2>
+                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log-config/" itemprop="url">Django Log 配置信息</a></h2>
         
 
         <div class="post-meta">
@@ -1856,7 +1870,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:08:18+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
                 2017-10-27
               </time>
             
@@ -1879,8 +1893,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/" itemprop="url" rel="index">
-                    <span itemprop="name">server</span>
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
                   </a>
                 </span>
 
@@ -1890,8 +1904,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/elk/" itemprop="url" rel="index">
-                    <span itemprop="name">elk</span>
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
                   </a>
                 </span>
 
@@ -1929,84 +1943,9 @@
       
         
           
-            <h2 id="ELK组成"><a href="#ELK组成" class="headerlink" title="ELK组成"></a>ELK组成</h2><p>参考链接：<a href="https://zhuanlan.zhihu.com/p/26399963" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/26399963</a></p>
-<p>ELK架构</p>
-<img src="/2017/10/27/Server/Log/elk/elk_framework.jpe" title="架构">
-<ol>
-<li>Shipper：负责收集各种来源的日志数据，可以是系统日志、文件、redis、mq等等；</li>
-<li>Broker：作为Shipper与中心Indexer之间的缓冲区（redis，kafka，RabbitMQ），主要是为了可以提高系统的性能和可靠性，当Indexer提取数据失败时，数据保存在redis中，而不至于丢失；</li>
-<li>Indexer：负责从Broker中取出数据，对数据进行格式化和相关处理后，输出到Elasticsearch中存储；</li>
-<li>Elasticsearch：一个分布式搜索引擎和分析引擎，用于数据存储，可提供实时的数据查询。</li>
-<li>Kibana：一个数据可视化服务，根据用户的操作从Elasticsearch中查询数据，形成相应的分析结果，以图表的形式展现给用户。</li>
-</ol>
-<h2 id="部署ELK方案"><a href="#部署ELK方案" class="headerlink" title="部署ELK方案"></a>部署ELK方案</h2><img src="/2017/10/27/Server/Log/elk/elk_deploy_step.png">
-<ol>
-<li>在每台生成日志文件的机器上，部署Logstash，作为Shipper的角色，负责从日志文件中提取数据，但是不做任何处理，直接将数据输出到Redis队列(list)中；</li>
-<li>需要一台机器部署Logstash，作为Indexer的角色，负责从Redis中取出数据，对数据进行格式化和相关处理后，输出到Elasticsearch中存储；</li>
-<li>部署Elasticsearch集群，当然取决于你的数据量了，数据量小的话可以使用单台服务，如果做集群的话，最好是有3个以上节点，同时还需要部署相关的监控插件；</li>
-<li>部署Kibana服务，提供Web服务。</li>
-</ol>
-<p>在上面的部署方案中，我们将Logstash分为Shipper和Indexer两种角色来完成不同的工作，中间通过Redis做数据管道。</p>
-<p>为什么要这样做？为什么不是直接在每台机器上使用Logstash提取数据、处理、存入Elasticsearch？采用这样的架构部署，有三点优势：</p>
-<ol>
-<li>降低对日志所在机器的影响，这些机器上一般都部署着反向代理或应用服务，本身负载就很重了，所以尽可能的在这些机器上少做事；</li>
-<li>如果有很多台机器需要做日志收集，那么让每台机器都向Elasticsearch持续写入数据，必然会对Elasticsearch造成压力，因此需要对数据进行缓冲，同时这样的缓冲也可以一定程度的保护数据不丢失；</li>
-<li>将日志数据的格式化与处理放到Indexer中统一做，可以在一处修改代码、部署，避免需要到多台机器上去修改配置。</li>
-</ol>
-<h2 id="docker部署ELK"><a href="#docker部署ELK" class="headerlink" title="docker部署ELK"></a>docker部署ELK</h2><p>参考链接：<a href="https://logz.io/blog/docker-logging/" target="_blank" rel="noopener">https://logz.io/blog/docker-logging/</a></p>
-<p>推荐docker：<a href="https://github.com/deviantony/docker-elk" target="_blank" rel="noopener">https://github.com/deviantony/docker-elk</a></p>
-<p>端口占用情况：</p>
-<ul>
-<li>5000: Logstash TCP input.</li>
-<li>9200: Elasticsearch HTTP</li>
-<li>9300: Elasticsearch TCP transport</li>
-<li>5601: Kibana</li>
-</ul>
-<h3 id="Logspout"><a href="#Logspout" class="headerlink" title="Logspout"></a>Logspout</h3><p>Logspout是Docker流行和轻量级的（15.2MB）日志路由器，它将附加到主机中的所有容器，并将Docker日志流输出到syslog服务器（除非定义了不同的输出目标）。</p>
-<h4 id="Filebeat"><a href="#Filebeat" class="headerlink" title="Filebeat"></a>Filebeat</h4><p>Filebeat属于Elastic的Beats系列日志收集组件， Filebeat是用Go语言开发的，支持追踪特定文件和日志加密的中间组件，它可以配置将日志导出到Logstash或者直接导出到Elasticsearch。</p>
-<p>如果没有额外指定，容器的stdout和stderr输出（也称为“docker logs”）输出到JSON文件。所以，如果是一个小型Docker环境，使用Filebeat来收集日志将是不错的选择。但如果使用其他日志记录驱动程序，则可能需要考虑其他方法。</p>
-<h4 id="Logging-Driver"><a href="#Logging-Driver" class="headerlink" title="Logging Driver"></a>Logging Driver</h4><p>Docker从1.12开始支持Logging Driver，允许将Docker日志路由到指定的第三方日志转发层，可将日志转发到AWS CloudWatch，Fluentd，GELF或NAT服务器。</p>
-<hr>
-<h2 id="docker应用服务器配置"><a href="#docker应用服务器配置" class="headerlink" title="docker应用服务器配置"></a>docker应用服务器配置</h2><h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p>日志格式化，日志输出重定向</p>
-<p>http {} 节点添加如下配置信息：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">log_format main '[$remote_addr, $request, $status, $body_bytes_sent, ' </span><br><span class="line">                    '$http_user_agent, $http_referer, $http_x_forwarded_for, $request_time, '</span><br><span class="line">                    '$upstream_response_time, $http_cookie, $http_Authorization, $http_token]';</span><br><span class="line"></span><br><span class="line">access_log /dev/stdout main;</span><br><span class="line">error_log /dev/stdout;</span><br></pre></td></tr></table></figure></p>
-<p>注意，在Docker中<br>/var/log/nginx/access.log -&gt; /dev/stdout<br>/var/log/nginx/error.log -&gt; /dev/stderr</p>
-<p>为了方便logstash进行分割，建议使用如下格式：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">log_format main '&#123;"@timestamp":"$time_iso8601",'</span><br><span class="line">                 '"host":"$server_addr",'</span><br><span class="line">                 '"clientip":"$remote_addr",'</span><br><span class="line">                 '"size":$body_bytes_sent,'</span><br><span class="line">                 '"responsetime":$request_time,'</span><br><span class="line">                 '"upstreamtime":"$upstream_response_time",'</span><br><span class="line">                 '"upstreamhost":"$upstream_addr",'</span><br><span class="line">                 '"http_host":"$host",'</span><br><span class="line">                 '"url":"$uri",'</span><br><span class="line">                 '"xff":"$http_x_forwarded_for",'</span><br><span class="line">                 '"referer":"$http_referer",'</span><br><span class="line">                 '"agent":"$http_user_agent",'</span><br><span class="line">                 '"status":"$status"&#125;';</span><br></pre></td></tr></table></figure></p>
-<h4 id="Logstash-配置信息"><a href="#Logstash-配置信息" class="headerlink" title="Logstash 配置信息"></a>Logstash 配置信息</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">input &#123;</span><br><span class="line">        udp &#123;</span><br><span class="line">                port =&gt; 5000</span><br><span class="line">                type =&gt; "nginx"</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">## Add your filters / logstash plugins configuration here</span><br><span class="line">output &#123;</span><br><span class="line">        elasticsearch &#123;</span><br><span class="line">        hosts =&gt; ["elasticsearch:9200"]</span><br><span class="line">        index =&gt; "logstash-%&#123;type&#125;-%&#123;+YYYY.MM.dd&#125;"</span><br><span class="line">        document_type =&gt; "%&#123;type&#125;"</span><br><span class="line">        flush_size =&gt; 20000</span><br><span class="line">        idle_flush_time =&gt; 10</span><br><span class="line">        sniffing =&gt; true</span><br><span class="line">        template_overwrite =&gt; true</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注意：这里input默认是使用TCP，现在修改为UDP，则docker-compse.yml需要修改ports为 “port:5000/udp”</p>
-<p><strong>input参数说明</strong></p>
-<p>type</p>
-<ul>
-<li>对应_type</li>
-</ul>
-<p><strong>output参数说明</strong></p>
-<p>flush_size idle_flush_time</p>
-<ul>
-<li>Logstash 会努力攒到 20000 条数据一次性发送出去，但是如果 10 秒钟内也没攒够 20000 条，Logstash 还是会以当前攒到的数据量发一次。</li>
-</ul>
-<p>index</p>
-<ul>
-<li>写入的 ES 索引的名称，这里可以使用变量。为了更贴合日志场景，Logstash 提供了 %{+YYYY.MM.dd} 这种写法。在语法解析的时候，看到以 + 号开头的，就会自动认为后面是时间格式，尝试用时间格式来解析后续字符串。此外，注意索引名中不能有大写字母，否则 ES 在日志中会报 InvalidIndexNameException，但是 Logstash 不会报错，这个错误比较隐晦，也容易掉进这个坑中。</li>
-</ul>
-<p>hosts</p>
-<ul>
-<li>host 可以设置数组，它会从节点列表中选取不同的节点发送数据，达到 Round-Robin 负载均衡的效果。</li>
-</ul>
-<h4 id="Logstas-过滤日志"><a href="#Logstas-过滤日志" class="headerlink" title="Logstas 过滤日志"></a>Logstas 过滤日志</h4><h4 id="Logspout-1"><a href="#Logspout-1" class="headerlink" title="Logspout"></a>Logspout</h4><p>查看收集Logspout收集nginx日志<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://ip:port/logs</span><br></pre></td></tr></table></figure></p>
-<hr>
-<h3 id="docker日志处理"><a href="#docker日志处理" class="headerlink" title="docker日志处理"></a>docker日志处理</h3><p>在部署一个传统的Linux时，应用程序或者架构记录日志的方式通常记录到文件里，一般会记录到/var/log目录下。</p>
-<p>Docker有什么不同呢？不同于以往将所有日志放在主机系统的统一位置，如今日志分散在很多不同容器的相互隔离的环境中。</p>
-<p>典型ELK日志收集流程如下所示：</p>
-<img src="/2017/10/27/Server/Log/elk/elk_process_docker_logs.png" title="处理流程">
-<p>Logstash负责从各种Docker容器和主机中提取日志，这个流程的主要优点是可以更好地用过滤器来解析日志，Logstash将日志转发到Elasticsearch进行索引，Kibana分析和可视化数据。</p>
-<p>这个流程可以有多种不同的实现方式， 例如可以使用不同的日志收集和转发组件, 如Fluentd或Filebeat 将日志发送到Elasticsearch。或者添加一个由Kafka或Redis容器组成的中间层，作为Logstash和Elasticsearch之间的缓冲区。</p>
-<hr>
-<h3 id="docker-compose"><a href="#docker-compose" class="headerlink" title="docker-compose"></a>docker-compose</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/deviantony/docker-elk.git</span><br><span class="line">docker-compose up</span><br></pre></td></tr></table></figure>
-<p>正常情况下, ELK套件的三个服务(Elasticsearch, Logstash, Kibana)会启动成功，默认持久化数据目录 /var/lib/elasticsearch (Elasticsearch 的数据存储目录)</p>
-<p>测试Elasticsearch<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl localhost:9200</span><br></pre></td></tr></table></figure></p>
-<p>返回结果<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span> : <span class="string">"6cU6dcx"</span>,</span><br><span class="line">  <span class="attr">"cluster_name"</span> : <span class="string">"docker-cluster"</span>,</span><br><span class="line">  <span class="attr">"cluster_uuid"</span> : <span class="string">"PGZdqdKdQiKwh67to_2H7g"</span>,</span><br><span class="line">  <span class="attr">"version"</span> : &#123;</span><br><span class="line">    <span class="attr">"number"</span> : <span class="string">"5.6.3"</span>,</span><br><span class="line">    <span class="attr">"build_hash"</span> : <span class="string">"1a2f265"</span>,</span><br><span class="line">    <span class="attr">"build_date"</span> : <span class="string">"2017-10-06T20:33:39.012Z"</span>,</span><br><span class="line">    <span class="attr">"build_snapshot"</span> : <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"lucene_version"</span> : <span class="string">"6.6.1"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"tagline"</span> : <span class="string">"You Know, for Search"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>打开Kibaba web页面 localhost:5601</p>
-<h4 id="Logspout-收集日志"><a href="#Logspout-收集日志" class="headerlink" title="Logspout 收集日志"></a>Logspout 收集日志</h4><p>如果docker服务使用docker-compose管理，则添加如下配置信息<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">logspout:</span><br><span class="line">     image: gliderlabs/logspout:latest</span><br><span class="line">     volumes:</span><br><span class="line">         - /var/run/docker.sock:/var/run/docker.sock</span><br><span class="line">     ports:</span><br><span class="line">         - "10000:80"</span><br><span class="line">     command:</span><br><span class="line">         syslog://Logstash_IP:Logstash_port</span><br></pre></td></tr></table></figure></p>
-<p>查看logsout收集的日志<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://localhost:10000/logs</span><br></pre></td></tr></table></figure></p>
+            <p>生产环境配置(包含了Sentry配置)，日志分割管理建议使用logrotate</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">LOGGING = &#123;</span><br><span class="line">    'version': 1,</span><br><span class="line">    'disable_existing_loggers': True,</span><br><span class="line">    'root': &#123;</span><br><span class="line">        'level': 'WARNING',</span><br><span class="line">        'handlers': ['sentry']</span><br><span class="line">    &#125;,</span><br><span class="line">    'formatters': &#123;</span><br><span class="line">        'verbose': &#123;</span><br><span class="line">            'format': '[%(levelname)s]%(asctime)s--[module:%(module)s, process:%(process)d, thread:%(thread)d]--'</span><br><span class="line">                      '[filename:%(filename)s][funcName:%(funcName)s]: %(message)s'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'handlers': &#123;</span><br><span class="line">        'sentry': &#123;</span><br><span class="line">            'level': 'ERROR',  # To capture more than ERROR, change to WARNING, INFO, etc.</span><br><span class="line">            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'console': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.StreamHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'file': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'class': 'logging.FileHandler',</span><br><span class="line">            'filename': './log/prod.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'loggers': &#123;</span><br><span class="line">        'root': &#123;</span><br><span class="line">            'level': 'ERROR',</span><br><span class="line">            'handlers': ['sentry']</span><br><span class="line">        &#125;,</span><br><span class="line">        'django': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'handlers': ['file', 'console', 'sentry'],</span><br><span class="line">            'propagate': True</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果日志文件需要自动分割，则file使用下面的配置<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">'file': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.handlers.RotatingFileHandler',</span><br><span class="line">            'maxBytes': 1024 * 1024 * 10,  # 文件大小</span><br><span class="line">            'backupCount': 5,  # 备份份数</span><br><span class="line">            'filename': './log/debug.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
 
           
         
@@ -2093,7 +2032,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">497</span>
+                <span class="site-state-item-count">499</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2104,7 +2043,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">225</span>
+                <span class="site-state-item-count">224</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2115,7 +2054,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">559</span>
+                <span class="site-state-item-count">561</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

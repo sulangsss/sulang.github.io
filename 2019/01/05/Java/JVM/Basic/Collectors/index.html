@@ -101,22 +101,22 @@
 
 
 
-<meta name="description" content="IntroductionGC需要完成的三件事：  哪些内存需要回收？ 什么时候回收？ 如何回收？   Terms Parallel Concurrent   ArithmeticMark-Sweep - 标记-清除这是最基础的收集算法，顾名思义，算法分为两个阶段：  标记：标记处所有需要回收的对象。 清除：统一回收所有被标记的对象。  算法缺陷：  效率问题，标记和清除两个过程的效率不高。 空间问">
+<meta name="description" content="IntroductionGC需要完成的三件事：  哪些内存需要回收？ 什么时候回收？ 如何回收？   Terms Parallel，并行：多条垃圾收集线程并行工作，但此时用户线程处于等待状态。 Concurrent，并发：用户线程与垃圾收集线程同时执行，用户程序继续运行，而垃圾收集程序运行在另一个CPU上。   ArithmeticMark-Sweep - 标记-清除这是最基础的收集算法，顾名思义">
 <meta name="keywords" content="Java,Basic,JVM,Collector">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Introduction to JVM Collectors">
 <meta property="og:url" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/Collectors/index.html">
 <meta property="og:site_name" content="sulang blog">
-<meta property="og:description" content="IntroductionGC需要完成的三件事：  哪些内存需要回收？ 什么时候回收？ 如何回收？   Terms Parallel Concurrent   ArithmeticMark-Sweep - 标记-清除这是最基础的收集算法，顾名思义，算法分为两个阶段：  标记：标记处所有需要回收的对象。 清除：统一回收所有被标记的对象。  算法缺陷：  效率问题，标记和清除两个过程的效率不高。 空间问">
+<meta property="og:description" content="IntroductionGC需要完成的三件事：  哪些内存需要回收？ 什么时候回收？ 如何回收？   Terms Parallel，并行：多条垃圾收集线程并行工作，但此时用户线程处于等待状态。 Concurrent，并发：用户线程与垃圾收集线程同时执行，用户程序继续运行，而垃圾收集程序运行在另一个CPU上。   ArithmeticMark-Sweep - 标记-清除这是最基础的收集算法，顾名思义">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/Collectors/mark-compact-example.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/Collectors/collectors-category.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/Collectors/parnew.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/Collectors/cms.png">
-<meta property="og:updated_time" content="2019-01-06T13:44:34.019Z">
+<meta property="og:updated_time" content="2019-01-06T14:20:33.574Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Introduction to JVM Collectors">
-<meta name="twitter:description" content="IntroductionGC需要完成的三件事：  哪些内存需要回收？ 什么时候回收？ 如何回收？   Terms Parallel Concurrent   ArithmeticMark-Sweep - 标记-清除这是最基础的收集算法，顾名思义，算法分为两个阶段：  标记：标记处所有需要回收的对象。 清除：统一回收所有被标记的对象。  算法缺陷：  效率问题，标记和清除两个过程的效率不高。 空间问">
+<meta name="twitter:description" content="IntroductionGC需要完成的三件事：  哪些内存需要回收？ 什么时候回收？ 如何回收？   Terms Parallel，并行：多条垃圾收集线程并行工作，但此时用户线程处于等待状态。 Concurrent，并发：用户线程与垃圾收集线程同时执行，用户程序继续运行，而垃圾收集程序运行在另一个CPU上。   ArithmeticMark-Sweep - 标记-清除这是最基础的收集算法，顾名思义">
 <meta name="twitter:image" content="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/Collectors/mark-compact-example.png">
 
 
@@ -412,8 +412,8 @@
 </ul>
 <hr>
 <h3 id="Terms"><a href="#Terms" class="headerlink" title="Terms"></a>Terms</h3><ul>
-<li>Parallel</li>
-<li>Concurrent</li>
+<li>Parallel，并行：多条垃圾收集线程并行工作，但此时用户线程处于等待状态。</li>
+<li>Concurrent，并发：用户线程与垃圾收集线程同时执行，用户程序继续运行，而垃圾收集程序运行在另一个CPU上。</li>
 </ul>
 <hr>
 <h3 id="Arithmetic"><a href="#Arithmetic" class="headerlink" title="Arithmetic"></a>Arithmetic</h3><h4 id="Mark-Sweep-标记-清除"><a href="#Mark-Sweep-标记-清除" class="headerlink" title="Mark-Sweep - 标记-清除"></a>Mark-Sweep - 标记-清除</h4><p>这是最基础的收集算法，顾名思义，算法分为两个阶段：</p>
@@ -465,7 +465,7 @@
 <h4 id="Parallel-Scavenge"><a href="#Parallel-Scavenge" class="headerlink" title="Parallel Scavenge"></a>Parallel Scavenge</h4><p>Parallel Scavenge是一个新生代的Collector，它使用的收集算法是Copying，以多线程进行GC。</p>
 <p>它的目标是达到一个可控制的吞吐量(Throughput)，CMS是尽可能地缩短在GC时用户线程的停顿时间。</p>
 <blockquote>
-<p>吞吐量：CPU用于运行用户代码的时间与CPU总消耗时间的比值，即吞吐量=运行用户代码时间 / (运行用户代码时间 + GC时间)。<br>例如，虚拟机运行100分钟，其中GC花费了1分钟，那么吞吐量就是99%。</p>
+<p>吞吐量：CPU用于运行用户代码的时间与CPU总消耗时间的比值，即吞吐量=运行用户代码时间 / (运行用户代码时间 + GC时间)。例如，虚拟机运行100分钟，其中GC花费了1分钟，那么吞吐量就是99%。</p>
 </blockquote>
 <p>停顿时间越短就越适合需要与用户交互的程序，良好的响应速度能提升用户体验，而高吞吐量则可以高效率地利用CPU，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务。</p>
 
@@ -473,7 +473,7 @@
 <ul>
 <li>-XX:MaxGCPauseMillis：尽可能地保证GC的时间不超过该值。</li>
 <li>-XX:GCTimeRatio：范围是0~100，GC时间占总时间的比率。例如，设置为19，即GC时间的最大占比为5%(1 / (1+19))，默认值为99，即GC最大占比为1%(1 / (1+99))</li>
-<li>-XX:+UseAdaptiveSizePolicy：不需要手工指定新生代的大小、Eden与Survivor比例、晋升老年代对象年龄等等细节参数，JVM根据当前系统的运行情况进行动态调整这些参数以提供最适合的停顿时间和最大的吞吐量 - GC自适应的调节策略(GC Ergonomics)。</li>
+<li>-XX:+UseAdaptiveSizePolicy：不需要手工指定新生代的大小、Eden与Survivor比例、晋升老年代对象年龄等等细节参数，JVM根据当前系统的运行情况进行动态调整这些参数以提供最适合的停顿时间和最大的吞吐量(GC自适应的调节策略 GC Ergonomics)。</li>
 </ul>
 <h4 id="Parallel-Old"><a href="#Parallel-Old" class="headerlink" title="Parallel Old"></a>Parallel Old</h4><p>Parallel Old是Parallel Scavenger的老年代版本，以多线程GC，使用Mark-Compact算法。</p>
 
@@ -482,10 +482,16 @@
 <ul>
 <li>初始标记(STW) - CMS initial mark，仅仅只是标记一下GC Roots能直接关联到的对象，速度很快。</li>
 <li>并发标记 - CMS concurrent mark，进行GC Roots Tracing的过程。</li>
-<li>重新标记(STW) - CMS remark，为了修正并发标记期间因用户程序继续运行而导致标记产生变动的那一部分对象的标记记录，一般停顿时间比初始</li>
+<li>重新标记(STW) - CMS remark，为了修正并发标记期间因用户程序继续运行而导致标记产生变动的那一部分对象的标记记录，一般停顿时间比初始标记长一些，但远比并发标记短。</li>
 <li>并发清除 - CMS concurrent sweep</li>
 </ul>
 <img src="/2019/01/05/Java/JVM/Basic/Collectors/cms.png">
+<p>整个过程中最耗时的并发标记和并发清除过程都可以与用户线程一起运行。所以，从总体上来说，CMS内存回收过程与用户线程一起并发执行的。</p>
+<p>与CMS配合使用的Collector：</p>
+<ul>
+<li>Young Generation：Serial、ParNew</li>
+<li>Tenured Generation：SerialOld</li>
+</ul>
 <p>CMS缺点：</p>
 <ul>
 <li>对CPU资源非常敏感。在并发阶段，它虽然不会导致用户线程停顿，但是会因为占用一部分CPU资源而导致应用程序慢，总吞吐量会降低。CMS默认启动的GC线程数为(CPU + 3) / 4。</li>
@@ -618,7 +624,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">497</span>
+                <span class="site-state-item-count">499</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -629,7 +635,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">225</span>
+                <span class="site-state-item-count">224</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -640,7 +646,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">559</span>
+                <span class="site-state-item-count">561</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
