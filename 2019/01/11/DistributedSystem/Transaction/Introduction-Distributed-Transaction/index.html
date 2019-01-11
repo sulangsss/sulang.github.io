@@ -104,17 +104,24 @@
 <meta name="description" content="Introduction传统单机应用一般都会使用一个关系型数据库，好处是应用可以使用ACID Transactions。  为保证一致性我们只需要：开始一个事务，改变（插入，删除，更新）很多行，然后提交事务（如果有异常时回滚事务）。更进一步，借助开发平台中的数据访问技术和框架（如Spring），我们需要做的事情更少，只需要关注数据本身的改变。 随着组织规模不断扩大，业务量不断增长，单机应用和数据库">
 <meta name="keywords" content="DistributedSystem,Introduction,DistributedTransaction">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Introduction to Distributed Transaction">
+<meta property="og:title" content="An Introduction to Distributed Transaction">
 <meta property="og:url" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/index.html">
 <meta property="og:site_name" content="A Big Boy -  Tech Articls &amp; Notes">
 <meta property="og:description" content="Introduction传统单机应用一般都会使用一个关系型数据库，好处是应用可以使用ACID Transactions。  为保证一致性我们只需要：开始一个事务，改变（插入，删除，更新）很多行，然后提交事务（如果有异常时回滚事务）。更进一步，借助开发平台中的数据访问技术和框架（如Spring），我们需要做的事情更少，只需要关注数据本身的改变。 随着组织规模不断扩大，业务量不断增长，单机应用和数据库">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/DBMSOnLocalTransaction.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/basic-dtp-model.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/rm-tm-interact-with-xa.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/crm-communication.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/tm-domain.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-transaction-tree-structure.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-theory.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-scene.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-alipay.jpg">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/3pc.png">
-<meta property="og:updated_time" content="2019-01-11T10:05:29.535Z">
+<meta property="og:updated_time" content="2019-01-11T11:53:31.539Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Introduction to Distributed Transaction">
+<meta name="twitter:title" content="An Introduction to Distributed Transaction">
 <meta name="twitter:description" content="Introduction传统单机应用一般都会使用一个关系型数据库，好处是应用可以使用ACID Transactions。  为保证一致性我们只需要：开始一个事务，改变（插入，删除，更新）很多行，然后提交事务（如果有异常时回滚事务）。更进一步，借助开发平台中的数据访问技术和框架（如Spring），我们需要做的事情更少，只需要关注数据本身的改变。 随着组织规模不断扩大，业务量不断增长，单机应用和数据库">
 <meta name="twitter:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/DBMSOnLocalTransaction.png">
 
@@ -155,7 +162,7 @@
 <meta name="baidu-site-verification" content="xV2vphJ53Q">
 
 
-  <title>Introduction to Distributed Transaction | A Big Boy -  Tech Articls & Notes</title>
+  <title>An Introduction to Distributed Transaction | A Big Boy -  Tech Articls & Notes</title>
   
 
 
@@ -309,7 +316,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">Introduction to Distributed Transaction</h2>
+          <h2 class="post-title" itemprop="name headline">An Introduction to Distributed Transaction</h2>
         
 
         <div class="post-meta">
@@ -410,15 +417,60 @@
 <p>最终一致性：指系统中的所有数据副本经过一定时间后，最终能够达到一致的状态。</p>
 </blockquote>
 <hr>
-<h3 id="XA规范"><a href="#XA规范" class="headerlink" title="XA规范"></a>XA规范</h3><p>X/Open 组织（即现在的Open Group)定义了分布式事务处理模型。X/Open DTP 模型(1994)包括应用程序(AP)、事务管理器(TM)、资源管理器(RM)、通信资源管理器(CRM)四部分。一般，常见的事务管理器(TM)是交易中间件，常见的资源管理器(RM)是数据库，常见的通信资源管理器(CRM)是消息中间件。</p>
-<p>通常把一个数据库内部的事务处理，如对多个表的操作，作为本地事务看待。数据库的事务处理对象是本地事务，而分布式事务处理的对象是全局事务。所谓全局事务，是指分布式事务处理环境中，多个数据库可能需要共同完成一个工作，这个工作即是一个全局事务，</p>
+<h3 id="X-Open-DTP-Model"><a href="#X-Open-DTP-Model" class="headerlink" title="X/Open DTP Model"></a>X/Open DTP Model</h3><hr>
+<h4 id="What’s-DTP-Model"><a href="#What’s-DTP-Model" class="headerlink" title="What’s DTP Model"></a>What’s DTP Model</h4><p>The X/Open Distributed Transaction Processing (DTP) model is a software architecture that <strong>allows multiple application programs to share resources provided by multiple resource managers, and allows their work to be coordinated into global transactions</strong>.</p>
+<p>通常把一个数据库内部的事务处理，如对多个表的操作，作为本地事务看待。数据库的事务处理对象是本地事务，而分布式事务处理的对象是全局事务。<strong>所谓全局事务，是指分布式事务处理环境中，多个数据库可能需要共同完成一个工作，这个工作即是一个全局事务</strong>。</p>
 <p>例如，一个事务中可能更新几个不同的数据库。对数据库的操作发生在系统的各处但必须全部被提交或回滚。此时一个数据库对自己内部所做操作的提交不仅依赖本身操作是否成功，还要依赖与全局事务相关的其它数据库的操作是否成功，如果任一数据库的任一操作失败，则参与此事务的所有数据库所做的所有操作都必须回滚。</p>
-<p>一般情况下，某一数据库无法知道其它数据库在做什么，因此，在一个DTP环境中，交易中间件是必需的，由它通知和协调相关数据库的提交或回滚。而一个数据库只将其自己所做的操作（可恢复）影射到全局事务中。    </p>
+<p>一般情况下，某一数据库无法知道其它数据库在做什么，因此，在一个DTP环境中，必须有一个中间件负责协调资源，由它通知和协调相关数据库的提交或回滚。而数据库只需根据通知进行提交或回滚。</p>
+<hr>
+<h4 id="DTP-Model-Components"><a href="#DTP-Model-Components" class="headerlink" title="DTP Model Components"></a>DTP Model Components</h4><ul>
+<li>an Application Program (<strong>AP</strong>), which defines transaction boundaries and specifies actions that constitute a transaction</li>
+<li>Resource Managers (<strong>RMs</strong>) such as databases or file access systems, which provide access to resources</li>
+<li>a Transaction Manager (<strong>TM</strong>), which assigns identifiers to transactions, monitors their progress, and takes responsibility for transaction completion and for coordinating failure recovery.</li>
+<li>Communication Resource Managers (<strong>CRMs</strong>), which control communication between distributed applications within or across TM domains.</li>
+<li>a communication protocol(<strong>CP</strong>), which provides the underlying communication services used by distributed applications and supported by CRMs.</li>
+</ul>
+<p>DTP目前最新的版本是V3，DTP模型的组成：</p>
+<ul>
+<li>应用程序(Application Program ，简称AP)：用于定义事务边界(即定义事务的开始和结束)，并且在事务边界内对资源进行操作。</li>
+<li>资源管理器(Resource Manager，简称RM)：如数据库、文件系统等，并提供访问资源的方式。</li>
+<li>事务管理器(Transaction Manager ，简称TM)：负责分配事务唯一标识，监控事务的执行进度，并负责事务的提交、回滚等。</li>
+<li>通信资源管理器(Communication Resource Manager，简称CRM)：控制一个TM域(TM domain)内或者跨TM域的分布式应用之间的通信。</li>
+<li>通信协议(Communication Protocol，简称CP)：提供CRM提供的分布式应用节点之间的底层通信服务。</li>
+</ul>
 <blockquote>
-<p>XA就是X/Open DTP定义的交易中间件与数据库之间的接口规范(即接口函数)，交易中间件用它来通知数据库事务的开始、结束以及提交、回滚等。 XA接口函数由数据库厂商提供。</p>
+<p>XA就是X/Open DTP定义的交易中间件与数据库之间的接口规范(即接口函数)，交易中间件用它来通知数据库事务的开始、结束以及提交、回滚等。 XA接口函数由数据库厂商提供。<br>DTP：distributed Transaction Processing，AP (Application Program)、RM (Resource Manager)、TM (Transaction Manager)和CRM (Communication Resource Managers)<br>AP：定义事务边界(即定义事务的开始和结束)，并且在事务边界内对资源进行操作(defines the boundaries of a transaction and specifies the actions that constitute a transaction)<br>RM：如数据库、文件系统等，并提供访问资源的方式(provides access to shared data. Usually a resource manager is a database server or a file-access system)<br>TM：负责分配事务唯一标识，监控事务的执行进度，并负责事务的提交、回滚等(manages the routing and transaction processing control of a service request)</p>
 </blockquote>
 <hr>
-<h3 id="2PC-Two-Phase-Commitment-Protocol"><a href="#2PC-Two-Phase-Commitment-Protocol" class="headerlink" title="2PC - Two Phase Commitment Protocol"></a>2PC - Two Phase Commitment Protocol</h3><p>两阶段提交协议(Two-phase Commit，2PC)经常被用来实现分布式事务。一般分为协调器和若干事务执行者两种角色，这里的事务执行者就是具体的数据库，抽象点可以说是可以控制给数据库的程序。 协调器可以和事务执行器在一台机器上。</p>
+<h4 id="Basic-DTP-Model"><a href="#Basic-DTP-Model" class="headerlink" title="Basic DTP Model"></a>Basic DTP Model</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/basic-dtp-model.png">
+<p>一个DTP Model Instance，至少有3个组成部分：AP、RMs、TM。</p>
+<blockquote>
+<p>The subject of this X/Open specification is interface (3) in the diagram above, the XA interface by which TMs and RMs interact.<br>XA规范的最主要的作用是，就是定义了RM-TM的交互接口。</p>
+</blockquote>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/rm-tm-interact-with-xa.png" title="XA仅仅出现在RM和TM的连线上">
+<p>特别注意：</p>
+<ul>
+<li>2PC是在OSI TP标准中提出的。</li>
+<li>在DTP参考模型中，指定了全局事务的提交要使用2PC协议。</li>
+<li>XA规范只是定义了两阶段提交协议中需要使用到的接口，也就是上面提到的RM-TM交互的接口(因为2PC过程中的参与方只有TM和RMs)。</li>
+</ul>
+<h4 id="CRM通信"><a href="#CRM通信" class="headerlink" title="CRM通信"></a>CRM通信</h4><p>如果分布式事务需要跨多个应用，那么每个模型实例中，还需要额外的加入一个通信资源管理器CRM。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/crm-communication.png">
+<p>CRM作为多个模型实例之间通信的桥梁，作用：</p>
+<ul>
+<li>基本的通信能力：从这个角度，可以将CRM类比为RPC框架，模型实例之间通过RPC调用实现彼此的通信。这一点体现在AP、CRM之间的连线。</li>
+<li>事务传播能力：与传统RPC框架不同的是，CRM底层采用OSI TP(Open Systems Interconnection — Distributed Transaction Processing)通信服务，因此CRM具备事务传播能力。这一点体现TM、CRM之间的连线。</li>
+</ul>
+<h4 id="TM-Domain"><a href="#TM-Domain" class="headerlink" title="TM Domain"></a>TM Domain</h4><p>一个TM Domain中由一个或者多个模型实例组成，这些模型实例使用的都是同一个TM，但是操作的RMs各不相同，由TM来统一协调这些模型实例共同参与形成的全局事务(global transaction)。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/tm-domain.png">
+<p>TM Domain只是列出了最终参与到一个全局事务中，有哪些模型实例，并不关心这些模型实例之间的关系。这就好比，有一个班级，我们只是想知道这个班级中每位同学的名字，但是并不是关心谁是班长、谁是学习委员等。</p>
+<p>不过显然的，当一个TM Domain中存在多个模型实例时，模型实例彼此之间存在一定的层级调用关系。这就是<strong>全局事务的树形结构</strong>。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-transaction-tree-structure.png">
+<p>发起分布式事务的模型实例称之为root节点，或者称之为事务的发起者，其他的模型实例可以统称为事务的参与者。事务发起者负责开启整个全局事务，事务参与者各自负责执行自己的事务分支。</p>
+<p>而从模型实例之间的相互调用关系来说，调用方称之为上游节点(Superior Node)，被调用方称之为下游节点(Subordinate Node)。</p>
+<hr>
+<h3 id="2PC-Two-Phase-Commitment-Protocol"><a href="#2PC-Two-Phase-Commitment-Protocol" class="headerlink" title="2PC - Two Phase Commitment Protocol"></a>2PC - Two Phase Commitment Protocol</h3><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-theory.png">
+<p>两阶段提交协议(Two-phase Commit，2PC)经常被用来实现分布式事务。一般分为协调器和若干事务执行者两种角色，这里的事务执行者就是具体的数据库，抽象点可以说是可以控制给数据库的程序。 协调器可以和事务执行器在一台机器上。</p>
 <p>两个阶段：准备阶段(投票阶段) 和 提交阶段(执行阶段)。</p>
 <img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-scene.png">
 <blockquote>
@@ -461,7 +513,7 @@
 </ul>
 <p>二阶段无法解决的问题：协调者再发出commit消息之后宕机，而唯一接收到这条消息的参与者同时也宕机了。那么即使协调者通过选举协议产生了新的协调者，这条事务的状态也是不确定的，没人知道事务是否被已经提交。</p>
 <h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><p>假设想从支付宝里转10000元到余额宝</p>
-
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-alipay.jpg">
 <ol>
 <li>首先我们的应用程序发起一个请求到协调器, 然后由控制器来保证分布式事务。</li>
 <li>准备凭证阶段<ol>
@@ -531,7 +583,7 @@
 <p>Disadvantage：在DoCommit阶段如果出现网络分区，协调者无法与参与者正常通信，参与者依然会进行事务提交，造成数据不一致。</p>
 <hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://yq.aliyun.com/articles/582282" target="_blank" rel="noopener">https://yq.aliyun.com/articles/582282</a><br><a href="http://xiaorui.cc/2016/02/25/%E7%90%86%E8%A7%A3%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A42pc/" target="_blank" rel="noopener">http://xiaorui.cc/2016/02/25/%E7%90%86%E8%A7%A3%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A42pc/</a></p>
+<p><a href="https://yq.aliyun.com/articles/582282" target="_blank" rel="noopener">https://yq.aliyun.com/articles/582282</a><br><a href="http://xiaorui.cc/2016/02/25/%E7%90%86%E8%A7%A3%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A42pc/" target="_blank" rel="noopener">http://xiaorui.cc/2016/02/25/%E7%90%86%E8%A7%A3%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A42pc/</a><br><a href="https://www.jianshu.com/p/ad924d2ed8e8" target="_blank" rel="noopener">https://www.jianshu.com/p/ad924d2ed8e8</a></p>
 </blockquote>
 
       
@@ -717,7 +769,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分布式事务"><span class="nav-number">2.</span> <span class="nav-text">分布式事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#微服务的困境"><span class="nav-number">3.</span> <span class="nav-text">微服务的困境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#XA规范"><span class="nav-number">4.</span> <span class="nav-text">XA规范</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2PC-Two-Phase-Commitment-Protocol"><span class="nav-number">5.</span> <span class="nav-text">2PC - Two Phase Commitment Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Phase-阶段说明"><span class="nav-number">5.1.</span> <span class="nav-text">Phase - 阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advantage-and-Disadvantage"><span class="nav-number">5.2.</span> <span class="nav-text">Advantage and Disadvantage</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Example"><span class="nav-number">5.3.</span> <span class="nav-text">Example</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3PC-Three-Phase-Commitment-Protocol"><span class="nav-number">6.</span> <span class="nav-text">3PC - Three Phase Commitment Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Phase-阶段说明-1"><span class="nav-number">6.1.</span> <span class="nav-text">Phase - 阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advantage-and-Disadvantage-1"><span class="nav-number">6.2.</span> <span class="nav-text">Advantage and Disadvantage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">7.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分布式事务"><span class="nav-number">2.</span> <span class="nav-text">分布式事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#微服务的困境"><span class="nav-number">3.</span> <span class="nav-text">微服务的困境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#X-Open-DTP-Model"><span class="nav-number">4.</span> <span class="nav-text">X/Open DTP Model</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#What’s-DTP-Model"><span class="nav-number">4.1.</span> <span class="nav-text">What’s DTP Model</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DTP-Model-Components"><span class="nav-number">4.2.</span> <span class="nav-text">DTP Model Components</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Basic-DTP-Model"><span class="nav-number">4.3.</span> <span class="nav-text">Basic DTP Model</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CRM通信"><span class="nav-number">4.4.</span> <span class="nav-text">CRM通信</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TM-Domain"><span class="nav-number">4.5.</span> <span class="nav-text">TM Domain</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2PC-Two-Phase-Commitment-Protocol"><span class="nav-number">5.</span> <span class="nav-text">2PC - Two Phase Commitment Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Phase-阶段说明"><span class="nav-number">5.1.</span> <span class="nav-text">Phase - 阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advantage-and-Disadvantage"><span class="nav-number">5.2.</span> <span class="nav-text">Advantage and Disadvantage</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Example"><span class="nav-number">5.3.</span> <span class="nav-text">Example</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3PC-Three-Phase-Commitment-Protocol"><span class="nav-number">6.</span> <span class="nav-text">3PC - Three Phase Commitment Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Phase-阶段说明-1"><span class="nav-number">6.1.</span> <span class="nav-text">Phase - 阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advantage-and-Disadvantage-1"><span class="nav-number">6.2.</span> <span class="nav-text">Advantage and Disadvantage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">7.</span> <span class="nav-text">Reference</span></a></li></ol></div>
             
 
           </div>
