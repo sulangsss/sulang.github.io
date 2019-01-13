@@ -284,6 +284,214 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/" itemprop="url">Distributed Transaction Solution</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-13T23:22:18+08:00">
+                2019-01-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
+                    <span itemprop="name">DistributedSystem</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/Transaction/" itemprop="url" rel="index">
+                    <span itemprop="name">Transaction</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/ms-app-structure-example.png">
+<p>在微服务架构中，有一个database per service的模式，这个模式就是每一个服务一个数据库。 这样可以保证微服务独立开发，独立演进，独立部署，独立团队。</p>
+<p>由于对外提供的服务是由一组相互协作的微服务所组成，在分布式环境下由于各个服务访问的数据是相互分离的，服务之间不能靠数据库来保证事务一致性。这就需要在应用层面提供一个协调机制，来保证一组事务执行要么成功，要么失败。</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/2pc-example.png">
+<p>由于隔离性互斥的要求，在事务执行过程中，所有的资源都是被锁定的，这种情况只适合执行时间确定的短事务。但是为了保证分布式事务的一致性，大都是采用串行化的隔离级别来保证事务一致性，这样会降低系统的吞吐。但因为2PC协议的成本比较高，又有全局锁的问题，性能会比较差。现在大家基本上不会采用这种强一致解决方案。</p>
+<p>微服务事务一致性建议：</p>
+<ul>
+<li>微服务内：聚合通过数据库事务保证强一致。</li>
+<li>微服务间：最终一致。</li>
+</ul>
+<hr>
+<h3 id="TCC"><a href="#TCC" class="headerlink" title="TCC"></a>TCC</h3><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/tcc-example.png">
+<p>TCC名字的由来是其中包含了 try, confirm, cancel三个操作。</p>
+<p>与2PC相比，TCC位于业务服务层，没有单独的准备阶段，Try操作可以灵活选择业务资源锁的粒度。TCC是通过最终一致性来解决系统性能问题的这个设计，对我们设计抉择有很大的启发。<strong>有些时候系统的技术问题是可以通过业务建模的方式来解决的。</strong></p>
+<blockquote>
+<p>推荐阅读书籍：领域驱动设计和实现领域驱动设计</p>
+</blockquote>
+<hr>
+<h3 id="Sage"><a href="#Sage" class="headerlink" title="Sage"></a>Sage</h3><p>Saga其实是30年前的一篇数据库论文里提到的一个概念。在论文中一个Saga事务就是一个长期运行的事务，这个事务是由多个本地事务所组成，每个本地事务有相应的执行模块和补偿模块，当saga事务中的任意一个本地事务出错了，可以通过调用相关事务对应的补偿方法恢复，达到事务的最终一致性。</p>
+<p>在分布式系统中由于网络请求可能的延时，在Caitie的论文中对被Saga调用的服务提出两点要求：</p>
+<ul>
+<li>超时重试的机制，需要Saga调用的服务支持幂等。在服务请求的过程中，可能会出现超时重试的情况，我们需要通过幂等来避免多次请求所带来的问题。</li>
+<li>重试取消的机制，补偿可交换原则是指Saga并行处理的过程中，如果发生了超时重试事件之后，并进行了补偿的操作，那么补偿操作是直接生效的。</li>
+</ul>
+<blockquote>
+<p>主要参考了Caitie McCaffrey在分布式Saga论文，以及Chris Richardson的研究</p>
+</blockquote>
+<hr>
+<h4 id="ACID与Sage"><a href="#ACID与Sage" class="headerlink" title="ACID与Sage"></a>ACID与Sage</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/acid-and-sage.png">
+<p>为了满足重试取消的机制，需要我们在设计系统的过程中保留所有的事务数据。但是从上图可知，Saga模型只支持ACD，不提供隔离性的保证。</p>
+<p><strong>如果Sage缺少了隔离性会带来什么问题？</strong></p>
+<ul>
+<li>两个Sage事务同时操作一个资源会出现数据语义不一致的情况。</li>
+<li>两个Sage事务同时操作一个订单，彼此操作会覆盖对比(更新丢失)。</li>
+<li>两个Sage事务同时访问扣款账号，无法看到退款(脏读取问题)。</li>
+<li>在一个Sage事务内，数据被其他事务修改前后的读取值不一致(模糊读取问题)。</li>
+</ul>
+<p><strong>如何应对隔离性问题？</strong></p>
+<p>隔离的本质是控制并发，防止并发事务操作相同资源而引起结果错乱。</p>
+<ul>
+<li>在应用层面加入逻辑锁的逻辑。</li>
+<li>Session层面，Session以及锁的机制保证串行化操作资源。</li>
+<li>业务层面采用预先冻结资金的方式隔离此部分资金。</li>
+<li>业务操作过程中通过及时读取当前状态的方式获取更新。</li>
+</ul>
+<hr>
+<h4 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h4><ul>
+<li><p>Orchestration-Base Coordination - 集中式：集中式协调器负责服务调用以及事务协调。</p>
+</li>
+<li><p>Choreography-Base Coordination - 分布式：通过事件驱动的方式来进行事务协调。</p>
+</li>
+</ul>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/" target="_blank" rel="noopener">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2270,154 +2478,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/26/读书笔记/标准差/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/26/读书笔记/标准差/" itemprop="url">StandardDeviation 标准差</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-26T16:22:22+08:00">
-                2018-12-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书/" itemprop="url" rel="index">
-                    <span itemprop="name">读书</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>标准差（StandardDeviation），在概率统计中最常使用作为统计分布程度（statisticaldispersion）上的测量。</p>
-<p>标准差定义是总体各单位标准值与其平均数离差平方的算术平均数的平方根。它反映组内个体间的离散程度。测量到分布程度的结果，原则上具有两种性质</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/50/">50</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/51/">51</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2464,7 +2529,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">500</span>
+                <span class="site-state-item-count">501</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2486,7 +2551,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">563</span>
+                <span class="site-state-item-count">564</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

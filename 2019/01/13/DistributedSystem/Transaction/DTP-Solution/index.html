@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="DistributedSystem,DistributedTransaction,分布式事务解决方案,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="Introduction 在微服务架构中，有一个database per service的模式，这个模式就是每一个服务一个数据库。 这样可以保证微服务独立开发，独立演进，独立部署，独立团队。 由于对外提供的服务是由一组相互协作的微服务所组成，在分布式环境下由于各个服务访问的数据是相互分离的，服务之间不能靠数据库来保证事务一致性。这就需要在应用层面提供一个协调机制，来保证一组事务执行要么成功，要么失">
+<meta name="keywords" content="DistributedSystem,DistributedTransaction,分布式事务解决方案">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Distributed Transaction Solution">
+<meta property="og:url" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="Introduction 在微服务架构中，有一个database per service的模式，这个模式就是每一个服务一个数据库。 这样可以保证微服务独立开发，独立演进，独立部署，独立团队。 由于对外提供的服务是由一组相互协作的微服务所组成，在分布式环境下由于各个服务访问的数据是相互分离的，服务之间不能靠数据库来保证事务一致性。这就需要在应用层面提供一个协调机制，来保证一组事务执行要么成功，要么失">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/ms-app-structure-example.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/2pc-example.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/tcc-example.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/acid-and-sage.png">
+<meta property="og:updated_time" content="2019-01-13T16:17:23.569Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Distributed Transaction Solution">
+<meta name="twitter:description" content="Introduction 在微服务架构中，有一个database per service的模式，这个模式就是每一个服务一个数据库。 这样可以保证微服务独立开发，独立演进，独立部署，独立团队。 由于对外提供的服务是由一组相互协作的微服务所组成，在分布式环境下由于各个服务访问的数据是相互分离的，服务之间不能靠数据库来保证事务一致性。这就需要在应用层面提供一个协调机制，来保证一组事务执行要么成功，要么失">
+<meta name="twitter:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/ms-app-structure-example.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>Distributed Transaction Solution | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Distributed Transaction Solution</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-13T23:22:18+08:00">
+                2019-01-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
+                    <span itemprop="name">DistributedSystem</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/Transaction/" itemprop="url" rel="index">
+                    <span itemprop="name">Transaction</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/ms-app-structure-example.png">
+<p>在微服务架构中，有一个database per service的模式，这个模式就是每一个服务一个数据库。 这样可以保证微服务独立开发，独立演进，独立部署，独立团队。</p>
+<p>由于对外提供的服务是由一组相互协作的微服务所组成，在分布式环境下由于各个服务访问的数据是相互分离的，服务之间不能靠数据库来保证事务一致性。这就需要在应用层面提供一个协调机制，来保证一组事务执行要么成功，要么失败。</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/2pc-example.png">
+<p>由于隔离性互斥的要求，在事务执行过程中，所有的资源都是被锁定的，这种情况只适合执行时间确定的短事务。但是为了保证分布式事务的一致性，大都是采用串行化的隔离级别来保证事务一致性，这样会降低系统的吞吐。但因为2PC协议的成本比较高，又有全局锁的问题，性能会比较差。现在大家基本上不会采用这种强一致解决方案。</p>
+<p>微服务事务一致性建议：</p>
+<ul>
+<li>微服务内：聚合通过数据库事务保证强一致。</li>
+<li>微服务间：最终一致。</li>
+</ul>
+<hr>
+<h3 id="TCC"><a href="#TCC" class="headerlink" title="TCC"></a>TCC</h3><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/tcc-example.png">
+<p>TCC名字的由来是其中包含了 try, confirm, cancel三个操作。</p>
+<p>与2PC相比，TCC位于业务服务层，没有单独的准备阶段，Try操作可以灵活选择业务资源锁的粒度。TCC是通过最终一致性来解决系统性能问题的这个设计，对我们设计抉择有很大的启发。<strong>有些时候系统的技术问题是可以通过业务建模的方式来解决的。</strong></p>
+<blockquote>
+<p>推荐阅读书籍：领域驱动设计和实现领域驱动设计</p>
+</blockquote>
+<hr>
+<h3 id="Sage"><a href="#Sage" class="headerlink" title="Sage"></a>Sage</h3><p>Saga其实是30年前的一篇数据库论文里提到的一个概念。在论文中一个Saga事务就是一个长期运行的事务，这个事务是由多个本地事务所组成，每个本地事务有相应的执行模块和补偿模块，当saga事务中的任意一个本地事务出错了，可以通过调用相关事务对应的补偿方法恢复，达到事务的最终一致性。</p>
+<p>在分布式系统中由于网络请求可能的延时，在Caitie的论文中对被Saga调用的服务提出两点要求：</p>
+<ul>
+<li>超时重试的机制，需要Saga调用的服务支持幂等。在服务请求的过程中，可能会出现超时重试的情况，我们需要通过幂等来避免多次请求所带来的问题。</li>
+<li>重试取消的机制，补偿可交换原则是指Saga并行处理的过程中，如果发生了超时重试事件之后，并进行了补偿的操作，那么补偿操作是直接生效的。</li>
+</ul>
+<blockquote>
+<p>主要参考了Caitie McCaffrey在分布式Saga论文，以及Chris Richardson的研究</p>
+</blockquote>
+<hr>
+<h4 id="ACID与Sage"><a href="#ACID与Sage" class="headerlink" title="ACID与Sage"></a>ACID与Sage</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/acid-and-sage.png">
+<p>为了满足重试取消的机制，需要我们在设计系统的过程中保留所有的事务数据。但是从上图可知，Saga模型只支持ACD，不提供隔离性的保证。</p>
+<p><strong>如果Sage缺少了隔离性会带来什么问题？</strong></p>
+<ul>
+<li>两个Sage事务同时操作一个资源会出现数据语义不一致的情况。</li>
+<li>两个Sage事务同时操作一个订单，彼此操作会覆盖对比(更新丢失)。</li>
+<li>两个Sage事务同时访问扣款账号，无法看到退款(脏读取问题)。</li>
+<li>在一个Sage事务内，数据被其他事务修改前后的读取值不一致(模糊读取问题)。</li>
+</ul>
+<p><strong>如何应对隔离性问题？</strong></p>
+<p>隔离的本质是控制并发，防止并发事务操作相同资源而引起结果错乱。</p>
+<ul>
+<li>在应用层面加入逻辑锁的逻辑。</li>
+<li>Session层面，Session以及锁的机制保证串行化操作资源。</li>
+<li>业务层面采用预先冻结资金的方式隔离此部分资金。</li>
+<li>业务操作过程中通过及时读取当前状态的方式获取更新。</li>
+</ul>
+<hr>
+<h4 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h4><ul>
+<li><p>Orchestration-Base Coordination - 集中式：集中式协调器负责服务调用以及事务协调。</p>
+</li>
+<li><p>Choreography-Base Coordination - 分布式：通过事件驱动的方式来进行事务协调。</p>
+</li>
+</ul>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/" target="_blank" rel="noopener">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/DistributedSystem/" rel="tag"># DistributedSystem</a>
+          
+            <a href="/tags/DistributedTransaction/" rel="tag"># DistributedTransaction</a>
+          
+            <a href="/tags/分布式事务解决方案/" rel="tag"># 分布式事务解决方案</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/" rel="next" title="An Introduction to Distributed Transaction">
+                <i class="fa fa-chevron-left"></i> An Introduction to Distributed Transaction
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">501</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">225</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">564</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCC"><span class="nav-number">2.</span> <span class="nav-text">TCC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Sage"><span class="nav-number">3.</span> <span class="nav-text">Sage</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ACID与Sage"><span class="nav-number">3.1.</span> <span class="nav-text">ACID与Sage</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实现方式"><span class="nav-number">3.2.</span> <span class="nav-text">实现方式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
