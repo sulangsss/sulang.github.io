@@ -406,7 +406,7 @@
 <p>推荐阅读书籍：领域驱动设计和实现领域驱动设计</p>
 </blockquote>
 <hr>
-<h3 id="Sage"><a href="#Sage" class="headerlink" title="Sage"></a>Sage</h3><p>Saga其实是30年前的一篇数据库论文里提到的一个概念。在论文中一个Saga事务就是一个长期运行的事务，这个事务是由多个本地事务所组成，每个本地事务有相应的执行模块和补偿模块，当saga事务中的任意一个本地事务出错了，可以通过调用相关事务对应的补偿方法恢复，达到事务的最终一致性。</p>
+<h3 id="Sage"><a href="#Sage" class="headerlink" title="Sage"></a>Sage</h3><p>Saga其实是30年前的一篇数据库论文里提到的一个概念。在论文中一个Saga事务就是一个长期运行的事务，这个事务是由多个本地事务所组成，每个本地事务有相应的执行模块和补偿模块，当Saga事务中的任意一个本地事务出错了，可以通过调用相关事务对应的补偿方法恢复，达到事务的最终一致性。</p>
 <p>在分布式系统中由于网络请求可能的延时，在Caitie的论文中对被Saga调用的服务提出两点要求：</p>
 <ul>
 <li>超时重试的机制，需要Saga调用的服务支持幂等。在服务请求的过程中，可能会出现超时重试的情况，我们需要通过幂等来避免多次请求所带来的问题。</li>
@@ -441,8 +441,29 @@
 </li>
 </ul>
 <hr>
+<h3 id="FESCAR-Fast-amp-Easy-Commit-And-Rollback"><a href="#FESCAR-Fast-amp-Easy-Commit-And-Rollback" class="headerlink" title="FESCAR - Fast &amp; Easy Commit And Rollback"></a>FESCAR - Fast &amp; Easy Commit And Rollback</h3><p>假设某个业务共有 3 个模块，在传统的单体应用中，每个业务模块可以使用单个的本地数据源，这样本地事务自然就可以保证数据一致性。而在微服务架构中，业务模块会被设计成为3个不同数据源上的3个服务，每个服务对应一个数据库，本地事务当然也可以保证每个服务中的数据一致性，但是扩展到整个应用、整个业务逻辑范围来看，情况如何呢？</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-example.png">
+<p>FESCAR解决方案是：</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-solution.png">
+<p>分布式事务是一个全局事务，由一批Branch Transation组成，通常Branch Transation只是本地事务。</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-global-transaction.png">
+<h4 id="三大基本组件"><a href="#三大基本组件" class="headerlink" title="三大基本组件"></a>三大基本组件</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-component.png">
+<ul>
+<li>Transaction Coordinator(TC)：维护全局和分支事务的状态，驱动全局事务提交与回滚。</li>
+<li>Transaction Manager™：定义全局事务的范围：开始、提交或回滚全局事务。</li>
+<li>Resource Manager(RM)：管理分支事务处理的资源，与TC通信以注册分支事务并报告分支事务的状态，并驱动分支事务提交或回滚。</li>
+</ul>
+<h4 id="管理分布式事务的典型生命周期"><a href="#管理分布式事务的典型生命周期" class="headerlink" title="管理分布式事务的典型生命周期"></a>管理分布式事务的典型生命周期</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-transaction-lifecycle.png">
+<ol>
+<li>TM 要求 TC 开始新的全局事务，TC 生成表示全局事务的 XID。</li>
+<li>XID 通过微服务的调用链传播。</li>
+<li>RM 在 TC 中将本地事务注册为 XID 的相应全局事务的分支。</li>
+<li>TM 要求 TC 提交或回滚 XID 的相应全局事务。</li>
+<li>TC 驱动 XID 的相应全局事务下的所有分支事务，完成分支提交或回滚。</li>
+</ol>
+<hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/" target="_blank" rel="noopener">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/</a></p>
+<p><a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/" target="_blank" rel="noopener">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/</a><br><a href="https://www.infoq.cn/article/JYa9UEU*CrBu8WHIQywy" target="_blank" rel="noopener">https://www.infoq.cn/article/JYa9UEU*CrBu8WHIQywy</a></p>
 </blockquote>
 
           
@@ -632,6 +653,26 @@
 <p>an Application Program (<strong>AP</strong>), which defines transaction boundaries and specifies actions that constitute a transaction<br>Resource Managers (<strong>RMs</strong>) such as databases or file access systems, which provide access to resources<br>a Transaction Manager (<strong>TM</strong>), which assigns identifiers to transactions, monitors their progress, and takes responsibility for transaction completion and for coordinating failure recovery.<br>Communication Resource Managers (<strong>CRMs</strong>), which control communication between distributed applications within or across TM domains.<br>a communication protocol(<strong>CP</strong>), which provides the underlying communication services used by distributed applications and supported by CRMs.</p>
 </blockquote>
 <hr>
+<h4 id="全局的DTP-Global-DTP"><a href="#全局的DTP-Global-DTP" class="headerlink" title="全局的DTP - Global DTP"></a>全局的DTP - Global DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/dtp-model.png">
+<ul>
+<li>全局事务：对于一次性操作多个资源管理器的事务。</li>
+<li>分支事务：在全局事务中，某一个资源管理器有自己独立的任务，这些任务的集合作为这个资源管理器的分支任务。</li>
+</ul>
+<p>AP可以和TM以及RM通信，TM和RM互相之间可以通信，DTP模型里面定义了XA接口，TM和RM通过XA接口进行双向通信，例如，TM通知RM提交事务或者回滚事务，RM把提交结果通知给TM。AP和RM之间则通过RM提供的Native API 进行资源控制，这个没有进行约API和规范，各个厂商自己实现自己的资源控制，比如Oracle的数据库驱动程序。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/ap-tm-rm-relationship.png" title="三者关系的关系">
+<hr>
+<h4 id="跨域的全局DTP"><a href="#跨域的全局DTP" class="headerlink" title="跨域的全局DTP"></a>跨域的全局DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-dtp-model.png">
+<p>如果分布式事务需要跨多个应用，那么每个Model实例中，还需要额外的加入一个通信资源管理器CRM。CRM负责在多个事务域之间进行协调和沟通。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/crm-communication.png">
+<p>CRM作为多个Model实例之间通信的桥梁：</p>
+<ul>
+<li>基本的通信能力：从这个角度，可以将CRM类比为RPC框架，Model实例之间通过RPC调用实现彼此的通信。这一点体现在AP、CRM之间的连线。</li>
+<li>事务传播能力：与传统RPC框架不同的是，CRM底层采用OSI TP通信服务，因此CRM具备事务传播能力。这一点体现TM、CRM之间的连线。<blockquote>
+<p>OSI TP：Open Systems Interconnection — Distributed Transaction Processing</p>
+</blockquote>
+</li>
+</ul>
+<hr>
 <h4 id="XA规范"><a href="#XA规范" class="headerlink" title="XA规范"></a>XA规范</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/basic-dtp-model.png">
 <p>一个DTP Model Instance，至少有3个组成部分：AP、RMs、TM。</p>
 <blockquote>
@@ -653,26 +694,6 @@
 <img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-transaction-tree-structure.png">
 <p>发起分布式事务的Model实例称之为root节点，或者称之为事务的发起者，其他的Model实例可以统称为事务的参与者。事务发起者负责开启整个全局事务，事务参与者各自负责执行自己的事务分支。</p>
 <p>而从Model实例之间的相互调用关系来说，调用方称之为上游节点(Superior Node)，被调用方称之为下游节点(Subordinate Node)。</p>
-<hr>
-<h4 id="全局的DTP-Global-DTP"><a href="#全局的DTP-Global-DTP" class="headerlink" title="全局的DTP - Global DTP"></a>全局的DTP - Global DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/dtp-model.png">
-<ul>
-<li>全局事务：对于一次性操作多个资源管理器的事务。</li>
-<li>分支事务：在全局事务中，某一个资源管理器有自己独立的任务，这些任务的集合作为这个资源管理器的分支任务。</li>
-</ul>
-<p>AP可以和TM以及RM通信，TM和RM互相之间可以通信，DTP模型里面定义了XA接口，TM和RM通过XA接口进行双向通信，例如，TM通知RM提交事务或者回滚事务，RM把提交结果通知给TM。AP和RM之间则通过RM提供的Native API 进行资源控制，这个没有进行约API和规范，各个厂商自己实现自己的资源控制，比如Oracle的数据库驱动程序。</p>
-<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/ap-tm-rm-relationship.png" title="三者关系的关系">
-<hr>
-<h4 id="跨域的全局DTP"><a href="#跨域的全局DTP" class="headerlink" title="跨域的全局DTP"></a>跨域的全局DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-dtp-model.png">
-<p>如果分布式事务需要跨多个应用，那么每个Model实例中，还需要额外的加入一个通信资源管理器CRM。CRM负责在多个事务域之间进行协调和沟通。</p>
-<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/crm-communication.png">
-<p>CRM作为多个Model实例之间通信的桥梁：</p>
-<ul>
-<li>基本的通信能力：从这个角度，可以将CRM类比为RPC框架，Model实例之间通过RPC调用实现彼此的通信。这一点体现在AP、CRM之间的连线。</li>
-<li>事务传播能力：与传统RPC框架不同的是，CRM底层采用OSI TP通信服务，因此CRM具备事务传播能力。这一点体现TM、CRM之间的连线。<blockquote>
-<p>OSI TP：Open Systems Interconnection — Distributed Transaction Processing</p>
-</blockquote>
-</li>
-</ul>
 <hr>
 <h3 id="2PC-Two-Phase-Commitment-Protocol"><a href="#2PC-Two-Phase-Commitment-Protocol" class="headerlink" title="2PC - Two Phase Commitment Protocol"></a>2PC - Two Phase Commitment Protocol</h3><p>2PC协议经常被用来实现分布式事务。一般分为协调器和若干事务执行者两种角色，这里的事务执行者就是具体的数据库，抽象点可以说是控制数据库的程序。协调器可以独立运行在一台机器上，也可以和事务执行器在同一台机器上。</p>
 <p>2PC协议主要分为两个阶段：</p>

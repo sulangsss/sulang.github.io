@@ -111,19 +111,19 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/local-transaction.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/dtp.png">
-<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/basic-dtp-model.png">
-<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/tm-domain.png">
-<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-transaction-tree-structure.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/dtp-model.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/ap-tm-rm-relationship.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-dtp-model.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/crm-communication.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/basic-dtp-model.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/tm-domain.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-transaction-tree-structure.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-scene.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-theory.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-alipay.jpg">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/3pc.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/j2ee-jta.png">
-<meta property="og:updated_time" content="2019-01-13T07:02:21.723Z">
+<meta property="og:updated_time" content="2019-01-15T05:18:20.622Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="An Introduction to Distributed Transaction">
 <meta name="twitter:description" content="Introduction传统单机应用一般都会使用一个关系型数据库，好处是应用可以使用ACID Transactions。  为保证一致性我们只需要：开始一个事务，改变（插入，删除，更新）很多行，然后提交事务（如果有异常时回滚事务）。更进一步，借助开发平台中的数据访问技术和框架（如Spring），我们需要做的事情更少，只需要关注数据本身的改变。 随着组织规模不断扩大，业务量不断增长，单机应用和数据库">
@@ -439,6 +439,26 @@
 <p>an Application Program (<strong>AP</strong>), which defines transaction boundaries and specifies actions that constitute a transaction<br>Resource Managers (<strong>RMs</strong>) such as databases or file access systems, which provide access to resources<br>a Transaction Manager (<strong>TM</strong>), which assigns identifiers to transactions, monitors their progress, and takes responsibility for transaction completion and for coordinating failure recovery.<br>Communication Resource Managers (<strong>CRMs</strong>), which control communication between distributed applications within or across TM domains.<br>a communication protocol(<strong>CP</strong>), which provides the underlying communication services used by distributed applications and supported by CRMs.</p>
 </blockquote>
 <hr>
+<h4 id="全局的DTP-Global-DTP"><a href="#全局的DTP-Global-DTP" class="headerlink" title="全局的DTP - Global DTP"></a>全局的DTP - Global DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/dtp-model.png">
+<ul>
+<li>全局事务：对于一次性操作多个资源管理器的事务。</li>
+<li>分支事务：在全局事务中，某一个资源管理器有自己独立的任务，这些任务的集合作为这个资源管理器的分支任务。</li>
+</ul>
+<p>AP可以和TM以及RM通信，TM和RM互相之间可以通信，DTP模型里面定义了XA接口，TM和RM通过XA接口进行双向通信，例如，TM通知RM提交事务或者回滚事务，RM把提交结果通知给TM。AP和RM之间则通过RM提供的Native API 进行资源控制，这个没有进行约API和规范，各个厂商自己实现自己的资源控制，比如Oracle的数据库驱动程序。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/ap-tm-rm-relationship.png" title="三者关系的关系">
+<hr>
+<h4 id="跨域的全局DTP"><a href="#跨域的全局DTP" class="headerlink" title="跨域的全局DTP"></a>跨域的全局DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-dtp-model.png">
+<p>如果分布式事务需要跨多个应用，那么每个Model实例中，还需要额外的加入一个通信资源管理器CRM。CRM负责在多个事务域之间进行协调和沟通。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/crm-communication.png">
+<p>CRM作为多个Model实例之间通信的桥梁：</p>
+<ul>
+<li>基本的通信能力：从这个角度，可以将CRM类比为RPC框架，Model实例之间通过RPC调用实现彼此的通信。这一点体现在AP、CRM之间的连线。</li>
+<li>事务传播能力：与传统RPC框架不同的是，CRM底层采用OSI TP通信服务，因此CRM具备事务传播能力。这一点体现TM、CRM之间的连线。<blockquote>
+<p>OSI TP：Open Systems Interconnection — Distributed Transaction Processing</p>
+</blockquote>
+</li>
+</ul>
+<hr>
 <h4 id="XA规范"><a href="#XA规范" class="headerlink" title="XA规范"></a>XA规范</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/basic-dtp-model.png">
 <p>一个DTP Model Instance，至少有3个组成部分：AP、RMs、TM。</p>
 <blockquote>
@@ -460,26 +480,6 @@
 <img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-transaction-tree-structure.png">
 <p>发起分布式事务的Model实例称之为root节点，或者称之为事务的发起者，其他的Model实例可以统称为事务的参与者。事务发起者负责开启整个全局事务，事务参与者各自负责执行自己的事务分支。</p>
 <p>而从Model实例之间的相互调用关系来说，调用方称之为上游节点(Superior Node)，被调用方称之为下游节点(Subordinate Node)。</p>
-<hr>
-<h4 id="全局的DTP-Global-DTP"><a href="#全局的DTP-Global-DTP" class="headerlink" title="全局的DTP - Global DTP"></a>全局的DTP - Global DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/dtp-model.png">
-<ul>
-<li>全局事务：对于一次性操作多个资源管理器的事务。</li>
-<li>分支事务：在全局事务中，某一个资源管理器有自己独立的任务，这些任务的集合作为这个资源管理器的分支任务。</li>
-</ul>
-<p>AP可以和TM以及RM通信，TM和RM互相之间可以通信，DTP模型里面定义了XA接口，TM和RM通过XA接口进行双向通信，例如，TM通知RM提交事务或者回滚事务，RM把提交结果通知给TM。AP和RM之间则通过RM提供的Native API 进行资源控制，这个没有进行约API和规范，各个厂商自己实现自己的资源控制，比如Oracle的数据库驱动程序。</p>
-<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/ap-tm-rm-relationship.png" title="三者关系的关系">
-<hr>
-<h4 id="跨域的全局DTP"><a href="#跨域的全局DTP" class="headerlink" title="跨域的全局DTP"></a>跨域的全局DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-dtp-model.png">
-<p>如果分布式事务需要跨多个应用，那么每个Model实例中，还需要额外的加入一个通信资源管理器CRM。CRM负责在多个事务域之间进行协调和沟通。</p>
-<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/crm-communication.png">
-<p>CRM作为多个Model实例之间通信的桥梁：</p>
-<ul>
-<li>基本的通信能力：从这个角度，可以将CRM类比为RPC框架，Model实例之间通过RPC调用实现彼此的通信。这一点体现在AP、CRM之间的连线。</li>
-<li>事务传播能力：与传统RPC框架不同的是，CRM底层采用OSI TP通信服务，因此CRM具备事务传播能力。这一点体现TM、CRM之间的连线。<blockquote>
-<p>OSI TP：Open Systems Interconnection — Distributed Transaction Processing</p>
-</blockquote>
-</li>
-</ul>
 <hr>
 <h3 id="2PC-Two-Phase-Commitment-Protocol"><a href="#2PC-Two-Phase-Commitment-Protocol" class="headerlink" title="2PC - Two Phase Commitment Protocol"></a>2PC - Two Phase Commitment Protocol</h3><p>2PC协议经常被用来实现分布式事务。一般分为协调器和若干事务执行者两种角色，这里的事务执行者就是具体的数据库，抽象点可以说是控制数据库的程序。协调器可以独立运行在一台机器上，也可以和事务执行器在同一台机器上。</p>
 <p>2PC协议主要分为两个阶段：</p>
@@ -797,7 +797,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分布式事务"><span class="nav-number">2.</span> <span class="nav-text">分布式事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#微服务的困境"><span class="nav-number">3.</span> <span class="nav-text">微服务的困境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#X-Open-DTP-Model"><span class="nav-number">4.</span> <span class="nav-text">X/Open DTP Model</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#What’s-DTP-Model"><span class="nav-number">4.1.</span> <span class="nav-text">What’s DTP Model</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#XA规范"><span class="nav-number">4.2.</span> <span class="nav-text">XA规范</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TM-Domain"><span class="nav-number">4.3.</span> <span class="nav-text">TM Domain</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#全局的DTP-Global-DTP"><span class="nav-number">4.4.</span> <span class="nav-text">全局的DTP - Global DTP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#跨域的全局DTP"><span class="nav-number">4.5.</span> <span class="nav-text">跨域的全局DTP</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2PC-Two-Phase-Commitment-Protocol"><span class="nav-number">5.</span> <span class="nav-text">2PC - Two Phase Commitment Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2PC、Paxos和Raft协议之间的区别"><span class="nav-number">5.1.</span> <span class="nav-text">2PC、Paxos和Raft协议之间的区别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Phase-阶段说明"><span class="nav-number">5.2.</span> <span class="nav-text">Phase - 阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advantage-and-Disadvantage"><span class="nav-number">5.3.</span> <span class="nav-text">Advantage and Disadvantage</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Example"><span class="nav-number">5.4.</span> <span class="nav-text">Example</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3PC-Three-Phase-Commitment-Protocol"><span class="nav-number">6.</span> <span class="nav-text">3PC - Three Phase Commitment Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Phase-阶段说明-1"><span class="nav-number">6.1.</span> <span class="nav-text">Phase - 阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advantage-and-Disadvantage-1"><span class="nav-number">6.2.</span> <span class="nav-text">Advantage and Disadvantage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#J2EE-分布式事务"><span class="nav-number">7.</span> <span class="nav-text">J2EE 分布式事务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#JTA"><span class="nav-number">7.1.</span> <span class="nav-text">JTA</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">8.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分布式事务"><span class="nav-number">2.</span> <span class="nav-text">分布式事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#微服务的困境"><span class="nav-number">3.</span> <span class="nav-text">微服务的困境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#X-Open-DTP-Model"><span class="nav-number">4.</span> <span class="nav-text">X/Open DTP Model</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#What’s-DTP-Model"><span class="nav-number">4.1.</span> <span class="nav-text">What’s DTP Model</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#全局的DTP-Global-DTP"><span class="nav-number">4.2.</span> <span class="nav-text">全局的DTP - Global DTP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#跨域的全局DTP"><span class="nav-number">4.3.</span> <span class="nav-text">跨域的全局DTP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#XA规范"><span class="nav-number">4.4.</span> <span class="nav-text">XA规范</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TM-Domain"><span class="nav-number">4.5.</span> <span class="nav-text">TM Domain</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2PC-Two-Phase-Commitment-Protocol"><span class="nav-number">5.</span> <span class="nav-text">2PC - Two Phase Commitment Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2PC、Paxos和Raft协议之间的区别"><span class="nav-number">5.1.</span> <span class="nav-text">2PC、Paxos和Raft协议之间的区别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Phase-阶段说明"><span class="nav-number">5.2.</span> <span class="nav-text">Phase - 阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advantage-and-Disadvantage"><span class="nav-number">5.3.</span> <span class="nav-text">Advantage and Disadvantage</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Example"><span class="nav-number">5.4.</span> <span class="nav-text">Example</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3PC-Three-Phase-Commitment-Protocol"><span class="nav-number">6.</span> <span class="nav-text">3PC - Three Phase Commitment Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Phase-阶段说明-1"><span class="nav-number">6.1.</span> <span class="nav-text">Phase - 阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advantage-and-Disadvantage-1"><span class="nav-number">6.2.</span> <span class="nav-text">Advantage and Disadvantage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#J2EE-分布式事务"><span class="nav-number">7.</span> <span class="nav-text">J2EE 分布式事务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#JTA"><span class="nav-number">7.1.</span> <span class="nav-text">JTA</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">8.</span> <span class="nav-text">Reference</span></a></li></ol></div>
             
 
           </div>

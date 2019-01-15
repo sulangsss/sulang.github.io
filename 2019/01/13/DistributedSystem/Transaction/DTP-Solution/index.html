@@ -88,6 +88,8 @@
 
 
 
+  
+
 
   <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
 
@@ -113,7 +115,12 @@
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/2pc-example.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/tcc-example.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/acid-and-sage.png">
-<meta property="og:updated_time" content="2019-01-13T16:17:23.569Z">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-example.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-solution.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-global-transaction.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-component.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-transaction-lifecycle.png">
+<meta property="og:updated_time" content="2019-01-15T05:19:57.879Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Distributed Transaction Solution">
 <meta name="twitter:description" content="Introduction 在微服务架构中，有一个database per service的模式，这个模式就是每一个服务一个数据库。 这样可以保证微服务独立开发，独立演进，独立部署，独立团队。 由于对外提供的服务是由一组相互协作的微服务所组成，在分布式环境下由于各个服务访问的数据是相互分离的，服务之间不能靠数据库来保证事务一致性。这就需要在应用层面提供一个协调机制，来保证一组事务执行要么成功，要么失">
@@ -411,7 +418,7 @@
 <p>推荐阅读书籍：领域驱动设计和实现领域驱动设计</p>
 </blockquote>
 <hr>
-<h3 id="Sage"><a href="#Sage" class="headerlink" title="Sage"></a>Sage</h3><p>Saga其实是30年前的一篇数据库论文里提到的一个概念。在论文中一个Saga事务就是一个长期运行的事务，这个事务是由多个本地事务所组成，每个本地事务有相应的执行模块和补偿模块，当saga事务中的任意一个本地事务出错了，可以通过调用相关事务对应的补偿方法恢复，达到事务的最终一致性。</p>
+<h3 id="Sage"><a href="#Sage" class="headerlink" title="Sage"></a>Sage</h3><p>Saga其实是30年前的一篇数据库论文里提到的一个概念。在论文中一个Saga事务就是一个长期运行的事务，这个事务是由多个本地事务所组成，每个本地事务有相应的执行模块和补偿模块，当Saga事务中的任意一个本地事务出错了，可以通过调用相关事务对应的补偿方法恢复，达到事务的最终一致性。</p>
 <p>在分布式系统中由于网络请求可能的延时，在Caitie的论文中对被Saga调用的服务提出两点要求：</p>
 <ul>
 <li>超时重试的机制，需要Saga调用的服务支持幂等。在服务请求的过程中，可能会出现超时重试的情况，我们需要通过幂等来避免多次请求所带来的问题。</li>
@@ -446,8 +453,29 @@
 </li>
 </ul>
 <hr>
+<h3 id="FESCAR-Fast-amp-Easy-Commit-And-Rollback"><a href="#FESCAR-Fast-amp-Easy-Commit-And-Rollback" class="headerlink" title="FESCAR - Fast &amp; Easy Commit And Rollback"></a>FESCAR - Fast &amp; Easy Commit And Rollback</h3><p>假设某个业务共有 3 个模块，在传统的单体应用中，每个业务模块可以使用单个的本地数据源，这样本地事务自然就可以保证数据一致性。而在微服务架构中，业务模块会被设计成为3个不同数据源上的3个服务，每个服务对应一个数据库，本地事务当然也可以保证每个服务中的数据一致性，但是扩展到整个应用、整个业务逻辑范围来看，情况如何呢？</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-example.png">
+<p>FESCAR解决方案是：</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-solution.png">
+<p>分布式事务是一个全局事务，由一批Branch Transation组成，通常Branch Transation只是本地事务。</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-global-transaction.png">
+<h4 id="三大基本组件"><a href="#三大基本组件" class="headerlink" title="三大基本组件"></a>三大基本组件</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-component.png">
+<ul>
+<li>Transaction Coordinator(TC)：维护全局和分支事务的状态，驱动全局事务提交与回滚。</li>
+<li>Transaction Manager™：定义全局事务的范围：开始、提交或回滚全局事务。</li>
+<li>Resource Manager(RM)：管理分支事务处理的资源，与TC通信以注册分支事务并报告分支事务的状态，并驱动分支事务提交或回滚。</li>
+</ul>
+<h4 id="管理分布式事务的典型生命周期"><a href="#管理分布式事务的典型生命周期" class="headerlink" title="管理分布式事务的典型生命周期"></a>管理分布式事务的典型生命周期</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-transaction-lifecycle.png">
+<ol>
+<li>TM 要求 TC 开始新的全局事务，TC 生成表示全局事务的 XID。</li>
+<li>XID 通过微服务的调用链传播。</li>
+<li>RM 在 TC 中将本地事务注册为 XID 的相应全局事务的分支。</li>
+<li>TM 要求 TC 提交或回滚 XID 的相应全局事务。</li>
+<li>TC 驱动 XID 的相应全局事务下的所有分支事务，完成分支提交或回滚。</li>
+</ol>
+<hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/" target="_blank" rel="noopener">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/</a></p>
+<p><a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/" target="_blank" rel="noopener">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/</a><br><a href="https://www.infoq.cn/article/JYa9UEU*CrBu8WHIQywy" target="_blank" rel="noopener">https://www.infoq.cn/article/JYa9UEU*CrBu8WHIQywy</a></p>
 </blockquote>
 
       
@@ -633,7 +661,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCC"><span class="nav-number">2.</span> <span class="nav-text">TCC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Sage"><span class="nav-number">3.</span> <span class="nav-text">Sage</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ACID与Sage"><span class="nav-number">3.1.</span> <span class="nav-text">ACID与Sage</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实现方式"><span class="nav-number">3.2.</span> <span class="nav-text">实现方式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCC"><span class="nav-number">2.</span> <span class="nav-text">TCC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Sage"><span class="nav-number">3.</span> <span class="nav-text">Sage</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ACID与Sage"><span class="nav-number">3.1.</span> <span class="nav-text">ACID与Sage</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实现方式"><span class="nav-number">3.2.</span> <span class="nav-text">实现方式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FESCAR-Fast-amp-Easy-Commit-And-Rollback"><span class="nav-number">4.</span> <span class="nav-text">FESCAR - Fast &amp; Easy Commit And Rollback</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#三大基本组件"><span class="nav-number">4.1.</span> <span class="nav-text">三大基本组件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#管理分布式事务的典型生命周期"><span class="nav-number">4.2.</span> <span class="nav-text">管理分布式事务的典型生命周期</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">5.</span> <span class="nav-text">Reference</span></a></li></ol></div>
             
 
           </div>
