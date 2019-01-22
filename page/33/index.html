@@ -284,6 +284,367 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/24/Server/Micro/微服务调用追踪/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/01/24/Server/Micro/微服务调用追踪/" itemprop="url">微服务调用追踪</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-24T11:24:18+08:00">
+                2018-01-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Micro/" itemprop="url" rel="index">
+                    <span itemprop="name">Micro</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="微服务特点"><a href="#微服务特点" class="headerlink" title="微服务特点"></a>微服务特点</h3><p>微服务的特点决定了功能模块的部署是分布式的，以往在单应用环境下，所有的业务都在同一个服务器上，如果服务器出现错误和异常，我们只要盯住一个点，就可以快速定位和处理问题，但是在微服务的架构下，大部分功能模块都是单独部署运行的，彼此通过总线交互，都是无状态的服务，这种架构下，前后台的业务流会经过很多个微服务的处理和传递，我们难免会遇到这样的问题：</p>
+<ul>
+<li>分散在各个服务器上的日志怎么处理？</li>
+<li>如果业务流出现了错误和异常，如何定位是哪个点出的问题？</li>
+<li>如何快速定位问题？</li>
+<li>如何跟踪业务流的处理顺序和结果？</li>
+</ul>
+<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><h4 id="Google-Dapper"><a href="#Google-Dapper" class="headerlink" title="Google Dapper"></a>Google Dapper</h4><p>Google公司广泛使用了分布式集群，为了应对自身大规模的复杂集群环境，Google公司研发了Dapper分布式跟踪系统，并发表了论文《Dapper, a Large-Scale Distributed Systems Tracing Infrastructure》，给行业内分布式跟踪的实现提供了非常有价值的参考，该论文也成为了当前分布式跟踪系统的理论基础。</p>
+<img src="/2018/01/24/Server/Micro/微服务调用追踪/Dapper-example.jpg">
+<p>这个路径由用户的X请求发起，穿过一个简单的服务系统。用字母标识的节点代表分布式系统中的不同处理过程。</p>
+<p>分布式服务的跟踪系统需要记录在一次特定的请求中系统中完成的所有工作的信息。</p>
+<p>举个例子，上图展现的是一个与5台服务器相关的一个服务，包括：前端（A），两个中间层（B和C），以及两个后端（D和E）。<strong>当一个用户（这个用例的发起人）发起一个请求时，首先到达前端，然后发送两个RPC调用到服务器B和C。B会马上做出反应，但是C需要和后端的D和E交互之后再返还给A，由A来响应最初的请求。对于这样一个请求，简单实用的分布式跟踪的实现，就是为服务器上每一次发送和接收动作来收集跟踪标识符（message identifiers）和时间戳（timestamped events）。</strong></p>
+<p>重要概念</p>
+<ul>
+<li>基于标注（annotation-based），又叫植入点或埋点</li>
+</ul>
+<p>在应用程序或中间件中明确定义一个<strong>全局的标注（annotation）</strong>，它可以是一个特殊的ID，通过这个ID连接每一条记录和发起者的请求，当然，这需要代码植入，在生产环境中，因为所有的应用程序都使用相同的线程模型，控制流和RPC系统，可以把代码植入限制在一个很小的通用组件库中，从而达到监测系统应用对开发人员的透明。Dapper能够以对应用开发者近乎零侵入的成本对分布式控制路径进行跟踪，几乎完全依赖于少量通用组件库的改造。</p>
+<ul>
+<li>跟踪树和span</li>
+</ul>
+<img src="/2018/01/24/Server/Micro/微服务调用追踪/trace-tree-and_span.jpg">
+<p>5个span在Dapper跟踪树中的关联关系</p>
+<p>在Dapper跟踪树结构中，树节点是整个架构的基本单元，而每一个节点又是对span的引用。节点之间的连线表示的span和它的父span的直接关系。通过简单的parentId和spanId就可以有序地把所有的关系串联起来，达到记录业务流的作用。</p>
+<h4 id="Twitter’s-Zipkin"><a href="#Twitter’s-Zipkin" class="headerlink" title="Twitter’s Zipkin"></a>Twitter’s Zipkin</h4><p>Twitter公司的Zipkin是Google Dapper系统的开源实现，Zipkin严格按照Dapper论文实现，采用Scala编写，并且紧密集成到Twitter公司自己的分布式服务Finagle中，使得跟踪做到对应用透明。</p>
+<img src="/2018/01/24/Server/Micro/微服务调用追踪/Zipkin-framework.jpg">
+<h4 id="淘宝鹰眼系统（EagleEye）"><a href="#淘宝鹰眼系统（EagleEye）" class="headerlink" title="淘宝鹰眼系统（EagleEye）"></a>淘宝鹰眼系统（EagleEye）</h4><p>淘宝鹰眼是基于网络调用日志的分布式跟踪系统，它可以分析网络请求在各个分布式系统之间的调用情况，从而得到处理请求的调用链上的入口URL、应用服务的调用关系，从而找到请求处理瓶颈，定位错误异常的根源位置。同时，业务方也可以在调用链上添加自己的业务埋点日志，使各个系统的网络调用与实际业务内容得到关联。</p>
+<h3 id="Spring-Cloud-Sleuth-Zipkin"><a href="#Spring-Cloud-Sleuth-Zipkin" class="headerlink" title="Spring Cloud Sleuth + Zipkin"></a>Spring Cloud Sleuth + Zipkin</h3><h3 id="分布式RequestId"><a href="#分布式RequestId" class="headerlink" title="分布式RequestId"></a>分布式RequestId</h3><p>参考链接</p>
+<ul>
+<li><a href="http://www.infoq.com/cn/articles/how-to-realize-distributed-tracking" target="_blank" rel="noopener">http://www.infoq.com/cn/articles/how-to-realize-distributed-tracking</a></li>
+<li>Spring Cloud Sleuth：<a href="https://www.jianshu.com/p/4303385b7512" target="_blank" rel="noopener">https://www.jianshu.com/p/4303385b7512</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/17/DB/MySQL/Theory/Redolog、Undolog/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/01/17/DB/MySQL/Theory/Redolog、Undolog/" itemprop="url">MySQL redo log和undo log作用</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-17T20:55:07+08:00">
+                2018-01-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Theory/" itemprop="url" rel="index">
+                    <span itemprop="name">Theory</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>InnoDB有两种非常重要的日志：</p>
+<ul>
+<li>undo log：用来保证事务的原子性以及InnoDB的MVCC。</li>
+<li>redo log：用来保证事务的持久性。</li>
+</ul>
+<blockquote>
+<p>InnoDB日志组的特性已经被废弃(redo日志写多份)，归档日志(InnoDB archive log)特性也在5.7被彻底移除</p>
+</blockquote>
+<h3 id="redo-log"><a href="#redo-log" class="headerlink" title="redo log"></a>redo log</h3><blockquote>
+<p>当数据库对数据做修改的时候，需要把数据页从磁盘读到buffer pool中，然后在buffer pool中进行修改，那么这个时候buffer pool中的数据页就与磁盘上的数据页内容不一致，称buffer pool的数据页为<strong>dirty page</strong>脏数据。</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="http://mysql.taobao.org/monthly/2015/05/01/" target="_blank" rel="noopener">http://mysql.taobao.org/monthly/2015/05/01/</a><br><a href="http://www.cnblogs.com/wy123/p/8365234.html" target="_blank" rel="noopener">http://www.cnblogs.com/wy123/p/8365234.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/17/Server/SpringBoot/Hibernate/hibernate-annotation/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -689,169 +1050,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/16/Server/SpringBoot/Apollo/configuration/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/01/16/Server/SpringBoot/Apollo/configuration/" itemprop="url">Apollo</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-16T14:48:18+08:00">
-                2018-01-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Spring-Boot/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Boot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/Spring-Boot/Apollo/" itemprop="url" rel="index">
-                    <span itemprop="name">Apollo</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="docker-compose-部署"><a href="#docker-compose-部署" class="headerlink" title="docker-compose 部署"></a>docker-compose 部署</h3><h4 id="Config-Server"><a href="#Config-Server" class="headerlink" title="Config Server"></a>Config Server</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">eureka:</span><br><span class="line">  instance:</span><br><span class="line">    hostname: $&#123;hostname:localhost&#125;</span><br><span class="line">    preferIpAddress: true</span><br><span class="line">    ip-address: 35.187.226.72 //    格外添加这一行，在Eurake注册时，使用外网IP</span><br><span class="line">    //  这个地址影响到client访问配置中心获取配置信息</span><br><span class="line">    //  如果不设置这个注册地址，SpringBoot通过外网地址去读取配置中心的信息</span><br><span class="line">  server:</span><br><span class="line">    peerEurekaNodesUpdateIntervalMs: 60000</span><br><span class="line">    enableSelfPreservation: false</span><br><span class="line">  client:</span><br><span class="line">    serviceUrl:</span><br><span class="line">      defaultZone: http://$&#123;eureka.instance.hostname&#125;:8080/eureka/</span><br><span class="line">    healthcheck:</span><br><span class="line">      enabled: true</span><br><span class="line">    eurekaServiceUrlPollIntervalSeconds: 60</span><br><span class="line"></span><br><span class="line">endpoints:</span><br><span class="line">  health:</span><br><span class="line">    sensitive: false</span><br><span class="line"></span><br><span class="line">management:</span><br><span class="line">  security:</span><br><span class="line">    enabled: false</span><br><span class="line">  health:</span><br><span class="line">    status:</span><br><span class="line">      order: DOWN, OUT_OF_SERVICE, UNKNOWN, UP</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/16/Server/SpringBoot/Annotation/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1003,6 +1201,169 @@
 <li>多个bean，使用@Qualifier</li>
 </ol>
 
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/16/Server/SpringBoot/Apollo/configuration/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/01/16/Server/SpringBoot/Apollo/configuration/" itemprop="url">Apollo</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-16T14:48:18+08:00">
+                2018-01-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Spring-Boot/Apollo/" itemprop="url" rel="index">
+                    <span itemprop="name">Apollo</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="docker-compose-部署"><a href="#docker-compose-部署" class="headerlink" title="docker-compose 部署"></a>docker-compose 部署</h3><h4 id="Config-Server"><a href="#Config-Server" class="headerlink" title="Config Server"></a>Config Server</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">eureka:</span><br><span class="line">  instance:</span><br><span class="line">    hostname: $&#123;hostname:localhost&#125;</span><br><span class="line">    preferIpAddress: true</span><br><span class="line">    ip-address: 35.187.226.72 //    格外添加这一行，在Eurake注册时，使用外网IP</span><br><span class="line">    //  这个地址影响到client访问配置中心获取配置信息</span><br><span class="line">    //  如果不设置这个注册地址，SpringBoot通过外网地址去读取配置中心的信息</span><br><span class="line">  server:</span><br><span class="line">    peerEurekaNodesUpdateIntervalMs: 60000</span><br><span class="line">    enableSelfPreservation: false</span><br><span class="line">  client:</span><br><span class="line">    serviceUrl:</span><br><span class="line">      defaultZone: http://$&#123;eureka.instance.hostname&#125;:8080/eureka/</span><br><span class="line">    healthcheck:</span><br><span class="line">      enabled: true</span><br><span class="line">    eurekaServiceUrlPollIntervalSeconds: 60</span><br><span class="line"></span><br><span class="line">endpoints:</span><br><span class="line">  health:</span><br><span class="line">    sensitive: false</span><br><span class="line"></span><br><span class="line">management:</span><br><span class="line">  security:</span><br><span class="line">    enabled: false</span><br><span class="line">  health:</span><br><span class="line">    status:</span><br><span class="line">      order: DOWN, OUT_OF_SERVICE, UNKNOWN, UP</span><br></pre></td></tr></table></figure>
           
         
       
@@ -1830,323 +2191,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/12/Server/SpringBoot/Scheduled/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/01/12/Server/SpringBoot/Scheduled/" itemprop="url">Spring Boot Scheduled</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-12T14:07:18+08:00">
-                2018-01-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Time-Format"><a href="#Time-Format" class="headerlink" title="Time Format"></a>Time Format</h3><h4 id=""><a href="#" class="headerlink" title="    ?"></a><em> </em> <em> </em> ?</h4>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/01/12/Server/RPC/gRPC/grpc-error/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/01/12/Server/RPC/gRPC/grpc-error/" itemprop="url">gRPC Error</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-12T14:07:18+08:00">
-                2018-01-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/RPC/" itemprop="url" rel="index">
-                    <span itemprop="name">RPC</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/RPC/rRPC/" itemprop="url" rel="index">
-                    <span itemprop="name">rRPC</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="Java-NANO-RUNTIME-does-not-support-services"><a href="#Java-NANO-RUNTIME-does-not-support-services" class="headerlink" title="Java NANO_RUNTIME does not support services"></a>Java NANO_RUNTIME does not support services</h4><p>解决：protoc –javanano_out=ignore_services=true:. helloworld.proto</p>
-<h4 id="io-grpc-StatusRuntimeException-INTERNAL-Too-many-responses"><a href="#io-grpc-StatusRuntimeException-INTERNAL-Too-many-responses" class="headerlink" title="io.grpc.StatusRuntimeException: INTERNAL: Too many responses"></a>io.grpc.StatusRuntimeException: INTERNAL: Too many responses</h4><h4 id="io-grpc-StatusRuntimeException-CANCELLED-HTTP-2-error-code-CANCEL"><a href="#io-grpc-StatusRuntimeException-CANCELLED-HTTP-2-error-code-CANCEL" class="headerlink" title="io.grpc.StatusRuntimeException: CANCELLED: HTTP/2 error code: CANCEL"></a>io.grpc.StatusRuntimeException: CANCELLED: HTTP/2 error code: CANCEL</h4><p>The problem has been solved, and the problem is caused by the server. The queue size of grpc server’s thread pool is too small, resulting in tasks submit failed. the server throw exception below:</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2198,7 +2242,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">501</span>
+                <span class="site-state-item-count">503</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2209,7 +2253,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">225</span>
+                <span class="site-state-item-count">228</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2220,7 +2264,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">564</span>
+                <span class="site-state-item-count">567</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
