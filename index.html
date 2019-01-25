@@ -284,6 +284,181 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/25/Security/Web/Replay-Attack/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/25/Security/Web/Replay-Attack/" itemprop="url">重放攻击 Replay Attack</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-25T13:05:06+08:00">
+                2019-01-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Security/" itemprop="url" rel="index">
+                    <span itemprop="name">Security</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Security/Web/" itemprop="url" rel="index">
+                    <span itemprop="name">Web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><img src="/2019/01/25/Security/Web/Replay-Attack/Replay_attack_on_hash.svg.png">
+<p>重放攻击(Replay attack，或重送攻击)是一种网络攻击，指攻击者发送一个目的主机已接收过的包，来达到欺骗系统的目的，主要用于身份认证过程，破坏认证的正确性。</p>
+<p>这种攻击会不断恶意或欺诈性地重复一个有效的数据传输，重放攻击可以由发起者，也可以由拦截并重发该数据的敌方进行。攻击者利用网络监听或者其他方式盗取认证凭据，之后再把它重新发给认证服务器。从这个解释上理解，加密可以有效防止会话劫持，但是却防止不了重放攻击。重放攻击任何网络通讯过程中都可能发生。</p>
+<hr>
+<h3 id="How-to-defend-against-it"><a href="#How-to-defend-against-it" class="headerlink" title="How to defend against it?"></a>How to defend against it?</h3><h4 id="时间戳"><a href="#时间戳" class="headerlink" title="时间戳"></a>时间戳</h4><p>首先我们认为一次HTTP请求从发出到到达服务器的时间是不会超过60s的，当你发送一个请求时必须携带一个时间戳timestamp。假设值为10，当请求到达服务器之后，服务器会取出当前时间，假设为t2=80,很明显t2 - timestamp &gt; 60s，那么服务器就认为请求不合法。</p>
+<blockquote>
+<p>发送的数据必须带上sign(比如，MD5签名生成的)，避免数据被篡改。</p>
+</blockquote>
+<p>存在的问题是：如果黑客在60s内发起攻击，那么我们就束手无策了。那是不是缩小时间范围就可以解决了？</p>
+<h4 id="时间戳-随机数nonce"><a href="#时间戳-随机数nonce" class="headerlink" title="时间戳 + 随机数nonce"></a>时间戳 + 随机数nonce</h4><p>为了避免上面时间戳的问题，可以加入一个随机数nonce，每次成功请求，服务器会保存当前成功请求的随机数nonce，比如存放在redis和数据库中，当请求再次进到服务器，先验证时间戳是否有效，如果有效，再判断携带的随机数nonce是否在缓存或者数据库中已经存在，如果存在，则认为请求非法。</p>
+<p>但你会发现，如果系统请求非常多，这个存放nonce的redis或者数据库势必会越来越大，因此，我们只需要保存服务器当前时间60秒内的nonce值即可。</p>
+<blockquote>
+<p>前提条件：保证随机数nonce绝对唯一。</p>
+</blockquote>
+<h4 id="序号"><a href="#序号" class="headerlink" title="序号"></a>序号</h4><p>通信双方必须事先协商一个初始序列号，并协商递增方法。然后双方通过消息中的序列号来判断消息的新鲜性。例如，如果nonce=1000已经请求过了，那么nonce&lt;1000的请求都是无效请求。</p>
+<blockquote>
+<p>A single account may have multiple API keys provisioned. In this document, we’ll refer to these as “sessions”. All orders will be recorded with the session that created them. The nonce associated with a request needs to be increasing with respect to the session that the nonce is used on.<br>This allows multithreaded or distributed trading systems to place orders independently of each other, without needing to synchronize clocks to avoid race conditions.<br>In addition, some operations (such as Cancel All Session Orders) act on the orders associated with a specific session.</p>
+</blockquote>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> request = <span class="built_in">require</span>(<span class="string">'request'</span>)</span><br><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> apiKey = <span class="string">'&lt;Your API key here&gt;'</span></span><br><span class="line"><span class="keyword">const</span> apiSecret = <span class="string">'&lt;Your API secret here&gt;'</span></span><br><span class="line"><span class="keyword">const</span> baseUrl = <span class="string">'https://api.xxx.com'</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> url = <span class="string">'/v1/account'</span></span><br><span class="line"><span class="keyword">const</span> nonce = <span class="built_in">Date</span>.now().toString()</span><br><span class="line"><span class="keyword">const</span> completeURL = baseUrl + url</span><br><span class="line"><span class="keyword">const</span> body = &#123;</span><br><span class="line">  request: url,</span><br><span class="line">  nonce</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> payload = <span class="keyword">new</span> Buffer(<span class="built_in">JSON</span>.stringify(body))</span><br><span class="line">	.toString(<span class="string">'base64'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> signature = crypto</span><br><span class="line">  .createHmac(<span class="string">'sha384'</span>, apiSecret)</span><br><span class="line">  .update(payload)</span><br><span class="line">  .digest(<span class="string">'hex'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> options = &#123;</span><br><span class="line">  url: completeURL,</span><br><span class="line">  headers: &#123;</span><br><span class="line">    <span class="string">'X-APIKEY'</span>: apiKey,</span><br><span class="line">    <span class="string">'X-PAYLOAD'</span>: payload,</span><br><span class="line">    <span class="string">'X-SIGNATURE'</span>: signature</span><br><span class="line">  &#125;,</span><br><span class="line">  body: <span class="built_in">JSON</span>.stringify(body)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> request.post(</span><br><span class="line">  options,</span><br><span class="line">  <span class="function"><span class="keyword">function</span>(<span class="params">error, response, body</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'response:'</span>, <span class="built_in">JSON</span>.stringify(body, <span class="number">0</span>, <span class="number">2</span>))</span><br><span class="line">  &#125;</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://blog.csdn.net/heluan123132/article/details/74375304" target="_blank" rel="noopener">https://blog.csdn.net/heluan123132/article/details/74375304</a><br><a href="https://juejin.im/post/5ad43b86f265da239236cedc" target="_blank" rel="noopener">https://juejin.im/post/5ad43b86f265da239236cedc</a><br><a href="https://docs.gemini.com/rest-api/#private-api-invocation" target="_blank" rel="noopener">https://docs.gemini.com/rest-api/#private-api-invocation</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/20/SpringBoot/Exception/HandleException/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -446,7 +621,7 @@
 <p><strong>Q：为什么不定义成受查异常？</strong> 如果是一个受查异常，那么意味着Controller必须要处理你的异常。并且如果有一天你的业务逻辑变了，可能多一种检查项，就需要增加一个异常。反之需要删除一个异常，那么你的方法签名也需要改变，Controller也随之要改变，这又变成了紧耦合。</p>
 <p><strong>Q：可以为每一种检查项定义一个异常吗？</strong>可以，但是那样显得太多余了。因为业务逻辑处理失败的时候，根据我们需求，我们只需要通知用户失败的原因(通常应该是一段字符串)，以及服务器受理失败的一个状态码，这样这需要一个包含原因属性的异常即可满足我们需求。</p>
 <hr>
-<h4 id="ControllerAdvice处理举例"><a href="#ControllerAdvice处理举例" class="headerlink" title="ControllerAdvice处理举例"></a>ControllerAdvice处理举例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerAdvice</span>(basePackages = &#123; <span class="string">"com.xxx.bussiness.xxx"</span> &#125;)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ModuleControllerAdvice</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(ModuleControllerAdvice.class);</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger SERVICE_LOGGER = LoggerFactory.getLogger(ServiceExp.class);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 业务受理失败</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@ResponseBody</span></span><br><span class="line">  <span class="meta">@ResponseStatus</span>(HttpStatus.INTERNAL_SERVER_ERROR)</span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(ServiceExp.class)</span><br><span class="line">  <span class="function"><span class="keyword">private</span> JSONResult <span class="title">handleServiceException</span><span class="params">(ServiceExp exception)</span> </span>&#123;</span><br><span class="line">    String message = <span class="string">"业务受理失败,原因:"</span> + exception.getLocalizedMessage();</span><br><span class="line">    SERVICE_LOGGER.info(message);</span><br><span class="line">    JSONResult json = <span class="keyword">new</span> JSONResult();</span><br><span class="line">    json.serCode(<span class="number">500001</span>); <span class="comment">// 500000表示系统异常,500001表示业务逻辑异常</span></span><br><span class="line">    json.setMessage(message); </span><br><span class="line">    <span class="keyword">return</span> json;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ControllerAdvice处理举例"><a href="#ControllerAdvice处理举例" class="headerlink" title="ControllerAdvice处理举例"></a>ControllerAdvice处理举例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerAdvice</span>(basePackages = &#123; <span class="string">"com.xxx.bussiness.xxx"</span> &#125;)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ModuleControllerAdvice</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(ModuleControllerAdvice.class);</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger SERVICE_LOGGER = LoggerFactory.getLogger(ServiceExp.class);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 业务受理失败</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@ResponseBody</span></span><br><span class="line">  <span class="meta">@ResponseStatus</span>(HttpStatus.INTERNAL_SERVER_ERROR)</span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(ServiceExp.class)</span><br><span class="line">  <span class="function"><span class="keyword">private</span> JSONResult <span class="title">handleServiceException</span><span class="params">(ServiceExp exception)</span> </span>&#123;</span><br><span class="line">    String message = <span class="string">"业务受理失败,原因:"</span> + exception.getLocalizedMessage();</span><br><span class="line">    SERVICE_LOGGER.info(message);</span><br><span class="line">    JSONResult json = <span class="keyword">new</span> JSONResult();</span><br><span class="line">    json.serCode(<span class="number">500001</span>);</span><br><span class="line">    json.setMessage(message); </span><br><span class="line">    <span class="keyword">return</span> json;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>注意一点，在这个类中，我们定义了2个log对象，分别指向ServiceExp.class 和 ControllerAdvice.class，处理ServiceExp的时候使用了info级别的日志输出。</p>
 <ul>
 <li>ServiceExp一定要和其他的代码错误分离，不应该混为一谈。</li>
@@ -2404,216 +2579,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/28/Java/JVM/Basic/CMS/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/28/Java/JVM/Basic/CMS/" itemprop="url">Introduction to CMS - Concurrent Mark Sweep Collector</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-28T00:10:22+08:00">
-                2018-12-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
-                    <span itemprop="name">JVM</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>The Concurrent Mark Sweep Collector (“CMS Collector”) of the HotSpot JVM has one primary goal: <strong>low application pause times</strong>.</p>
-<p>CMS被设计成在大多数时间能与应用程序线程并行执行，仅仅会有一点(短暂的)停顿时间。GC与应用程序并行的缺点是可能会出现各种同步和数据不一致的问题。为了实现安全且正确的并发执行，CMS收集器的GC周期被分为了好几个连续的阶段。</p>
-<hr>
-<h3 id="Theory"><a href="#Theory" class="headerlink" title="Theory"></a>Theory</h3><p>CMS收集器的GC周期由6个阶段组成。其中4个阶段(名字以Concurrent开始的)与实际的应用程序是并发执行的，而其他2个阶段需要暂停应用程序线程。</p>
-<p>CMS收集器的过程：</p>
-<ol>
-<li>初始标记(STW)：为了收集应用程序的对象引用需要暂停应用程序线程，该阶段完成后，应用程序线程再次启动。</li>
-<li>并发标记：从第一阶段收集到的对象引用开始，遍历所有其他的对象引用。</li>
-<li>并发预清理：改变当运行第二阶段时，由应用程序线程产生的对象引用，以更新第二阶段的结果。</li>
-<li>重标记：由于第三阶段是并发的，对象引用可能会发生进一步改变。因此，应用程序线程会再一次被暂停以更新这些变化，并且在进行实际的清理之前确保一个正确的对象引用视图。这一阶段十分重要，因为必须避免收集到仍被引用的对象。</li>
-<li>并发清理(STW)：所有不再被应用的对象将从堆里清除掉。</li>
-<li>并发重置：收集器做一些收尾的工作，以便下一次GC周期能有一个干净的状态。</li>
-</ol>
-<p>一个常见的误解是，CMS收集器运行是完全与应用程序并发的。事实并非如此，即使“stop-the-world”阶段相对于并发阶段的时间很短。</p>
-<p>应该指出，尽管CMS收集器为老年代垃圾回收提供了几乎完全并发的解决方案，然而年轻代仍然通过“stop-the-world”方法来进行收集。对于交互式应用，停顿也是可接受的，背后的原理是年轻带的垃圾回收时间通常是相当短的。</p>
-<p>在使用CMS时候，需要解决两个问题：</p>
-<ul>
-<li><p>堆碎片</p>
-<blockquote>
-<p>CMS收集器并没有任何碎片整理的机制，因此，应用程序有可能出现这样的情形，即使总的堆大小远没有耗尽，但却不能分配对象——仅仅是因为没有足够连续的空间完全容纳对象。</p>
-</blockquote>
-</li>
-<li><p>对象分配率高</p>
-<blockquote>
-<p>如果创建对象实例的频率高于收集器清除堆里死对象的频率，并发算法将失败。从某种程度上说，老年代将没有足够的可用空间来容纳一个从年轻代提升过来的对象。这种情况被称为“并发模式失败”，并且JVM会执行堆碎片整理：触发Full GC。</p>
-</blockquote>
-</li>
-</ul>
-<hr>
-<h3 id="Young-Generation-Garbage-Collection"><a href="#Young-Generation-Garbage-Collection" class="headerlink" title="Young Generation Garbage Collection"></a>Young Generation Garbage Collection</h3><p><strong>为什么调整新生代的参数会对应用的性能如此重要？</strong></p>
-<p>单纯从JVM的功能考虑，并不需要新生代，完全可以针对整个堆进行操作。新生代存在的唯一理由是<strong>优化垃圾回收(GC)的性能</strong>。更具体说，把堆划分为新生代和老年代的好处：</p>
-<ul>
-<li>简化了新对象的分配(只在新生代分配内存)</li>
-<li>可以更有效的清除不再需要的对象(即死对象)(新生代和老年代使用不同的GC算法)</li>
-</ul>
-<p>通过广泛研究面向对象实现的应用，发现一个共同特点：<strong>很多对象的生存时间都很短</strong>。同时研究发现，新生对象很少引用生存时间长的对象。</p>
-<img src="/2018/12/28/Java/JVM/Basic/CMS/eden-survivor.png" title="黄色表示死对象，绿色表示剩余空间，红色表示幸存对象">
-<p>结合这两个个特点，很明显GC会频繁访问新生对象，例如在堆中一个单独的区域，称之为新生代。在新生代中，GC可以快速标记回收”死对象”，而不需要扫描整个Heap中的存活一段时间的”老对象”。</p>
-<p>HotSpot JVM又把新生代进一步划分为3个区域：一个相对大点的区域，称为”Eden”；两个相对小点的区域称为”From survivor”和”To survivor”。按照规定，新对象会首先分配在Eden中(如果新对象过大，会直接分配在老年代中)。在GC中，Eden中没有被回收的对象会被移动到survivor中，直至对象满足一定的年纪(定义为熬过GC的次数)，会被移动到老年代。</p>
-<p>基于大多数新生对象都会在GC中被收回的假设。新生代的GC使用复制算法。在GC前To survivor保持清空，当前的对象保存在Eden和From survivor中。GC运行时，Eden中的幸存对象被复制到To survivor。复制阶段完成后，Eden 和From survivor中只保存死对象，可以直接回收清空。如果在复制过程中To survivor被填满了，剩余的对象会被复制到老年代中。最后From survivor和 To survivor会调换下名字，在下次GC时，To survivor会变为From survivor。</p>
-<blockquote>
-<p>对于From survivor中的幸存对象，会考虑对象年龄，如果年龄没达到阀值(tenuring threshold，15 GC cycles)，对象会被复制到To survivor。如果达到阀值对象被复制到老年代。</p>
-</blockquote>
-<p>总结一下，对象一般出生在Eden区，年轻代GC过程中，对象在两个survivor之间移动，如果对象存活到适当的年龄，会被移动到老年代。当对象在老年代死亡时，就需要更高级别的GC，更重量级的GC算法(复制算法不适用于老年代，因为没有多余的空间用于复制)</p>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://blog.codecentric.de/en/2013/10/useful-jvm-flags-part-7-cms-collector/" target="_blank" rel="noopener">https://blog.codecentric.de/en/2013/10/useful-jvm-flags-part-7-cms-collector/</a><br><a href="http://ifeve.com/useful-jvm-flags-part-7-cms-collector/" target="_blank" rel="noopener">http://ifeve.com/useful-jvm-flags-part-7-cms-collector/</a><br><a href="https://blog.codecentric.de/en/2012/08/useful-jvm-flags-part-5-young-generation-garbage-collection/" target="_blank" rel="noopener">https://blog.codecentric.de/en/2012/08/useful-jvm-flags-part-5-young-generation-garbage-collection/</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2665,7 +2630,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">503</span>
+                <span class="site-state-item-count">504</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2676,7 +2641,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">228</span>
+                <span class="site-state-item-count">230</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2687,7 +2652,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">567</span>
+                <span class="site-state-item-count">570</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

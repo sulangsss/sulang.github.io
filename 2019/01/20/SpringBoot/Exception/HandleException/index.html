@@ -109,7 +109,7 @@
 <meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
 <meta property="og:description" content="Introduction我们开发的业务系统,或者是产品,常常面临着这样的问题：  系统运行出错,但是完全不知道错误发生的位置； 我们找到了错误的位置,但是完全不知道是因为什么； 系统明明出了错误,但是就是看不到错误堆栈信息。  什么时候需要自定异常？经常看到一些项目，在全局定义一个 AppException，然后所有地方都只抛出这个异常，并且把捕获的异常case到这个AppException中。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-01-22T05:42:08.347Z">
+<meta property="og:updated_time" content="2019-01-25T05:04:22.629Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="优雅处理异常">
 <meta name="twitter:description" content="Introduction我们开发的业务系统,或者是产品,常常面临着这样的问题：  系统运行出错,但是完全不知道错误发生的位置； 我们找到了错误的位置,但是完全不知道是因为什么； 系统明明出了错误,但是就是看不到错误堆栈信息。  什么时候需要自定异常？经常看到一些项目，在全局定义一个 AppException，然后所有地方都只抛出这个异常，并且把捕获的异常case到这个AppException中。">
@@ -446,7 +446,7 @@
 <p><strong>Q：为什么不定义成受查异常？</strong> 如果是一个受查异常，那么意味着Controller必须要处理你的异常。并且如果有一天你的业务逻辑变了，可能多一种检查项，就需要增加一个异常。反之需要删除一个异常，那么你的方法签名也需要改变，Controller也随之要改变，这又变成了紧耦合。</p>
 <p><strong>Q：可以为每一种检查项定义一个异常吗？</strong>可以，但是那样显得太多余了。因为业务逻辑处理失败的时候，根据我们需求，我们只需要通知用户失败的原因(通常应该是一段字符串)，以及服务器受理失败的一个状态码，这样这需要一个包含原因属性的异常即可满足我们需求。</p>
 <hr>
-<h4 id="ControllerAdvice处理举例"><a href="#ControllerAdvice处理举例" class="headerlink" title="ControllerAdvice处理举例"></a>ControllerAdvice处理举例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerAdvice</span>(basePackages = &#123; <span class="string">"com.xxx.bussiness.xxx"</span> &#125;)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ModuleControllerAdvice</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(ModuleControllerAdvice.class);</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger SERVICE_LOGGER = LoggerFactory.getLogger(ServiceExp.class);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 业务受理失败</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@ResponseBody</span></span><br><span class="line">  <span class="meta">@ResponseStatus</span>(HttpStatus.INTERNAL_SERVER_ERROR)</span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(ServiceExp.class)</span><br><span class="line">  <span class="function"><span class="keyword">private</span> JSONResult <span class="title">handleServiceException</span><span class="params">(ServiceExp exception)</span> </span>&#123;</span><br><span class="line">    String message = <span class="string">"业务受理失败,原因:"</span> + exception.getLocalizedMessage();</span><br><span class="line">    SERVICE_LOGGER.info(message);</span><br><span class="line">    JSONResult json = <span class="keyword">new</span> JSONResult();</span><br><span class="line">    json.serCode(<span class="number">500001</span>); <span class="comment">// 500000表示系统异常,500001表示业务逻辑异常</span></span><br><span class="line">    json.setMessage(message); </span><br><span class="line">    <span class="keyword">return</span> json;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ControllerAdvice处理举例"><a href="#ControllerAdvice处理举例" class="headerlink" title="ControllerAdvice处理举例"></a>ControllerAdvice处理举例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerAdvice</span>(basePackages = &#123; <span class="string">"com.xxx.bussiness.xxx"</span> &#125;)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ModuleControllerAdvice</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(ModuleControllerAdvice.class);</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger SERVICE_LOGGER = LoggerFactory.getLogger(ServiceExp.class);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 业务受理失败</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@ResponseBody</span></span><br><span class="line">  <span class="meta">@ResponseStatus</span>(HttpStatus.INTERNAL_SERVER_ERROR)</span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(ServiceExp.class)</span><br><span class="line">  <span class="function"><span class="keyword">private</span> JSONResult <span class="title">handleServiceException</span><span class="params">(ServiceExp exception)</span> </span>&#123;</span><br><span class="line">    String message = <span class="string">"业务受理失败,原因:"</span> + exception.getLocalizedMessage();</span><br><span class="line">    SERVICE_LOGGER.info(message);</span><br><span class="line">    JSONResult json = <span class="keyword">new</span> JSONResult();</span><br><span class="line">    json.serCode(<span class="number">500001</span>);</span><br><span class="line">    json.setMessage(message); </span><br><span class="line">    <span class="keyword">return</span> json;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>注意一点，在这个类中，我们定义了2个log对象，分别指向ServiceExp.class 和 ControllerAdvice.class，处理ServiceExp的时候使用了info级别的日志输出。</p>
 <ul>
 <li>ServiceExp一定要和其他的代码错误分离，不应该混为一谈。</li>
@@ -509,6 +509,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/01/25/Security/Web/Replay-Attack/" rel="prev" title="重放攻击 Replay Attack">
+                重放攻击 Replay Attack <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -586,7 +590,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">503</span>
+                <span class="site-state-item-count">504</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -597,7 +601,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">228</span>
+                <span class="site-state-item-count">230</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -608,7 +612,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">567</span>
+                <span class="site-state-item-count">570</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

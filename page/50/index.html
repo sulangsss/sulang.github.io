@@ -284,205 +284,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/18/DB/MySQL/Error/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/18/DB/MySQL/Error/" itemprop="url">MySQL Error</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-18T20:31:19+08:00">
-                2017-09-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="‘Lock-wait-timeout-exceeded-try-restarting-transaction’"><a href="#‘Lock-wait-timeout-exceeded-try-restarting-transaction’" class="headerlink" title="‘Lock wait timeout exceeded; try restarting transaction’"></a>‘Lock wait timeout exceeded; try restarting transaction’</h3><p>解决办法：</p>
-<ul>
-<li><p>连接mysql</p>
-</li>
-<li><p>查询当前连接进程</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">processlist</span>;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>kill进程</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">kill</span> <span class="keyword">id</span></span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-<h3 id="1071-‘Specified-key-was-too-long-max-key-length-is-767-bytes’"><a href="#1071-‘Specified-key-was-too-long-max-key-length-is-767-bytes’" class="headerlink" title="1071, ‘Specified key was too long; max key length is 767 bytes’"></a>1071, ‘Specified key was too long; max key length is 767 bytes’</h3><p>数据库表采用utf8编码，其中varchar(255)的column进行了唯一键索引，而mysql默认情况下单个列的索引不能超过767位(不同版本可能存在差异)，于是utf8字符编码下，255*3 byte 超过限制。</p>
-<p>解决方案</p>
-<ul>
-<li>使用innodb引擎；</li>
-<li>启用innodb_large_prefix选项，将约束项扩展至3072byte；</li>
-<li>重新创建数据库；</li>
-</ul>
-<p>my.cnf 配置<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">default-storage-engine=INNODB</span><br><span class="line">innodb_large_prefix=on</span><br></pre></td></tr></table></figure></p>
-<p>一般情况下不建议使用这么长的索引，对性能有一定影响；</p>
-<h3 id="Too-many-keys-specified-max-64-keys-allowed"><a href="#Too-many-keys-specified-max-64-keys-allowed" class="headerlink" title="Too many keys specified; max 64 keys allowed"></a>Too many keys specified; max 64 keys allowed</h3><p>这是因为 MySQL 默认最大允许在一个表中建立 64 个索引，一般情况表的索引数量是不会超过 64 个的</p>
-<h3 id="this-is-incompatible-with-sql-mode-only-full-group-by"><a href="#this-is-incompatible-with-sql-mode-only-full-group-by" class="headerlink" title="this is incompatible with sql_mode=only_full_group_by"></a>this is incompatible with sql_mode=only_full_group_by</h3><p>SQL语句查看MySQL配置<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> @@GLOBAL.sql_mode;</span><br><span class="line"><span class="keyword">SELECT</span> @@SESSION.sql_mode;</span><br></pre></td></tr></table></figure></p>
-<p>输出结果<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION</span><br></pre></td></tr></table></figure></p>
-<p>解决方案</p>
-<ul>
-<li><p>只选择出现在group by后面的列，或者给列增加聚合函数；</p>
-</li>
-<li><p>默认关掉ONLY_FULL_GROUP_BY</p>
-</li>
-</ul>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> sql_mode=<span class="string">'STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'</span>;</span><br><span class="line"># or</span><br><span class="line"><span class="keyword">SET</span> <span class="keyword">GLOBAL</span> sql_mode=(<span class="keyword">SELECT</span> <span class="keyword">REPLACE</span>(@@sql_mode,<span class="string">'ONLY_FULL_GROUP_BY'</span>,<span class="string">''</span>));3</span><br></pre></td></tr></table></figure>
-<h4 id="The-table-‘-’-is-full-nested-exception-is-java-sql-SQLException"><a href="#The-table-‘-’-is-full-nested-exception-is-java-sql-SQLException" class="headerlink" title="The table ‘*’ is full; nested exception is java.sql.SQLException"></a>The table ‘*’ is full; nested exception is java.sql.SQLException</h4><ol>
-<li>查看当前空间情况</li>
-</ol>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SHOW</span> <span class="keyword">VARIABLES</span> <span class="keyword">WHERE</span> Variable_name <span class="keyword">LIKE</span> <span class="string">'%table_size%'</span></span><br></pre></td></tr></table></figure>
-<p>输出结果</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+---------------------+----------+  </span><br><span class="line">| Variable_name       | Value    |  </span><br><span class="line">+---------------------+----------+  </span><br><span class="line">| max_heap_table_size | 16777216 |  </span><br><span class="line">| tmp_table_size      | 16777216 |  </span><br><span class="line">+---------------------+----------+</span><br></pre></td></tr></table></figure>
-<p>相关配置</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]  </span><br><span class="line">tmp_table_size = 32M  </span><br><span class="line">max_heap_table_size = 32M</span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li>另外设置</li>
-</ol>
-<p>innodb_data_file_path=ibdata1:10M:autoextend:max:512M</p>
-<ol start="3">
-<li>Disk is full writing ‘./master-bin.~rec~’ (Errcode: -2061346848 - No space left on device). Waiting for someone to free space…</li>
-</ol>
-<p>参考链接：<a href="https://dba.stackexchange.com/questions/43503/how-to-solve-the-table-is-full-with-innodb-file-per-table" target="_blank" rel="noopener">https://dba.stackexchange.com/questions/43503/how-to-solve-the-table-is-full-with-innodb-file-per-table</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/18/DB/Redis/cluster-command/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -589,6 +390,394 @@
           
             <h3 id="Cluster-Status"><a href="#Cluster-Status" class="headerlink" title="Cluster Status"></a>Cluster Status</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cluster info</span><br></pre></td></tr></table></figure>
 <h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://my.oschina.net/billyteam/blog/748440" target="_blank" rel="noopener">https://my.oschina.net/billyteam/blog/748440</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/18/DB/Redis/command/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/18/DB/Redis/command/" itemprop="url">redis command</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-18T20:31:19+08:00">
+                2017-09-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/" itemprop="url" rel="index">
+                    <span itemprop="name">Database</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="常用操作命令"><a href="#常用操作命令" class="headerlink" title="常用操作命令"></a>常用操作命令</h3><h4 id="登录"><a href="#登录" class="headerlink" title="登录"></a>登录</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h <span class="number">127.0</span><span class="number">.0</span><span class="number">.1</span> -p <span class="number">6379</span> -a password</span><br></pre></td></tr></table></figure>
+<h4 id="切换数据库"><a href="#切换数据库" class="headerlink" title="切换数据库"></a>切换数据库</h4><p>默认16个数据库：0-15，进入redis后默认是0库。不建议使用多个数据库</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select dbIndex</span><br></pre></td></tr></table></figure>
+<h4 id="清空数据库"><a href="#清空数据库" class="headerlink" title="清空数据库"></a>清空数据库</h4><p>flushdb只清除当前数据库</p>
+<p>flushall清除所有数据库</p>
+<h4 id="查看状态参数命令"><a href="#查看状态参数命令" class="headerlink" title="查看状态参数命令"></a>查看状态参数命令</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">info clients</span><br></pre></td></tr></table></figure>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://segmentfault.com/a/1190000010999677" target="_blank" rel="noopener">https://segmentfault.com/a/1190000010999677</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/18/DB/MySQL/Optimize-SQL/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/18/DB/MySQL/Optimize-SQL/" itemprop="url">MySQL SQL语句调优</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-18T20:31:19+08:00">
+                2017-09-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="SQL-优化准则"><a href="#SQL-优化准则" class="headerlink" title="SQL 优化准则"></a>SQL 优化准则</h3><p>在应用层，通过pt工具和慢查询日志的配合，可以轻松地分辨出全表扫描的语句</p>
+<h3 id="基本原则"><a href="#基本原则" class="headerlink" title="基本原则"></a>基本原则</h3><ul>
+<li><p>避免全表扫描</p>
+</li>
+<li><p>建立索引</p>
+</li>
+<li><p>尽量避免向客户端返回大数据量，若数据量过大，应该考虑相应需求是否合理</p>
+</li>
+<li><p>尽量避免大事务操作，提高系统并发能力</p>
+</li>
+<li><p>使用基于游标的方法或临时表方法之前，应先寻找基于集的解决方案来解决问题，基于集的方法通常更有效。尽量避免使用游标，因为游标的效率较差。</p>
+</li>
+</ul>
+<h4 id="关于where-后的条件"><a href="#关于where-后的条件" class="headerlink" title="关于where 后的条件"></a>关于where 后的条件</h4><ul>
+<li><p>应尽量避免在where子句中使用 != 或 &lt;&gt; 操作符，否则引擎将放弃使用索引，而是进行全表扫描。</p>
+</li>
+<li><p>应尽量避免在where子句中使用or来连接条件,可以考虑使用union代替</p>
+</li>
+<li><p>in和not in也要慎用，对于连续的数值，能用between就不要用in，exists 代替 in</p>
+</li>
+<li><p>尽量避免在where子句中对字段进行表达式操作和函数操作</p>
+</li>
+</ul>
+<h4 id="关于数据类型"><a href="#关于数据类型" class="headerlink" title="关于数据类型"></a>关于数据类型</h4><ul>
+<li><p>尽量使用数字型字段，若只含数值信息的字段尽量不要设计为字符型，这会降低查询和连接的性能，并会增加存储开销。</p>
+</li>
+<li><p>尽可能的使用 varchar/nvarchar 代替 char/nchar ，因为变长字段存储空间小，对于查询来说，在一个相对较小的字段内搜索效率显然要高些。</p>
+</li>
+<li><p>最好不要给数据库留NULL，尽可能的使用 NOT NULL填充数据库.备注、描述、评论之类的可以设置为 NULL，其他的，最好不要使用NULL。</p>
+</li>
+<li><p>任何地方都不要使用 select <em> from t ，用具体的字段列表代替“</em>”，不要返回用不到的任何字段。</p>
+</li>
+</ul>
+<h4 id="关于临时表"><a href="#关于临时表" class="headerlink" title="关于临时表"></a>关于临时表</h4><ul>
+<li><p>避免频繁创建和删除临时表，以减少系统表资源的消耗。对于一次性事件，最好使用导出表。</p>
+</li>
+<li><p>在新建临时表时，如果一次性插入数据量很大，那么可以使用 select into 代替 create table，避免造成大量log，以提高速度；<br>如果数据量不大，为了缓和系统表的资源，应先create table，然后insert。</p>
+</li>
+<li><p>如果使用到了临时表，在最后将所有的临时表显式删除时，先truncate table ，然后drop table，这样可以避免系统表的较长时间锁定。</p>
+</li>
+</ul>
+<h4 id="关于索引"><a href="#关于索引" class="headerlink" title="关于索引"></a>关于索引</h4><ul>
+<li><p>先应考虑在 where 及 order by 涉及的列上建立索引。</p>
+</li>
+<li><p>在使用索引字段作为条件时，如果该索引是复合索引，那么必须使用到该索引中的第一个字段作为条件时才能保证系统使用该索引， 否则该索引将不会被使用，<br>并且应尽可能的让字段顺序与索引顺序相一致。</p>
+</li>
+<li><p>索引并不是越多越好，索引固然可以提高相应的select的效率，但同时也降低了insert和update的效率，因为insert或update时有可能会重建索引，所以<br>视具体情况而定。一个表的索引数最好不要超过7个，若太多则应考虑一些不常使用到的列上建的索引是否有必要.</p>
+</li>
+</ul>
+<h4 id="数据库架构调优"><a href="#数据库架构调优" class="headerlink" title="数据库架构调优"></a>数据库架构调优</h4><ul>
+<li>分区分表</li>
+<li>业务分库</li>
+<li>主从同步与读写分离</li>
+<li>数据缓存</li>
+<li>主从热备与HA双活</li>
+</ul>
+<hr>
+<h3 id="SQL-优化实战"><a href="#SQL-优化实战" class="headerlink" title="SQL 优化实战"></a>SQL 优化实战</h3><h4 id="explain"><a href="#explain" class="headerlink" title="explain"></a>explain</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">explain</span> <span class="keyword">select</span> * from.....</span><br></pre></td></tr></table></figure>
+<p>输出结果说明</p>
+<ul>
+<li><p>select_type：查询类型</p>
+</li>
+<li><p>table：查询表名</p>
+</li>
+<li><p>type：扫描方式，all全表</p>
+</li>
+<li><p>possible_keys：可能使用到的索引</p>
+</li>
+<li><p>key：实际使用到的索引</p>
+</li>
+<li><p>rows：sql语句扫描了多少行记录才得到所要的结果</p>
+</li>
+<li><p>extra：附加说明，比如排序方式</p>
+</li>
+</ul>
+<h4 id="group-by"><a href="#group-by" class="headerlink" title="group by"></a>group by</h4><p>在使用group by 分组查询是，默认分组后，还会排序，可能会降低速度。在group by 后面增加 order by null 就可以防止排序。</p>
+<p>有些情况下，可以使用连接来替代子查询。因为使用join，MySQL不需要在内存中创建临时表。</p>
 
           
         
@@ -1737,160 +1926,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/08/Tools/Vscode/keymap/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/08/Tools/Vscode/keymap/" itemprop="url">vscode 插件</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-08T00:54:06+08:00">
-                2017-09-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/devtools/" itemprop="url" rel="index">
-                    <span itemprop="name">devtools</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/devtools/vscode/" itemprop="url" rel="index">
-                    <span itemprop="name">vscode</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="行列快捷键"><a href="#行列快捷键" class="headerlink" title="行列快捷键"></a>行列快捷键</h3><p>交换行 Alt + up/down</p>
-<p>删除行 Ctrl+Shift+K，习惯用 Alt + F</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1942,7 +1977,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">503</span>
+                <span class="site-state-item-count">504</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1953,7 +1988,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">228</span>
+                <span class="site-state-item-count">230</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1964,7 +1999,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">567</span>
+                <span class="site-state-item-count">570</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
