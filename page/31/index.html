@@ -452,6 +452,233 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/11/DB/MySQL/ACID/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/11/DB/MySQL/ACID/" itemprop="url">MySQL ACID</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-11T22:55:07+08:00">
+                2018-03-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="ACID"><a href="#ACID" class="headerlink" title="ACID"></a>ACID</h3><p>数据库事务有ACID四个属性，分别是原子性、一致性、隔离性、持久性。</p>
+<h4 id="原子性-Atomicity"><a href="#原子性-Atomicity" class="headerlink" title="原子性(Atomicity)"></a>原子性(Atomicity)</h4><p>整个事务最终只能是要么成功要么失败，不能存在中间状态，如果发生错误了就需要回滚回去，就像这个事务从来没有执行过一样。</p>
+<hr>
+<h4 id="一致性-Consistency"><a href="#一致性-Consistency" class="headerlink" title="一致性(Consistency)"></a>一致性(Consistency)</h4><p>指系统要处于一个一致的状态，不能因为并发事务的多少影响到系统的一致性，举个典型的例子就是转帐的情况，假设有ABC三个帐号各有100元，<br>那么不管这三个帐号之间怎么转账，整个系统总的额度是300元这一点是应该是不变的。其实ACID里的一致性更多的是应用程序需要考虑的问题，<br>和分布式系统里的CAP里的一致性完全不是一个概念。</p>
+<hr>
+<h4 id="隔离性-Isolation"><a href="#隔离性-Isolation" class="headerlink" title="隔离性(Isolation)"></a>隔离性(Isolation)</h4><p>本质上是解决并发执行的事务如何保证数据库状态是正确的，抽象描述叫可串行化，就是并发的事务在执行的时候效果要求达到看起来像是一个个事务串行执行的效果。<br>有冲突的事务之间的隔离性如果保证不了会引起前面的一致性(consistency)也无法满足。</p>
+<hr>
+<h4 id="持久性-Durability"><a href="#持久性-Durability" class="headerlink" title="持久性(Durability)"></a>持久性(Durability)</h4><p>在事务完成以后所有的修改可以持久的保存在数据库中，一般会采用WAL的方式，会把操作提前记录到日志中来保证即使操作还没有刷到磁盘就宕机的情况下有日志可以恢复。</p>
+<h3 id="MySQL无法提供严格的分布式事务语义的支持"><a href="#MySQL无法提供严格的分布式事务语义的支持" class="headerlink" title="MySQL无法提供严格的分布式事务语义的支持"></a>MySQL无法提供严格的分布式事务语义的支持</h3><p>如果客户端发送的SQL只涉及到一个节点，那自然是可以保证事务的，但是如果客户端发送的SQL涉及到两个及以上节点的SQL，那就无法保证事务语义了。原因主要是两个：</p>
+<ul>
+<li><p>原子性无法保证，在一个节点commit成功以后，在另外的节点commit失败了，这个事务就处在一个中间状态，此时原子性被打破。</p>
+</li>
+<li><p>隔离性，这个事务的一部分提交了，另一部分未提交，此时该事务正常是不该被读取到的，但是提交成功的部分会被其他事务读到，此时就无法保证隔离性了。</p>
+</li>
+</ul>
+<p>另外就算是涉及多个节点的操作都是成功的，理论上来说也是无法保证隔离性的。因为假设A事务的一个节点先commit成功，其他的节点后commit成功，而此时B事务在读取的<br>时候可能会读取到了A事务最早commit成功的那部分内容，却没有读到后来commit成功的内容，此时依然无法保证隔离性。</p>
+<p>更本质一点的原因是MySQL的事务都是每个实例维护自身的事务ID，而基于MySQL集群的分布式方案没有一个全局的事务ID来标识每个MySQL实例上的事务以及全局事务的元信息<br>的管理，所以无法做到严格的分布式事务语义。</p>
+<p>但实际上绝大多数业务对这个需求未必那么强烈，因为绝大多数的业务逻辑都是可以拆分的，拆成一个个只落在一个分库里的操作在绝大多数场景下是完全可行的，而且拆分完以后<br>也会更可控，所以这个问题在我们支撑业务的过程中也不是一个特别大的问题。</p>
+<h3 id="隔离级别"><a href="#隔离级别" class="headerlink" title="隔离级别"></a>隔离级别</h3><hr>
+<h4 id="READ-UNCOMMITTED"><a href="#READ-UNCOMMITTED" class="headerlink" title="READ UNCOMMITTED"></a>READ UNCOMMITTED</h4><p>事务中的修改，即使没有提交，对其他事务也都是可见的。从性能来说，READ UNCOMMITTED不会比其他的级别好太多，实际应用中很少使用。</p>
+<p>事务可以读取未提交的数据，称为脏读(Dirty Read)。</p>
+<hr>
+<h4 id="READ-COMMITTED"><a href="#READ-COMMITTED" class="headerlink" title="READ COMMITTED"></a>READ COMMITTED</h4><p>大多数数据库默认的级别，这个级别只是满足前面提到的隔离性的简单定义：一个事务开始时，只能“看见”已经提交的事务所做的修改。</p>
+<p>即一个事务从开始直到提交前，所做的任何修改对其他事务是不可见的。</p>
+<p>这个级别也称为不可重复读（nonrepeatable read），因为两次执行同样的查询，可能会得到不一样的结果。</p>
+<hr>
+<h4 id="REPEATABLE-READ"><a href="#REPEATABLE-READ" class="headerlink" title="REPEATABLE READ"></a>REPEATABLE READ</h4><p>该级别解决了脏读问题，保证了在同一个事务中多次读取同样的记录的结果是一致的。</p>
+<p>但是该级别在理论上，还是无法解决另一个问题——幻读（Phantom Read）。</p>
+<p>Phantom Read：当某个事务在读取某个范围内的记录时，另外一个事务又在该范围内插入了新的记录，此时如果之前的事务再次读取该范围的<br>记录时，会产生幻行（Phantom Row）</p>
+<p>注：InnoDB和XtraDB通过多版本并发控制（MVCC，Mutlversion Concurrency Control）解决了幻读问题。</p>
+<p>关于账户转账出问题的参考案例：<a href="http://www.importnew.com/28657.html" target="_blank" rel="noopener">http://www.importnew.com/28657.html</a></p>
+<hr>
+<h4 id="SERIALIZABLE"><a href="#SERIALIZABLE" class="headerlink" title="SERIALIZABLE"></a>SERIALIZABLE</h4><p>最高级别的隔离，通过强制事务串行执行，避免了前面提到的幻读（Phantom Read）问题。</p>
+<p>该级别会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁争用的问题。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>Dirty Read</th>
+<th>Nonrepeatable Read</th>
+<th>Phantom Read</th>
+<th>Locked Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>READ UNCOMMITTED</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>READ COMMITTED</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>REPEATABLE READ</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>SERIALIZABLE</td>
+<td>no</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/08/Server/SpringBoot/MyBatis/config/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1288,160 +1515,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/03/Testing/websockt-tools/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/03/03/Testing/websockt-tools/" itemprop="url">Websocket Tools</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-03T09:25:18+08:00">
-                2018-03-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Testing/" itemprop="url" rel="index">
-                    <span itemprop="name">Testing</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Testing/Websocket/" itemprop="url" rel="index">
-                    <span itemprop="name">Websocket</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="测试Websocket连接工具"><a href="#测试Websocket连接工具" class="headerlink" title="测试Websocket连接工具"></a>测试Websocket连接工具</h3><h4 id="wscat"><a href="#wscat" class="headerlink" title="wscat"></a>wscat</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nodejs安装：npm install -g wscat</span><br></pre></td></tr></table></figure>
-<p>连接测试命令：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wscat –c ws://ip</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/03/Nginx/proxy/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1566,6 +1639,160 @@
 <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">user  root;</span><br><span class="line"># 处理请求的进程数量，CPU核心数量决定</span><br><span class="line">worker_processes 1;</span><br><span class="line"></span><br><span class="line">events &#123;</span><br><span class="line">  use epoll;</span><br><span class="line">  multi_accept on;</span><br><span class="line">  worker_connections  65535;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">error_log /var/log/nginx/error.log info;</span><br><span class="line"></span><br><span class="line">http &#123;</span><br><span class="line">  include mime.types;</span><br><span class="line">  # 默认文件类型</span><br><span class="line">  default_type  application/octet-stream;</span><br><span class="line">  sendfile on;</span><br><span class="line">  server_tokens off;</span><br><span class="line">  tcp_nopush on;</span><br><span class="line">  tcp_nodelay on;</span><br><span class="line">  gzip on;</span><br><span class="line">  gzip_comp_level 4;</span><br><span class="line">  gzip_min_length 1000;</span><br><span class="line">  gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;</span><br><span class="line">  server &#123;</span><br><span class="line">    listen 80;</span><br><span class="line">    charset utf-8;</span><br><span class="line">    </span><br><span class="line">    # visit /ws/v1/xxx/xxx/ is ok</span><br><span class="line">    # client visit ws://xx/xx</span><br><span class="line">    location /ws/ &#123;</span><br><span class="line">      # 注意尾部不带/的区别</span><br><span class="line">      proxy_pass http://ethex-trade-ps-service:8081/;</span><br><span class="line">      proxy_http_version 1.1;</span><br><span class="line">      proxy_read_timeout 86400;</span><br><span class="line">      proxy_set_header Upgrade $http_upgrade;</span><br><span class="line">      proxy_set_header Connection "Upgrade";</span><br><span class="line"></span><br><span class="line">      proxy_set_header    X-Real_IP   $remote_addr;</span><br><span class="line">      proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">      proxy_set_header    Host    $host;</span><br><span class="line">      proxy_set_header    Authorization   $http_authorization;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    location / &#123;</span><br><span class="line">      proxy_pass http://api-gateway-service/;</span><br><span class="line">      proxy_set_header    X-Real_IP   $remote_addr;</span><br><span class="line">      proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">      proxy_set_header    Host    $host;</span><br><span class="line">      proxy_set_header    Authorization   $http_authorization;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>Client连接<a href="http://ip/ws/test/" target="_blank" rel="noopener">http://ip/ws/test/</a> -&gt; 连接<a href="http://ethex-trade-ps-service:8081/test/" target="_blank" rel="noopener">http://ethex-trade-ps-service:8081/test/</a></p>
 <h4 id="使用HTTPS代理无法连接Websockets"><a href="#使用HTTPS代理无法连接Websockets" class="headerlink" title="使用HTTPS代理无法连接Websockets"></a>使用HTTPS代理无法连接Websockets</h4><p>注：使用SSR方式连接没有问题</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/03/03/Testing/websockt-tools/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/03/Testing/websockt-tools/" itemprop="url">Websocket Tools</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-03T09:25:18+08:00">
+                2018-03-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Testing/" itemprop="url" rel="index">
+                    <span itemprop="name">Testing</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Testing/Websocket/" itemprop="url" rel="index">
+                    <span itemprop="name">Websocket</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="测试Websocket连接工具"><a href="#测试Websocket连接工具" class="headerlink" title="测试Websocket连接工具"></a>测试Websocket连接工具</h3><h4 id="wscat"><a href="#wscat" class="headerlink" title="wscat"></a>wscat</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nodejs安装：npm install -g wscat</span><br></pre></td></tr></table></figure>
+<p>连接测试命令：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wscat –c ws://ip</span><br></pre></td></tr></table></figure></p>
 
           
         
@@ -1760,181 +1987,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/26/Server/SpringBoot/Zuul/zuul-tutorial/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/02/26/Server/SpringBoot/Zuul/zuul-tutorial/" itemprop="url">Spring Boot Zuul</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-26T20:48:18+08:00">
-                2018-02-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="基本配置文件"><a href="#基本配置文件" class="headerlink" title="基本配置文件"></a>基本配置文件</h3><h4 id="Application-Class"><a href="#Application-Class" class="headerlink" title="Application Class"></a>Application Class</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="meta">@EnableZuulProxy</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ApigatewayApplication</span></span></span><br><span class="line"><span class="class"></span></span><br><span class="line">fun main(args: Array&lt;String&gt;) &#123;</span><br><span class="line">    SpringApplication.run(ApigatewayApplication::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>, *<span class="title">args</span>)</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
-<p>@EnableZuulProxy 与 @EnableZuulServer 区别</p>
-<p>@EnableZuulServer,不加载任何反向代理过滤器，不使用Eureka的服务发现来发现其他服务。@EnableZuulServer只在搭建自己的路由服务并不使用Zuul的预构建功能时使用。<br>比如需要使用Zuul来配合其它不是Eureka的服务发现引擎，如Consul。</p>
-<h4 id="application-properties"><a href="#application-properties" class="headerlink" title="application.properties"></a>application.properties</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">server.port=8080</span><br><span class="line"></span><br><span class="line">## remove prefix from URL</span><br><span class="line">zuul.routes.api.stripPrefix=false</span><br><span class="line">## connection limit</span><br><span class="line">zuul.host.max-total-connections=200000</span><br><span class="line">zuul.host.max-per-route-connections=2000</span><br><span class="line"></span><br><span class="line">## 添加静态路由配置</span><br><span class="line">zuul.routes.api-sso.path=/api/sso/gateway/**</span><br><span class="line">zuul.routes.api-sso.url=http://sso-gateway-service</span><br></pre></td></tr></table></figure>
-<p>如果部署在kubernetes上,则不需要eureka,直接使用kube自带发现服务</p>
-<h4 id="route优先级问题"><a href="#route优先级问题" class="headerlink" title="route优先级问题"></a>route优先级问题</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># Email</span><br><span class="line">zuul.routes.api-email.path=/email/**</span><br><span class="line">zuul.routes.api-email.url=http://email-service</span><br><span class="line"># Root</span><br><span class="line">zuul.routes.root.path=/**</span><br><span class="line">zuul.routes.root.url=http://ethex-frontend</span><br></pre></td></tr></table></figure>
-<p>路及匹配的顺序是从上到下</p>
-<h4 id="查看当前route-path配置"><a href="#查看当前route-path配置" class="headerlink" title="查看当前route path配置"></a>查看当前route path配置</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">management.security.enabled=false</span><br></pre></td></tr></table></figure>
-<p>访问 <a href="http://ip/routes/" target="_blank" rel="noopener">http://ip/routes/</a></p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zuul.routes.stripPrefix=false</span><br><span class="line">zuul.routes.root.path=/gateway/**</span><br></pre></td></tr></table></figure>
-<p>访问/gateway/xxx，此时转发的请求是/xx；如果修改为true，则是/gateway/xx</p>
-<p>跳转到本地URL<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zuul.routes.user.path=/user/**</span><br><span class="line">zuul.routes.user.url=forward:/user</span><br></pre></td></tr></table></figure></p>
-<h4 id="跨域问题"><a href="#跨域问题" class="headerlink" title="跨域问题"></a>跨域问题</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function">fun <span class="title">getCORSFilter</span><span class="params">()</span>: CorsFilter </span>&#123;</span><br><span class="line">    val source = UrlBasedCorsConfigurationSource()</span><br><span class="line">    val config = CorsConfiguration()</span><br><span class="line">    <span class="comment">//允许跨域</span></span><br><span class="line">    config.allowCredentials = <span class="keyword">true</span></span><br><span class="line">    <span class="comment">//允许向该服务器提交请求的URI,*表示全部</span></span><br><span class="line">    config.addAllowedOrigin(<span class="string">"*"</span>)</span><br><span class="line">    <span class="comment">//允许访问的头信息,*表示全部</span></span><br><span class="line">    config.addAllowedHeader(<span class="string">"*"</span>)</span><br><span class="line">    <span class="comment">//允许的method</span></span><br><span class="line">    config.addAllowedMethod(<span class="string">"OPTIONS"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"HEAD"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"GET"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"PUT"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"POST"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"DELETE"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"PATCH"</span>)</span><br><span class="line">    source.registerCorsConfiguration(<span class="string">"/**"</span>, config)</span><br><span class="line">    <span class="keyword">return</span> CorsFilter(source)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>报错：The ‘Access-Control-Allow-Origin’ header contains multiple values</p>
-<p>解决方案：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zuul.ignored-headers=Access-Control-Allow-Credentials, Access-Control-Allow-Origin</span><br></pre></td></tr></table></figure></p>
-<h4 id="sensitiveHeaders与ignoredHeaders的区别"><a href="#sensitiveHeaders与ignoredHeaders的区别" class="headerlink" title="sensitiveHeaders与ignoredHeaders的区别"></a>sensitiveHeaders与ignoredHeaders的区别</h4><ul>
-<li>sensitiveHeaders会过滤客户端附带的headers</li>
-</ul>
-<p>例如：sensitiveHeaders: X-ABC如果客户端在发请求是带了X-ABC，那么X-ABC不会传递给下游服务。</p>
-<ul>
-<li>ignoredHeaders会过滤服务之间通信附带的headers</li>
-</ul>
-<p>例如：ignoredHeaders: X-ABC如果客户端在发请求是带了X-ABC，那么X-ABC依然会传递给下游服务。但是如果下游服务再转发就会被过滤。</p>
-<h4 id="Read-Timeout"><a href="#Read-Timeout" class="headerlink" title="Read Timeout"></a>Read Timeout</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zuul.host.max-total-connections=3000</span><br><span class="line">zuul.host.max-per-route-connections=1000</span><br><span class="line">zuul.host.socket-timeout-millis=30000</span><br><span class="line">zuul.host.connect-timeout-millis=30000</span><br><span class="line">hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=30000</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1986,7 +2038,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">508</span>
+                <span class="site-state-item-count">509</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1997,7 +2049,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">231</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2008,7 +2060,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">574</span>
+                <span class="site-state-item-count">576</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

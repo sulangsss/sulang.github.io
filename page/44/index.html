@@ -284,6 +284,178 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Command/nohup/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/30/Linux/Command/nohup/" itemprop="url">nohup 命令</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T14:17:57+08:00">
+                2017-10-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><img src="/2017/10/30/Linux/Command/nohup/process_session.png">
+<h4 id="进程组"><a href="#进程组" class="headerlink" title="进程组"></a>进程组</h4><p>进程组是一个或多个进程的集合，进程组方便了对多个进程的控制，在进程数较多的情况下，向进程组发送信号就行了。</p>
+<p>它的 ID 由它的组长进程的进程 ID 决定。组长进程创建了进程组，但它并不能决定进程组的存活时间，只要进程组内还有一个进程存在，进程就存在，与组长进程是否已终止无关。</p>
+<h4 id="会话"><a href="#会话" class="headerlink" title="会话"></a>会话</h4><p>会话(session)是一个或多个进程组的集合，它开始于用户登陆终端，结束于用户退出登陆。其义如其名，就是指用户与系统的一次对话的全程。</p>
+<p>会话包括控制进程（与终端建立连接的领头进程），一个前台进程组和任意后台进程组。一个会话只能有一个控制终端，通常是登录到其上的终端设备或伪终端设备，产生在控制终端上的输入和信号将发送给会话的前台进程组中的所有进程。</p>
+<h4 id="控制终端"><a href="#控制终端" class="headerlink" title="控制终端"></a>控制终端</h4><p>每当我们使用终端工具打开一个本地或远程 shell，我们便打开了一个控制终端，通过 ps 命令可以查看到 command 为 ttyn 的就是它对应的进程了，同时它对应 linux /dev/ 目录下的一个文件。</p>
+<h4 id="作业"><a href="#作业" class="headerlink" title="作业"></a>作业</h4><p>作业的概念与进程组类似，同样由一个或多个进程组成，它分为前台作业和后台作业，一个会话会有一个前台作业和多个后台作业，与进程组不同的是，作业内的某个进程产生的子进程并不属于这个作业。</p>
+<h4 id="后台执行"><a href="#后台执行" class="headerlink" title="后台执行"></a>后台执行</h4><p>我们每次在终端窗口执行命令的时候，进程总会一直占用着终端，直到进程结束。这段时间内，我们在终端的输入是没有用的。而且，当终端窗口关闭或网络连接失败后，再次打开终端，会发现进程已经中断了。这是因为用户注销或者网络断开时，SIGHUP信号会被发送到会话所属的子进程，而此 SIGHUP 的默认处理方式是终止收到该信号的进程。所以若程序中没有捕捉该信号，当终端关闭后，会话所属进程就会退出。</p>
+<h3 id="nohup"><a href="#nohup" class="headerlink" title="nohup"></a>nohup</h3><p>我们要实现后台执行的目的，实际上是要完成如下两个目标：</p>
+<ul>
+<li>使进程让出前台终端，让我们可以继续通过终端与系统进行交互。</li>
+<li>使进程不再受终端关闭的影响，即系统在终端关闭后不再向进程发送 SIGHUP 信号或即使发送了信号程序也不会退出。</li>
+</ul>
+<p>涉及两个指令 &amp; 和 nohup</p>
+<ul>
+<li>&amp;：将它附在命令后面可以使进程在后台执行，不会占用前台界面。它实际上是在会话中开启了一个后台作业。但我们会发现，如果此时终端被关闭后，进程还是会退出。这是因为，&amp; 符号只有让进程让出前台终端的功能，无法让进程不受 SIGHUP 信号的影响。</li>
+<li>nohup：使进程不受 SIGHUP 信号的影响。但我们在使用 nohup php test.php 后会发现，进程还会一直占用前台终端，但即使终端被关闭或连接断开了，程序还是会执行，另外我们会发现在当前文件夹下多了个名为 nohup.out 的文件。这是因为 nohup 的功能仅仅是让进程不受 SIGHUP 信号的影响，并不会让出前台终端，而且它还会在命令执行目录下建立 nohup.out 用以存储进程的输出。如果进程不需要输出，且不想让 nohup 创建文件，可以将标准输出和标准错误输出重定向。</li>
+</ul>
+<p>我们常将 nohup 和 &amp; 搭配到一块使用，执行命令如下 nohup command &gt;/dev/null 2&gt;&amp;1 &amp; 这样，就可以放心的等待进程运行结果了。</p>
+<p>参考链接：<a href="http://www.cnblogs.com/zhenbianshu/p/7152327.html" target="_blank" rel="noopener">http://www.cnblogs.com/zhenbianshu/p/7152327.html</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Tools/aria2/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1182,160 +1354,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/29/Linux/Software/cloud-disk/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/29/Linux/Software/cloud-disk/" itemprop="url">私人云存储</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-29T17:03:27+08:00">
-                2017-10-29
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/software/" itemprop="url" rel="index">
-                    <span itemprop="name">software</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="seafile"><a href="#seafile" class="headerlink" title="seafile"></a>seafile</h2><h3 id="一键脚本安装"><a href="#一键脚本安装" class="headerlink" title="一键脚本安装"></a>一键脚本安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">yum install wget -y</span><br><span class="line">wget https://raw.githubusercontent.com/helloxz/seafile/master/install_seafile.sh</span><br><span class="line">chmod +x install_seafile.sh &amp;&amp; ./install_seafile.sh</span><br></pre></td></tr></table></figure>
-<h3 id="脚本内容"><a href="#脚本内容" class="headerlink" title="脚本内容"></a>脚本内容</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment">################ 一键安装Seafile脚本 ##################</span></span><br><span class="line"><span class="comment">#Author:xiaoz.me</span></span><br><span class="line"><span class="comment">#######################   END   #######################</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#防火墙放行端口</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">chk_firewall</span></span>() &#123;</span><br><span class="line">	<span class="keyword">if</span> [ -e <span class="string">"/etc/sysconfig/iptables"</span> ]</span><br><span class="line">	<span class="keyword">then</span></span><br><span class="line">		iptables -I INPUT -p tcp --dport 8000 -j ACCEPT</span><br><span class="line">		iptables -I INPUT -p tcp --dport 8082 -j ACCEPT</span><br><span class="line">		service iptables save</span><br><span class="line">		service iptables restart</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		firewall-cmd --zone=public --add-port=8000/tcp --permanent</span><br><span class="line">		firewall-cmd --zone=public --add-port=8082/tcp --permanent</span><br><span class="line">		firewall-cmd --reload</span><br><span class="line">	<span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装seafile函数</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">install_sea</span></span>() &#123;</span><br><span class="line">	<span class="built_in">cd</span> /home/MyCloud</span><br><span class="line">	<span class="comment">#下载安装包6.0.9 64bit</span></span><br><span class="line">	wget http://seafile-downloads.oss-cn-shanghai.aliyuncs.com/seafile-server_6.1.1_x86-64.tar.gz</span><br><span class="line">	<span class="comment">#解压</span></span><br><span class="line">	tar -zxvf seafile-server_6.1.1_x86-64.tar.gz</span><br><span class="line">	mkdir installed</span><br><span class="line">	mv seafile-server*.tar.gz ./installed</span><br><span class="line">	mv seafile-server-6* seafile-server</span><br><span class="line">	<span class="comment">#安装依赖环境</span></span><br><span class="line">	yum -y install python-setuptools python-imaging python-ldap MySQL-python python-memcached python-urllib3</span><br><span class="line">	<span class="comment">#进行安装</span></span><br><span class="line">	<span class="built_in">cd</span> seafile-server &amp;&amp; ./setup-seafile.sh</span><br><span class="line">	</span><br><span class="line">	<span class="comment">#启动服务</span></span><br><span class="line">	./seafile.sh start &amp;&amp;  ./seahub.sh start</span><br><span class="line">	<span class="comment">#防火墙放行端口</span></span><br><span class="line">	chk_firewall</span><br><span class="line">	<span class="comment">#获取IP</span></span><br><span class="line">	osip=$(curl http://https.tn/ip/myip.php?<span class="built_in">type</span>=onlyip)</span><br><span class="line">	<span class="built_in">echo</span> <span class="string">"恭喜，安装完成。请访问：http://<span class="variable">$&#123;osip&#125;</span>:8000"</span></span><br><span class="line">	<span class="built_in">echo</span> <span class="string">"帮助文档请访问：https://www.xiaoz.me/archives/8480"</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"##########	欢迎使用Seafile一键安装脚本^_^	##########"</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"1.安装Seafile"</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"2.卸载Seafile"</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"3.退出"</span></span><br><span class="line"><span class="built_in">declare</span> -i stype</span><br><span class="line"><span class="built_in">read</span> -p <span class="string">"请输入选项:（1.2.3）:"</span> stype</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ <span class="string">"<span class="variable">$stype</span>"</span> == 1 ]</span><br><span class="line">	<span class="keyword">then</span></span><br><span class="line">		<span class="comment">#检查目录是否存在</span></span><br><span class="line">		<span class="keyword">if</span> [ -e <span class="string">"/home/MyCloud"</span> ]</span><br><span class="line">			<span class="keyword">then</span></span><br><span class="line">			<span class="built_in">echo</span> <span class="string">"目录存在，请检查是否已经安装。"</span></span><br><span class="line">			<span class="built_in">exit</span></span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			<span class="built_in">echo</span> <span class="string">"目录不存在，创建目录..."</span></span><br><span class="line">			mkdir -p /home/MyCloud</span><br><span class="line">			<span class="comment">#执行安装函数</span></span><br><span class="line">			install_sea</span><br><span class="line">		<span class="keyword">fi</span></span><br><span class="line">	<span class="keyword">elif</span> [ <span class="string">"<span class="variable">$stype</span>"</span> == 2 ]</span><br><span class="line">		<span class="keyword">then</span></span><br><span class="line">			/home/MyCloud/seafile-server/seafile.sh stop</span><br><span class="line">			/home/MyCloud/seafile-server/seahub.sh stop</span><br><span class="line">			rm -rf /home/MyCloud</span><br><span class="line">			rm -rf /tmp/seahub_cache/*</span><br><span class="line">			<span class="built_in">echo</span> <span class="string">'卸载完成.'</span></span><br><span class="line">			<span class="built_in">exit</span></span><br><span class="line">	<span class="keyword">elif</span> [ <span class="string">"<span class="variable">$stype</span>"</span> == 3 ]</span><br><span class="line">		<span class="keyword">then</span></span><br><span class="line">			<span class="built_in">exit</span></span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		<span class="built_in">echo</span> <span class="string">"参数错误！"</span></span><br><span class="line">	<span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/29/Linux/Software/kernel/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1496,7 +1514,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Middle/middleware/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/29/Linux/Software/cloud-disk/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1515,7 +1533,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Middle/middleware/" itemprop="url">Django Middleware</a></h2>
+                <a class="post-title-link" href="/2017/10/29/Linux/Software/cloud-disk/" itemprop="url">私人云存储</a></h2>
         
 
         <div class="post-meta">
@@ -1527,8 +1545,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
-                2017-10-27
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-29T17:03:27+08:00">
+                2017-10-29
               </time>
             
 
@@ -1550,8 +1568,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
                   </a>
                 </span>
 
@@ -1561,8 +1579,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
+                  <a href="/categories/linux/software/" itemprop="url" rel="index">
+                    <span itemprop="name">software</span>
                   </a>
                 </span>
 
@@ -1600,180 +1618,8 @@
       
         
           
-            <h2 id="Middleware是什么？"><a href="#Middleware是什么？" class="headerlink" title="Middleware是什么？"></a>Middleware是什么？</h2><p>Middleware is a framework of hooks into Django’s request/response processing. It’s a light, low-level “plugin” system for globally altering Django’s input or output.</p>
-<h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><p>从浏览器发出一个请求 Request，得到一个响应后的内容 HttpResponse ，这个请求传递到 Django的过程如下：</p>
-<img src="/2017/10/27/Python/Django/Middle/middleware/middleware_processing.svg" title="工作流程">
-<p>process_request 被 process_view 替换</p>
-<p>每一个请求都是先通过中间件中的 process_view 函数，这个函数返回 None 或者 HttpResponse 对象，如果返回前者，继续处理其它中间件，如果返回一个 HttpResponse，就处理中止，返回结果给浏览器。</p>
-<p>process_view: <a href="https://docs.djangoproject.com/en/1.11/topics/http/middleware/#process_view" target="_blank" rel="noopener">https://docs.djangoproject.com/en/1.11/topics/http/middleware/#process_view</a></p>
-<h3 id="自定义Middleware"><a href="#自定义Middleware" class="headerlink" title="自定义Middleware"></a>自定义Middleware</h3><h4 id="开发模式（DEBUG-True）禁用Middleware"><a href="#开发模式（DEBUG-True）禁用Middleware" class="headerlink" title="开发模式（DEBUG=True）禁用Middleware"></a>开发模式（DEBUG=True）禁用Middleware</h4><p>在Middleware class的 <strong>init</strong>() 方法中 raise MiddlewareNotUsed</p>
-<p>Django will then remove that middleware from the middleware process and log a debug message to the django.request logger when DEBUG is True.</p>
-<hr>
-<h4 id="定义方法"><a href="#定义方法" class="headerlink" title="定义方法"></a>定义方法</h4><p>Response类型</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">simple_middleware</span><span class="params">(get_response)</span>:</span></span><br><span class="line">    <span class="comment"># One-time configuration and initialization.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">middleware</span><span class="params">(request)</span>:</span></span><br><span class="line">        <span class="comment"># Code to be executed for each request before</span></span><br><span class="line">        <span class="comment"># the view (and later middleware) are called.</span></span><br><span class="line"></span><br><span class="line">        response = get_response(request)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Code to be executed for each request/response after</span></span><br><span class="line">        <span class="comment"># the view is called.</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> response</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> middleware</span><br></pre></td></tr></table></figure>
-<hr>
-<h4 id="定义类"><a href="#定义类" class="headerlink" title="定义类"></a>定义类</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SimpleMiddleware</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, get_response)</span>:</span></span><br><span class="line">        self.get_response = get_response</span><br><span class="line">        <span class="comment"># One-time configuration and initialization.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="comment"># Code to be executed for each request before</span></span><br><span class="line">        <span class="comment"># the view (and later middleware) are called.</span></span><br><span class="line"></span><br><span class="line">        response = self.get_response(request)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Code to be executed for each request/response after</span></span><br><span class="line">        <span class="comment"># the view is called.</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
-<h4 id="Django-1-10-定义类"><a href="#Django-1-10-定义类" class="headerlink" title="Django 1.10 定义类"></a>Django 1.10 定义类</h4><p>class django.utils.deprecation.MiddlewareMixin</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MiddlewareMixin</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, get_response=None)</span>:</span></span><br><span class="line">        self.get_response = get_response</span><br><span class="line">        super(MiddlewareMixin, self).__init__()</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        response = <span class="keyword">None</span></span><br><span class="line">        <span class="keyword">if</span> hasattr(self, <span class="string">'process_request'</span>):</span><br><span class="line">            response = self.process_request(request)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> response:</span><br><span class="line">            response = self.get_response(request)</span><br><span class="line">        <span class="keyword">if</span> hasattr(self, <span class="string">'process_response'</span>):</span><br><span class="line">            response = self.process_response(request, response)</span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
-<p><strong>call</strong> 方法会先调用 self.process_request(request)，接着执行 self.get_response(request) 然后调用 self.process_response(request, response)</p>
-<p>创建一个Middleware基类，后续Middleware直接继承重写即可</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseMiddleware</span><span class="params">(MiddlewareMixin)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_request</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_response</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_response</span><span class="params">(self, request, response)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
-<hr>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log-config/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log-config/" itemprop="url">Django Log 配置信息</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
-                2017-10-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>生产环境配置(包含了Sentry配置)，日志分割管理建议使用logrotate</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">LOGGING = &#123;</span><br><span class="line">    'version': 1,</span><br><span class="line">    'disable_existing_loggers': True,</span><br><span class="line">    'root': &#123;</span><br><span class="line">        'level': 'WARNING',</span><br><span class="line">        'handlers': ['sentry']</span><br><span class="line">    &#125;,</span><br><span class="line">    'formatters': &#123;</span><br><span class="line">        'verbose': &#123;</span><br><span class="line">            'format': '[%(levelname)s]%(asctime)s--[module:%(module)s, process:%(process)d, thread:%(thread)d]--'</span><br><span class="line">                      '[filename:%(filename)s][funcName:%(funcName)s]: %(message)s'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'handlers': &#123;</span><br><span class="line">        'sentry': &#123;</span><br><span class="line">            'level': 'ERROR',  # To capture more than ERROR, change to WARNING, INFO, etc.</span><br><span class="line">            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'console': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.StreamHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'file': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'class': 'logging.FileHandler',</span><br><span class="line">            'filename': './log/prod.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'loggers': &#123;</span><br><span class="line">        'root': &#123;</span><br><span class="line">            'level': 'ERROR',</span><br><span class="line">            'handlers': ['sentry']</span><br><span class="line">        &#125;,</span><br><span class="line">        'django': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'handlers': ['file', 'console', 'sentry'],</span><br><span class="line">            'propagate': True</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果日志文件需要自动分割，则file使用下面的配置<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">'file': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.handlers.RotatingFileHandler',</span><br><span class="line">            'maxBytes': 1024 * 1024 * 10,  # 文件大小</span><br><span class="line">            'backupCount': 5,  # 备份份数</span><br><span class="line">            'filename': './log/debug.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+            <h2 id="seafile"><a href="#seafile" class="headerlink" title="seafile"></a>seafile</h2><h3 id="一键脚本安装"><a href="#一键脚本安装" class="headerlink" title="一键脚本安装"></a>一键脚本安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">yum install wget -y</span><br><span class="line">wget https://raw.githubusercontent.com/helloxz/seafile/master/install_seafile.sh</span><br><span class="line">chmod +x install_seafile.sh &amp;&amp; ./install_seafile.sh</span><br></pre></td></tr></table></figure>
+<h3 id="脚本内容"><a href="#脚本内容" class="headerlink" title="脚本内容"></a>脚本内容</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment">################ 一键安装Seafile脚本 ##################</span></span><br><span class="line"><span class="comment">#Author:xiaoz.me</span></span><br><span class="line"><span class="comment">#######################   END   #######################</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#防火墙放行端口</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">chk_firewall</span></span>() &#123;</span><br><span class="line">	<span class="keyword">if</span> [ -e <span class="string">"/etc/sysconfig/iptables"</span> ]</span><br><span class="line">	<span class="keyword">then</span></span><br><span class="line">		iptables -I INPUT -p tcp --dport 8000 -j ACCEPT</span><br><span class="line">		iptables -I INPUT -p tcp --dport 8082 -j ACCEPT</span><br><span class="line">		service iptables save</span><br><span class="line">		service iptables restart</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		firewall-cmd --zone=public --add-port=8000/tcp --permanent</span><br><span class="line">		firewall-cmd --zone=public --add-port=8082/tcp --permanent</span><br><span class="line">		firewall-cmd --reload</span><br><span class="line">	<span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装seafile函数</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">install_sea</span></span>() &#123;</span><br><span class="line">	<span class="built_in">cd</span> /home/MyCloud</span><br><span class="line">	<span class="comment">#下载安装包6.0.9 64bit</span></span><br><span class="line">	wget http://seafile-downloads.oss-cn-shanghai.aliyuncs.com/seafile-server_6.1.1_x86-64.tar.gz</span><br><span class="line">	<span class="comment">#解压</span></span><br><span class="line">	tar -zxvf seafile-server_6.1.1_x86-64.tar.gz</span><br><span class="line">	mkdir installed</span><br><span class="line">	mv seafile-server*.tar.gz ./installed</span><br><span class="line">	mv seafile-server-6* seafile-server</span><br><span class="line">	<span class="comment">#安装依赖环境</span></span><br><span class="line">	yum -y install python-setuptools python-imaging python-ldap MySQL-python python-memcached python-urllib3</span><br><span class="line">	<span class="comment">#进行安装</span></span><br><span class="line">	<span class="built_in">cd</span> seafile-server &amp;&amp; ./setup-seafile.sh</span><br><span class="line">	</span><br><span class="line">	<span class="comment">#启动服务</span></span><br><span class="line">	./seafile.sh start &amp;&amp;  ./seahub.sh start</span><br><span class="line">	<span class="comment">#防火墙放行端口</span></span><br><span class="line">	chk_firewall</span><br><span class="line">	<span class="comment">#获取IP</span></span><br><span class="line">	osip=$(curl http://https.tn/ip/myip.php?<span class="built_in">type</span>=onlyip)</span><br><span class="line">	<span class="built_in">echo</span> <span class="string">"恭喜，安装完成。请访问：http://<span class="variable">$&#123;osip&#125;</span>:8000"</span></span><br><span class="line">	<span class="built_in">echo</span> <span class="string">"帮助文档请访问：https://www.xiaoz.me/archives/8480"</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"##########	欢迎使用Seafile一键安装脚本^_^	##########"</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"1.安装Seafile"</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"2.卸载Seafile"</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"3.退出"</span></span><br><span class="line"><span class="built_in">declare</span> -i stype</span><br><span class="line"><span class="built_in">read</span> -p <span class="string">"请输入选项:（1.2.3）:"</span> stype</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ <span class="string">"<span class="variable">$stype</span>"</span> == 1 ]</span><br><span class="line">	<span class="keyword">then</span></span><br><span class="line">		<span class="comment">#检查目录是否存在</span></span><br><span class="line">		<span class="keyword">if</span> [ -e <span class="string">"/home/MyCloud"</span> ]</span><br><span class="line">			<span class="keyword">then</span></span><br><span class="line">			<span class="built_in">echo</span> <span class="string">"目录存在，请检查是否已经安装。"</span></span><br><span class="line">			<span class="built_in">exit</span></span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			<span class="built_in">echo</span> <span class="string">"目录不存在，创建目录..."</span></span><br><span class="line">			mkdir -p /home/MyCloud</span><br><span class="line">			<span class="comment">#执行安装函数</span></span><br><span class="line">			install_sea</span><br><span class="line">		<span class="keyword">fi</span></span><br><span class="line">	<span class="keyword">elif</span> [ <span class="string">"<span class="variable">$stype</span>"</span> == 2 ]</span><br><span class="line">		<span class="keyword">then</span></span><br><span class="line">			/home/MyCloud/seafile-server/seafile.sh stop</span><br><span class="line">			/home/MyCloud/seafile-server/seahub.sh stop</span><br><span class="line">			rm -rf /home/MyCloud</span><br><span class="line">			rm -rf /tmp/seahub_cache/*</span><br><span class="line">			<span class="built_in">echo</span> <span class="string">'卸载完成.'</span></span><br><span class="line">			<span class="built_in">exit</span></span><br><span class="line">	<span class="keyword">elif</span> [ <span class="string">"<span class="variable">$stype</span>"</span> == 3 ]</span><br><span class="line">		<span class="keyword">then</span></span><br><span class="line">			<span class="built_in">exit</span></span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		<span class="built_in">echo</span> <span class="string">"参数错误！"</span></span><br><span class="line">	<span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
 
           
         
@@ -1988,6 +1834,177 @@
 
 
     
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Middle/middleware/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/27/Python/Django/Middle/middleware/" itemprop="url">Django Middleware</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
+                2017-10-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Middleware是什么？"><a href="#Middleware是什么？" class="headerlink" title="Middleware是什么？"></a>Middleware是什么？</h2><p>Middleware is a framework of hooks into Django’s request/response processing. It’s a light, low-level “plugin” system for globally altering Django’s input or output.</p>
+<h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><p>从浏览器发出一个请求 Request，得到一个响应后的内容 HttpResponse ，这个请求传递到 Django的过程如下：</p>
+<img src="/2017/10/27/Python/Django/Middle/middleware/middleware_processing.svg" title="工作流程">
+<p>process_request 被 process_view 替换</p>
+<p>每一个请求都是先通过中间件中的 process_view 函数，这个函数返回 None 或者 HttpResponse 对象，如果返回前者，继续处理其它中间件，如果返回一个 HttpResponse，就处理中止，返回结果给浏览器。</p>
+<p>process_view: <a href="https://docs.djangoproject.com/en/1.11/topics/http/middleware/#process_view" target="_blank" rel="noopener">https://docs.djangoproject.com/en/1.11/topics/http/middleware/#process_view</a></p>
+<h3 id="自定义Middleware"><a href="#自定义Middleware" class="headerlink" title="自定义Middleware"></a>自定义Middleware</h3><h4 id="开发模式（DEBUG-True）禁用Middleware"><a href="#开发模式（DEBUG-True）禁用Middleware" class="headerlink" title="开发模式（DEBUG=True）禁用Middleware"></a>开发模式（DEBUG=True）禁用Middleware</h4><p>在Middleware class的 <strong>init</strong>() 方法中 raise MiddlewareNotUsed</p>
+<p>Django will then remove that middleware from the middleware process and log a debug message to the django.request logger when DEBUG is True.</p>
+<hr>
+<h4 id="定义方法"><a href="#定义方法" class="headerlink" title="定义方法"></a>定义方法</h4><p>Response类型</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">simple_middleware</span><span class="params">(get_response)</span>:</span></span><br><span class="line">    <span class="comment"># One-time configuration and initialization.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">middleware</span><span class="params">(request)</span>:</span></span><br><span class="line">        <span class="comment"># Code to be executed for each request before</span></span><br><span class="line">        <span class="comment"># the view (and later middleware) are called.</span></span><br><span class="line"></span><br><span class="line">        response = get_response(request)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Code to be executed for each request/response after</span></span><br><span class="line">        <span class="comment"># the view is called.</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> response</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> middleware</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="定义类"><a href="#定义类" class="headerlink" title="定义类"></a>定义类</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SimpleMiddleware</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, get_response)</span>:</span></span><br><span class="line">        self.get_response = get_response</span><br><span class="line">        <span class="comment"># One-time configuration and initialization.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="comment"># Code to be executed for each request before</span></span><br><span class="line">        <span class="comment"># the view (and later middleware) are called.</span></span><br><span class="line"></span><br><span class="line">        response = self.get_response(request)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Code to be executed for each request/response after</span></span><br><span class="line">        <span class="comment"># the view is called.</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
+<h4 id="Django-1-10-定义类"><a href="#Django-1-10-定义类" class="headerlink" title="Django 1.10 定义类"></a>Django 1.10 定义类</h4><p>class django.utils.deprecation.MiddlewareMixin</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MiddlewareMixin</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, get_response=None)</span>:</span></span><br><span class="line">        self.get_response = get_response</span><br><span class="line">        super(MiddlewareMixin, self).__init__()</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        response = <span class="keyword">None</span></span><br><span class="line">        <span class="keyword">if</span> hasattr(self, <span class="string">'process_request'</span>):</span><br><span class="line">            response = self.process_request(request)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> response:</span><br><span class="line">            response = self.get_response(request)</span><br><span class="line">        <span class="keyword">if</span> hasattr(self, <span class="string">'process_response'</span>):</span><br><span class="line">            response = self.process_response(request, response)</span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
+<p><strong>call</strong> 方法会先调用 self.process_request(request)，接着执行 self.get_response(request) 然后调用 self.process_response(request, response)</p>
+<p>创建一个Middleware基类，后续Middleware直接继承重写即可</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseMiddleware</span><span class="params">(MiddlewareMixin)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_request</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_response</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_response</span><span class="params">(self, request, response)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
+<hr>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
   </section>
 
   
@@ -2039,7 +2056,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">508</span>
+                <span class="site-state-item-count">509</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2050,7 +2067,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">231</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2061,7 +2078,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">574</span>
+                <span class="site-state-item-count">576</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
