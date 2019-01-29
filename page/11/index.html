@@ -588,7 +588,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Linux/Command/systemctl/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Linux/Command/mosh/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -607,7 +607,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/17/Linux/Command/systemctl/" itemprop="url">systemctl</a></h2>
+                <a class="post-title-link" href="/2018/11/17/Linux/Command/mosh/" itemprop="url">Mosh</a></h2>
         
 
         <div class="post-meta">
@@ -692,11 +692,16 @@
       
         
           
-            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><p><strong>configure service</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/systemd/system/test.service</span></span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Spark service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/path/to/spark/sbin/start-all.sh</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">cat &gt;&gt; /etc/systemd/system/mosh-server.service &lt;&lt;EOF</span><br><span class="line">[Unit]</span><br><span class="line">Description=Mosh Service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/usr/bin/mosh-server</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
-<p><strong>boot service</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl <span class="built_in">enable</span> mosh-server</span><br><span class="line">sudo systemctl start mosh-server</span><br></pre></td></tr></table></figure>
+            <h3 id="Install"><a href="#Install" class="headerlink" title="Install"></a>Install</h3><p>在服务器端需要运行mosh-server，默认情况下使用 UDP 60001~61000 范围的端口简历session</p>
+<p>查看端口是否监听成功</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -anp | grep mosh</span><br></pre></td></tr></table></figure>
+<h4 id="Ubuntu-18-04"><a href="#Ubuntu-18-04" class="headerlink" title="Ubuntu 18.04"></a>Ubuntu 18.04</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">sudo apt remove iptables</span><br><span class="line">sudo apt-get update -y</span><br><span class="line">sudo apt-get install -y mosh</span><br><span class="line"><span class="comment"># 为了防止出现乱码，安装locales组件</span></span><br><span class="line">sudo apt-get install locales</span><br><span class="line"><span class="comment"># 添加对en_US.UTF-8的支持</span></span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_ALL=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANG=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANGUAGE==en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="comment"># 写入locale配置文件，保存设置</span></span><br><span class="line">localedef -v -c -i en_US -f UTF-8 en_US.UTF-8</span><br><span class="line"><span class="comment"># 开启60000到61000的端口</span></span><br><span class="line">mosh-server</span><br></pre></td></tr></table></figure>
+<h4 id="MacOS"><a href="#MacOS" class="headerlink" title="MacOS"></a>MacOS</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install mosh</span><br></pre></td></tr></table></figure>
+<p>配置locale</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_ALL=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANG=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_CTYPE=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANGUAGE==en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line">localedef -v -c -i en_US -f UTF-8 en_US.UTF-8</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Usege"><a href="#Usege" class="headerlink" title="Usege"></a>Usege</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mosh root@host -p 60001</span><br><span class="line"></span><br><span class="line">mosh -ssh=<span class="string">"ssh -i ~/.ssh/id_rsa -p 10002"</span> user@host</span><br></pre></td></tr></table></figure>
+
           
         
       
@@ -896,7 +901,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Linux/Command/mosh/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/17/Linux/Command/systemctl/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -915,7 +920,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/17/Linux/Command/mosh/" itemprop="url">Mosh</a></h2>
+                <a class="post-title-link" href="/2018/11/17/Linux/Command/systemctl/" itemprop="url">systemctl</a></h2>
         
 
         <div class="post-meta">
@@ -1000,16 +1005,11 @@
       
         
           
-            <h3 id="Install"><a href="#Install" class="headerlink" title="Install"></a>Install</h3><p>在服务器端需要运行mosh-server，默认情况下使用 UDP 60001~61000 范围的端口简历session</p>
-<p>查看端口是否监听成功</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -anp | grep mosh</span><br></pre></td></tr></table></figure>
-<h4 id="Ubuntu-18-04"><a href="#Ubuntu-18-04" class="headerlink" title="Ubuntu 18.04"></a>Ubuntu 18.04</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">sudo apt remove iptables</span><br><span class="line">sudo apt-get update -y</span><br><span class="line">sudo apt-get install -y mosh</span><br><span class="line"><span class="comment"># 为了防止出现乱码，安装locales组件</span></span><br><span class="line">sudo apt-get install locales</span><br><span class="line"><span class="comment"># 添加对en_US.UTF-8的支持</span></span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_ALL=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANG=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANGUAGE==en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="comment"># 写入locale配置文件，保存设置</span></span><br><span class="line">localedef -v -c -i en_US -f UTF-8 en_US.UTF-8</span><br><span class="line"><span class="comment"># 开启60000到61000的端口</span></span><br><span class="line">mosh-server</span><br></pre></td></tr></table></figure>
-<h4 id="MacOS"><a href="#MacOS" class="headerlink" title="MacOS"></a>MacOS</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install mosh</span><br></pre></td></tr></table></figure>
-<p>配置locale</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_ALL=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANG=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LC_CTYPE=en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">"export LANGUAGE==en_US.UTF-8"</span> &gt;&gt; ~/.bashrc</span><br><span class="line">localedef -v -c -i en_US -f UTF-8 en_US.UTF-8</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Usege"><a href="#Usege" class="headerlink" title="Usege"></a>Usege</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mosh root@host -p 60001</span><br><span class="line"></span><br><span class="line">mosh -ssh=<span class="string">"ssh -i ~/.ssh/id_rsa -p 10002"</span> user@host</span><br></pre></td></tr></table></figure>
-
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><p><strong>configure service</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/systemd/system/test.service</span></span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Spark service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/path/to/spark/sbin/start-all.sh</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">cat &gt;&gt; /etc/systemd/system/mosh-server.service &lt;&lt;EOF</span><br><span class="line">[Unit]</span><br><span class="line">Description=Mosh Service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/usr/bin/mosh-server</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<p><strong>boot service</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl <span class="built_in">enable</span> mosh-server</span><br><span class="line">sudo systemctl start mosh-server</span><br></pre></td></tr></table></figure>
           
         
       
@@ -1735,7 +1735,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/13/Kubenetes/Course/Introduction to Kubernetes/Chapter 1. Container Orchestration/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/13/Nginx/Basic/Introduction/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1754,7 +1754,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/11/13/Kubenetes/Course/Introduction to Kubernetes/Chapter 1. Container Orchestration/" itemprop="url">Chapter 1. Container Orchestration</a></h2>
+                <a class="post-title-link" href="/2018/11/13/Nginx/Basic/Introduction/" itemprop="url">Nginx Introduction</a></h2>
         
 
         <div class="post-meta">
@@ -1789,8 +1789,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kunberntes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kunberntes</span>
+                  <a href="/categories/Nginx/" itemprop="url" rel="index">
+                    <span itemprop="name">Nginx</span>
                   </a>
                 </span>
 
@@ -1800,8 +1800,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kunberntes/Course/" itemprop="url" rel="index">
-                    <span itemprop="name">Course</span>
+                  <a href="/categories/Nginx/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
                   </a>
                 </span>
 
@@ -1839,18 +1839,49 @@
       
         
           
-            <h3 id="Learning-Objectives"><a href="#Learning-Objectives" class="headerlink" title="Learning Objectives"></a>Learning Objectives</h3><p>By the end of this chapter, you should be able to:</p>
-<ul>
-<li>Define the concept of container orchestration.</li>
-<li>Explain the reasons for doing container orchestration.</li>
-<li>Discuss different container orchestration options.</li>
-<li>Discuss different container orchestration deployment options.</li>
+            <h3 id="Components"><a href="#Components" class="headerlink" title="Components"></a>Components</h3><ul>
+<li>binary module</li>
+<li>conf</li>
+<li>access.log</li>
+<li>error.log</li>
 </ul>
-<h3 id="Term"><a href="#Term" class="headerlink" title="Term"></a>Term</h3><ul>
-<li>container orchestrator 容器编排(调度)</li>
-<li>controller/management unit</li>
+<h3 id="Open-Source-Framework"><a href="#Open-Source-Framework" class="headerlink" title="Open Source Framework"></a>Open Source Framework</h3><ul>
+<li>OpenRestry</li>
+<li>Nginx</li>
+<li>Nginx Plus</li>
 </ul>
-<h3 id="What-Are-Containers"><a href="#What-Are-Containers" class="headerlink" title="What Are Containers?"></a>What Are Containers?</h3>
+<h3 id="Compile"><a href="#Compile" class="headerlink" title="Compile"></a>Compile</h3><h3 id="Grammar"><a href="#Grammar" class="headerlink" title="Grammar"></a>Grammar</h3><ul>
+<li>配置文件由指令与指令块构成</li>
+<li>每条指令以 “;” 结尾，指令与参数之间以空格符分割</li>
+<li>指令块以 “{}” 将多条指令组织在一起</li>
+<li>include语句允许组合多个配置文件，便于维护</li>
+<li>“#” 注释语句</li>
+<li>“$” 使用变量</li>
+<li>部分指令的参数支持正则表达式</li>
+</ul>
+<h4 id="Instruct-block"><a href="#Instruct-block" class="headerlink" title="Instruct block"></a>Instruct block</h4><ul>
+<li>http</li>
+<li>server</li>
+<li>upstream</li>
+<li>location</li>
+</ul>
+<h4 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h4><ul>
+<li>nginx -s reload</li>
+<li>-c 指定配置文件</li>
+<li>-g 指定配置指令，比如覆盖指令</li>
+<li>-p 指定运行目录</li>
+<li>-s stop/quit/reload/reopen(重新开始记录日志文件) 发送信号 </li>
+<li>-t/T 检查配置文件</li>
+<li>-v/V 查看版本 </li>
+<li>kill -USR2 pid 热更新替换binary，路径不变，覆盖文件</li>
+</ul>
+<h4 id="Time-Unit"><a href="#Time-Unit" class="headerlink" title="Time Unit"></a>Time Unit</h4><p>ms，s，m，h，d，w，m (30 days)，y (365 days)</p>
+<h4 id="Storage-Unit"><a href="#Storage-Unit" class="headerlink" title="Storage Unit"></a>Storage Unit</h4><p>如果不添加以下单位，默认是bytes</p>
+<p>k/K，m/M，g/G</p>
+<h3 id="Doc"><a href="#Doc" class="headerlink" title="Doc"></a>Doc</h3><blockquote>
+<p>OpenResty 最佳实践 - <a href="https://moonbingbing.gitbooks.io/openresty-best-practices/content/" target="_blank" rel="noopener">https://moonbingbing.gitbooks.io/openresty-best-practices/content/</a></p>
+</blockquote>
+
           
         
       
