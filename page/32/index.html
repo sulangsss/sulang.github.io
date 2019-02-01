@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/26/Server/SpringBoot/Zuul/zuul-tutorial/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/27/读书笔记/关键词/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/02/26/Server/SpringBoot/Zuul/zuul-tutorial/" itemprop="url">Spring Boot Zuul</a></h2>
+                <a class="post-title-link" href="/2018/02/27/读书笔记/关键词/" itemprop="url">关键词</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-26T20:48:18+08:00">
-                2018-02-26
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-27T15:07:07+08:00">
+                2018-02-27
               </time>
             
 
@@ -338,19 +338,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
+                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
+                    <span itemprop="name">读书笔记</span>
                   </a>
                 </span>
 
@@ -388,30 +377,25 @@
       
         
           
-            <h3 id="基本配置文件"><a href="#基本配置文件" class="headerlink" title="基本配置文件"></a>基本配置文件</h3><h4 id="Application-Class"><a href="#Application-Class" class="headerlink" title="Application Class"></a>Application Class</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="meta">@EnableZuulProxy</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ApigatewayApplication</span></span></span><br><span class="line"><span class="class"></span></span><br><span class="line">fun main(args: Array&lt;String&gt;) &#123;</span><br><span class="line">    SpringApplication.run(ApigatewayApplication::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>, *<span class="title">args</span>)</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
-<p>@EnableZuulProxy 与 @EnableZuulServer 区别</p>
-<p>@EnableZuulServer,不加载任何反向代理过滤器，不使用Eureka的服务发现来发现其他服务。@EnableZuulServer只在搭建自己的路由服务并不使用Zuul的预构建功能时使用。<br>比如需要使用Zuul来配合其它不是Eureka的服务发现引擎，如Consul。</p>
-<h4 id="application-properties"><a href="#application-properties" class="headerlink" title="application.properties"></a>application.properties</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">server.port=8080</span><br><span class="line"></span><br><span class="line">## remove prefix from URL</span><br><span class="line">zuul.routes.api.stripPrefix=false</span><br><span class="line">## connection limit</span><br><span class="line">zuul.host.max-total-connections=200000</span><br><span class="line">zuul.host.max-per-route-connections=2000</span><br><span class="line"></span><br><span class="line">## 添加静态路由配置</span><br><span class="line">zuul.routes.api-sso.path=/api/sso/gateway/**</span><br><span class="line">zuul.routes.api-sso.url=http://sso-gateway-service</span><br></pre></td></tr></table></figure>
-<p>如果部署在kubernetes上,则不需要eureka,直接使用kube自带发现服务</p>
-<h4 id="route优先级问题"><a href="#route优先级问题" class="headerlink" title="route优先级问题"></a>route优先级问题</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># Email</span><br><span class="line">zuul.routes.api-email.path=/email/**</span><br><span class="line">zuul.routes.api-email.url=http://email-service</span><br><span class="line"># Root</span><br><span class="line">zuul.routes.root.path=/**</span><br><span class="line">zuul.routes.root.url=http://ethex-frontend</span><br></pre></td></tr></table></figure>
-<p>路及匹配的顺序是从上到下</p>
-<h4 id="查看当前route-path配置"><a href="#查看当前route-path配置" class="headerlink" title="查看当前route path配置"></a>查看当前route path配置</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">management.security.enabled=false</span><br></pre></td></tr></table></figure>
-<p>访问 <a href="http://ip/routes/" target="_blank" rel="noopener">http://ip/routes/</a></p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zuul.routes.stripPrefix=false</span><br><span class="line">zuul.routes.root.path=/gateway/**</span><br></pre></td></tr></table></figure>
-<p>访问/gateway/xxx，此时转发的请求是/xx；如果修改为true，则是/gateway/xx</p>
-<p>跳转到本地URL<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zuul.routes.user.path=/user/**</span><br><span class="line">zuul.routes.user.url=forward:/user</span><br></pre></td></tr></table></figure></p>
-<h4 id="跨域问题"><a href="#跨域问题" class="headerlink" title="跨域问题"></a>跨域问题</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function">fun <span class="title">getCORSFilter</span><span class="params">()</span>: CorsFilter </span>&#123;</span><br><span class="line">    val source = UrlBasedCorsConfigurationSource()</span><br><span class="line">    val config = CorsConfiguration()</span><br><span class="line">    <span class="comment">//允许跨域</span></span><br><span class="line">    config.allowCredentials = <span class="keyword">true</span></span><br><span class="line">    <span class="comment">//允许向该服务器提交请求的URI,*表示全部</span></span><br><span class="line">    config.addAllowedOrigin(<span class="string">"*"</span>)</span><br><span class="line">    <span class="comment">//允许访问的头信息,*表示全部</span></span><br><span class="line">    config.addAllowedHeader(<span class="string">"*"</span>)</span><br><span class="line">    <span class="comment">//允许的method</span></span><br><span class="line">    config.addAllowedMethod(<span class="string">"OPTIONS"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"HEAD"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"GET"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"PUT"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"POST"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"DELETE"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"PATCH"</span>)</span><br><span class="line">    source.registerCorsConfiguration(<span class="string">"/**"</span>, config)</span><br><span class="line">    <span class="keyword">return</span> CorsFilter(source)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>报错：The ‘Access-Control-Allow-Origin’ header contains multiple values</p>
-<p>解决方案：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zuul.ignored-headers=Access-Control-Allow-Credentials, Access-Control-Allow-Origin</span><br></pre></td></tr></table></figure></p>
-<h4 id="sensitiveHeaders与ignoredHeaders的区别"><a href="#sensitiveHeaders与ignoredHeaders的区别" class="headerlink" title="sensitiveHeaders与ignoredHeaders的区别"></a>sensitiveHeaders与ignoredHeaders的区别</h4><ul>
-<li>sensitiveHeaders会过滤客户端附带的headers</li>
+            <h3 id="黑天鹅"><a href="#黑天鹅" class="headerlink" title="黑天鹅"></a>黑天鹅</h3><p>比喻小概率而影响巨大的事件</p>
+<hr>
+<h3 id="灰犀牛"><a href="#灰犀牛" class="headerlink" title="灰犀牛"></a>灰犀牛</h3><p>比喻大概率且影响巨大的潜在危机。</p>
+<hr>
+<h3 id="房间里的大象"><a href="#房间里的大象" class="headerlink" title="房间里的大象"></a>房间里的大象</h3><p>指某种巨大到不可能被忽视的真相，而事实上如此巨大的大象常常被集体忽略。</p>
+<hr>
+<h3 id="倒U曲线"><a href="#倒U曲线" class="headerlink" title="倒U曲线"></a>倒U曲线</h3><ul>
+<li><p>美国,经济学家,1955年,库兹涅茨</p>
+</li>
+<li><p>收入分配状况随经济发展过程而变化的曲线，是发展经济学中重要的概念，又称作“库兹涅茨曲线”（Kuznets curve）</p>
+</li>
+<li><p>该曲线表明：在经济发展过程开始的时候，尤其是在国民人均收入从最低上升到中等水平时，收入分配状况先趋于恶化，继而随着经济发展，逐步改善，<br>最后达到比较公平的收入分配状况，呈颠倒过来的U的形状。Y轴表示是基尼系数或分配状况，X轴是时间或收入状况。</p>
+</li>
 </ul>
-<p>例如：sensitiveHeaders: X-ABC如果客户端在发请求是带了X-ABC，那么X-ABC不会传递给下游服务。</p>
+<p>关联术语说明:</p>
 <ul>
-<li>ignoredHeaders会过滤服务之间通信附带的headers</li>
+<li>基尼系数(Gini coefficient):在0和1之间,在民众收入中，如基尼系数最大为“1”，最小为“0”。前者表示居民之间的年收入分配绝对不平均（即该年所有收入都集中在一个人手里，其余的国民没有收入），而后者则表示居民之间的该年收入分配绝对平均，即人与人之间收入绝对平等，这基尼系数的实际数值只能介于这两种极端情况，即0～1之间。<br>基尼系数越小，年收入分配越平均，基尼系数越大，年收入分配越不平均。<strong>要注意基尼系数只计算某一时段，如一年的收入，不计算已有财产，因此它不能反映国民的总积累财富分配情况。</strong></li>
 </ul>
-<p>例如：ignoredHeaders: X-ABC如果客户端在发请求是带了X-ABC，那么X-ABC依然会传递给下游服务。但是如果下游服务再转发就会被过滤。</p>
-<h4 id="Read-Timeout"><a href="#Read-Timeout" class="headerlink" title="Read Timeout"></a>Read Timeout</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zuul.host.max-total-connections=3000</span><br><span class="line">zuul.host.max-per-route-connections=1000</span><br><span class="line">zuul.host.socket-timeout-millis=30000</span><br><span class="line">zuul.host.connect-timeout-millis=30000</span><br><span class="line">hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=30000</span><br></pre></td></tr></table></figure>
+
           
         
       
@@ -567,6 +551,181 @@
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.fasterxml.jackson.module<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jackson-module-kotlin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.9.4.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
 <h3 id="because-it-is-a-JDK-dynamic-proxy-that-xxxxx"><a href="#because-it-is-a-JDK-dynamic-proxy-that-xxxxx" class="headerlink" title="because it is a JDK dynamic proxy that xxxxx"></a>because it is a JDK dynamic proxy that xxxxx</h3><p>在单元测试中出现该问题</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@EnableAspectJAutoProxy</span>(proxyTargetClass = <span class="keyword">true</span>)</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AccountApplication</span></span></span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/26/Server/SpringBoot/Zuul/zuul-tutorial/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/02/26/Server/SpringBoot/Zuul/zuul-tutorial/" itemprop="url">Spring Boot Zuul</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-26T20:48:18+08:00">
+                2018-02-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="基本配置文件"><a href="#基本配置文件" class="headerlink" title="基本配置文件"></a>基本配置文件</h3><h4 id="Application-Class"><a href="#Application-Class" class="headerlink" title="Application Class"></a>Application Class</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="meta">@EnableZuulProxy</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ApigatewayApplication</span></span></span><br><span class="line"><span class="class"></span></span><br><span class="line">fun main(args: Array&lt;String&gt;) &#123;</span><br><span class="line">    SpringApplication.run(ApigatewayApplication::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>, *<span class="title">args</span>)</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>@EnableZuulProxy 与 @EnableZuulServer 区别</p>
+<p>@EnableZuulServer,不加载任何反向代理过滤器，不使用Eureka的服务发现来发现其他服务。@EnableZuulServer只在搭建自己的路由服务并不使用Zuul的预构建功能时使用。<br>比如需要使用Zuul来配合其它不是Eureka的服务发现引擎，如Consul。</p>
+<h4 id="application-properties"><a href="#application-properties" class="headerlink" title="application.properties"></a>application.properties</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">server.port=8080</span><br><span class="line"></span><br><span class="line">## remove prefix from URL</span><br><span class="line">zuul.routes.api.stripPrefix=false</span><br><span class="line">## connection limit</span><br><span class="line">zuul.host.max-total-connections=200000</span><br><span class="line">zuul.host.max-per-route-connections=2000</span><br><span class="line"></span><br><span class="line">## 添加静态路由配置</span><br><span class="line">zuul.routes.api-sso.path=/api/sso/gateway/**</span><br><span class="line">zuul.routes.api-sso.url=http://sso-gateway-service</span><br></pre></td></tr></table></figure>
+<p>如果部署在kubernetes上,则不需要eureka,直接使用kube自带发现服务</p>
+<h4 id="route优先级问题"><a href="#route优先级问题" class="headerlink" title="route优先级问题"></a>route优先级问题</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># Email</span><br><span class="line">zuul.routes.api-email.path=/email/**</span><br><span class="line">zuul.routes.api-email.url=http://email-service</span><br><span class="line"># Root</span><br><span class="line">zuul.routes.root.path=/**</span><br><span class="line">zuul.routes.root.url=http://ethex-frontend</span><br></pre></td></tr></table></figure>
+<p>路及匹配的顺序是从上到下</p>
+<h4 id="查看当前route-path配置"><a href="#查看当前route-path配置" class="headerlink" title="查看当前route path配置"></a>查看当前route path配置</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">management.security.enabled=false</span><br></pre></td></tr></table></figure>
+<p>访问 <a href="http://ip/routes/" target="_blank" rel="noopener">http://ip/routes/</a></p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zuul.routes.stripPrefix=false</span><br><span class="line">zuul.routes.root.path=/gateway/**</span><br></pre></td></tr></table></figure>
+<p>访问/gateway/xxx，此时转发的请求是/xx；如果修改为true，则是/gateway/xx</p>
+<p>跳转到本地URL<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zuul.routes.user.path=/user/**</span><br><span class="line">zuul.routes.user.url=forward:/user</span><br></pre></td></tr></table></figure></p>
+<h4 id="跨域问题"><a href="#跨域问题" class="headerlink" title="跨域问题"></a>跨域问题</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function">fun <span class="title">getCORSFilter</span><span class="params">()</span>: CorsFilter </span>&#123;</span><br><span class="line">    val source = UrlBasedCorsConfigurationSource()</span><br><span class="line">    val config = CorsConfiguration()</span><br><span class="line">    <span class="comment">//允许跨域</span></span><br><span class="line">    config.allowCredentials = <span class="keyword">true</span></span><br><span class="line">    <span class="comment">//允许向该服务器提交请求的URI,*表示全部</span></span><br><span class="line">    config.addAllowedOrigin(<span class="string">"*"</span>)</span><br><span class="line">    <span class="comment">//允许访问的头信息,*表示全部</span></span><br><span class="line">    config.addAllowedHeader(<span class="string">"*"</span>)</span><br><span class="line">    <span class="comment">//允许的method</span></span><br><span class="line">    config.addAllowedMethod(<span class="string">"OPTIONS"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"HEAD"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"GET"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"PUT"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"POST"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"DELETE"</span>)</span><br><span class="line">    config.addAllowedMethod(<span class="string">"PATCH"</span>)</span><br><span class="line">    source.registerCorsConfiguration(<span class="string">"/**"</span>, config)</span><br><span class="line">    <span class="keyword">return</span> CorsFilter(source)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>报错：The ‘Access-Control-Allow-Origin’ header contains multiple values</p>
+<p>解决方案：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zuul.ignored-headers=Access-Control-Allow-Credentials, Access-Control-Allow-Origin</span><br></pre></td></tr></table></figure></p>
+<h4 id="sensitiveHeaders与ignoredHeaders的区别"><a href="#sensitiveHeaders与ignoredHeaders的区别" class="headerlink" title="sensitiveHeaders与ignoredHeaders的区别"></a>sensitiveHeaders与ignoredHeaders的区别</h4><ul>
+<li>sensitiveHeaders会过滤客户端附带的headers</li>
+</ul>
+<p>例如：sensitiveHeaders: X-ABC如果客户端在发请求是带了X-ABC，那么X-ABC不会传递给下游服务。</p>
+<ul>
+<li>ignoredHeaders会过滤服务之间通信附带的headers</li>
+</ul>
+<p>例如：ignoredHeaders: X-ABC如果客户端在发请求是带了X-ABC，那么X-ABC依然会传递给下游服务。但是如果下游服务再转发就会被过滤。</p>
+<h4 id="Read-Timeout"><a href="#Read-Timeout" class="headerlink" title="Read Timeout"></a>Read Timeout</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zuul.host.max-total-connections=3000</span><br><span class="line">zuul.host.max-per-route-connections=1000</span><br><span class="line">zuul.host.socket-timeout-millis=30000</span><br><span class="line">zuul.host.connect-timeout-millis=30000</span><br><span class="line">hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=30000</span><br></pre></td></tr></table></figure>
           
         
       
@@ -1781,161 +1940,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/02/05/Docker/docker-settings/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/02/05/Docker/docker-settings/" itemprop="url">Docker 配置</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-05T13:45:19+08:00">
-                2018-02-05
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Docker/" itemprop="url" rel="index">
-                    <span itemprop="name">Docker</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Proxy"><a href="#Proxy" class="headerlink" title="Proxy"></a>Proxy</h3><ul>
-<li>创建代理配置文件<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p /etc/systemd/system/docker.service.d</span><br><span class="line">vim /etc/systemd/system/docker.service.d/https-proxy.conf</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[Service]</span><br><span class="line">Environment="HTTP_PROXY=socks5://127.0.0.1:2010/" "HTTPS_PROXY=socks5://127.0.0.1:2010/" "NO_PROXY=localhost,127.0.0.1,docker.io,yanzhe919.mirror.aliyuncs.com,99nkhzdo.mirror.aliyuncs.com,*.aliyuncs.com,*.mirror.aliyuncs.com,registry.docker-cn.com,hub.c.163.com,hub-auth.c.163.com,"</span><br></pre></td></tr></table></figure>
-<ul>
-<li>重启docker服务</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl restart docker</span><br></pre></td></tr></table></figure>
-<h3 id="取消sudo权限"><a href="#取消sudo权限" class="headerlink" title="取消sudo权限"></a>取消sudo权限</h3><p>为什么需要创建docker用户组？<br>Docker守候进程绑定的是一个unix socket，而不是TCP端口。这个套接字默认的属主是root，其他是用户可以使用sudo命令来访问这个套接字文件。因为这个原因，docker服务进程都是以root帐号的身份运行的。</p>
-<p>为了避免每次运行docker命令的时候都需要输入sudo，可以创建一个docker用户组，并把相应的用户添加到这个分组里面。当docker进程启动的时候，会设置该套接字可以被docker这个分组的用户读写。这样只要是在docker这个组里面的用户就可以直接执行docker命令了。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo usermod -aG docker username</span><br></pre></td></tr></table></figure>
-<p>执行测试命令<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker info</span><br></pre></td></tr></table></figure></p>
-<p>如果报错：dial unix /var/run/docker.sock: connect: permission denied<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo chmod a+rw /var/run/docker.sock</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1987,7 +1991,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">509</span>
+                <span class="site-state-item-count">510</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1998,7 +2002,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">232</span>
+                <span class="site-state-item-count">233</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2009,7 +2013,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">576</span>
+                <span class="site-state-item-count">577</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
