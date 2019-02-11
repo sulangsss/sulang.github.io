@@ -284,6 +284,282 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/" itemprop="url">Distributed Transaction Solution</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-13T23:22:18+08:00">
+                2019-01-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
+                    <span itemprop="name">DistributedSystem</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/Transaction/" itemprop="url" rel="index">
+                    <span itemprop="name">Transaction</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/ms-app-structure-example.png">
+<p>在微服务架构中，有一个database per service的模式，这个模式就是每一个服务一个数据库。 这样可以保证微服务独立开发，独立演进，独立部署，独立团队。</p>
+<p>由于对外提供的服务是由一组相互协作的微服务所组成，在分布式环境下由于各个服务访问的数据是相互分离的，服务之间不能靠数据库来保证事务一致性。这就需要在应用层面提供一个协调机制，来保证一组事务执行要么成功，要么失败。</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/2pc-example.png">
+<p>由于隔离性互斥的要求，在事务执行过程中，所有的资源都是被锁定的，这种情况只适合执行时间确定的短事务。但是为了保证分布式事务的一致性，大都是采用串行化的隔离级别来保证事务一致性，这样会降低系统的吞吐。但因为2PC协议的成本比较高，又有全局锁的问题，性能会比较差。现在大家基本上不会采用这种强一致解决方案。</p>
+<p>微服务事务一致性建议：</p>
+<ul>
+<li>微服务内：聚合通过数据库事务保证强一致。</li>
+<li>微服务间：最终一致。</li>
+</ul>
+<hr>
+<h3 id="TCC"><a href="#TCC" class="headerlink" title="TCC"></a>TCC</h3><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/tcc-example.png">
+<p>TCC名字的由来是其中包含了try，confirm，cancel三个操作。</p>
+<p>与2PC相比，TCC位于业务服务层，没有单独的准备阶段，Try操作可以灵活选择业务资源锁的粒度。TCC是通过最终一致性来解决系统性能问题的这个设计，对我们设计抉择有很大的启发。<strong>有些时候系统的技术问题是可以通过业务建模的方式来解决的。</strong></p>
+<blockquote>
+<p>推荐阅读书籍：领域驱动设计和实现领域驱动设计</p>
+</blockquote>
+<h4 id="消息驱动方式"><a href="#消息驱动方式" class="headerlink" title="消息驱动方式"></a>消息驱动方式</h4>
+<p>消息一致性方案是通过消息中间件保证上下游应用数据操作的一致性。基本思路是将本地操作和发送消息放在一个事务中，下游应用向消息系统订阅该消息，收到消息后执行相应操作。本质上是依靠消息的重试机制，达到最终一致性。</p>
+<p>消息驱动的缺点是：耦合度高，需要在业务系统中引入MQ，导致系统复杂度增加。</p>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><p>A账户往B账户汇款100元，流程如下：</p>
+
+<p>汇款服务和收款服务分别需要实现，Try-Confirm-Cancel接口，并在业务初始化阶段将其注入到TCC事务管理器中。</p>
+<h4 id="汇款服务"><a href="#汇款服务" class="headerlink" title="汇款服务"></a>汇款服务</h4><p>Try：</p>
+<ul>
+<li>检查A账户有效性，即查看A账户的状态是否为“转帐中”或者“冻结”；</li>
+<li>检查A账户余额是否充足；</li>
+<li>从A账户中扣减100元，并将状态置为“转账中”；</li>
+<li>预留扣减资源，将从A往B账户转账100元这个事件存入消息或者日志中；</li>
+</ul>
+<p>Confirm：不做任何操作</p>
+<p>Cancel：</p>
+<ul>
+<li>A账户增加100元；</li>
+<li>从日志或者消息中，释放扣减资源。</li>
+</ul>
+<h4 id="收款服务"><a href="#收款服务" class="headerlink" title="收款服务"></a>收款服务</h4><p>Try：</p>
+<ul>
+<li>检查B账户账户是否有效；</li>
+</ul>
+<p>Confirm：</p>
+<ul>
+<li>读取日志或者消息，B账户增加100元；</li>
+<li>从日志或者消息中，释放扣减资源；</li>
+</ul>
+<p>Cancel：不做任何操作。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>由此可以看出，TCC模型对业务的侵入强，改造的难度大。</p>
+<hr>
+<h3 id="Sage"><a href="#Sage" class="headerlink" title="Sage"></a>Sage</h3><p>Saga其实是30年前的一篇数据库论文里提到的一个概念。在论文中一个Saga事务就是一个长期运行的事务，这个事务是由多个本地事务所组成，每个本地事务有相应的执行模块和补偿模块，当Saga事务中的任意一个本地事务出错了，可以通过调用相关事务对应的补偿方法恢复，达到事务的最终一致性。</p>
+<p>在分布式系统中由于网络请求可能的延时，在Caitie的论文中对被Saga调用的服务提出两点要求：</p>
+<ul>
+<li>超时重试的机制，需要Saga调用的服务支持幂等。在服务请求的过程中，可能会出现超时重试的情况，我们需要通过幂等来避免多次请求所带来的问题。</li>
+<li>重试取消的机制，补偿可交换原则是指Saga并行处理的过程中，如果发生了超时重试事件之后，并进行了补偿的操作，那么补偿操作是直接生效的。</li>
+</ul>
+<blockquote>
+<p>主要参考了Caitie McCaffrey在分布式Saga论文，以及Chris Richardson的研究</p>
+</blockquote>
+<h4 id="Theory"><a href="#Theory" class="headerlink" title="Theory"></a>Theory</h4><p>Saga模型把一个分布式事务拆分为多个本地事务，每个本地事务都有相应的执行模块和补偿模块（ TCC中的Confirm和Cancel）。当Saga事务中任意一个本地事务出错时，可以通过调用相关的补偿方法恢复之前的事务，达到事务最终的一致性。</p>
+<p>当每个Saga子事务 T1, T2, …, Tn 都有对应的补偿定义 C1, C2, …, Cn-1,那么Saga系统可以保证：</p>
+<ul>
+<li>子事务序列 T1, T2, …, Tn得以完成 (最佳情况)；</li>
+<li>或者序列 T1, T2, …, Tj, Cj, …, C2, C1, 0 &lt; j &lt; n, 得以完成。</li>
+</ul>
+<p>由于Saga模型中没有Prepare阶段，因此事务间不能保证隔离性，当多个Saga事务操作同一资源时，就会产生更新丢失、脏数据读取等问题，这时需要在业务层控制并发，例如：</p>
+<ul>
+<li>在应用层面加锁；</li>
+<li>应用层面预先冻结资源。</li>
+</ul>
+<p>Saga恢复方式：</p>
+<ul>
+<li>向后恢复：补偿所有已完成的事务，如果任一子事务失败；</li>
+<li>向前恢复：重试失败的事务，假设每个子事务最终都会成功。</li>
+</ul>
+<p>显然，向前恢复没有必要提供补偿事务，如果你的业务中，子事务(最终)总会成功，或补偿事务难以定义或不可能，向前恢复更符合你的需求。理论上补偿事务永不失败，然而，在分布式世界中，服务器可能会宕机、网络可能会失败，甚至数据中心也可能会停电，这时需要提供故障恢复后回退的机制，比如人工干预。</p>
+<hr>
+<h4 id="ACID与Sage"><a href="#ACID与Sage" class="headerlink" title="ACID与Sage"></a>ACID与Sage</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/acid-and-sage.png">
+<p>为了满足重试取消的机制，需要我们在设计系统的过程中保留所有的事务数据。但是从上图可知，Saga模型只支持ACD，不提供隔离性的保证。</p>
+<p><strong>如果Sage缺少了隔离性会带来什么问题？</strong></p>
+<ul>
+<li>两个Sage事务同时操作一个资源会出现数据语义不一致的情况。</li>
+<li>两个Sage事务同时操作一个订单，彼此操作会覆盖对比(更新丢失)。</li>
+<li>两个Sage事务同时访问扣款账号，无法看到退款(脏读取问题)。</li>
+<li>在一个Sage事务内，数据被其他事务修改前后的读取值不一致(模糊读取问题)。</li>
+</ul>
+<p><strong>如何应对隔离性问题？</strong></p>
+<p>隔离的本质是控制并发，防止并发事务操作相同资源而引起结果错乱。</p>
+<ul>
+<li>在应用层面加入逻辑锁的逻辑。</li>
+<li>Session层面，Session以及锁的机制保证串行化操作资源。</li>
+<li>业务层面采用预先冻结资金的方式隔离此部分资金。</li>
+<li>业务操作过程中通过及时读取当前状态的方式获取更新。</li>
+</ul>
+<hr>
+<h4 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h4><ul>
+<li><p>Orchestration-Base Coordination - 集中式：集中式协调器负责服务调用以及事务协调。</p>
+</li>
+<li><p>Choreography-Base Coordination - 分布式：通过事件驱动的方式来进行事务协调。</p>
+</li>
+</ul>
+<hr>
+<h3 id="FESCAR-Fast-amp-Easy-Commit-And-Rollback"><a href="#FESCAR-Fast-amp-Easy-Commit-And-Rollback" class="headerlink" title="FESCAR - Fast &amp; Easy Commit And Rollback"></a>FESCAR - Fast &amp; Easy Commit And Rollback</h3><p>假设某个业务共有 3 个模块，在传统的单体应用中，每个业务模块可以使用单个的本地数据源，这样本地事务自然就可以保证数据一致性。而在微服务架构中，业务模块会被设计成为3个不同数据源上的3个服务，每个服务对应一个数据库，本地事务当然也可以保证每个服务中的数据一致性，但是扩展到整个应用、整个业务逻辑范围来看，情况如何呢？</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-example.png">
+<p>FESCAR解决方案是：</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-solution.png">
+<p>分布式事务是一个全局事务，由一批Branch Transation组成，通常Branch Transation只是本地事务。</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-global-transaction.png">
+<h4 id="三大基本组件"><a href="#三大基本组件" class="headerlink" title="三大基本组件"></a>三大基本组件</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-component.png">
+<ul>
+<li>Transaction Coordinator(TC)：维护全局和分支事务的状态，驱动全局事务提交与回滚。</li>
+<li>Transaction Manager™：定义全局事务的范围：开始、提交或回滚全局事务。</li>
+<li>Resource Manager(RM)：管理分支事务处理的资源，与TC通信以注册分支事务并报告分支事务的状态，并驱动分支事务提交或回滚。</li>
+</ul>
+<h4 id="管理分布式事务的典型生命周期"><a href="#管理分布式事务的典型生命周期" class="headerlink" title="管理分布式事务的典型生命周期"></a>管理分布式事务的典型生命周期</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-transaction-lifecycle.png">
+<ol>
+<li>TM 要求 TC 开始新的全局事务，TC 生成表示全局事务的 XID。</li>
+<li>XID 通过微服务的调用链传播。</li>
+<li>RM 在 TC 中将本地事务注册为 XID 的相应全局事务的分支。</li>
+<li>TM 要求 TC 提交或回滚 XID 的相应全局事务。</li>
+<li>TC 驱动 XID 的相应全局事务下的所有分支事务，完成分支提交或回滚。</li>
+</ol>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/" target="_blank" rel="noopener">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/</a><br><a href="https://www.infoq.cn/article/JYa9UEU*CrBu8WHIQywy" target="_blank" rel="noopener">https://www.infoq.cn/article/JYa9UEU*CrBu8WHIQywy</a><br><a href="https://dbaplus.cn/news-159-2152-1.html" target="_blank" rel="noopener">https://dbaplus.cn/news-159-2152-1.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2270,149 +2546,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/26/读书笔记/标准差/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/26/读书笔记/标准差/" itemprop="url">StandardDeviation 标准差</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-26T16:22:22+08:00">
-                2018-12-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书/" itemprop="url" rel="index">
-                    <span itemprop="name">读书</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>标准差（StandardDeviation），在概率统计中最常使用作为统计分布程度（statisticaldispersion）上的测量。</p>
-<p>标准差定义是总体各单位标准值与其平均数离差平方的算术平均数的平方根。它反映组内个体间的离散程度。测量到分布程度的结果，原则上具有两种性质</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2475,7 +2608,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">233</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2486,7 +2619,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">578</span>
+                <span class="site-state-item-count">580</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

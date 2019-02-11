@@ -110,7 +110,7 @@
 <meta property="og:description" content="AtomicLongAtomicLong是JUC包提供的原子性操作类，其内部通过CAS保证了对计数的原子性更新操作。  java.util.concurrent.atomi  12345678/*** Atomically increments by one the current value.** @return the previous value*/public final long get">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://sulangsss.github.io/2019/02/01/Java/Advance/AtomicLong和LongAddr/LongAddr-CAS.png">
-<meta property="og:updated_time" content="2019-02-01T04:34:23.932Z">
+<meta property="og:updated_time" content="2019-02-11T02:44:26.314Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java AtomicLong 和 LongAdder">
 <meta name="twitter:description" content="AtomicLongAtomicLong是JUC包提供的原子性操作类，其内部通过CAS保证了对计数的原子性更新操作。  java.util.concurrent.atomi  12345678/*** Atomically increments by one the current value.** @return the previous value*/public final long get">
@@ -406,7 +406,7 @@
 <img src="/2019/02/01/Java/Advance/AtomicLong和LongAddr/LongAddr-CAS.png">
 <p>在LongAdder的底层实现中，首先有一个base值，刚开始多线程来不停的累加数值，都是对base进行累加的，比如刚开始累加成了base = 5。接着如果发现并发更新的线程数量过多，就会开始施行分段CAS的机制，也就是内部会搞一个Cell数组，每个数组是一个数值分段。</p>
 <p>这时，让大量的线程分别去对不同Cell内部的value值进行CAS累加操作，这样就把CAS计算压力分散到了不同的Cell分段数值中了。这样就可以大幅度的降低多线程并发更新同一个数值时出现的无限循环的问题，大幅度提升了多线程并发更新数值的性能和效率。</p>
-<p>而且他内部实现了自动分段迁移的机制，也就是如果某个Cell的value执行CAS失败了，那么就会自动去找另外一个Cell分段内的value值进行CAS操作。这样也解决了线程空旋转、自旋不停等待执行CAS操作的问题，让一个线程过来执行CAS时可以尽快的完成这个操作。</p>
+<p>而且LongAdder内部实现了自动分段迁移的机制，也就是如果某个Cell的value执行CAS失败了，那么就会自动去找另外一个Cell分段内的value值进行CAS操作。这样也解决了线程空旋转、自旋不停等待执行CAS操作的问题，让一个线程过来执行CAS时可以尽快的完成这个操作。</p>
 <p>最后，如果你要从LongAdder中获取当前累加的总值，就会把base值和所有Cell分段数值加起来返回给你。</p>
 <h4 id="Analyze-Source-Code"><a href="#Analyze-Source-Code" class="headerlink" title="Analyze Source Code"></a>Analyze Source Code</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Number of CPUS, to place bound on table size */</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NCPU = Runtime.getRuntime().availableProcessors();</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Table of cells. When non-null, size is a power of 2.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> Cell[] cells;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Base value, used mainly when there is no contention, but also as</span></span><br><span class="line"><span class="comment">* a fallback during table initialization races. Updated via CAS.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> <span class="keyword">long</span> base;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Spinlock (locked via CAS) used when resizing and/or creating Cells.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> <span class="keyword">int</span> cellsBusy;</span><br><span class="line"></span><br><span class="line"><span class="meta">@sun</span>.misc.Contended <span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Cell</span> </span>&#123;</span><br><span class="line">    <span class="keyword">volatile</span> <span class="keyword">long</span> value;</span><br><span class="line">    Cell(<span class="keyword">long</span> x) &#123; value = x; &#125;</span><br><span class="line">    <span class="function"><span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">cas</span><span class="params">(<span class="keyword">long</span> cmp, <span class="keyword">long</span> val)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> UNSAFE.compareAndSwapLong(<span class="keyword">this</span>, valueOffset, cmp, val);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Unsafe mechanics</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> sun.misc.Unsafe UNSAFE;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> valueOffset;</span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            UNSAFE = sun.misc.Unsafe.getUnsafe();</span><br><span class="line">            Class&lt;?&gt; ak = Cell.class;</span><br><span class="line">            valueOffset = UNSAFE.objectFieldOffset(ak.getDeclaredField(<span class="string">"value"</span>));</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> Error(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>LongAdder维护了一个延迟初始化的原子性更新数组（默认情况下Cell数组是null）和一个基值变量base，由于Cells占用内存是相对比较大的，所以一开始并不创建，而是在需要时候在创建，也就是惰性创建。</p>
@@ -422,7 +422,7 @@
 </ul>
 <hr>
 <h3 id="Refference"><a href="#Refference" class="headerlink" title="Refference"></a>Refference</h3><blockquote>
-<p><a href="http://ifeve.com/juc1/" target="_blank" rel="noopener">http://ifeve.com/juc1/</a><br><a href="https://juejin.im/post/5c062c87e51d451dbc21801b" target="_blank" rel="noopener">https://juejin.im/post/5c062c87e51d451dbc21801b</a><br>[Java 8 Performance Improvements: LongAdder vs AtomicLong]<a href="http://blog.palominolabs.com/2014/02/10/java-8-performance-improvements-longadder-vs-atomiclong/" target="_blank" rel="noopener">http://blog.palominolabs.com/2014/02/10/java-8-performance-improvements-longadder-vs-atomiclong/</a></p>
+<p><a href="http://ifeve.com/juc1/" target="_blank" rel="noopener">http://ifeve.com/juc1/</a><br><a href="https://juejin.im/post/5c062c87e51d451dbc21801b" target="_blank" rel="noopener">https://juejin.im/post/5c062c87e51d451dbc21801b</a><br><a href="http://blog.palominolabs.com/2014/02/10/java-8-performance-improvements-longadder-vs-atomiclong/" target="_blank" rel="noopener">http://blog.palominolabs.com/2014/02/10/java-8-performance-improvements-longadder-vs-atomiclong/</a></p>
 </blockquote>
 
       
@@ -469,6 +469,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/02/01/读书笔记/行业/金融/RSI/" rel="prev" title="RSI是什么？">
+                RSI是什么？ <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -557,7 +561,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">233</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -568,7 +572,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">578</span>
+                <span class="site-state-item-count">580</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
