@@ -109,7 +109,7 @@
 <meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
 <meta property="og:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-12-10T14:59:43.594Z">
+<meta property="og:updated_time" content="2019-03-12T03:13:36.578Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java Aeron">
 <meta name="twitter:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
@@ -441,9 +441,19 @@
 </blockquote>
 <h4 id="Media-Driver-on-Docker"><a href="#Media-Driver-on-Docker" class="headerlink" title="Media Driver on Docker"></a>Media Driver on Docker</h4><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> java:openjdk-<span class="number">8</span>-alpine</span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> init.sh /init.sh</span></span><br><span class="line"><span class="bash">COPY boot.jar /java/boot.jar</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">RUN chmod +x /init_shm.sh</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">ENTRYPOINT [<span class="string">"/init.sh"</span>]</span></span><br><span class="line"><span class="bash">CMD [<span class="string">"1G"</span>, <span class="string">"/java/boot.jar"</span>]</span></span><br></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"init shm size: <span class="variable">$1</span>"</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"args: <span class="variable">$@</span>"</span></span><br><span class="line"></span><br><span class="line">shm_dir=/dev/shm</span><br><span class="line">umount <span class="variable">$shm_dir</span></span><br><span class="line">mount -t tmpfs -o rw,nosuid,nodev,noexec,relatime,size=<span class="variable">$1</span> shm <span class="variable">$shm_dir</span></span><br><span class="line"></span><br><span class="line"><span class="comment">## running java process</span></span><br><span class="line">java -jar <span class="variable">$2</span></span><br></pre></td></tr></table></figure>
+<hr>
 <h3 id="Unit-Testing-Attention"><a href="#Unit-Testing-Attention" class="headerlink" title="Unit Testing Attention"></a>Unit Testing Attention</h3><ul>
 <li>在每个单元测试用例执行前，最好重启并清空MediaServer缓冲区，否则遗留的数据可能会被下一个用例读取到。</li>
 </ul>
+<hr>
+<h3 id="MediaServer-Code"><a href="#MediaServer-Code" class="headerlink" title="MediaServer Code"></a>MediaServer Code</h3><h4 id="LowLatency"><a href="#LowLatency" class="headerlink" title="LowLatency"></a>LowLatency</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">val ctx = MediaDriver.Context()</span><br><span class="line">        .termBufferSparseFile(<span class="keyword">false</span>)</span><br><span class="line">        .threadingMode(ThreadingMode.DEDICATED)</span><br><span class="line">        .conductorIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">        .receiverIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">        .senderIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">ctx.errorHandler &#123;</span><br><span class="line">    it.printStackTrace()</span><br><span class="line">&#125;</span><br><span class="line">MediaDriver.launch(ctx)</span><br></pre></td></tr></table></figure>
+<p>JVM参数</p>
+<ul>
+<li>-XX:+UnlockDiagnosticVMOptions</li>
+<li>-XX:GuaranteedSafepointInterval=300000</li>
+<li>-XX:BiasedLockingStartupDelay=0 </li>
+</ul>
+<hr>
 <h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
 <p><a href="https://github.com/real-logic/aeron/wiki/Best-Practices-Guide" target="_blank" rel="noopener">https://github.com/real-logic/aeron/wiki/Best-Practices-Guide</a></p>
 </blockquote>
@@ -481,8 +491,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/10/14/Architecture/What's Architechture Design/" rel="next" title="What's Architecture Design">
-                <i class="fa fa-chevron-left"></i> What's Architecture Design
+              <a href="/2018/10/16/Java/Maven/Command/" rel="next" title="Maven Configuration">
+                <i class="fa fa-chevron-left"></i> Maven Configuration
               </a>
             
           </div>
@@ -491,8 +501,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/10/16/Java/Maven/Command/" rel="prev" title="Maven Configuration">
-                Maven Configuration <i class="fa fa-chevron-right"></i>
+              <a href="/2018/10/19/Java/Kotlin/Annotation/" rel="prev" title="Kotlin Annotation">
+                Kotlin Annotation <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -571,7 +581,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">510</span>
+                <span class="site-state-item-count">515</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -635,7 +645,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-Overview"><span class="nav-number">1.</span> <span class="nav-text">Design Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OS-Related-Considerations"><span class="nav-number">2.</span> <span class="nav-text">OS Related Considerations</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux"><span class="nav-number">2.1.</span> <span class="nav-text">Linux</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Windows"><span class="nav-number">2.2.</span> <span class="nav-text">Windows</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mac-Darwin"><span class="nav-number">2.3.</span> <span class="nav-text">Mac/Darwin</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Media-Driver"><span class="nav-number">3.</span> <span class="nav-text">Media Driver</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-to-Run-Aeron-Media-Driver"><span class="nav-number">3.1.</span> <span class="nav-text">How to Run Aeron Media Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shm-on-Linux-System"><span class="nav-number">3.2.</span> <span class="nav-text">shm on Linux System</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Media-Driver-on-Docker"><span class="nav-number">3.3.</span> <span class="nav-text">Media Driver on Docker</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unit-Testing-Attention"><span class="nav-number">4.</span> <span class="nav-text">Unit Testing Attention</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refer"><span class="nav-number">5.</span> <span class="nav-text">Refer</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-Overview"><span class="nav-number">1.</span> <span class="nav-text">Design Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OS-Related-Considerations"><span class="nav-number">2.</span> <span class="nav-text">OS Related Considerations</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux"><span class="nav-number">2.1.</span> <span class="nav-text">Linux</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Windows"><span class="nav-number">2.2.</span> <span class="nav-text">Windows</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mac-Darwin"><span class="nav-number">2.3.</span> <span class="nav-text">Mac/Darwin</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Media-Driver"><span class="nav-number">3.</span> <span class="nav-text">Media Driver</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-to-Run-Aeron-Media-Driver"><span class="nav-number">3.1.</span> <span class="nav-text">How to Run Aeron Media Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shm-on-Linux-System"><span class="nav-number">3.2.</span> <span class="nav-text">shm on Linux System</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Media-Driver-on-Docker"><span class="nav-number">3.3.</span> <span class="nav-text">Media Driver on Docker</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unit-Testing-Attention"><span class="nav-number">4.</span> <span class="nav-text">Unit Testing Attention</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MediaServer-Code"><span class="nav-number">5.</span> <span class="nav-text">MediaServer Code</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#LowLatency"><span class="nav-number">5.1.</span> <span class="nav-text">LowLatency</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refer"><span class="nav-number">6.</span> <span class="nav-text">Refer</span></a></li></ol></div>
             
 
           </div>

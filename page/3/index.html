@@ -284,6 +284,1146 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/Collectors/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/05/Java/JVM/Basic/Collectors/" itemprop="url">Introduction to JVM Collectors</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-05T16:20:22+08:00">
+                2019-01-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>GC需要完成的三件事：</p>
+<ul>
+<li>哪些内存需要回收？</li>
+<li>什么时候回收？</li>
+<li>如何回收？</li>
+</ul>
+<hr>
+<h3 id="Terms"><a href="#Terms" class="headerlink" title="Terms"></a>Terms</h3><ul>
+<li>Parallel，并行：多条垃圾收集线程并行工作，但此时用户线程处于等待状态。</li>
+<li>Concurrent，并发：用户线程与垃圾收集线程同时执行，用户程序继续运行，而垃圾收集程序运行在另一个CPU上。</li>
+</ul>
+<hr>
+<h3 id="Arithmetic"><a href="#Arithmetic" class="headerlink" title="Arithmetic"></a>Arithmetic</h3><h4 id="Mark-Sweep-标记-清除"><a href="#Mark-Sweep-标记-清除" class="headerlink" title="Mark-Sweep - 标记-清除"></a>Mark-Sweep - 标记-清除</h4><p>这是最基础的收集算法，顾名思义，算法分为两个阶段：</p>
+<ul>
+<li>标记：标记处所有需要回收的对象。</li>
+<li>清除：统一回收所有被标记的对象。</li>
+</ul>
+<p>算法缺陷：</p>
+<ul>
+<li>效率问题，标记和清除两个过程的效率不高。</li>
+<li>空间问题，标记清除之后会产生大量不连续的内存碎片。<blockquote>
+<p>过多的内存碎片可能会造成后续在分配比较大的对象时，无法找到足够的连续内存而不得不提前触发另一次GC。</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="Copying-复制"><a href="#Copying-复制" class="headerlink" title="Copying - 复制"></a>Copying - 复制</h4><p>该算法的出现是为了解决Mark-Sweep的效率问题。</p>
+<p>它将可用内存按容量划分为大小相等的两块，每次只使用其中的一块。当这一块的内存用完了，就将还存活着的对象复制到另一块内存上面，然后再把已使用过的内存空间一次性清理掉。</p>
+<p>这样每次都只是对整个半区进行内存回收，内存分配时也不需要考虑内存碎片等复杂情况，只要移动堆顶指针，按顺序分配内存即可，实现简单，运行高效。缺点是可用的内存空间缩小了一半。</p>
+<h4 id="Mark-Compact-标记-整理"><a href="#Mark-Compact-标记-整理" class="headerlink" title="Mark-Compact - 标记-整理"></a>Mark-Compact - 标记-整理</h4><p>Copying算法在对象存活率较高时就要进行比较多的复制操作，效率将会降低。</p>
+<p>更重要的是，如果不想浪费50%的空间，就需要额外的空间进行分配担保，以应对被使用的内存中所有对象都100%存活的极端情况，所以在老年代一般不能直接选用这种算法。</p>
+<p>根据老年代的特点，提出了Mark-Compact算法，标记过程与Mark-Sweep算法一样，但是清理过程不一样。</p>
+<p>Mark-Compact算法的清理过程是<strong>让所有存活的对象都向一端移动，然后直接清理掉边界以外的内存</strong>。</p>
+<img src="/2019/01/05/Java/JVM/Basic/Collectors/mark-compact-example.png">
+<h4 id="Generational-Collection-分代收集"><a href="#Generational-Collection-分代收集" class="headerlink" title="Generational Collection - 分代收集"></a>Generational Collection - 分代收集</h4><p>这种算法并没有什么新的思想，只是根据对象存活周期的不同进行划分内存块。一般把Java堆分为新生代和老年代，这样就可以根据各个年代的特点采用适当的收集算法。</p>
+<p>在新生代中，每次GC时都发现有大批对象死去，只有少量对象存活下来，那就选用复制算法，只需要付出少量存活对象的复制成本就可以完成回收。</p>
+<p>在老年代中，因为对象的存活率高，没有额外空间对它进行分配担保，就必须使用Mark-Sweep或者Mark-Compact算法进行回收。</p>
+<hr>
+<h3 id="Collectors"><a href="#Collectors" class="headerlink" title="Collectors"></a>Collectors</h3><p>如果说收集算法是内存回收的方法论，那么垃圾回收器就是内存回收的具体实现。</p>
+<img src="/2019/01/05/Java/JVM/Basic/Collectors/collectors-category.png">
+<ul>
+<li>两个收集器之间存在连线：它们之间可以搭配使用。</li>
+<li>虚拟机所处的区域：它属于新生代收集器还是老年代收集器。</li>
+</ul>
+<h4 id="Serial"><a href="#Serial" class="headerlink" title="Serial"></a>Serial</h4><p>Serial是最基本的，发展历史最悠久的Collector，在JDK 1.3.1之前，是虚拟机收集新生代的唯一选择。</p>
+<p>它是一个单线程的Collector，但它的“单线程”的意义并不仅仅说明它只会使用一个CPU或一条线程去完成GC，更重要的是在它进行GC时，必须暂停其他所有的工作线程(应用程序的线程)，直到它GC结束。</p>
+
+<p>单线程是它的劣势，也是它的优势。</p>
+<ul>
+<li>简单而高效</li>
+<li>对于限定单个CPU的环境来说，Serial没有线程交互开销，专心做GC工作自然可以获得最高的单线程GC效率。</li>
+<li>在桌面应用场景中，Serial是JVM运行在Client模式下的一个很好的选择。</li>
+</ul>
+<h4 id="Serial-Old"><a href="#Serial-Old" class="headerlink" title="Serial Old"></a>Serial Old</h4><p>Serial Old是Serial的老年代版本，同样以单线程GC。它主要用于Client模式。</p>
+<p>如果用于Sever模式，一种用途是在JDK 1.5之前版本中与Parallel Scavenge搭配使用，另一种用途就是作为CMS的后备预案，在并发收集发生Concurrent Mode Failure时使用。</p>
+
+<h4 id="ParNew"><a href="#ParNew" class="headerlink" title="ParNew"></a>ParNew</h4><p>ParNew其实是Serial的多线程版本，除了以多线程GC外，其余行为和设置与Serial是一样的，比如控制参数(-XX:SuvivorRatio)、收集算法、STW对象分配规则、回收策略等等。</p>
+<img src="/2019/01/05/Java/JVM/Basic/Collectors/parnew.png">
+<p>ParNew除了多线程GC之外，其他与Serial相比并没有太多创新之处，但它却是许多运行在Server模式下JVM首选的新生代Collector，其中还有一个与性能无关但很重要的原因是，除了Serial外，目前只有它可以与CMS配合使用。</p>
+<h4 id="Parallel-Scavenge"><a href="#Parallel-Scavenge" class="headerlink" title="Parallel Scavenge"></a>Parallel Scavenge</h4><p>Parallel Scavenge是一个新生代的Collector，它使用的收集算法是Copying，以多线程进行GC。</p>
+<p>它的目标是达到一个可控制的吞吐量(Throughput)，CMS是尽可能地缩短在GC时用户线程的停顿时间。</p>
+<blockquote>
+<p>吞吐量：CPU用于运行用户代码的时间与CPU总消耗时间的比值，即吞吐量=运行用户代码时间 / (运行用户代码时间 + GC时间)。例如，虚拟机运行100分钟，其中GC花费了1分钟，那么吞吐量就是99%。</p>
+</blockquote>
+<p>停顿时间越短就越适合需要与用户交互的程序，良好的响应速度能提升用户体验，而高吞吐量则可以高效率地利用CPU，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务。</p>
+
+<p>JVM调优关键参数：</p>
+<ul>
+<li>-XX:MaxGCPauseMillis：尽可能地保证GC的时间不超过该值。</li>
+<li>-XX:GCTimeRatio：范围是0~100，GC时间占总时间的比率。例如，设置为19，即GC时间的最大占比为5%(1 / (1+19))，默认值为99，即GC最大占比为1%(1 / (1+99))</li>
+<li>-XX:+UseAdaptiveSizePolicy：不需要手工指定新生代的大小、Eden与Survivor比例、晋升老年代对象年龄等等细节参数，JVM根据当前系统的运行情况进行动态调整这些参数以提供最适合的停顿时间和最大的吞吐量(GC自适应的调节策略 GC Ergonomics)。</li>
+</ul>
+<h4 id="Parallel-Old"><a href="#Parallel-Old" class="headerlink" title="Parallel Old"></a>Parallel Old</h4><p>Parallel Old是Parallel Scavenger的老年代版本，以多线程GC，使用Mark-Compact算法。</p>
+
+<h4 id="CMS-Concurrent-Mark-Sweep"><a href="#CMS-Concurrent-Mark-Sweep" class="headerlink" title="CMS - Concurrent Mark Sweep"></a>CMS - Concurrent Mark Sweep</h4><p>Concurrent Low Pause Collector</p>
+<p>CMS是一种期望得到最短GC时间为目标的Collector。CMS是基于Mark-Sweep实现的，整个过程分为以下几个步骤：</p>
+<ul>
+<li>初始标记(STW) - CMS initial mark，仅仅只是标记一下GC Roots能直接关联到的对象，速度很快。</li>
+<li>并发标记 - CMS concurrent mark，进行GC Roots Tracing的过程。</li>
+<li>重新标记(STW) - CMS remark，为了修正并发标记期间因用户程序继续运行而导致标记产生变动的那一部分对象的标记记录，一般停顿时间比初始标记长一些，但远比并发标记短。</li>
+<li>并发清除 - CMS concurrent sweep</li>
+</ul>
+<img src="/2019/01/05/Java/JVM/Basic/Collectors/cms.png">
+<p>整个过程中最耗时的并发标记和并发清除过程都可以与用户线程一起运行。所以，从总体上来说，CMS内存回收过程与用户线程一起并发执行的。</p>
+<p>与CMS配合使用的Collector：</p>
+<ul>
+<li>Young Generation：Serial、ParNew</li>
+<li>Tenured Generation：SerialOld</li>
+</ul>
+<p>CMS缺点：</p>
+<ul>
+<li>对CPU资源非常敏感。在并发阶段，它虽然不会导致用户线程停顿，但是会因为占用一部分CPU资源而导致应用程序慢，总吞吐量会降低。CMS默认启动的GC线程数为(CPU + 3) / 4。</li>
+<li>无法处理浮动垃圾(Floating Garbage)，可能出现Concurrent Mode Failure失败而导致另一次Full GC的产生。</li>
+<li>空间碎片，因为它是基于Mark-Sweep算法实现的。</li>
+</ul>
+<h4 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h4>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/G1/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/05/Java/JVM/Basic/G1/" itemprop="url">Introduction to G1</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-05T16:20:22+08:00">
+                2019-01-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>在G1提出之前，经典的垃圾收集器主要有三种类型：串行收集器、并行收集器和并发标记清除收集器，这三种收集器分别可以是满足Java应用三种不同的需求：内存占用及并发开销最小化、应用吞吐量最大化和应用GC暂停时间最小化。但是，上述三种垃圾收集器都有几个共同的问题：</p>
+<ul>
+<li>所有针对老年代的操作必须扫描整个老年代空间；</li>
+<li>年轻地和老年代是独立的连续的内存块，必须先决定年轻代和老年代在虚拟地址空间的位置。</li>
+</ul>
+<p>G1是一种服务器端的垃圾收集器，应用在多处理器和大容量内存环境中，在实现高吞吐量的同时，尽可能的满足垃圾收集暂停时间的要求。它是专门针对以下应用场景设计的:</p>
+<ul>
+<li>像CMS收集器一样，能与应用程序线程并发执行。</li>
+<li>整理空闲空间更快。</li>
+<li>需要GC停顿时间更好预测。</li>
+<li>不希望牺牲大量的吞吐性能。</li>
+<li>不需要更大的Java Heap。</li>
+</ul>
+<p>G1收集器的设计目标是取代CMS收集器，它同CMS相比，在以下方面表现的更出色：</p>
+<ul>
+<li>G1是一个有整理内存过程的垃圾收集器，不会产生很多内存碎片。</li>
+<li>G1的Stop The World(STW)更可控，G1在停顿时间上添加了预测机制，用户可以指定期望停顿时间。</li>
+</ul>
+<blockquote>
+<p>The Garbage-First (G1) collector is a server-style garbage collector, targeted for multi-processor machines with large memories. It meets garbage collection (GC) pause time goals with a high probability, while achieving high throughput. The G1 garbage collector is fully supported in Oracle JDK 7 update 4 and later releases. The G1 collector is designed for applications that:</p>
+<ul>
+<li>Can operate concurrently with applications threads like the CMS collector.</li>
+<li>Compact free space without lengthy GC induced pause times.</li>
+<li>Need more predictable GC pause durations.</li>
+<li>Do not want to sacrifice a lot of throughput performance.</li>
+<li>Do not require a much larger Java heap.</li>
+</ul>
+</blockquote>
+<h3 id="Terms"><a href="#Terms" class="headerlink" title="Terms"></a>Terms</h3><h4 id="Region"><a href="#Region" class="headerlink" title="Region"></a>Region</h4><p>传统的GC收集器将连续的内存空间划分为新生代、老年代和永久代（JDK 8去除了永久代，引入了元空间Metaspace），这种划分的特点是各代的存储地址(逻辑地址)是连续的。如下图所示：</p>
+<img src="/2019/01/05/Java/JVM/Basic/G1/g1-heap-allocation.png">
+<p>而G1的各代存储地址是不连续的，每一代都使用了n个不连续的大小相同的Region，每个Region占有一块连续的虚拟内存地址。如下图所示：</p>
+<img src="/2019/01/05/Java/JVM/Basic/G1/g1_gc_layout.png">
+<p>每个分区都可能是年轻代也可能是老年代，但是在同一时刻只能属于某个代。年轻代、幸存区、老年代这些概念还存在，成为逻辑上的概念，这样方便复用之前分代框架的逻辑。</p>
+<p>在物理上不需要连续，则带来了额外的好处 —— 有的分区内垃圾对象特别多，有的分区内垃圾对象很少，G1会优先回收垃圾对象特别多的分区，这样可以花费较少的时间来回收这些分区的垃圾，这也就是G1名字的由来，即<strong>首先收集垃圾最多的分区</strong>。</p>
+<p>在上图中，我们注意到还有一些Region标明了H，它代表Humongous，这表示这些Region存储的是巨大对象（humongous object，H-obj），即大小大于等于region一半的对象。H-obj有如下几个特征：</p>
+<ul>
+<li>H-obj直接分配到了old gen，防止了反复拷贝移动。</li>
+<li>H-obj在global concurrent marking阶段的cleanup 和 Full GC阶段回收。</li>
+<li>在分配H-obj之前先检查是否超过 initiating heap occupancy percent和the marking threshold, 如果超过的话，就启动global concurrent marking，为的是提早回收，防止 evacuation failures 和 Full GC。</li>
+</ul>
+<p>为了减少连续H-objs分配对GC的影响，需要把大对象变为普通的对象，建议增大Region size。</p>
+<p>一个Region的大小可以通过参数-XX:G1HeapRegionSize设定，取值范围从1M到32M，且是2的指数。如果不设定，那么G1会根据Heap大小自动决定。</p>
+<hr>
+<h4 id="CSet-收集集合"><a href="#CSet-收集集合" class="headerlink" title="CSet - 收集集合"></a>CSet - 收集集合</h4><p>一组可被回收的分区的集合。在CSet中存活的数据会在GC过程中被移动到另一个可用分区，CSet中的分区可以来自Eden空间、survivor空间、或者老年代。CSet会占用不到整个堆空间的1%大小。</p>
+<hr>
+<h4 id="RSet-已记忆集合"><a href="#RSet-已记忆集合" class="headerlink" title="RSet - 已记忆集合"></a>RSet - 已记忆集合</h4><p>RSet记录了其他Region中的对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。RSet的价值在于使得垃圾收集器不需要扫描整个堆找到谁引用了当前分区中的对象，只需要扫描RSet即可。</p>
+<img src="/2019/01/05/Java/JVM/Basic/G1/rset-example.jpg">
+<p>Region1和Region3中的对象都引用了Region2中的对象，因此在Region2的RSet中记录了这两个引用。</p>
+<blockquote>
+<p>G1 GC是在points-out的card table之上再加了一层结构来构成points-into RSet：每个region会记录下到底哪些别的region有指向自己的指针，而这些指针分别在哪些card的范围内。<br>这个RSet其实是一个hash table，key是别的region的起始地址，value是一个集合，里面的元素是card table的index。<br>举例来说，如果region A的RSet里有一项的key是region B，value里有index为1234的card，它的意思就是region B的一个card里有引用指向region A。所以对region A来说，该RSet记录的是points-into的关系；而card table仍然记录了points-out的关系。</p>
+</blockquote>
+<hr>
+<h4 id="Snapshot-At-The-Beginning-SATB"><a href="#Snapshot-At-The-Beginning-SATB" class="headerlink" title="Snapshot-At-The-Beginning(SATB)"></a>Snapshot-At-The-Beginning(SATB)</h4><p>SATB是GC开始时活着的对象的一个快照。它是通过Root Tracing得到的，作用是维持并发GC的正确性。</p>
+<p>那么它是怎么维持并发GC的正确性的呢？根据三色标记算法，我们知道对象存在三种状态：</p>
+<ul>
+<li>白：对象没有被标记到，标记阶段结束后，会被当做垃圾回收掉。</li>
+<li>灰：对象被标记了，但是它的field还没有被标记或标记完。</li>
+<li>黑：对象被标记了，且它的所有field也被标记完了。</li>
+</ul>
+<p>由于并发阶段的存在，Mutator和Garbage Collector线程同时对对象进行修改，就会出现白对象漏标的情况，这种情况发生的前提是：</p>
+<ul>
+<li>Mutator赋予一个黑对象该白对象的引用。</li>
+<li>Mutator删除了所有从灰对象到该白对象的直接或者间接引用。</li>
+</ul>
+<hr>
+<h4 id="Pause-Prediction-Model"><a href="#Pause-Prediction-Model" class="headerlink" title="Pause Prediction Model"></a>Pause Prediction Model</h4><p>Pause Prediction Model 即停顿预测模型。它在G1中的作用是：G1 uses a pause prediction model to meet a user-defined pause time target and selects the number of regions to collect based on the specified pause time target.</p>
+<p>G1 GC是一个响应时间优先的GC算法，它与CMS最大的不同是，用户可以设定整个GC过程的期望停顿时间，参数-XX:MaxGCPauseMillis指定一个G1收集过程目标停顿时间，默认值200ms，不过它不是硬性条件，只是期望值。那么G1怎么满足用户的期望呢？就需要这个停顿预测模型了。G1根据这个模型统计计算出来的历史数据来预测本次收集需要选择的Region数量，从而尽量满足用户设定的目标停顿时间。</p>
+<hr>
+<h3 id="Phase"><a href="#Phase" class="headerlink" title="Phase"></a>Phase</h3><h4 id="G1-GC模式"><a href="#G1-GC模式" class="headerlink" title="G1 GC模式"></a>G1 GC模式</h4><p>G1提供了两种GC模式，<strong>Young GC</strong>和<strong>Mixed GC</strong>，两种都是完全<strong>Stop The World</strong>：</p>
+<ul>
+<li>Young GC：选定所有年轻代里的Region。通过控制年轻代的region个数，即年轻代内存大小，来控制young GC的时间开销。</li>
+<li>Mixed GC：选定所有年轻代里的Region，外加根据global concurrent marking统计得出收集收益高的若干老年代Region。在用户指定的开销目标范围内尽可能选择收益高的老年代Region。</li>
+</ul>
+<p>由上面的描述可知，Mixed GC不是Full GC，它只能回收部分老年代的Region，如果Mixed GC实在无法跟上程序分配内存的速度，导致老年代填满无法继续进行Mixed GC，就会使用Serial Old GC(Full GC)来收集整个GC Heap。所以我们可以知道，G1是不提供Full GC的。</p>
+<h4 id="global-concurrent-marking"><a href="#global-concurrent-marking" class="headerlink" title="global concurrent marking"></a>global concurrent marking</h4><p>它的执行过程类似CMS，但是不同的是，在G1 GC中，它主要是为Mixed GC提供标记服务的，并不是一次GC过程的一个必须环节。</p>
+<p>global concurrent marking的执行过程分为四个步骤：</p>
+<ul>
+<li>初始标记（initial mark，STW）。它标记了从GC Root开始直接可达的对象。</li>
+<li>并发标记（Concurrent Marking）。这个阶段从GC Root开始对heap中的对象标记，标记线程与应用程序线程并行执行，并且收集各个Region的存活对象信息。</li>
+<li>最终标记（Remark，STW）。标记那些在并发标记阶段发生变化的对象，将被回收。</li>
+<li>清除垃圾（Cleanup）。清除空Region（没有存活对象的），加入到free list。</li>
+</ul>
+<p>第一阶段initial mark是共用了Young GC的暂停，这是因为他们可以复用root scan操作，所以可以说global concurrent marking是伴随Young GC而发生的。第四阶段Cleanup只是回收了没有存活对象的Region，所以它并不需要STW。</p>
+<h4 id="Mixed-GC"><a href="#Mixed-GC" class="headerlink" title="Mixed GC"></a>Mixed GC</h4><p>在什么时候触发Mixed GC？</p>
+<ul>
+<li><p>G1HeapWastePercent：在global concurrent marking结束之后，我们可以知道old gen regions中有多少空间要被回收，在每次YGC之后和再次发生Mixed GC之前，会检查垃圾占比是否达到此参数，只有达到了，下次才会发生Mixed GC。</p>
+</li>
+<li><p>G1MixedGCLiveThresholdPercent：old generation region中的存活对象的占比，只有在此参数之下，才会被选入CSet。</p>
+</li>
+<li>G1MixedGCCountTarget：一次global concurrent marking之后，最多执行Mixed GC的次数。</li>
+<li>G1OldCSetRegionThresholdPercent：一次Mixed GC中能被选入CSet的最多old generation region数量。</li>
+</ul>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://tech.meituan.com/g1.html" target="_blank" rel="noopener">https://tech.meituan.com/g1.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/28/Java/JVM/Case/ResizeMetaspaceCauseOfFullGC/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/28/Java/JVM/Case/ResizeMetaspaceCauseOfFullGC/" itemprop="url">Resize Metaspace Cause Of Full GC</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-28T13:30:22+08:00">
+                2018-12-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Why-Remove-the-Permanent-Generation-From-Hotspot-JVM"><a href="#Why-Remove-the-Permanent-Generation-From-Hotspot-JVM" class="headerlink" title="Why Remove the Permanent Generation From Hotspot JVM"></a>Why Remove the Permanent Generation From Hotspot JVM</h3><blockquote>
+<p><a href="http://openjdk.java.net/jeps/122" target="_blank" rel="noopener">http://openjdk.java.net/jeps/122</a></p>
+</blockquote>
+<p>PermGen space的全称是Permanent Generation space，是指内存的永久保存区域。</p>
+<p>PermGen 被移除，方法区移至 Metaspace，字符串常量移至 Java Heap。</p>
+<ol>
+<li>PermGen 大小是在启动时固定好的，很难进行调优。</li>
+<li><p>由于 PermGen 内存经常会溢出，引发恼人的 java.lang.OutOfMemoryError: PermGen，因此 JVM 的开发者希望这一块内存可以更灵活地被管理，不要再经常出现这样的OOM。</p>
+<blockquote>
+<p>PermGen 为什么会内存溢出？PermGen主要用于存放 Class 和 Meta 的信息，即加载的 Class 会被放入 PermGen space 区域。<br>Pergen和存放Instance的Heap区域不同，所以如果你的APP加载过多 Class 就很可能出现PermGen space错误。例如，在Web服务器对JSP进行pre compile的时候就经常会发生。</p>
+</blockquote>
+</li>
+<li><p>移除 PermGen 可以促进 HotSpot JVM 与 JRockit VM 的融合，因为 JRockit 没有永久代。</p>
+</li>
+</ol>
+<hr>
+<h3 id="What’s-Metaspace"><a href="#What’s-Metaspace" class="headerlink" title="What’s Metaspace"></a>What’s Metaspace</h3><p>In JDK 8, classes metadata is now stored in the native heap and this space is called Metaspace.</p>
+<p>Advantage:</p>
+<ul>
+<li>OOM问题将不复存在，因为默认的类的元数据分配只受本地内存大小的限制，也就是说本地内存剩余多少，理论上Metaspace就可以有多大。</li>
+<li>take advantage of Java Language Specification property : Classes and associated metadata lifetimes match class loader’s</li>
+<li>Linear allocation only</li>
+<li>No individual reclamation (except for RedefineClasses and class loading failure)</li>
+<li>No GC scan or compaction</li>
+<li>No relocation for metaspace objects</li>
+</ul>
+<p>如果Metaspace的空间占用达到了设定的最大值，那么就会触发GC来收集死亡对象和类的加载器。根据JDK 8的特性，G1和CMS都会很好地收集Metaspace区(一般都伴随着Full GC)。</p>
+<p>为了减少垃圾回收的频率及时间，控制吞吐量，对Metaspace进行适当的监控和调优是非常有必要的。如果在Metaspace区发生了频繁的Full GC，那么可能表示存在内存泄露或Metaspace区的空间太小了。</p>
+<hr>
+<h3 id="Notice"><a href="#Notice" class="headerlink" title="Notice"></a>Notice</h3><ul>
+<li>默认情况下，Metaspace 容量受限于本地内存(Native Memory)，默认是几乎无穷大，如果 Metaspace 发生内存泄漏，可以把系统内存耗尽。</li>
+<li>MaxMetaspaceSize JVM Option用于限制 Metaspace 本地内存大小，如果没有设置该选项，JVM会根据程序的运行情况，进行动态调整 Metaspace 的大小。</li>
+<li>如果 Metaspace 使用大小达到了 MaxMetaspaceSize，会触发Full GC回收，回收无用的类和类加载器。在完成Full GC后，会增加 Metaspace 的大小，延迟下次Full GC的时间。</li>
+<li>为了控制在 Metaspace 的GC频率，调整 Metaspace 的大小是非常必要的，频繁的在 Metaspace 是类和类加载器发生内存泄漏的征兆，同时也说明你的程序的 Metaspace 大小不合适，需要进行适当地调整。</li>
+<li>JVM的参数 PermSize 和 MaxPermSize 会被忽略并给出警告。</li>
+</ul>
+<hr>
+<h3 id="JVM-Options"><a href="#JVM-Options" class="headerlink" title="JVM Options"></a>JVM Options</h3><ul>
+<li>-XX:MetaspaceSize：初始值。垃圾回收过后，MetaspaceSize可能会扩大。</li>
+<li>-XX:MaxMetaspaceSize：最大值，超过此值就会触发Full GC。此值默认没有限制，取决于系统内存的大小。JVM会动态地改变此值。</li>
+<li>-XX:MinMetaspaceFreeRatio：在GC之后，当前剩余可用 Metaspace 占总可用 Metaspace 的百分比小于MinMetaspaceFreeRatio，那么将对 Metaspace 进行扩容，Min默认为40。</li>
+<li>-XX:MaxMetaspaceFreeRatio：默认为70。</li>
+</ul>
+<hr>
+<h3 id="Analyze-CMS-Case"><a href="#Analyze-CMS-Case" class="headerlink" title="Analyze CMS Case"></a>Analyze CMS Case</h3><h4 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h4><ol>
+<li><p>每次docker container启动都会触发一次CMS GC，刚开始以为是分配给container的内存太小，后来检查发现分配给contianer的内存为4G，基本排除因为分配内存太小而造成的。</p>
+</li>
+<li><p>每次发布应用后，应用还没有启动完毕就会触发一次CMS GC，此时老年代使用量为0K。</p>
+</li>
+</ol>
+<h4 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Java HotSpot(TM) 64-Bit Server VM (25.65-b01) for linux-amd64 JRE (1.8.0_65-b17), built on Oct  6 2015 17:16:12 by "java_re" with gcc 4.3.0 20080428 (Red Hat 4.3.0-8)</span><br><span class="line">Memory: 4k page, physical 131779324k(4738628k free), swap 0k(0k free)</span><br><span class="line">CommandLine flags: -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:+DisableExplicitGC -XX:InitialHeapSize=4294967296 -XX:LargePageSizeInBytes=134217728 -XX:MaxHeapSize=4294967296 -XX:MaxNewSize=2684354560 -XX:MaxTenuringThreshold=6 -XX:NewSize=2684354560 -XX:OldPLABSize=16 -XX:+PrintGC -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:ThreadStackSize=256 -XX:+UseCMSCompactAtFullCollection -XX:+UseCMSInitiatingOccupancyOnly -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseConcMarkSweepGC -XX:+UseFastAccessorMethods -XX:+UseParNewGC</span><br><span class="line">2.133: [GC (CMS Initial Mark) [1 CMS-initial-mark: 0K(1572864K)] 796919K(3932160K), 0.0577900 secs] [Times: user=0.08 </span><br><span class="line">//  老年代已经使用为0K，最大可用大小为1572864K</span><br><span class="line">//  Heap已经使用大小796919K，Heap最大可用大小为3932160K</span><br><span class="line">2.191: [CMS-concurrent-mark-start]</span><br><span class="line">2.191: [CMS-concurrent-mark: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">2.191: [CMS-concurrent-preclean-start]</span><br><span class="line">2.195: [CMS-concurrent-preclean: 0.003/0.003 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]</span><br><span class="line">2.195: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line">4.144: [GC (GCLocker Initiated GC) 2018-08-20T11:38:38.811+0800: 4.145: [ParNew: 2097152K-&gt;30361K(2359296K), 0.0289636 secs] 0.0296327 secs] [Times: user=0.36 sys=0.11, real=0.03 secs]</span><br><span class="line">//  年轻代变化情况2097152K-&gt;30361K，最大可用为2359296K</span><br><span class="line">5.358: [CMS-concurrent-abortable-preclean: 0.892/3.164 secs] [Times: user=8.26 sys=0.57, real=3.16 secs]</span><br><span class="line">5.359: [GC (CMS Final Remark) [YG occupancy: 1218768 K (2359296 K)]2018-08-20T11:38:40.025+0800: 5.359: [Rescan (parallel) , :38:40.096+0800: 5.429: [weak refs processing, 0.0000365 secs]2018-08-20T11:38:40.096+0800: 5.429: [class unloading, 0.0069690 +0800: 5.436: [scrub symbol table, 0.0036416 secs]5.440: [scrub string table, 0.0006395 secs][1 18768K(3932160K), 0.0839617 secs] [Times: user=1.94 sys=0.01, real=0.08 secs]</span><br><span class="line">5.443: [CMS-concurrent-sweep-start]</span><br><span class="line">5.443: [CMS-concurrent-sweep: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">5.443: [CMS-concurrent-reset-start]</span><br><span class="line">5.450: [CMS-concurrent-reset: 0.007/0.007 secs] [Times: user=0.02 sys=0.01, real=0.00 secs]</span><br></pre></td></tr></table></figure>
+<p>2.133: [GC (CMS Initial Mark) [1 CMS-initial-mark: 0K(1572864K)] 796919K(3932160K), 0.0577900 secs]，可知老年代已经使用0K，最大可用大小为1572864K，Heap已经使用796919K，Heap最大可用大小为3932160K。</p>
+<p>4.144: [GC (GCLocker Initiated GC) 2018-08-20T11:38:38.811+0800: 4.145: [ParNew: 2097152K-&gt;30361K(2359296K)，可知年轻代变化情况2097152K-&gt;30361K，最大可用为2359296K。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">-server -Xmx4g -Xms4g -Xmn2g -XX:PermSize=128m -Xss256k </span><br><span class="line">-XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled </span><br><span class="line">-XX:+UseCMSCompactAtFullCollection -XX:LargePageSizeInBytes=128m -XX:+UseFastAccessorMethods </span><br><span class="line">-XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 </span><br><span class="line">-XX:+PrintGCDetails -XX:+PrintGCDateStamps</span><br></pre></td></tr></table></figure>
+<p>注意看JVM参数，-XX:+DisableExplicitGC已经显式禁止程序调用System.gc()进行回收操作，可以排除程序主动触发的GC回收操作。</p>
+<p>如果不是程序触发的GC回收，那就是JVM触发的，JVM在内存不够用的时候才会触发该操作。但是我们在启动的时候已经设置了-XX:PermSize=128m。</p>
+<p>使用命令jstat -gc pid 1000查看，结果如下</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">S0C         S1C    S0U    S1U      EC       EU        OC         OU         MC     MU    CCSC   CCSU     YGC     YGCT    FGC    FGCT     GCT</span><br><span class="line"><span class="number">262144.0</span> <span class="number">262144.0</span>  <span class="number">0.0</span>   <span class="number">1601.7</span> <span class="number">2097152.0</span> <span class="number">687465.5</span> <span class="number">1572864.0</span>   <span class="number">522538.5</span>  <span class="number">47724.0</span> <span class="number">46235.0</span> <span class="number">5288.0</span> <span class="number">4900.6</span>   <span class="number">3141</span>   <span class="number">45.946</span>   <span class="number">2</span>      <span class="number">0.142</span>   <span class="number">46.087</span></span><br></pre></td></tr></table></figure>
+<p>MC，MU显示 perm 实际使用大小都不到50MB。再检查JDK版本，实际使用的是JDK 8，对于该版本来说，permSize和maxPermSize已经失效。</p>
+<blockquote>
+<p>MC: Metaspace capacity (kB)，MU: Metacspace utilization (kB).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th style="text-align:center">含义</th>
+<th style="text-align:right">默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-XX:MetaspaceSize</td>
+<td style="text-align:center">Metaspace扩容时触发FullGC的初始化阈值，也是最小的阈值</td>
+<td style="text-align:right">依照系统而区别，可以在运行时查看，线上机子大概在20MB</td>
+</tr>
+<tr>
+<td>-XX:MaxMetaspaceSize</td>
+<td style="text-align:center">jdk8 MaxMetaspace上限，配置太小会触发OOM</td>
+<td style="text-align:right">默认是几乎无穷大，如果Metaspace发生内存泄漏，可以把系统内存吃掉</td>
+</tr>
+</tbody>
+</table>
+<p>因为使用的是JDK 8，配置的 XX:PermSize 无效，应用启动之后，meta区很快到达默认值(20MB)，然后触发Full GC，GC完后 Metaspace 被扩容。</p>
+<p>建议解决方案：稳定运行一段时间后通过<strong>jstat -gc pid</strong>确认 Metaspace 的值，一般情况下，设置 128MB 或者 256Mb 即可。</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p>Metaspace 之一：Metaspace整体介绍（永久代被替换原因、元空间特点、元空间内存查看分析方法）: <a href="https://www.cnblogs.com/duanxz/p/3520829.html" target="_blank" rel="noopener">https://www.cnblogs.com/duanxz/p/3520829.html</a><br><a href="https://lishoubo.github.io/2018/08/25/%E4%B8%80%E6%AC%A1CMS%E9%97%AE%E9%A2%98%E6%8E%92%E9%99%A4/" target="_blank" rel="noopener">https://lishoubo.github.io/2018/08/25/%E4%B8%80%E6%AC%A1CMS%E9%97%AE%E9%A2%98%E6%8E%92%E9%99%A4/</a><br><a href="https://www.sczyh30.com/posts/Java/jvm-metaspace/" target="_blank" rel="noopener">https://www.sczyh30.com/posts/Java/jvm-metaspace/</a><br>Java 8-从持久代到metaspace: <a href="https://juejin.im/post/59e969ca51882561a05a3340" target="_blank" rel="noopener">https://juejin.im/post/59e969ca51882561a05a3340</a><br>一次CMS问题排除: <a href="https://lishoubo.github.io/2018/08/25/%E4%B8%80%E6%AC%A1CMS%E9%97%AE%E9%A2%98%E6%8E%92%E9%99%A4/" target="_blank" rel="noopener">https://lishoubo.github.io/2018/08/25/%E4%B8%80%E6%AC%A1CMS%E9%97%AE%E9%A2%98%E6%8E%92%E9%99%A4/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/28/Java/JVM/Basic/CMS/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/28/Java/JVM/Basic/CMS/" itemprop="url">Introduction to CMS - Concurrent Mark Sweep Collector</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-28T00:10:22+08:00">
+                2018-12-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>The Concurrent Mark Sweep Collector (“CMS Collector”) of the HotSpot JVM has one primary goal: <strong>low application pause times</strong>.</p>
+<p>CMS被设计成在大多数时间能与应用程序线程并行执行，仅仅会有一点(短暂的)停顿时间。GC与应用程序并行的缺点是可能会出现各种同步和数据不一致的问题。为了实现安全且正确的并发执行，CMS收集器的GC周期被分为了好几个连续的阶段。</p>
+<hr>
+<h3 id="Theory"><a href="#Theory" class="headerlink" title="Theory"></a>Theory</h3><p>CMS收集器的GC周期由6个阶段组成。其中4个阶段(名字以Concurrent开始的)与实际的应用程序是并发执行的，而其他2个阶段需要暂停应用程序线程。</p>
+<p>CMS收集器的过程：</p>
+<ol>
+<li>初始标记(STW)：为了收集应用程序的对象引用需要暂停应用程序线程，该阶段完成后，应用程序线程再次启动。</li>
+<li>并发标记：从第一阶段收集到的对象引用开始，遍历所有其他的对象引用。</li>
+<li>并发预清理：改变当运行第二阶段时，由应用程序线程产生的对象引用，以更新第二阶段的结果。</li>
+<li>重标记：由于第三阶段是并发的，对象引用可能会发生进一步改变。因此，应用程序线程会再一次被暂停以更新这些变化，并且在进行实际的清理之前确保一个正确的对象引用视图。这一阶段十分重要，因为必须避免收集到仍被引用的对象。</li>
+<li>并发清理(STW)：所有不再被应用的对象将从堆里清除掉。</li>
+<li>并发重置：收集器做一些收尾的工作，以便下一次GC周期能有一个干净的状态。</li>
+</ol>
+<p>一个常见的误解是，CMS收集器运行是完全与应用程序并发的。事实并非如此，即使“stop-the-world”阶段相对于并发阶段的时间很短。</p>
+<p>应该指出，尽管CMS收集器为老年代垃圾回收提供了几乎完全并发的解决方案，然而年轻代仍然通过“stop-the-world”方法来进行收集。对于交互式应用，停顿也是可接受的，背后的原理是年轻带的垃圾回收时间通常是相当短的。</p>
+<p>在使用CMS时候，需要解决两个问题：</p>
+<ul>
+<li><p>堆碎片</p>
+<blockquote>
+<p>CMS收集器并没有任何碎片整理的机制，因此，应用程序有可能出现这样的情形，即使总的堆大小远没有耗尽，但却不能分配对象——仅仅是因为没有足够连续的空间完全容纳对象。</p>
+</blockquote>
+</li>
+<li><p>对象分配率高</p>
+<blockquote>
+<p>如果创建对象实例的频率高于收集器清除堆里死对象的频率，并发算法将失败。从某种程度上说，老年代将没有足够的可用空间来容纳一个从年轻代提升过来的对象。这种情况被称为“并发模式失败”，并且JVM会执行堆碎片整理：触发Full GC。</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h3 id="Young-Generation-Garbage-Collection"><a href="#Young-Generation-Garbage-Collection" class="headerlink" title="Young Generation Garbage Collection"></a>Young Generation Garbage Collection</h3><p><strong>为什么调整新生代的参数会对应用的性能如此重要？</strong></p>
+<p>单纯从JVM的功能考虑，并不需要新生代，完全可以针对整个堆进行操作。新生代存在的唯一理由是<strong>优化垃圾回收(GC)的性能</strong>。更具体说，把堆划分为新生代和老年代的好处：</p>
+<ul>
+<li>简化了新对象的分配(只在新生代分配内存)</li>
+<li>可以更有效的清除不再需要的对象(即死对象)(新生代和老年代使用不同的GC算法)</li>
+</ul>
+<p>通过广泛研究面向对象实现的应用，发现一个共同特点：<strong>很多对象的生存时间都很短</strong>。同时研究发现，新生对象很少引用生存时间长的对象。</p>
+<img src="/2018/12/28/Java/JVM/Basic/CMS/eden-survivor.png" title="黄色表示死对象，绿色表示剩余空间，红色表示幸存对象">
+<p>结合这两个个特点，很明显GC会频繁访问新生对象，例如在堆中一个单独的区域，称之为新生代。在新生代中，GC可以快速标记回收”死对象”，而不需要扫描整个Heap中的存活一段时间的”老对象”。</p>
+<p>HotSpot JVM又把新生代进一步划分为3个区域：一个相对大点的区域，称为”Eden”；两个相对小点的区域称为”From survivor”和”To survivor”。按照规定，新对象会首先分配在Eden中(如果新对象过大，会直接分配在老年代中)。在GC中，Eden中没有被回收的对象会被移动到survivor中，直至对象满足一定的年纪(定义为熬过GC的次数)，会被移动到老年代。</p>
+<p>基于大多数新生对象都会在GC中被收回的假设。新生代的GC使用复制算法。在GC前To survivor保持清空，当前的对象保存在Eden和From survivor中。GC运行时，Eden中的幸存对象被复制到To survivor。复制阶段完成后，Eden 和From survivor中只保存死对象，可以直接回收清空。如果在复制过程中To survivor被填满了，剩余的对象会被复制到老年代中。最后From survivor和 To survivor会调换下名字，在下次GC时，To survivor会变为From survivor。</p>
+<blockquote>
+<p>对于From survivor中的幸存对象，会考虑对象年龄，如果年龄没达到阀值(tenuring threshold，15 GC cycles)，对象会被复制到To survivor。如果达到阀值对象被复制到老年代。</p>
+</blockquote>
+<p>总结一下，对象一般出生在Eden区，年轻代GC过程中，对象在两个survivor之间移动，如果对象存活到适当的年龄，会被移动到老年代。当对象在老年代死亡时，就需要更高级别的GC，更重量级的GC算法(复制算法不适用于老年代，因为没有多余的空间用于复制)</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://blog.codecentric.de/en/2013/10/useful-jvm-flags-part-7-cms-collector/" target="_blank" rel="noopener">https://blog.codecentric.de/en/2013/10/useful-jvm-flags-part-7-cms-collector/</a><br><a href="http://ifeve.com/useful-jvm-flags-part-7-cms-collector/" target="_blank" rel="noopener">http://ifeve.com/useful-jvm-flags-part-7-cms-collector/</a><br><a href="https://blog.codecentric.de/en/2012/08/useful-jvm-flags-part-5-young-generation-garbage-collection/" target="_blank" rel="noopener">https://blog.codecentric.de/en/2012/08/useful-jvm-flags-part-5-young-generation-garbage-collection/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/27/CS/DesignPattern/6 Principles/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/27/CS/DesignPattern/6 Principles/" itemprop="url">Design Pattern 6 Principles</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-27T00:28:18+08:00">
+                2018-12-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Design-Pattern/" itemprop="url" rel="index">
+                    <span itemprop="name">Design Pattern</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="开闭原则"><a href="#开闭原则" class="headerlink" title="开闭原则"></a>开闭原则</h3><p>对扩展开放，对修改关闭，多使用抽象类和接口</p>
+<h4 id="QA"><a href="#QA" class="headerlink" title="QA"></a>QA</h4><ol>
+<li>为什么要遵循开闭原则？<blockquote>
+<p>在软件的生命周期内，因为变化、升级和维护等原因需要对软件原有代码进行修改时，可能会给旧代码中引入错误，也可能会使我们不得不对整个功能进行重构，并且需要原有代码经过重新测试。</p>
+</blockquote>
+</li>
+</ol>
+<hr>
+<h3 id="里氏代换原则"><a href="#里氏代换原则" class="headerlink" title="里氏代换原则"></a>里氏代换原则</h3><p>基类可以被子类替换，使用抽象类继承，不使用具体类继承</p>
+<hr>
+<h3 id="依赖倒转原则"><a href="#依赖倒转原则" class="headerlink" title="依赖倒转原则"></a>依赖倒转原则</h3><p>要依赖于抽象，不要依赖于具体，针对接口编程，不针对实现编程</p>
+<hr>
+<h3 id="接口隔离原则"><a href="#接口隔离原则" class="headerlink" title="接口隔离原则"></a>接口隔离原则</h3><p>使用多个隔离的接口，比使用单个接口好，建立最小的接口</p>
+<hr>
+<h3 id="迪米特法则"><a href="#迪米特法则" class="headerlink" title="迪米特法则"></a>迪米特法则</h3><p>一个软件实体应当尽可能少地与其他实体发生相互作用，通过中间类建立联系</p>
+<hr>
+<h3 id="合成复用原则"><a href="#合成复用原则" class="headerlink" title="合成复用原则"></a>合成复用原则</h3><p>尽量使用合成/聚合，而不是使用继承</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://blog.csdn.net/q291611265/article/details/48465113" target="_blank" rel="noopener">https://blog.csdn.net/q291611265/article/details/48465113</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/26/读书笔记/标准差/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -618,7 +1758,10 @@
 </li>
 <li><p>-XX:+UseCodeCacheFlushing：当代码缓存被填满时让JVM放弃一些编译代码。</p>
 </li>
-<li>Xss：设置单个线程栈的大小</li>
+<li><p>Xss：设置单个线程栈的大小</p>
+</li>
+<li><p>GuaranteedSafepointInterval：</p>
+</li>
 </ul>
 <hr>
 <h3 id="Collector"><a href="#Collector" class="headerlink" title="Collector"></a>Collector</h3><ul>
@@ -1257,902 +2400,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/DistributedSystem/RegisterAndDiscover/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/24/DistributedSystem/RegisterAndDiscover/" itemprop="url">Register And Discover Centra</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-24T22:22:18+08:00">
-                2018-12-24
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
-                    <span itemprop="name">DistributedSystem</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>在聊注册与发现中心之前，请先看以下几个问题：</p>
-<ul>
-<li>注册的IP和端口怎么确定？</li>
-<li>实现服务治理还需要注册哪些信息？</li>
-<li>如何进行优雅的服务注册与服务下线？</li>
-<li>注册服务的健康检查是如何做的？</li>
-<li>当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知？</li>
-<li>是否方便地查看某个应用发布和订阅了哪些服务，以及所订阅的服务有哪些节点吗？</li>
-</ul>
-<p>看完这些问题后，你也许会发现，对于服务注册与发现，首先应该关注的是服务注册发现本身的功能，然后才是性能和高可用。<strong>一个好的服务注册发现中间件，应该是能完整地满足服务开发和治理的基础功能，然后才是性能和高可用。</strong>如果没有想清楚前面的功能，再高的可用性和性能都是浮云。最后，安全也同样重要。</p>
-<p>在其他方面，我们应该关注什么？</p>
-<ul>
-<li>服务端的性能如何？</li>
-<li>服务发现的容灾策略是怎样的？</li>
-<li>当我的应用和服务发现中心的网络连接出现问题时，会对我的调用产生什么影响？</li>
-<li>服务注册中心某台机器宕机或者全部宕机时，会对我的调用产生什么影响？</li>
-<li>服务注册和发现的链路安全吗，有没有做好权限控制？</li>
-</ul>
-<hr>
-<h3 id="Register-Service"><a href="#Register-Service" class="headerlink" title="Register Service"></a>Register Service</h3><h4 id="如何确定注册的IP和端口"><a href="#如何确定注册的IP和端口" class="headerlink" title="如何确定注册的IP和端口"></a>如何确定注册的IP和端口</h4><ol>
-<li>如何确定IP</li>
-</ol>
-<ul>
-<li>最简单粗暴的方式，手动配置需要注册的IP。当然这种方式基本无法在生产环境使用，因为微服务基本都是支持水平扩容多机部署的，在配置中写死 IP 地址的方式无法支持一份代码水平扩容，会给运维带来极大的成本。</li>
-<li>通过遍历网卡的方式去获取，找到第一个不为本地环回地址的 IP 地址。绝大多数情况下，这个方式比较好用，dubbo等框架采用的就是这种方法。</li>
-<li>在一些网络规划比较好的标准化机房中，我们还可以通过手动指定网卡名，即interfaceName的方式来指定使用哪一块网卡所对应的IP地址进行注册。</li>
-<li>当上述三种方式都不能有效解决问题的时候，有一个方法就是直接与服务注册中心建立socket连接，然后通过socket.getLocalAddress()这种方式来获取本机的IP。</li>
-</ul>
-<hr>
-<ol start="2">
-<li>如何确定端口</li>
-</ol>
-<ul>
-<li>如果是RPC应用，启动的时候都有一个配置来指定服务监听的端口，注册的时候直接使用配置项的端口值。</li>
-<li>传统的WEB容器所提供的HTTP的应用，同样也存在一个配置文件来配置容器的监听端口，注册时候直接使用配置项的端口值。</li>
-<li>特别的，在Java应用的Spring Boot框架中，可以通过EmbeddedServletContainerInitializedEvent.getEmbeddedServletContainer().getPort()来获取(Spring Boot版本为1.x)。</li>
-</ul>
-<hr>
-<h4 id="实现服务治理还需要注册哪些信息"><a href="#实现服务治理还需要注册哪些信息" class="headerlink" title="实现服务治理还需要注册哪些信息"></a>实现服务治理还需要注册哪些信息</h4><ul>
-<li>最基本的注册信息是IP和Port，可以满足基本的服务调用的需求</li>
-<li>想知道某个HTTP服务是否开启了TLS</li>
-<li>对相同服务下的不同节点设置不同的权重，进行流量调度</li>
-<li>将服务分成预发环境和生产环境，方便进行ABTest功能</li>
-<li>不同机房的服务注册时加上机房的标签，以实现同机房优先的路由规则</li>
-</ul>
-<p>这些高级功能的实现，本质上是依赖于客户端调用时候的负载均衡策略和调用策略，但是如果服务元数据没有注册上来，也只能是巧妇难为无米之炊。一个良好的服务注册中心在设计最初就应该支持这些扩展字段。</p>
-<hr>
-<h4 id="如何进行优雅的服务注册与服务下线"><a href="#如何进行优雅的服务注册与服务下线" class="headerlink" title="如何进行优雅的服务注册与服务下线"></a>如何进行优雅的服务注册与服务下线</h4><ol>
-<li>优雅发布</li>
-</ol>
-<p>虽然服务注册一般发生在服务的启动阶段，但是细分的话，服务注册应该在服务已经完全启动成功，并准备对外提供服务之后才能进行注册。</p>
-<ul>
-<li>有些RPC框架自身提供了方法来判断服务是否已经启动完成，如Thrift，我们可以通过Server.isServing()来判断</li>
-<li>有一些RPC框架本身没有提供服务是否启动完成的方式，这时我们可以通过检测端口是否已经处于监听状态来判断</li>
-<li>对于HTTP服务，服务是否启动完毕也可以通过端口是否处于监听状态来判断<blockquote>
-<p>特别的，在Java应用的Spring Boot框架中，可以通过事件通知的形式来通知容器已经启动完毕，EmbeddedServletContainerInitializedEvent事件来通知容器已经启动完成 (Spring Boot版本为1.x)</p>
-</blockquote>
-</li>
-</ul>
-<hr>
-<ol>
-<li>优雅下线</li>
-</ol>
-<p>绝大多数的服务注册中心都提供了健康检查功能，在应用停止后会自动摘除服务所对应的节点。但是我们也不能完全依赖此功能，应用应该在停止时主动调用服务注册中心的服务下线接口。</p>
-<ul>
-<li>在Java 应用中，通用的服务下线接口调用一般使用JVM Shutdown Hook的方式来实现。</li>
-<li>特别的，在Java应用中的Spring框架中，可以通过Spring Bean LifeCycle来实现应用停止时主动调用服务下线接口。<blockquote>
-<p>当然上述两种方式还不够优雅，因为不能确保不出现kill -9这种粗暴的停止方式，而且应用调用服务下线接口也是尝试去调用，对于网络不通等异常场景并没有做异常处理。因此，调用客户端仍应该做好负载均衡与failover的处理。</p>
-</blockquote>
-</li>
-<li>更优雅的方式，先将即将停止的应用所对应的权重调成0，此时上游将不再调用此应用。这时候的停止应用的操作对服务订阅者完全没有影响，当然这种场景需要订阅者实现按权重的负载均衡和运维部署工具深度结合。</li>
-</ul>
-<hr>
-<h4 id="服务的健康检查是如何做的"><a href="#服务的健康检查是如何做的" class="headerlink" title="服务的健康检查是如何做的"></a>服务的健康检查是如何做的</h4><p>健康检查分为客户端心跳和服务端主动探测两种方式.</p>
-<ol>
-<li>客户端心跳</li>
-</ol>
-<ul>
-<li>客户端每隔一定时间主动发送“心跳”的方式来向服务端表明自己的服务状态正常，心跳可以是TCP的形式，也可以是HTTP的形式。</li>
-<li>也可以通过维持客户端和服务端的一个socket长连接自己实现一个客户端心跳的方式。</li>
-<li>ZooKeeper并没有主动的发送心跳，而是依赖了组件本身提供的临时节点的特性，通过ZooKeeper连接的session来维持临时节点。</li>
-</ul>
-<p>但是客户端心跳中，长连接的维持和客户端的主动心跳都只是表明链路上的正常，不一定是服务状态正常。</p>
-<hr>
-<ol start="2">
-<li>服务端主动探测</li>
-</ol>
-<ul>
-<li>服务端调用服务发布者某个HTTP接口来完成健康检查。</li>
-<li>对于没有提供HTTP服务的RPC应用，服务端调用服务发布者的接口来完成健康检查。</li>
-<li>可以通过执行某个脚本的形式来进行综合检查。</li>
-</ul>
-<p>服务端主动调用服务进行健康检查是一个较为准确的方式，返回结果成功表明服务状态确实正常。</p>
-<p>但是这种方式也存在一些问题：服务注册中心主动调用RPC服务的某个接口无法做到通用性；在很多场景下服务注册中心到服务发布者的网络是不通的，服务端无法主动发起健康检查。</p>
-<p>所以如何取舍，还是需要根据实际情况来决定，根据不同的场景，选择不同的策略。</p>
-<hr>
-<h3 id="Discover-Service"><a href="#Discover-Service" class="headerlink" title="Discover Service"></a>Discover Service</h3><h4 id="怎么找到服务发现服务端的地址"><a href="#怎么找到服务发现服务端的地址" class="headerlink" title="怎么找到服务发现服务端的地址"></a>怎么找到服务发现服务端的地址</h4><ul>
-<li>在应用的配置文件中指定服务注册中心的地址，类似于zookeeper和eureka。</li>
-<li>指定一个地址服务器的地址，然后通过这个地址服务器来获取服务注册中心的地址，地址服务器返回的结果会随着服务注册中心的扩缩容及时更新。</li>
-</ul>
-<hr>
-<h4 id="当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知"><a href="#当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知" class="headerlink" title="当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知"></a>当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知</h4><p>很经典的Push和Pull问题。Push的经典实现有两种，基于socket长连接的notify，典型的实现如zookeeper；另一种为HTTP连接所使用Long Polling。</p>
-<p>但是基于socket长连接的notify和基于HTTP协议的Long Polling都会存在notify消息丢失的问题。</p>
-<p>所以通过Pull的方式定时轮询也必不可少，时间间隔的选择也很关键，频率越高服务注册中心所承受的压力也越大。需要结合服务端的性能和业务的规模进行权衡。</p>
-<p>还有一种方式，真实的Push，客户端开启一个UDPserver，服务注册中心通过UDP的方式进行数据推送，当然这个也受限于网络的连通性。</p>
-<hr>
-<h4 id="我能方便地查看我发布和订阅了哪些服务，订阅的服务有哪些节点吗"><a href="#我能方便地查看我发布和订阅了哪些服务，订阅的服务有哪些节点吗" class="headerlink" title="我能方便地查看我发布和订阅了哪些服务，订阅的服务有哪些节点吗"></a>我能方便地查看我发布和订阅了哪些服务，订阅的服务有哪些节点吗</h4><p>一个好的产品，用户使用体验和运维体验必须是优雅的，如果查看本机发布和订阅的服务，只能通过查看日志，甚至是jmap的方式来获取，显然体验非常糟糕。</p>
-<p>服务注册中心应该提供了丰富的接口，支持根据应用名、IP、订阅服务名、发布服务名，来进行多层次的组合查询。同时，客户端的内存里，同样也应该保留服务发布与订阅的各种信息，并提供方式供人方便地查询。</p>
-<p>比如在Java中的Spring Boot的应用，可以结合actuator endpoint，通过HTTP的方式来提供本机服务查询功能，查询此应用发布的服务，以及订阅的服务及各服务的对应节点。</p>
-<hr>
-<h3 id="容灾和高可用"><a href="#容灾和高可用" class="headerlink" title="容灾和高可用"></a>容灾和高可用</h3><h4 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h4><p>当服务节点数越来越多时，服务注册中心的性能会成为瓶颈，这时候就需要通过水平扩容来提升服务注册中心集群的性能。</p>
-<p>对于那些采用了类Paxos协议的强一致性的组件，如ZooKeeper，由于每次写操作需要过半的节点确认。水平扩容不能提升整个集群的写性能，只能提升整个集群的读性能。而对于采用最终一致性的组件来说，水平扩容可以同时提升整个集群的写性能和读性能。</p>
-<hr>
-<h4 id="客户端容灾策略"><a href="#客户端容灾策略" class="headerlink" title="客户端容灾策略"></a>客户端容灾策略</h4><ul>
-<li>首先，本地内存缓存，当运行时与服务注册中心的连接丢失或服务注册中心完全宕机，仍能正常地调用服务。</li>
-<li>然后，本地缓存文件，当应用与服务注册中心发生网络分区或服务注册中心完全宕机后，应用进行了重启操作，内存里没有数据，此时应用可以通过读取本地缓存文件的数据来获取到最后一次订阅到的内容。</li>
-<li>最后，本地容灾文件夹。正常的情况下，容灾文件夹内是没有内容的。当服务端完全宕机且长时间不能恢复，同时服务提供者又发生了很大的变更时，可以通过在容灾文件夹内添加文件的方式来开启本地容灾。此时客户端会忽略原有的本地缓存文件，只从本地容灾文件中读取配置。</li>
-</ul>
-<hr>
-<h4 id="服务端容灾与高可用"><a href="#服务端容灾与高可用" class="headerlink" title="服务端容灾与高可用"></a>服务端容灾与高可用</h4><ul>
-<li>当有新节点加入集群时，节点启动后能自动添加到地址服务器中，并通过地址服务器找到其他节点，自动从其他节点同步数据，以达到数据的最终一致性。</li>
-<li>当某个节点宕机时，此服务注册中心节点的信息会自动地址服务器中摘除，客户端能及时感知到此节点已下线。</li>
-</ul>
-<p>服务端的无状态性保证了服务的容灾和高可用可以做的很薄。</p>
-<hr>
-<h3 id="服务器安全"><a href="#服务器安全" class="headerlink" title="服务器安全"></a>服务器安全</h3><p>链路安全，对于使用HTTP连接的服务注册中心，保护链路安全的最好方式是使用HTTPS。而使用TCP连接的服务注册中心来说，由于应用层协议一般使用的是私有协议，不一定存在现成的TLS支持方案。</p>
-<p>在业务安全方面，应该在每一次的发布、订阅、心跳，都带上鉴权的信息就行验签和鉴权，确保业务信息的安全性。</p>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="http://jm.taobao.org/2018/06/26/%E8%81%8A%E8%81%8A%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8F%91%E7%8E%B0/" target="_blank" rel="noopener">http://jm.taobao.org/2018/06/26/%E8%81%8A%E8%81%8A%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8F%91%E7%8E%B0/</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/Java/SpringBoot/Session/Controller-Session/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/24/Java/SpringBoot/Session/Controller-Session/" itemprop="url">Spring Boot Controller Session</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-24T19:00:22+08:00">
-                2018-12-24
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/SpringBoot/Session/" itemprop="url" rel="index">
-                    <span itemprop="name">Session</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@GetMapping</span>(value = <span class="string">"/hello"</span>)  </span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">home</span><span class="params">(HttpSession session)</span> </span>&#123;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="Custom-Session"><a href="#Custom-Session" class="headerlink" title="Custom Session"></a>Custom Session</h3><blockquote>
-<p><a href="https://stackoverflow.com/questions/48353967/how-to-modify-or-custom-sessionid-in-spring-session-project" target="_blank" rel="noopener">https://stackoverflow.com/questions/48353967/how-to-modify-or-custom-sessionid-in-spring-session-project</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/Network/Nonce/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/24/Network/Nonce/" itemprop="url">HTTP Nonce</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-24T18:28:19+08:00">
-                2018-12-24
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Why-need-it"><a href="#Why-need-it" class="headerlink" title="Why need it?"></a>Why need it?</h4><p>All requests must contain a <strong>nonce</strong>, a number that will never be repeated and must increase between requests. </p>
-<p>This is to <strong>prevent an attacker who has captured a previous request from simply replaying that request</strong>. We recommend using a timestamp at millisecond or higher precision. The nonce need only be increasing with respect to the session that the message is on.</p>
-<blockquote>
-<p>A single account may have multiple API keys provisioned. In this document, we’ll refer to these as “sessions”. All orders will be recorded with the session that created them. The nonce associated with a request needs to be increasing with respect to the session that the nonce is used on.This allows multithreaded or distributed trading systems to place orders independently of each other, without needing to synchronize clocks to avoid race conditions.<br>In addition, some operations (such as Cancel All Session Orders) act on the orders associated with a specific session.<br>简单来说，每个session关联一个nonce，nonce必须递增。在应用程序里面，一个Thread对应一个Session，多Thread对应多个Session，进而确保nonce是递增不重复的。</p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/Java/Maven/Module/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/24/Java/Maven/Module/" itemprop="url">Maven Multiple Module Management</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-24T16:01:22+08:00">
-                2018-12-24
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Maven/" itemprop="url" rel="index">
-                    <span itemprop="name">Maven</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><ol>
-<li>Parent pom.xml</li>
-</ol>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>library<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.anda.library<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">packaging</span>&gt;</span>pom<span class="tag">&lt;/<span class="name">packaging</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">modules</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">module</span>&gt;</span>common<span class="tag">&lt;/<span class="name">module</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">module</span>&gt;</span>network<span class="tag">&lt;/<span class="name">module</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">modules</span>&gt;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"> <span class="comment">&lt;!-- Gloable Dependencies --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!-- declare dependencies --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.esotericsoftware<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>kryo<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">dependencyManagement</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- declare dependencies version --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.esotericsoftware<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>kryo<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>4.0.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencyManagement</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li>Network Module pom.xml</li>
-</ol>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.anda.library.network<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>network<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">&lt;!-- Network Module dependent on Common Module --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.anda.library.common<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>common<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">scope</span>&gt;</span>compile<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<ol start="3">
-<li>Common Module pom.xml</li>
-</ol>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.anda.library.common<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>common<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>io.jsonwebtoken<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jjwt<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>0.9.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>commons-codec<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>commons-codec<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/23/Network/TCP-IP-Model/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/23/Network/TCP-IP-Model/" itemprop="url">TCP/IP Model</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-23T12:12:19+08:00">
-                2018-12-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://zhuanlan.zhihu.com/p/33797520" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/33797520</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/51/">51</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/52/">52</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2199,7 +2451,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">510</span>
+                <span class="site-state-item-count">515</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
