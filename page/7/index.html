@@ -284,6 +284,343 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/15/Docker/Unikernel/Unikernel-Introduction/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/15/Docker/Unikernel/Unikernel-Introduction/" itemprop="url">Unikernel</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-15T11:55:03+08:00">
+                2018-12-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="What-Are-Unikernels"><a href="#What-Are-Unikernels" class="headerlink" title="What Are Unikernels?"></a>What Are Unikernels?</h3><p>Unikernels are specialised, single-address-space machine images constructed by using library operating systems.</p>
+<p>In other words, unikernels are <strong>small, fast, secure virtual machines that lack operating systems</strong>.</p>
+<p>其最大的卖点就是在，没有用户空间与内核空间之分，只有一个连续的地址空间。这样使得 Unikernel 中只能运行一个应用，而且对于运行的应用而言，没有硬件抽象可言，所有的逻辑，包括应用逻辑和操作硬件的逻辑，都在一个地址空间中。</p>
+<p>Unikernel就是一个单一内存空间的内核镜像，其中只能有一个应用在运行，那这样有啥好呢，为啥值得我放弃Linux而用你这么一个看上去像是阉割版的内核呢？好处就在，小，快，安全。</p>
+<p>Unikernel镜像都很小，由MirageOS实现的一个 DNS server 才 184KB，实现的一个 web server 674 KB，小到恐怖的程度。然后就是快，启动很快。因为镜像都很小，所以起停都在毫秒级别，比传统的kernel要快多了。最后是安全，一般来讲，小的东西相对而言比较安全。Unikernel中没有Shell可用，没有密码文件，没有多余的设备驱动，这使得Unikernel更加安全。</p>
+<hr>
+<h4 id="Unikernel架构"><a href="#Unikernel架构" class="headerlink" title="Unikernel架构"></a>Unikernel架构</h4><img src="/2018/12/15/Docker/Unikernel/Unikernel-Introduction/unikernel-architechture.png">
+<p>Unikernel在整个服务器的架构中取消了操作系统，应用直接运行在hypervisor或者硬件上。试图抹去现代操作系统带来的一些复杂性。因为“通用”的操作系统（就像任何Linux和Windows的发行版），通常会伴随着带来一些对你的应用来说并不需要的驱动、依赖包、服务、等等。</p>
+<hr>
+<h4 id="Unikernel的开发和测试"><a href="#Unikernel的开发和测试" class="headerlink" title="Unikernel的开发和测试"></a>Unikernel的开发和测试</h4><p>Unikernel 在真正实践中，如何开发与测试是一个值得关注的问题。在开发过程中，开发者可以假定自己在传统的操作系统上进行开发，而所有内核相关的功能，暂且由开发机的操作系统提供。</p>
+<p>而在测试环境中，大部分Unikernel的实现会将应用代码与需要的内核模块构建成Unikernel后，再将其跑在一个传统的操作系统上，利用传统操作系统上的工具来测试Unikernel。以Rumprun为例，它可以通过KVM/QEMU来运行一个 Rumprun Unikernel VM，随后用Host OS上的GDB来对其进行调试，</p>
+<blockquote>
+<p>更多关于调试的信息，可以查看<a href="https://news.ycombinator.com/item?id=10954132" target="_blank" rel="noopener">https://news.ycombinator.com/item?id=10954132</a></p>
+</blockquote>
+<p>在发布阶段，这是 Unikernel最简单的事情了。Unikernel最后的产物就是一个kernel image，可以在Hypervisor，Bare Metal等等各种环境上运行。</p>
+<p>所以可以看到，其中Unikernel在软件过程中与传统方式最大的不同就在于调试与测试。而在发布的阶段，传统的方式可能发布的是一个应用，或者一个容器镜像，而Unikernel则是一个高度定制化的kernel。</p>
+<p>目前的Unikernel项目：MirageOS、HaLVM、ClickOS和Rumprun等等。</p>
+<blockquote>
+<p>更多项目: <a href="http://unikernel.org/projects/" target="_blank" rel="noopener">http://unikernel.org/projects/</a></p>
+</blockquote>
+<hr>
+<h3 id="The-Problem-Our-Fat-Insecure-Clouds"><a href="#The-Problem-Our-Fat-Insecure-Clouds" class="headerlink" title="The Problem: Our Fat, Insecure Clouds"></a>The Problem: Our Fat, Insecure Clouds</h3><p>When cloud computing burst on(突然出现) the scene(场景), there were all sorts of(各种各样的) promises made of a grand future. It was said that our compute farms would magically allocate resources to meet the needs of applications.</p>
+<p>Resources would be automatically optimized to do the maximum work possible with the assets available. And compute clouds would leverage assets both in the datacenter and on the Internet, transparently to the end user.</p>
+<p>Emphasis was placed on developing excellent cloud orchestration(编排,调度) engines that could move applications with agility(灵活,敏捷) throughout the cloud. </p>
+<p>That(cloud orchestration engine) was an entirely appropriate(适合的) focus, as the datacenter in the time before the cloud was both immobile and slow to change. Many system administrators could walk blindfolded(vt.蒙住眼睛) through the aisles(通道) of their equipment racks(货架) and point out what each machine did for what department, stating(vt.说明) exactly what software was installed on each server. The placement of workloads on hardware was frequently laborious(费劲地) and static; changing those workloads was a slow, difficult, and arduous(费力的) task, requiring much verification and testing before even the smallest changes were made on production systems.</p>
+<p>The advent(到来) of cloud orchestration software (OpenStack, CloudStack, openNebula, etc.) altered all that—and many of us were very grateful. The ability of these orchestration systems to adapt and change with business needs turned the IT world on its head. A new world ensued(vi.跟着发生), and the promise of the cloud seemed to be fulfilled.</p>
+<hr>
+<h3 id="Security-Is-a-Growing-Problem"><a href="#Security-Is-a-Growing-Problem" class="headerlink" title="Security Is a Growing Problem"></a>Security Is a Growing Problem</h3><p>However, as the cloud era(时代) dawned(vi.出现), it became evident that a good orchestration engine alone is simply not enough to make a truly effective cloud. </p>
+<p>A quick review of industry headlines(新闻提要) over the past few years yields report after report of security breaches(breach vt.破坏, n.违反,缺口) in some of the most impressive organizations. </p>
+<p>Major retailers(零售商), credit card companies, even federal governments(联邦政府) have reported successful attacks on their infrastructure, including possible loss of sensitive data. For example, in May 2016, the Wall Street Journal ran a story about banks in three different countries that had been recently hacked to the tune of $90 million in losses. A quick review of the graphic representation of major attacks in the past decade will take your breath away. Even the US Pentagon(五角大楼) was reportedly hacked in the summer of (夏天的时候)2011. It is no longer unusual to receive a letter in the mail stating that your credit card is being reissued(vt.重新发行) because credit card data was compromised(vt.危害) by malicious(恶意的) hackers.</p>
+<blockquote>
+<p>to the tune of: 达…之多<br>take your breath away: 令人屏息</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p>official site: <a href="http://unikernel.org/" target="_blank" rel="noopener">http://unikernel.org/</a><br><a href="https://www.oreilly.com/library/view/unikernels/9781492042815/" target="_blank" rel="noopener">https://www.oreilly.com/library/view/unikernels/9781492042815/</a><br><a href="https://www.oreilly.com/library/view/unikernels/9781492042815/ch01.html" target="_blank" rel="noopener">https://www.oreilly.com/library/view/unikernels/9781492042815/ch01.html</a><br><a href="http://dockone.io/article/1379" target="_blank" rel="noopener">http://dockone.io/article/1379</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/14/Rust/Basic/UnitTesting/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/14/Rust/Basic/UnitTesting/" itemprop="url">Rust Unit Testing</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-14T19:00:03+08:00">
+                2018-12-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Rust/" itemprop="url" rel="index">
+                    <span itemprop="name">Rust</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Rust/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><p>add #[test] on the line before <strong>fn</strong>. When you run your tests with the cargo test command, Rust builds a test runner binary that runs the functions annotated with the test attribute and reports on whether each test function passes or fails.</p>
+<p>the#[ignore] attribute to exclude some tests</p>
+<h4 id="Cargo-Command"><a href="#Cargo-Command" class="headerlink" title="Cargo Command"></a>Cargo Command</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cargo <span class="built_in">test</span></span><br><span class="line"></span><br><span class="line">cargo <span class="built_in">test</span> tset_case_name</span><br><span class="line"></span><br><span class="line">cargo <span class="built_in">test</span> prefix_test_name</span><br></pre></td></tr></table></figure>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="Case-Hello"><a href="#Case-Hello" class="headerlink" title="Case: Hello"></a>Case: Hello</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#[cfg(test)]</span></span><br><span class="line"><span class="keyword">mod</span> tests &#123;</span><br><span class="line">    <span class="meta">#[test]</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">it_works</span></span>() &#123;</span><br><span class="line">        <span class="built_in">assert_eq!</span>(<span class="number">2</span> + <span class="number">2</span>, <span class="number">4</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">running 1 <span class="built_in">test</span></span><br><span class="line"><span class="built_in">test</span> tests::it_works ... ok</span><br><span class="line"></span><br><span class="line"><span class="built_in">test</span> result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out</span><br></pre></td></tr></table></figure>
+<h4 id="panic"><a href="#panic" class="headerlink" title="panic"></a>panic</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#[cfg(test)]</span></span><br><span class="line"><span class="keyword">mod</span> tests &#123;</span><br><span class="line">    <span class="meta">#[test]</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">exploration</span></span>() &#123;</span><br><span class="line">        <span class="built_in">assert_eq!</span>(<span class="number">2</span> + <span class="number">2</span>, <span class="number">4</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">#[test]</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">another</span></span>() &#123;</span><br><span class="line">        <span class="built_in">panic!</span>(<span class="string">"Make this test fail"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="should-panic"><a href="#should-panic" class="headerlink" title="should panic"></a>should panic</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">pub</span> <span class="function"><span class="keyword">fn</span> <span class="title">divide_non_zero_result</span></span>(a: <span class="built_in">u32</span>, b: <span class="built_in">u32</span>) -&gt; <span class="built_in">u32</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> b == <span class="number">0</span> &#123;</span><br><span class="line">        <span class="built_in">panic!</span>(<span class="string">"Divide-by-zero error"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> a &lt; b &#123;</span><br><span class="line">        <span class="built_in">panic!</span>(<span class="string">"Divide result is zero"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    a / b</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#[cfg(test)]</span></span><br><span class="line"><span class="keyword">mod</span> tests &#123;</span><br><span class="line">    <span class="keyword">use</span> super::*;</span><br><span class="line"></span><br><span class="line">    <span class="meta">#[test]</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">test_divide</span></span>() &#123;</span><br><span class="line">        <span class="built_in">assert_eq!</span>(divide_non_zero_result(<span class="number">10</span>, <span class="number">2</span>), <span class="number">5</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">#[test]</span></span><br><span class="line">    <span class="meta">#[should_panic]</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">test_any_panic</span></span>() &#123;</span><br><span class="line">        divide_non_zero_result(<span class="number">1</span>, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">#[test]</span></span><br><span class="line">    <span class="meta">#[should_panic(expected = <span class="meta-string">"Divide result is zero"</span>)]</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">test_specific_panic</span></span>() &#123;</span><br><span class="line">        divide_non_zero_result(<span class="number">1</span>, <span class="number">10</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/14/CS/Disk/RAID/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -917,161 +1254,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/读书笔记/认知/BCG Matrix/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/13/读书笔记/认知/BCG Matrix/" itemprop="url">BCG Matrx</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-13T23:24:07+08:00">
-                2018-12-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
-                    <span itemprop="name">读书笔记</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/认知/" itemprop="url" rel="index">
-                    <span itemprop="name">认知</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://whoisnnamdi.com/the-growth-share-matrix-of-software-development/" target="_blank" rel="noopener">https://whoisnnamdi.com/the-growth-share-matrix-of-software-development/</a><br><a href="https://zhuanlan.zhihu.com/p/53358012" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/53358012</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/读书笔记/认知/如何快速掌握新技术/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1213,6 +1395,161 @@
 <hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
 <p><a href="https://www.youtube.com/watch?v=FKTxC9pl-WM" target="_blank" rel="noopener">https://www.youtube.com/watch?v=FKTxC9pl-WM</a><br><a href="https://decodezp.github.io/2018/12/12/eng-talk1-fast-learn/#%E5%85%B3%E9%94%AE%E7%9A%84%E7%BC%BA%E5%A4%B1%E2%80%94%E2%80%94%E9%AB%98%E8%B4%A8%E9%87%8F%E7%9A%84%E4%BE%8B%E5%AD%90" target="_blank" rel="noopener">https://decodezp.github.io/2018/12/12/eng-talk1-fast-learn/#%E5%85%B3%E9%94%AE%E7%9A%84%E7%BC%BA%E5%A4%B1%E2%80%94%E2%80%94%E9%AB%98%E8%B4%A8%E9%87%8F%E7%9A%84%E4%BE%8B%E5%AD%90</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/读书笔记/认知/BCG Matrix/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/13/读书笔记/认知/BCG Matrix/" itemprop="url">BCG Matrx</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-13T23:24:07+08:00">
+                2018-12-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
+                    <span itemprop="name">读书笔记</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/读书笔记/认知/" itemprop="url" rel="index">
+                    <span itemprop="name">认知</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://whoisnnamdi.com/the-growth-share-matrix-of-software-development/" target="_blank" rel="noopener">https://whoisnnamdi.com/the-growth-share-matrix-of-software-development/</a><br><a href="https://zhuanlan.zhihu.com/p/53358012" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/53358012</a></p>
 </blockquote>
 
           
@@ -1605,384 +1942,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/Network/HTTP/CORS/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/13/Network/HTTP/CORS/" itemprop="url">认识一下CORS(Cross-Origin Resource Sharing)</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-13T18:15:18+08:00">
-                2018-12-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/HTTP/" itemprop="url" rel="index">
-                    <span itemprop="name">HTTP</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="What’-CORS-Cross-Origin-Resource-Sharing"><a href="#What’-CORS-Cross-Origin-Resource-Sharing" class="headerlink" title="What’ CORS - Cross-Origin Resource Sharing"></a>What’ CORS - Cross-Origin Resource Sharing</h3><p>Cross-Origin Resource Sharing (CORS) is a mechanism that uses additional HTTP headers to tell a browser to let a web application running at one origin (domain) have permission to access selected resources from a server at a different origin. A web application makes a cross-origin HTTP request when it requests a resource that has a different <strong>origin (domain, protocol, and port)</strong> than its own origin.</p>
-<p>支持CORS请求的浏览器一旦发现ajax请求跨域，会对请求做一些特殊处理，对于已经实现CORS接口的服务端，接受请求，并做出回应。</p>
-<p>有一种情况比较特殊，如果我们发送的跨域请求为“非简单请求”，浏览器会在发出此请求之前首先发送一个请求类型为OPTIONS的“预检请求”，验证请求源是否为服务端允许源，这些对于开发这来说是感觉不到的，由浏览器代理。</p>
-<p>总而言之，客户端不需要对跨域请求做任何特殊处理。</p>
-<h3 id="CORS存在的意义"><a href="#CORS存在的意义" class="headerlink" title="CORS存在的意义"></a>CORS存在的意义</h3><p>为了保证用户信息的安全，所有的浏览器都遵循同源策略。</p>
-<p>凡是发送请求url的协议、域名、端口三者之间任意一与当前页面地址不同，即为跨域(不同源)</p>
-<ul>
-<li>域名(domain)</li>
-<li>协议(protocol)</li>
-<li>端口(porot)</li>
-</ul>
-<hr>
-<p>同源策略的限制：</p>
-<ul>
-<li>无法获取非同源的Cookie、LocalStorage、SessionStorage等</li>
-<li>无法获取非同源的dom</li>
-<li>无法向非同源的服务器发送ajax请求</li>
-</ul>
-<hr>
-<p>CORS的请求Header</p>
-<ul>
-<li>origin：表明预检请求或实际请求的源站URL，总是会带上</li>
-<li>Access-Control-Request-Method：实际请求所使用的HTTP方法告诉服务器</li>
-<li>Access-Control-Request-Headers：将实际请求所携带的首部字段告诉服务器</li>
-</ul>
-<hr>
-<p>CORS的响应Header</p>
-<ul>
-<li>Access-Control-Allow-Origin：这个请求头一般会被服务器端返回，它的值代表了哪些域名你有权可以访问(注：对于携带身份凭证的请求不可使用通配符*)</li>
-<li>Access-Control-Expose-Headers：指定XMLRequest的getResourceHeader可以访问的响应头</li>
-<li>Access-Control-Max-Age：指定preflight请求的结果能够被缓存多久</li>
-<li>Access-Control-Allow-Credentials：是否允许浏览器读取response的内容；</li>
-<li>Access-Control-Allow-Methods：指明实际请求允许所使用的HTTP方法</li>
-<li>Access-Control-Allow-Headers：指明实际请求中允许携带的首部字段</li>
-</ul>
-<hr>
-<h3 id="什么是简单请求？"><a href="#什么是简单请求？" class="headerlink" title="什么是简单请求？"></a>什么是简单请求？</h3><p>请求方法属于以下类型：</p>
-<ul>
-<li>HEAD</li>
-<li>GET</li>
-<li>POST</li>
-</ul>
-<p>Headers不超出以下字段：</p>
-<ul>
-<li>Accept</li>
-<li>Accept-Language</li>
-<li>Content-Language</li>
-<li>Content-Type: application/x-www-form-urlencoded、 multipart/form-data、text/plain</li>
-<li>DPR</li>
-<li>Downlink</li>
-<li>Save-Data</li>
-<li>Viewport-Width</li>
-<li>Width</li>
-</ul>
-<p>不满足上述要求的在发送正式请求前都要先发送一个预检请求，预检请求以OPTIONS方法发送，浏览器通过请求方法和请求头能够判断是否发送预检请求。</p>
-<blockquote>
-<p>服务器端在处理OPTIONS请求的时候需要注意：需要预检请求时，浏览器会发出两次请求，一次OPTIONS，一次POST。两次都返回了数据。如果服务端逻辑复杂一些，比如去数据库查找数据，从web层、service到数据库这段逻辑就会走两遍，浏览器会两次拿到相同的数据。如果是OPTIONS请求，在设置完跨域请求响应头后就不走后面的逻辑直接返回。</p>
-</blockquote>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p>重点阅读：<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank" rel="noopener">https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS</a><br><a href="https://zhuanlan.zhihu.com/p/29980092" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/29980092</a><br><a href="https://juejin.im/post/5a7359876fb9a0634a38e389" target="_blank" rel="noopener">https://juejin.im/post/5a7359876fb9a0634a38e389</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/Java/SpringBoot/WebFlux/Introduction/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/13/Java/SpringBoot/WebFlux/Introduction/" itemprop="url">Introduce Spring WebFlux</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-13T17:46:22+08:00">
-                2018-12-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/SpringBoot/WebFlux/" itemprop="url" rel="index">
-                    <span itemprop="name">WebFlux</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Spring WebFlux is supported on Tomcat, Jetty, Servlet 3.1+ containers, as well as on non-Servlet runtimes such as <strong>Netty</strong> and <strong>Undertow</strong>.</p>
-<p><strong>Spring Boot defaults to Netty</strong>, because it is more widely used in the asynchronous, non-blocking space and lets a client and a server share resources.</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2034,7 +1993,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">515</span>
+                <span class="site-state-item-count">517</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2045,7 +2004,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">231</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2056,7 +2015,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">579</span>
+                <span class="site-state-item-count">580</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
