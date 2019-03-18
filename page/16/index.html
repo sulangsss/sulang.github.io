@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/16/Java/Maven/Command/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/16/Java/LowLatency/Aeron/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/10/16/Java/Maven/Command/" itemprop="url">Maven Configuration</a></h2>
+                <a class="post-title-link" href="/2018/10/16/Java/LowLatency/Aeron/" itemprop="url">Java Aeron</a></h2>
         
 
         <div class="post-meta">
@@ -388,27 +388,75 @@
       
         
           
-            <h3 id="Commmand"><a href="#Commmand" class="headerlink" title="Commmand"></a>Commmand</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mvn <span class="string">'-Dtest=com.anda.engine.disruptor.*Test'</span> <span class="built_in">test</span></span><br><span class="line"></span><br><span class="line">mvn clean install -DskipTests</span><br><span class="line"></span><br><span class="line">mvn compile</span><br></pre></td></tr></table></figure>
-<h3 id="Dependencies"><a href="#Dependencies" class="headerlink" title="Dependencies"></a>Dependencies</h3><h4 id="Exclude"><a href="#Exclude" class="headerlink" title="Exclude"></a>Exclude</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">exclusions</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">exclusion</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-tomcat<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">exclusion</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">exclusions</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h3 id="Scope"><a href="#Scope" class="headerlink" title="Scope"></a>Scope</h3><ul>
-<li>compile：默认选项，编译测试运行都有效。项目在编译，测试，运行阶段都需要这个artifact对应的Jar。</li>
-<li>provided：在编译和测试时有效。在编译测试阶段，我们需要这个artifact对应的jar包在classpath中，而在运行阶段，假定已经提供了这个jar包，所以无需这个artifact对应的Jar。</li>
-<li>runtime：在测试和运行时有效。</li>
-<li>test：仅在测试时有效。</li>
-<li>system：在编译和测试时有效，与本机系统关联，可移植性差。</li>
+            <h3 id="Design-Overview"><a href="#Design-Overview" class="headerlink" title="Design Overview"></a>Design Overview</h3><p><a href="https://github.com/real-logic/aeron/wiki/Design-Overview" target="_blank" rel="noopener">https://github.com/real-logic/aeron/wiki/Design-Overview</a></p>
+<hr>
+<h3 id="OS-Related-Considerations"><a href="#OS-Related-Considerations" class="headerlink" title="OS Related Considerations"></a>OS Related Considerations</h3><p>Operating system socket buffers have an impact on some of the settings within Aeron.</p>
+<ul>
+<li><p>SO_RCVBUF can impact loss rates when too small for the given processing. If too large, this buffer can increase latency. Values that tend to work well with Aeron are 2MB to 4MB. This setting must be large enough for the MTU of the sender. If not, persistent loss can result. In addition, the receiver window length should be less than or equal to this value to allow plenty of space for burst traffic from a sender.</p>
+</li>
+<li><p>SO_SNDBUF can impact loss rate. Loss can occur on the sender side due to this buffer being too small. This buffer must be large enough to accommodate the MTU as a minimum. In addition, some systems, most notably Windows, need plenty of buffering on the send side to reach adequate throughput rates. If too large, this buffer can increase latency or cause loss. This usually should be less than 2MB.</p>
+</li>
 </ul>
-<h3 id="Unit-Test"><a href="#Unit-Test" class="headerlink" title="Unit Test"></a>Unit Test</h3><h4 id="Plugin"><a href="#Plugin" class="headerlink" title="Plugin"></a>Plugin</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-surefire-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.22.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">forkCount</span>&gt;</span>1<span class="tag">&lt;/<span class="name">forkCount</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">reuseForks</span>&gt;</span>true<span class="tag">&lt;/<span class="name">reuseForks</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h3 id="Build"><a href="#Build" class="headerlink" title="Build"></a>Build</h3><h4 id="Package-Kotlin-Project-With-Jar-File"><a href="#Package-Kotlin-Project-With-Jar-File" class="headerlink" title="Package Kotlin Project With Jar File"></a>Package Kotlin Project With Jar File</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"> <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-assembly-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.1.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">executions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">execution</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">id</span>&gt;</span>make-assembly<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">phase</span>&gt;</span>package<span class="tag">&lt;/<span class="name">phase</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">goals</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">goal</span>&gt;</span>single<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">                 <span class="comment">&lt;!-- package jar file --&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">descriptors</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">descriptor</span>&gt;</span>assembly.xml<span class="tag">&lt;/<span class="name">descriptor</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">descriptors</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">archive</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">manifest</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">mainClass</span>&gt;</span>com.anda.engine.ApplicationKt<span class="tag">&lt;/<span class="name">mainClass</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">archive</span>&gt;</span></span><br><span class="line">                <span class="comment">&lt;!-- &lt;descriptorRefs&gt;</span></span><br><span class="line"><span class="comment">                    &lt;descriptorRef&gt;jar-with-dependencies&lt;/descriptorRef&gt;</span></span><br><span class="line"><span class="comment">                &lt;/descriptorRefs&gt; --&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p>在pom.xml同级目录下，新建assembly.xml，内容如下：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">assembly</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"</span></span></span><br><span class="line"><span class="tag">          <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></span></span><br><span class="line"><span class="tag">          <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">id</span>&gt;</span>dependencies<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">formats</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">format</span>&gt;</span>jar<span class="tag">&lt;/<span class="name">format</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">formats</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">includeBaseDirectory</span>&gt;</span>false<span class="tag">&lt;/<span class="name">includeBaseDirectory</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependencySets</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependencySet</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">outputDirectory</span>&gt;</span>/<span class="tag">&lt;/<span class="name">outputDirectory</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">useProjectArtifact</span>&gt;</span>true<span class="tag">&lt;/<span class="name">useProjectArtifact</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">unpack</span>&gt;</span>true<span class="tag">&lt;/<span class="name">unpack</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">scope</span>&gt;</span>runtime<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependencySet</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependencySet</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">outputDirectory</span>&gt;</span>/<span class="tag">&lt;/<span class="name">outputDirectory</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">useProjectArtifact</span>&gt;</span>true<span class="tag">&lt;/<span class="name">useProjectArtifact</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">unpack</span>&gt;</span>true<span class="tag">&lt;/<span class="name">unpack</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">scope</span>&gt;</span>system<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependencySet</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependencySets</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">assembly</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<h4 id="Including-Library-for-Spring-Boot"><a href="#Including-Library-for-Spring-Boot" class="headerlink" title="Including Library for Spring Boot"></a>Including Library for Spring Boot</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-maven-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">includeSystemScope</span>&gt;</span>true<span class="tag">&lt;/<span class="name">includeSystemScope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h4 id="Build-Library"><a href="#Build-Library" class="headerlink" title="Build Library"></a>Build Library</h4><ol>
-<li>导出的jar没有包含依赖的denpendency，导致其他项目引入的时候报错。</li>
-</ol>
-<p>解决方案：添加maven-assembly-plugin插件进行打包。<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-assembly-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.1.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">executions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">execution</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">id</span>&gt;</span>make-assembly<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">phase</span>&gt;</span>package<span class="tag">&lt;/<span class="name">phase</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">goals</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">goal</span>&gt;</span>single<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">descriptorRefs</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">descriptorRef</span>&gt;</span>jar-with-dependencies<span class="tag">&lt;/<span class="name">descriptorRef</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">descriptorRefs</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<p>此外，需要注意的是，maven-assembly打包出来的是一个可运行的jar，即包含了Kotlin标准库的代码，而实际上需要的仅仅是一个Library。</p>
-<p>针对标准库添加provided关键字<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.jetbrains.kotlin<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>kotlin-reflect<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">scope</span>&gt;</span>provided<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="Repository"><a href="#Repository" class="headerlink" title="Repository"></a>Repository</h3><h4 id="MacOS"><a href="#MacOS" class="headerlink" title="MacOS"></a>MacOS</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看maven安装目录</span></span><br><span class="line">mvn -v</span><br></pre></td></tr></table></figure>
-<p>添加Aliyun Repository，sudo vim /usr/local/Cellar/maven/3.5.4/libexec/conf/settings.xml<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">mirrors</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">mirror</span>&gt;</span>  </span><br><span class="line">      <span class="tag">&lt;<span class="name">id</span>&gt;</span>alimaven<span class="tag">&lt;/<span class="name">id</span>&gt;</span>  </span><br><span class="line">      <span class="tag">&lt;<span class="name">name</span>&gt;</span>aliyun maven<span class="tag">&lt;/<span class="name">name</span>&gt;</span>  </span><br><span class="line">      <span class="tag">&lt;<span class="name">url</span>&gt;</span>http://maven.aliyun.com/nexus/content/groups/public/<span class="tag">&lt;/<span class="name">url</span>&gt;</span>  </span><br><span class="line">      <span class="tag">&lt;<span class="name">mirrorOf</span>&gt;</span>central<span class="tag">&lt;/<span class="name">mirrorOf</span>&gt;</span>          </span><br><span class="line">    <span class="tag">&lt;/<span class="name">mirror</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">mirrors</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<h4 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h4><p>As was mentioned above, changing the location of the buffers for Aeron can be a good thing. For Linux, this means that <strong>/dev/shm</strong> will be the location of the buffers if present.</p>
+<p>Linux normally requires some settings of sysctl values. One is <strong>net.core.rmem_max</strong> to allow larger <strong>SO_RCVBUF</strong> and <strong>net.core.wmem_max</strong> to allow larger <strong>SO_SNDBUF</strong> values to be set.</p>
+<h4 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h4><p>Windows tends to use <strong>SO_SNDBUF</strong> values that are too small. It is recommended to use values more like 1MB or so.</p>
+<h4 id="Mac-Darwin"><a href="#Mac-Darwin" class="headerlink" title="Mac/Darwin"></a>Mac/Darwin</h4><p>Mac tends to use <strong>SO_SNDBUF</strong> values that are too small. It is recommended to use larger values, like <strong>16KB</strong>.</p>
+<hr>
+<h3 id="Media-Driver"><a href="#Media-Driver" class="headerlink" title="Media Driver"></a>Media Driver</h3><p>Media Driver instances sit on a box an send/receive UDP packets over the network, whilst ensuring that the mapped files and cleaned and rotated. </p>
+<p>If you’ve got multiple publishers or subscribers sitting in different processes on the same box then probably your best bet is to run separate a instance of the media driver and have it manage all the processes.</p>
+<p>If you’re going to just have a single process on a machine with the publishers and subscribers inside then its probably easiest to just keep it embedded within the process. Just my opinion of course</p>
+<p>Aeron instances in application, commonly referred to as “clients”, communicate with Media Drivers via a set of buffers. </p>
+<p>The location of these buffers is normally in the OS file system. By default, the java.io.tmpdir or /dev/shm/ is used to hold these files. </p>
+<h4 id="How-to-Run-Aeron-Media-Driver"><a href="#How-to-Run-Aeron-Media-Driver" class="headerlink" title="How to Run Aeron Media Driver"></a>How to Run Aeron Media Driver</h4><p>To run the Aeron Media Driver as a foreground process, use the script provided with the driver. The script provides the appropriate configuration for the driver. You can provide your own configuration via environment variables:</p>
+<ul>
+<li>AERON_DIR（Method：aeronDirectoryName()）</li>
+</ul>
+<p>The path to the directory where the Aeron Media Driver needs to store its files. On Linux, the directory inside /dev/shm/ is recommended. If you provide your own path, make it the same for the driver and any microservice that operates with this driver.</p>
+<p>If it is not specified then the default value provided by the Aeron is used.</p>
+<ul>
+<li>AERON_SO_BUFFER</li>
+</ul>
+<p>The size in bytes of the send and receive socket buffers. The length of the buffer must be a power of two. On Linux, it must not exceed the kernel configuration parameters:</p>
+<p>net.core.wmem_max</p>
+<p>net.core.rmem_max</p>
+<p>The default value is 4194304.</p>
+<ul>
+<li>ERON_TERM_BUFFER</li>
+</ul>
+<p>The size in bytes of the Term (a section of data within a stream) buffer. The length of the buffer must be a power of two and must be the same length on both ends.The default value is 67108864.</p>
+<ul>
+<li>AERON_MTU<br>The length of MTU in bytes.</li>
+</ul>
+<p>The default value is 65504.</p>
+<blockquote>
+<p><a href="https://docs.genesys.com/Documentation/EZP/9.0.0/Deploy/AeronMediaDriver" target="_blank" rel="noopener">https://docs.genesys.com/Documentation/EZP/9.0.0/Deploy/AeronMediaDriver</a></p>
+</blockquote>
+<h4 id="shm-on-Linux-System"><a href="#shm-on-Linux-System" class="headerlink" title="shm on Linux System"></a>shm on Linux System</h4><p>在Docker中，/dev/shm 默认大小是64MB，完全不够用，因此需要调整大小。然而，在Kubernetes中是不持支持shm-size参数的，所以只能通过启动脚本来修改容器/dev/shm的大小。</p>
+<p>前提条件：–priviledge=true</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">shm_dir=/dev/shm</span><br><span class="line">umount <span class="variable">$shm_dir</span></span><br><span class="line">mount -t tmpfs -o rw,nosuid,nodev,noexec,relatime,size=&lt;size, e.g. 500M, 1G&gt; shm <span class="variable">$shm_dir</span></span><br></pre></td></tr></table></figure>
+<p>running docker command</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --privileged image:tag</span><br><span class="line"><span class="comment"># or</span></span><br><span class="line">docker run -it --privileged image:tag /bin/bash</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a href="https://tw.saowen.com/a/d4e0d2129b3fcaa1597c3860ac1f4e77753e738073b67ae599b8b4b10d0b8ee2" target="_blank" rel="noopener">https://tw.saowen.com/a/d4e0d2129b3fcaa1597c3860ac1f4e77753e738073b67ae599b8b4b10d0b8ee2</a></p>
+</blockquote>
+<h4 id="Media-Driver-on-Docker"><a href="#Media-Driver-on-Docker" class="headerlink" title="Media Driver on Docker"></a>Media Driver on Docker</h4><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> java:openjdk-<span class="number">8</span>-alpine</span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> init.sh /init.sh</span></span><br><span class="line"><span class="bash">COPY boot.jar /java/boot.jar</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">RUN chmod +x /init_shm.sh</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">ENTRYPOINT [<span class="string">"/init.sh"</span>]</span></span><br><span class="line"><span class="bash">CMD [<span class="string">"1G"</span>, <span class="string">"/java/boot.jar"</span>]</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"init shm size: <span class="variable">$1</span>"</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"args: <span class="variable">$@</span>"</span></span><br><span class="line"></span><br><span class="line">shm_dir=/dev/shm</span><br><span class="line">umount <span class="variable">$shm_dir</span></span><br><span class="line">mount -t tmpfs -o rw,nosuid,nodev,noexec,relatime,size=<span class="variable">$1</span> shm <span class="variable">$shm_dir</span></span><br><span class="line"></span><br><span class="line"><span class="comment">## running java process</span></span><br><span class="line">java -jar <span class="variable">$2</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Unit-Testing-Attention"><a href="#Unit-Testing-Attention" class="headerlink" title="Unit Testing Attention"></a>Unit Testing Attention</h3><ul>
+<li>在每个单元测试用例执行前，最好重启并清空MediaServer缓冲区，否则遗留的数据可能会被下一个用例读取到。</li>
+</ul>
+<hr>
+<h3 id="MediaServer-Code"><a href="#MediaServer-Code" class="headerlink" title="MediaServer Code"></a>MediaServer Code</h3><h4 id="LowLatency"><a href="#LowLatency" class="headerlink" title="LowLatency"></a>LowLatency</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">val ctx = MediaDriver.Context()</span><br><span class="line">        .termBufferSparseFile(<span class="keyword">false</span>)</span><br><span class="line">        .threadingMode(ThreadingMode.DEDICATED)</span><br><span class="line">        .conductorIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">        .receiverIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">        .senderIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">ctx.errorHandler &#123;</span><br><span class="line">    it.printStackTrace()</span><br><span class="line">&#125;</span><br><span class="line">MediaDriver.launch(ctx)</span><br></pre></td></tr></table></figure>
+<p>JVM参数</p>
+<ul>
+<li>-XX:+UnlockDiagnosticVMOptions</li>
+<li>-XX:GuaranteedSafepointInterval=300000</li>
+<li>-XX:BiasedLockingStartupDelay=0 </li>
+</ul>
+<hr>
+<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
+<p><a href="https://github.com/real-logic/aeron/wiki/Best-Practices-Guide" target="_blank" rel="noopener">https://github.com/real-logic/aeron/wiki/Best-Practices-Guide</a></p>
+</blockquote>
 
           
         
@@ -1313,6 +1361,170 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/11/Java/LowLatency/FalseSharing/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/11/Java/LowLatency/FalseSharing/" itemprop="url">Java False Sharing</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-11T11:01:22+08:00">
+                2018-10-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Low-Latency/" itemprop="url" rel="index">
+                    <span itemprop="name">Low Latency</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h3><p>如果CPU访问的内存数据不在Cache中（一级、二级、三级），这就产生了Cache Line miss问题，此时CPU不得不发出新的加载指令，从内存中获取数据。</p>
+<p>Cache主要分为L1、L2 和 L3，如果出现Cache Line Missing，CPU就要从内存中访问数据，这就会产生一个较大的时延，程序性能显著降低。为此我们不得不提高Cache命中率，也就是充分发挥局部性原理。</p>
+<ul>
+<li>时间局部性：对于同一数据可能被多次使用，自第一次加载到Cache Line后，后面的访问就可以多次从Cache Line中命中，从而提高读取速度（而不是从下层缓存读取）。</li>
+<li>空间局部性：一个Cache Line有64字节块，我们可以充分利用一次加载64字节的空间，把程序后续会访问的数据，一次性全部加载进来，从而提高Cache Line命中率（而不是重新去寻址读取）。</li>
+</ul>
+<p>举例，长度为16的row和column数组，在Cache Line 64字节数据块上内存地址是连续的，能被一次加载到Cache Line中，所以在访问数组时，Cache Line命中率高，性能发挥到极致。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">run</span><span class="params">(<span class="keyword">int</span>[] row, <span class="keyword">int</span>[] column)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">16</span>; i++ ) &#123;</span><br><span class="line">        sum += row[i] * column[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>变量i则体现了时间局部性，i作为计数器被频繁操作，一直存放在寄存器中，每次从寄存器访问，而不是从主存甚至磁盘访问。虽然连续紧凑的内存分配带来高性能，但并不代表它一直都能带来高性能。</p>
+<blockquote>
+<p><a href="https://blog.csdn.net/qq_27680317/article/details/78486220" target="_blank" rel="noopener">https://blog.csdn.net/qq_27680317/article/details/78486220</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/11/Java/LowLatency/ZeroGarbage/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1462,170 +1674,6 @@
 </ul>
 <h4 id="java-util-vs-fastutil"><a href="#java-util-vs-fastutil" class="headerlink" title="java.util vs fastutil"></a>java.util vs fastutil</h4><blockquote>
 <p><a href="http://java-performance.info/hashmap-overview-jdk-fastutil-goldman-sachs-hppc-koloboke-trove-january-2015/" target="_blank" rel="noopener">http://java-performance.info/hashmap-overview-jdk-fastutil-goldman-sachs-hppc-koloboke-trove-january-2015/</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/11/Java/LowLatency/FalseSharing/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/11/Java/LowLatency/FalseSharing/" itemprop="url">Java False Sharing</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-11T11:01:22+08:00">
-                2018-10-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Low-Latency/" itemprop="url" rel="index">
-                    <span itemprop="name">Low Latency</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h3><p>如果CPU访问的内存数据不在Cache中（一级、二级、三级），这就产生了Cache Line miss问题，此时CPU不得不发出新的加载指令，从内存中获取数据。</p>
-<p>Cache主要分为L1、L2 和 L3，如果出现Cache Line Missing，CPU就要从内存中访问数据，这就会产生一个较大的时延，程序性能显著降低。为此我们不得不提高Cache命中率，也就是充分发挥局部性原理。</p>
-<ul>
-<li>时间局部性：对于同一数据可能被多次使用，自第一次加载到Cache Line后，后面的访问就可以多次从Cache Line中命中，从而提高读取速度（而不是从下层缓存读取）。</li>
-<li>空间局部性：一个Cache Line有64字节块，我们可以充分利用一次加载64字节的空间，把程序后续会访问的数据，一次性全部加载进来，从而提高Cache Line命中率（而不是重新去寻址读取）。</li>
-</ul>
-<p>举例，长度为16的row和column数组，在Cache Line 64字节数据块上内存地址是连续的，能被一次加载到Cache Line中，所以在访问数组时，Cache Line命中率高，性能发挥到极致。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">run</span><span class="params">(<span class="keyword">int</span>[] row, <span class="keyword">int</span>[] column)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">16</span>; i++ ) &#123;</span><br><span class="line">        sum += row[i] * column[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>变量i则体现了时间局部性，i作为计数器被频繁操作，一直存放在寄存器中，每次从寄存器访问，而不是从主存甚至磁盘访问。虽然连续紧凑的内存分配带来高性能，但并不代表它一直都能带来高性能。</p>
-<blockquote>
-<p><a href="https://blog.csdn.net/qq_27680317/article/details/78486220" target="_blank" rel="noopener">https://blog.csdn.net/qq_27680317/article/details/78486220</a></p>
 </blockquote>
 
           
@@ -2116,7 +2164,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">234</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
