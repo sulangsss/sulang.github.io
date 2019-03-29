@@ -109,7 +109,7 @@
 <meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
 <meta property="og:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-03-12T03:13:36.578Z">
+<meta property="og:updated_time" content="2019-03-29T12:28:07.830Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java Aeron">
 <meta name="twitter:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
@@ -446,7 +446,12 @@
 <li>在每个单元测试用例执行前，最好重启并清空MediaServer缓冲区，否则遗留的数据可能会被下一个用例读取到。</li>
 </ul>
 <hr>
-<h3 id="MediaServer-Code"><a href="#MediaServer-Code" class="headerlink" title="MediaServer Code"></a>MediaServer Code</h3><h4 id="LowLatency"><a href="#LowLatency" class="headerlink" title="LowLatency"></a>LowLatency</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">val ctx = MediaDriver.Context()</span><br><span class="line">        .termBufferSparseFile(<span class="keyword">false</span>)</span><br><span class="line">        .threadingMode(ThreadingMode.DEDICATED)</span><br><span class="line">        .conductorIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">        .receiverIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">        .senderIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">ctx.errorHandler &#123;</span><br><span class="line">    it.printStackTrace()</span><br><span class="line">&#125;</span><br><span class="line">MediaDriver.launch(ctx)</span><br></pre></td></tr></table></figure>
+<h3 id="MediaServer-Code"><a href="#MediaServer-Code" class="headerlink" title="MediaServer Code"></a>MediaServer Code</h3><h4 id="Shm-Memory"><a href="#Shm-Memory" class="headerlink" title="Shm Memory"></a>Shm Memory</h4><p>Each node will reserve aeron.term.buffer.length <em> 12, that said; its default value is 16m hence occupying 192m per JVM in the cluster per shared driver (1 per physical machine), thats is to say that if you have 10 JVMs spread out in 4 physical machines and each machine with a shared driver, each machine will need 192m </em> 10 JVMs which is 1920m, making each machine require at least 4g+ of RAM.</p>
+<p>Why 4g+? is not only 1920m, it is 1920m + some overhead &gt; 2g, that IMHO was too much, hence I tuned down aeron.term.buffer.length to 4m hence making it possible to run 10 JVMs among 4 physical machines (in my case virtual machines) with 2g RAM.</p>
+<blockquote>
+<p><a href="https://github.com/akka/akka/issues/21923" target="_blank" rel="noopener">https://github.com/akka/akka/issues/21923</a></p>
+</blockquote>
+<h4 id="LowLatency"><a href="#LowLatency" class="headerlink" title="LowLatency"></a>LowLatency</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">val ctx = MediaDriver.Context()</span><br><span class="line">        .termBufferSparseFile(<span class="keyword">false</span>)</span><br><span class="line">        .threadingMode(ThreadingMode.DEDICATED)</span><br><span class="line">        .conductorIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">        .receiverIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">        .senderIdleStrategy(BusySpinIdleStrategy())</span><br><span class="line">ctx.errorHandler &#123;</span><br><span class="line">    it.printStackTrace()</span><br><span class="line">&#125;</span><br><span class="line">MediaDriver.launch(ctx)</span><br></pre></td></tr></table></figure>
 <p>JVM参数</p>
 <ul>
 <li>-XX:+UnlockDiagnosticVMOptions</li>
@@ -581,7 +586,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">517</span>
+                <span class="site-state-item-count">519</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -592,7 +597,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">232</span>
+                <span class="site-state-item-count">234</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -603,7 +608,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">580</span>
+                <span class="site-state-item-count">582</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -645,7 +650,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-Overview"><span class="nav-number">1.</span> <span class="nav-text">Design Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OS-Related-Considerations"><span class="nav-number">2.</span> <span class="nav-text">OS Related Considerations</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux"><span class="nav-number">2.1.</span> <span class="nav-text">Linux</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Windows"><span class="nav-number">2.2.</span> <span class="nav-text">Windows</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mac-Darwin"><span class="nav-number">2.3.</span> <span class="nav-text">Mac/Darwin</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Media-Driver"><span class="nav-number">3.</span> <span class="nav-text">Media Driver</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-to-Run-Aeron-Media-Driver"><span class="nav-number">3.1.</span> <span class="nav-text">How to Run Aeron Media Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shm-on-Linux-System"><span class="nav-number">3.2.</span> <span class="nav-text">shm on Linux System</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Media-Driver-on-Docker"><span class="nav-number">3.3.</span> <span class="nav-text">Media Driver on Docker</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unit-Testing-Attention"><span class="nav-number">4.</span> <span class="nav-text">Unit Testing Attention</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MediaServer-Code"><span class="nav-number">5.</span> <span class="nav-text">MediaServer Code</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#LowLatency"><span class="nav-number">5.1.</span> <span class="nav-text">LowLatency</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refer"><span class="nav-number">6.</span> <span class="nav-text">Refer</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-Overview"><span class="nav-number">1.</span> <span class="nav-text">Design Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OS-Related-Considerations"><span class="nav-number">2.</span> <span class="nav-text">OS Related Considerations</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux"><span class="nav-number">2.1.</span> <span class="nav-text">Linux</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Windows"><span class="nav-number">2.2.</span> <span class="nav-text">Windows</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mac-Darwin"><span class="nav-number">2.3.</span> <span class="nav-text">Mac/Darwin</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Media-Driver"><span class="nav-number">3.</span> <span class="nav-text">Media Driver</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-to-Run-Aeron-Media-Driver"><span class="nav-number">3.1.</span> <span class="nav-text">How to Run Aeron Media Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shm-on-Linux-System"><span class="nav-number">3.2.</span> <span class="nav-text">shm on Linux System</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Media-Driver-on-Docker"><span class="nav-number">3.3.</span> <span class="nav-text">Media Driver on Docker</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unit-Testing-Attention"><span class="nav-number">4.</span> <span class="nav-text">Unit Testing Attention</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MediaServer-Code"><span class="nav-number">5.</span> <span class="nav-text">MediaServer Code</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Shm-Memory"><span class="nav-number">5.1.</span> <span class="nav-text">Shm Memory</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LowLatency"><span class="nav-number">5.2.</span> <span class="nav-text">LowLatency</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refer"><span class="nav-number">6.</span> <span class="nav-text">Refer</span></a></li></ol></div>
             
 
           </div>

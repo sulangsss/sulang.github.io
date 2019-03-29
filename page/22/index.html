@@ -284,6 +284,519 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/15/Java/JVM/Basic/GC-Logger/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/07/15/Java/JVM/Basic/GC-Logger/" itemprop="url">JVM GC Logger</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-15T20:01:22+08:00">
+                2018-07-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Configuation"><a href="#Configuation" class="headerlink" title="Configuation"></a>Configuation</h3><hr>
+<h3 id="Analyze-Logger"><a href="#Analyze-Logger" class="headerlink" title="Analyze Logger"></a>Analyze Logger</h3><h4 id="GC格式图解"><a href="#GC格式图解" class="headerlink" title="GC格式图解"></a>GC格式图解</h4><img src="/2018/07/15/Java/JVM/Basic/GC-Logger/gc-logger-format.png">
+<h4 id="实战分析"><a href="#实战分析" class="headerlink" title="实战分析"></a>实战分析</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">[GC pause (G1 Evacuation Pause) (young) 140.031: [G1Ergonomics (CSet Construction) start choosing CSet, _pending_cards: 19075, predicted base time: 18.50 ms, remaining time: 81.50 ms, target pause time: 100.00 ms]</span><br><span class="line"> 140.031: [G1Ergonomics (CSet Construction) add young regions to CSet, eden: 77 regions, survivors: 6 regions, predicted young region time: 89.12 ms]</span><br><span class="line"> 140.031: [G1Ergonomics (CSet Construction) finish choosing CSet, eden: 77 regions, survivors: 6 regions, old: 0 regions, predicted pause time: 107.62 ms, target pause time: 100.00 ms]</span><br><span class="line">, 0.1151640 secs]</span><br><span class="line">   [Parallel Time: 111.6 ms, GC Workers: 4] <span class="comment"># 标记着并行阶段的汇总信息。总共花费时间以及GC的工作线程数</span></span><br><span class="line">      <span class="comment"># Start时间戳信息 Diff是偏移平均时间的值。Diff越小越好，说明每个工作线程的速度都很均匀</span></span><br><span class="line">      <span class="comment"># Avg代表平均时间值。如果Avg跟Min,Max偏差不大是比较正常的，否则也要详细分析具体的偏差值大的任务。</span></span><br><span class="line">      [GC Worker Start (ms): Min: 140031.5, Avg: 140031.6, Max: 140031.9, Diff: 0.4] </span><br><span class="line">      <span class="comment"># Ext Root Scanning 外部根区扫描。外部根是堆外区。JNI引用，JVM系统目录，Classloaders等。</span></span><br><span class="line">      [Ext Root Scanning (ms): Min: 1.1, Avg: 1.7, Max: 2.2, Diff: 1.2, Sum: 6.7] </span><br><span class="line">      <span class="comment"># RSet</span></span><br><span class="line">      <span class="comment"># UpdateRS:更新RSet的时间信息。-XX:MaxGCPauseMillis参数是限制G1的暂停之间，一般RSet更新的时间小于10%的目标暂停时间是比较可取的。</span></span><br><span class="line">      <span class="comment"># 如果花费在RSetUpdate的时间过长，可以修改其占用总暂停时间的百分比-XX:G1RSetUpdatingPauseTimePercent。这个参数的默认值是10。</span></span><br><span class="line">      [Update RS (ms): Min: 11.1, Avg: 12.9, Max: 16.9, Diff: 5.9, Sum: 51.6] </span><br><span class="line">        <span class="comment"># Processed Buffers:已处理缓冲区。这个阶段处理的是在优化线程中处理dirty card分区扫描时记录的日志缓冲区。</span></span><br><span class="line">         [Processed Buffers: Min: 14, Avg: 25.2, Max: 36, Diff: 22, Sum: 101]</span><br><span class="line">      [Scan RS (ms): Min: 37.4, Avg: 41.9, Max: 44.7, Diff: 7.3, Sum: 167.7]</span><br><span class="line">      <span class="comment"># Code Root Scanning：代码跟的扫描。只有在分区的RSet有强代码根时会检查CSet的对内引用，例如常量池。</span></span><br><span class="line">      [Code Root Scanning (ms): Min: 0.0, Avg: 0.1, Max: 0.5, Diff: 0.5, Sum: 0.5]</span><br><span class="line">      <span class="comment"># Object Copy：该任务主要是对CSet中存活对象进行转移（复制）。对象拷贝的时间一般占用暂停时间的主要部分。</span></span><br><span class="line">      <span class="comment"># 如果拷贝时间和”预测暂停时间“有相差很大，也可以调整年轻代尺寸大小。</span></span><br><span class="line">      [Object Copy (ms): Min: 52.6, Avg: 54.2, Max: 55.1, Diff: 2.5, Sum: 216.9]</span><br><span class="line">      <span class="comment"># Termination </span></span><br><span class="line">      <span class="comment"># 这里的终止主要是终止工作线程。Work线程在工作终止前会检查其他工作线程的任务，如果其他work线程有没完成的任务，会抢活。</span></span><br><span class="line">      <span class="comment"># 如果终止时间较长，额能是某个work线程在某项任务执行时间过长。</span></span><br><span class="line">      [Termination (ms): Min: 0.0, Avg: 0.5, Max: 0.7, Diff: 0.7, Sum: 2.2]</span><br><span class="line">         [Termination Attempts: Min: 1, Avg: 2.0, Max: 4, Diff: 3, Sum: 8]</span><br><span class="line">      <span class="comment"># GC Worker Other</span></span><br><span class="line">      <span class="comment"># 花在GC之外的工作线程的时间，比如因为JVM的某个活动，导致GC线程被停掉。这部分消耗的时间不是真正花在GC上，只是作为log的一部分记录。</span></span><br><span class="line">      [GC Worker Other (ms): Min: 0.0, Avg: 0.0, Max: 0.0, Diff: 0.0, Sum: 0.1]</span><br><span class="line">      <span class="comment"># GC Worker Total</span></span><br><span class="line">      <span class="comment"># 并行阶段的GC汇总，包含了GC以及GC Worker Other的总时间。</span></span><br><span class="line">      [GC Worker Total (ms): Min: 111.1, Avg: 111.4, Max: 111.5, Diff: 0.4, Sum: 445.5]</span><br><span class="line">      <span class="comment"># End时间戳信息</span></span><br><span class="line">      [GC Worker End (ms): Min: 140143.0, Avg: 140143.0, Max: 140143.0, Diff: 0.0] </span><br><span class="line">   [Code Root Fixup: 0.0 ms]</span><br><span class="line">   [Code Root Purge: 0.1 ms]</span><br><span class="line">   [Clear CT: 0.5 ms]</span><br><span class="line">   [Other: 3.0 ms]</span><br><span class="line">      [Choose CSet: 0.0 ms]</span><br><span class="line">      [Ref Proc: 1.0 ms]</span><br><span class="line">      [Ref Enq: 0.0 ms]</span><br><span class="line">      [Redirty Cards: 0.7 ms]</span><br><span class="line">      [Humongous Register: 0.3 ms]</span><br><span class="line">      [Humongous Reclaim: 0.1 ms]</span><br><span class="line">      [Free CSet: 0.3 ms]</span><br><span class="line">   <span class="comment"># 垃圾收集结果统计</span></span><br><span class="line">   <span class="comment">#  Eden分区GC前616.0M，GC后是0；其中括号里面的分别是GC前后Eden分区的总大小</span></span><br><span class="line">   [Eden: 616.0M(616.0M)-&gt;0.0B(616.0M) Survivors: 48.0M-&gt;48.0M Heap: 2742.1M(13.1G)-&gt;2127.1M(13.1G)]</span><br><span class="line">   <span class="comment"># Survivors: 48.0M-&gt;48.0M，这里没有变化，如果Survivors空间的变化，空间增长了，说明有存活对象E区晋升到S区。</span></span><br><span class="line">   <span class="comment"># Heap: 2742.1M(13.1G)-&gt;2127.1M(13.1G)，整个堆区的GC前后空间数据，G1 GC会动态调整堆区，但这次回收中没有改变堆区的容量。</span></span><br><span class="line"> [Times: user=0.33 sys=0.01, real=0.12 secs]</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[GC pause (G1 Evacuation Pause) (young) 144.865: </span><br><span class="line">[G1Ergonomics (CSet Construction) start choosing CSet, _pending_cards: 14697, predicted base time: 15.95 ms, remaining time: 84.05 ms, target pause time: 100.00 ms]</span><br><span class="line">[G1Ergonomics (CSet Construction) add young regions to CSet, eden: 77 regions, survivors: 6 regions, predicted young region time: 93.31 ms]</span><br><span class="line">[G1Ergonomics (CSet Construction) finish choosing CSet, eden: 77 regions, survivors: 6 regions, old: 0 regions, predicted pause time: 109.26 ms, target pause time: 100.00 ms]</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h4><p><a href="https://blog.csdn.net/lijingyao8206/article/details/80566384" target="_blank" rel="noopener">https://blog.csdn.net/lijingyao8206/article/details/80566384</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/11/Java/JVM/JVM-Analazy/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/07/11/Java/JVM/JVM-Analazy/" itemprop="url">JVM Analazy</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-11T20:01:22+08:00">
+                2018-07-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Visual-VM"><a href="#Visual-VM" class="headerlink" title="Visual VM"></a>Visual VM</h3><h4 id="Plugin"><a href="#Plugin" class="headerlink" title="Plugin"></a>Plugin</h4><p>查看DirectMemory：Buffer Pools 和   MBeans Browser</p>
+<h3 id="jmap"><a href="#jmap" class="headerlink" title="jmap"></a>jmap</h3><h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><p>查看当前存活对象统计</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">jmap -histo:live pid</span><br><span class="line"></span><br><span class="line"><span class="comment"># 仅看前10个</span></span><br><span class="line">jmap -histo:live 42374 | head -10</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jmap -dump:format=b,file=heap.bin pid</span><br></pre></td></tr></table></figure>
+<h3 id="jstat"><a href="#jstat" class="headerlink" title="jstat"></a>jstat</h3><h4 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h4><ol>
+<li>需要每250毫秒查询一次进程2849 垃圾收集状况，一共查询20次</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jstat -gc 2849 250 20</span><br></pre></td></tr></table></figure>
+<p>输出结果说明</p>
+<ul>
+<li>S0  — Heap上的 Survivor space 0 区已使用空间的百分比</li>
+<li>S1  — Heap上的 Survivor space 1 区已使用空间的百分比</li>
+<li>E   — Heap上的 Eden space 区已使用空间的百分比</li>
+<li>O   — Heap上的 Old space 区已使用空间的百分比</li>
+<li>P   — Perm space 区已使用空间的百分比</li>
+<li>YGC — 从应用程序启动到采样时发生 Young GC 的次数</li>
+<li>YGCT– 从应用程序启动到采样时 Young GC 所用的时间(单位秒)</li>
+<li>FGC — 从应用程序启动到采样时发生 Full GC 的次数</li>
+<li>FGCT– 从应用程序启动到采样时 Full GC 所用的时间(单位秒)</li>
+<li>GCT — 从应用程序启动到采样时用于垃圾回收的总时间(单位秒)</li>
+</ul>
+<hr>
+<ul>
+<li>S0C: Current survivor space 0 capacity (kB).</li>
+<li>S1C: Current survivor space 1 capacity (kB).</li>
+<li>S0U: Survivor space 0 utilization (kB).</li>
+<li>S1U: Survivor space 1 utilization (kB).</li>
+<li>EC: Current eden space capacity (kB).</li>
+<li>EU: Eden space utilization (kB).</li>
+<li>OC: Current old space capacity (kB).</li>
+<li>OU: Old space utilization (kB).</li>
+<li>MC: Metaspace capacity (kB).</li>
+<li>MU: Metacspace utilization (kB).</li>
+<li>CCSC: Compressed class space capacity (kB).</li>
+<li>CCSU: Compressed class space used (kB).</li>
+<li>YGC: Number of young generation garbage collection events.</li>
+<li>YGCT: Young generation garbage collection time.</li>
+<li>FGC: Number of full GC events.</li>
+<li>FGCT: Full garbage collection time.</li>
+<li>GCT: Total garbage collection time.</li>
+</ul>
+<h3 id="jstack"><a href="#jstack" class="headerlink" title="jstack"></a>jstack</h3><p>Java Stack Trace，Java堆栈跟踪工具</p>
+<p>这个命令用于查看虚拟机当前时刻的线程快照（一般是threaddump 或者 javacore文件）。线程快照就是当前虚拟机内每一条线程正在执行的方法堆栈的集合。生成线程快照的主要目的是定位线程出现长时间停顿的原因，入线程间死锁、死循环、请求外部资源导致的长时间等待都是导致线程长时间停顿的常见原因。线程出现停顿的时候通过jstack来查看各个线程的调用堆栈，就可以知道没有响应的线程到底在后台做些什么事情。</p>
+<h3 id="jconsole"><a href="#jconsole" class="headerlink" title="jconsole"></a>jconsole</h3><p>一个java GUI监视工具，可以以图表化的形式显示各种数据。并可通过远程连接监视远程的服务器VM。用java写的GUI程序，用来监控VM，并可监控远程的VM，非常易用，而且功能非常强。命令行里打 jconsole，选则进程就可以了</p>
+<h4 id="docker"><a href="#docker" class="headerlink" title="docker"></a>docker</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">CMD [<span class="string">"java"</span>, \</span><br><span class="line"> <span class="string">"-server"</span>, \</span><br><span class="line"> <span class="string">"-Xms1g"</span>, \</span><br><span class="line"> <span class="string">"-Xmx30g"</span>, \</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote=true"</span>,\</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote.port=9000"</span>, \</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote.authenticate=false"</span>,\</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote.ssl=false"</span>, \</span><br><span class="line"> <span class="string">"-Djava.rmi.server.hostname=localhost"</span>, \</span><br><span class="line"> <span class="string">"-Dcom.sun.management.jmxremote.rmi.port=9000"</span>, \</span><br><span class="line"> <span class="string">"-jar"</span>, \</span><br><span class="line"> <span class="string">"/root/root.war"</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h3><h4 id="Unable-to-open-socket-file-target-process-not-responding-or-HotSpot-VM-not-loaded"><a href="#Unable-to-open-socket-file-target-process-not-responding-or-HotSpot-VM-not-loaded" class="headerlink" title="Unable to open socket file: target process not responding or HotSpot VM not loaded"></a>Unable to open socket file: target process not responding or HotSpot VM not loaded</h4><p>使用openJDK造成的，改用Oracle JDK即可</p>
+<blockquote>
+<p><a href="https://hub.docker.com/r/anapsix/alpine-java/" target="_blank" rel="noopener">https://hub.docker.com/r/anapsix/alpine-java/</a></p>
+</blockquote>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://www.jianshu.com/p/25e94a1399a0" target="_blank" rel="noopener">https://www.jianshu.com/p/25e94a1399a0</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/11/Server/SpringBoot/ServiceDiscovery/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/07/11/Server/SpringBoot/ServiceDiscovery/" itemprop="url">SpringBoot Service Discovery</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-11T10:22:18+08:00">
+                2018-07-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Consul（CA）"><a href="#Consul（CA）" class="headerlink" title="Consul（CA）"></a>Consul（CA）</h3><h3 id="Euerka（AP）"><a href="#Euerka（AP）" class="headerlink" title="Euerka（AP）"></a>Euerka（AP）</h3><h3 id="zookeeper（AP）"><a href="#zookeeper（AP）" class="headerlink" title="zookeeper（AP）"></a>zookeeper（AP）</h3><h3 id="etcd（AP）"><a href="#etcd（AP）" class="headerlink" title="etcd（AP）"></a>etcd（AP）</h3><h3 id="Feature（CAP）"><a href="#Feature（CAP）" class="headerlink" title="Feature（CAP）"></a>Feature（CAP）</h3><h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://blog.csdn.net/u013068377/article/details/78933654" target="_blank" rel="noopener">https://blog.csdn.net/u013068377/article/details/78933654</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/07/08/DB/MySQL/upgrade/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -609,152 +1122,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/30/Java/Queue/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/30/Java/Queue/" itemprop="url">Java Queue</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-30T11:01:22+08:00">
-                2018-06-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="ConcurrentLinkedQueue"><a href="#ConcurrentLinkedQueue" class="headerlink" title="ConcurrentLinkedQueue"></a>ConcurrentLinkedQueue</h3><p>peek操作是获取链表头部一个元素（只读取不移除）</p>
-<p>poll操作是在链表头部获取并且移除一个元素</p>
-<p>它实现了BlockingQueue接口，BlockingQueue接口继承自java.util.Queue接口，并在这个接口的基础上增加了take和put方法，这两个方法正是队列操作的阻塞版本。</p>
-<p>ConcurrentLinkedQueue的API原来.size()是要遍历一遍集合的，难怪那么慢，所以尽量要避免用size而改用isEmpty()</p>
-<h3 id="LinkedBlockingQueue"><a href="#LinkedBlockingQueue" class="headerlink" title="LinkedBlockingQueue"></a>LinkedBlockingQueue</h3><p>默认最大是Integer.MAX_VALUE，其中主要用到put和take方法，put方法在队列满的时候会阻塞直到有队列成员被消费，take方法在队列空的时候会阻塞，直到有队列成员被放进来。</p>
-<h3 id="CopyOnWriteArrayList"><a href="#CopyOnWriteArrayList" class="headerlink" title="CopyOnWriteArrayList"></a>CopyOnWriteArrayList</h3>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/30/Java/Map/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -965,7 +1332,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/29/Java/Best Practices to Handle Exceptions/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/30/Java/Queue/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -984,7 +1351,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/06/29/Java/Best Practices to Handle Exceptions/" itemprop="url">Best Practices to Handle Exceptions</a></h2>
+                <a class="post-title-link" href="/2018/06/30/Java/Queue/" itemprop="url">Java Queue</a></h2>
         
 
         <div class="post-meta">
@@ -996,8 +1363,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-29T11:01:22+08:00">
-                2018-06-29
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-30T11:01:22+08:00">
+                2018-06-30
               </time>
             
 
@@ -1058,199 +1425,12 @@
       
         
           
-            <h3 id="Case"><a href="#Case" class="headerlink" title="Case"></a>Case</h3><h4 id="Don’t-Catch-Throwable"><a href="#Don’t-Catch-Throwable" class="headerlink" title="Don’t Catch Throwable"></a>Don’t Catch Throwable</h4><p>Throwable 是所有 exceptions 和 errors 的父类。虽然你可以在 catch 子句中使用它，但你应该永远别这样做！</p>
-<p>如果你在 catch 子句中使用了 Throwable ，它将不仅捕获所有异常，还会捕获所有错误。这些错误是由 JVM 抛出的，用来表明不打算由应用处理的严重错误。 OutOfMemoryError 和 StackOverflowError 就是典型的例子，这两种情况都是由一些超出应用控制范围的情况导致的，无法处理。</p>
-<p>所以，最好不要在 catch 中使用 Throwable ，除非你能确保自己处于一些特定情况下，比如你自己足以处理错误，又或被要求处理错误。</p>
-<h4 id="Don’t-Log-and-Throw"><a href="#Don’t-Log-and-Throw" class="headerlink" title="Don’t Log and Throw"></a>Don’t Log and Throw</h4><p>That is probably the most often ignored best practice in this list. You can find lots of code snippets and even libraries in which an exception gets caught, logged and rethrown.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">new</span> Long(<span class="string">"xyz"</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">    log.error(e);</span><br><span class="line">    <span class="keyword">throw</span> e;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>It might feel intuitive to log an exception when it occurred and then rethrow it so that the caller can handle it appropriately. But it will write multiple error messages for the same exception.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">17</span>:<span class="number">44</span>:<span class="number">28</span>,<span class="number">945</span> ERROR TestExceptionHandling:<span class="number">65</span> - java.lang.NumberFormatException: For input string: <span class="string">"xyz"</span></span><br><span class="line">Exception in thread <span class="string">"main"</span> java.lang.NumberFormatException: For input string: <span class="string">"xyz"</span></span><br><span class="line">at java.lang.NumberFormatException.forInputString(NumberFormatException.java:<span class="number">65</span>)</span><br><span class="line">at java.lang.Long.parseLong(Long.java:<span class="number">589</span>)</span><br><span class="line">at java.lang.Long.(Long.java:<span class="number">965</span>)</span><br><span class="line">at com.stackify.example.TestExceptionHandling.logAndThrowException(TestExceptionHandling.java:<span class="number">63</span>)</span><br><span class="line">at com.stackify.example.TestExceptionHandling.main(TestExceptionHandling.java:<span class="number">58</span>)</span><br></pre></td></tr></table></figure>
-<p>The additional messages also don’t add any information. As explained in best practice #4, the exception message should describe the exceptional event. And the stack trace tells you in which class, method, and line the exception was thrown.</p>
-<p>If you need to add additional information, you should catch the exception and wrap it in a custom one. But make sure to follow best practice number 9.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">wrapException</span><span class="params">(String input)</span> <span class="keyword">throws</span> MyBusinessException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> MyBusinessException(<span class="string">"A message that describes the error."</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>So, only catch an exception if you want to handle it. Otherwise, specify it in the method signature and let the caller take care of it.</p>
-<h4 id="Wrap-the-Exception-Without-Consuming-it"><a href="#Wrap-the-Exception-Without-Consuming-it" class="headerlink" title="Wrap the Exception Without Consuming it"></a>Wrap the Exception Without Consuming it</h4><p>It’s sometimes better to catch a standard exception and to wrap it into a custom one. A typical example for such an exception is an application or framework specific business exception. That allows you to add additional information and you can also implement a special handling for your exception class.</p>
-<p>When you do that, make sure to set the original exception as the cause. The Exception class provides specific constructor methods that accept a Throwable as a parameter. Otherwise, you lose the stack trace and message of the original exception which will make it difficult to analyze the exceptional event that caused your exception.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">wrapException</span><span class="params">(String input)</span> <span class="keyword">throws</span> MyBusinessException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> MyBusinessException(<span class="string">"A message that describes the error."</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://dzone.com/articles/9-best-practices-to-handle-exceptions-in-java" target="_blank" rel="noopener">https://dzone.com/articles/9-best-practices-to-handle-exceptions-in-java</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/29/Java/BigDecimal/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/29/Java/BigDecimal/" itemprop="url">Java BigDecimal</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-29T11:01:22+08:00">
-                2018-06-29
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="RoundingMode"><a href="#RoundingMode" class="headerlink" title="RoundingMode"></a>RoundingMode</h3><h4 id="ROUND-CEILING"><a href="#ROUND-CEILING" class="headerlink" title="ROUND_CEILING"></a>ROUND_CEILING</h4><p>向正无限大方向舍入</p>
-<p>如果结果为正，则舍入行为类似于 RoundingMode.UP；如果结果为负，则舍入行为类似于RoundingMode.DOWN。</p>
-<p>例如：</p>
-<p>1.1 -&gt; 2</p>
-<p>5.5 -&gt; 6</p>
-<p>-1.1 -&gt; -1</p>
-<p>-2.5 -&gt; -2</p>
-<h4 id="ROUND-FLOOR"><a href="#ROUND-FLOOR" class="headerlink" title="ROUND_FLOOR"></a>ROUND_FLOOR</h4><p>向负无限大方向舍入。</p>
-<p>如果结果为正，则舍入行为类似于 RoundingMode.DOWN；如果结果为负，则舍入行为类似于RoundingMode.UP。</p>
-<p>例如：</p>
-<p>5.6 -&gt; 5</p>
-<p>1.1 -&gt; 1</p>
-<p>-1.1 -&gt; -2</p>
-<p>-1.6 -&gt; -2</p>
-<h4 id="HALF-UP"><a href="#HALF-UP" class="headerlink" title="HALF_UP"></a>HALF_UP</h4><p>向最接近的数字方向舍入，如果与两个相邻数字的距离相等，则向上舍入。</p>
-<p>如果被舍弃部分 &gt;= 0.5，则舍入行为同 RoundingMode.UP；否则舍入行为同RoundingMode.DOWN。注意，此舍入模式就是通常学校里讲的四舍五入。</p>
-<p>例如：</p>
-<p>2.5 -&gt; 3</p>
-<p>1.1 -&gt; 1</p>
-<p>-1.0 -&gt; -1</p>
-<p>-1.6 -&gt; -2</p>
-<h4 id="HALF-DOWN"><a href="#HALF-DOWN" class="headerlink" title="HALF_DOWN"></a>HALF_DOWN</h4><h4 id="HALF-EVEN"><a href="#HALF-EVEN" class="headerlink" title="HALF_EVEN"></a>HALF_EVEN</h4><p>向最接近数字方向舍入，如果与两个相邻数字的距离相等，则向相邻的偶数舍入。</p>
-<p>如果舍弃部分左边的数字为奇数，则舍入行为同 RoundingMode.HALF_UP；如果为偶数，则舍入行为同RoundingMode.HALF_DOWN。</p>
-<p>注意，在重复进行一系列计算时，根据统计学，此舍入模式可以在统计上将累加错误减到最小。此舍入模式也称为“银行家舍入法”，主要在美国使用。此舍入模式类似于Java 中对float 和double 算法使用的舍入策略。</p>
-<p>例如：</p>
-<p>5.5 -&gt; 6</p>
-<p>2.5 -&gt; 2</p>
-<p>-2.5 -&gt; 2</p>
-<ul>
-<li>5.5 -&gt; -5</li>
-</ul>
-<p>参考链接：<a href="https://my.oschina.net/sunchp/blog/670909" target="_blank" rel="noopener">https://my.oschina.net/sunchp/blog/670909</a></p>
-<h3 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h3><h4 id="java-lang-ArithmeticException-Rounding-necessary"><a href="#java-lang-ArithmeticException-Rounding-necessary" class="headerlink" title="java.lang.ArithmeticException: Rounding necessary"></a>java.lang.ArithmeticException: Rounding necessary</h4><p>设置结果小数位数小于当前位数时，如果未设置进位方式会抛出异常：java.lang.ArithmeticException: Rounding necessary，提示我们进位方式必须，当我们设置四舍五入后即可，其他方式可查看RoundingMode枚举类。</p>
-<h4 id="Jackson"><a href="#Jackson" class="headerlink" title="Jackson"></a>Jackson</h4><p>必须设置浮点数使用BigDecimal类型</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ObjectMapper().enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)</span><br></pre></td></tr></table></figure>
-<h4 id="计算出错"><a href="#计算出错" class="headerlink" title="计算出错"></a>计算出错</h4><p>BigDecimal BigDecimal(double d); //不允许使用<br>BigDecimal BigDecimal(String s); //常用,推荐使用<br>static BigDecimal valueOf(double d); //常用,推荐使用</p>
-
+            <h3 id="ConcurrentLinkedQueue"><a href="#ConcurrentLinkedQueue" class="headerlink" title="ConcurrentLinkedQueue"></a>ConcurrentLinkedQueue</h3><p>peek操作是获取链表头部一个元素（只读取不移除）</p>
+<p>poll操作是在链表头部获取并且移除一个元素</p>
+<p>它实现了BlockingQueue接口，BlockingQueue接口继承自java.util.Queue接口，并在这个接口的基础上增加了take和put方法，这两个方法正是队列操作的阻塞版本。</p>
+<p>ConcurrentLinkedQueue的API原来.size()是要遍历一遍集合的，难怪那么慢，所以尽量要避免用size而改用isEmpty()</p>
+<h3 id="LinkedBlockingQueue"><a href="#LinkedBlockingQueue" class="headerlink" title="LinkedBlockingQueue"></a>LinkedBlockingQueue</h3><p>默认最大是Integer.MAX_VALUE，其中主要用到put和take方法，put方法在队列满的时候会阻塞直到有队列成员被消费，take方法在队列空的时候会阻塞，直到有队列成员被放进来。</p>
+<h3 id="CopyOnWriteArrayList"><a href="#CopyOnWriteArrayList" class="headerlink" title="CopyOnWriteArrayList"></a>CopyOnWriteArrayList</h3>
           
         
       
@@ -1506,7 +1686,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/22/Linux/Manjaro/Software/disk/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/29/Java/BigDecimal/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1525,7 +1705,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/06/22/Linux/Manjaro/Software/disk/" itemprop="url">Manjaro Disk Software</a></h2>
+                <a class="post-title-link" href="/2018/06/29/Java/BigDecimal/" itemprop="url">Java BigDecimal</a></h2>
         
 
         <div class="post-meta">
@@ -1537,341 +1717,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-22T09:33:27+08:00">
-                2018-06-22
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Manjaro/" itemprop="url" rel="index">
-                    <span itemprop="name">Manjaro</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Manjaro/Software/" itemprop="url" rel="index">
-                    <span itemprop="name">Software</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="磁盘检查"><a href="#磁盘检查" class="headerlink" title="磁盘检查"></a>磁盘检查</h3><p>gsmartcontrol</p>
-<h3 id="Fix-Bad-Sector"><a href="#Fix-Bad-Sector" class="headerlink" title="Fix Bad Sector"></a>Fix Bad Sector</h3><h4 id="smartmontools"><a href="#smartmontools" class="headerlink" title="smartmontools"></a>smartmontools</h4><p>方式一：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo smartctl -a /dev/sda</span><br></pre></td></tr></table></figure>
-<p>方式二：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">smartctl -t long /dev/sdb</span><br></pre></td></tr></table></figure>
-<p>Use Diskscan to try and fix the uncorrectable sectors if you have errors with your smartctl test.</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/22/Linux/Manjaro/Software/file/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/22/Linux/Manjaro/Software/file/" itemprop="url">Manjaro Disk Software</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-22T09:33:27+08:00">
-                2018-06-22
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Manjaro/" itemprop="url" rel="index">
-                    <span itemprop="name">Manjaro</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Manjaro/Software/" itemprop="url" rel="index">
-                    <span itemprop="name">Software</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="文件同步"><a href="#文件同步" class="headerlink" title="文件同步"></a>文件同步</h3><p>FreeFileSync</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/21/Java/TimeTask/Scheduled/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/21/Java/TimeTask/Scheduled/" itemprop="url">Java ScheduledExecutorService</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-21T20:01:22+08:00">
-                2018-06-21
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-29T11:01:22+08:00">
+                2018-06-29
               </time>
             
 
@@ -1932,7 +1779,199 @@
       
         
           
-            <h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="simple-example"><a href="#simple-example" class="headerlink" title="simple example"></a>simple example</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var schedule: ScheduledExecutorService = Executors.newScheduledThreadPool(<span class="number">1</span>)</span><br><span class="line">schedule.scheduleAtFixedRate(</span><br><span class="line">    &#123; isPushOrderBook = <span class="keyword">true</span> &#125;,</span><br><span class="line">    bootInterval,</span><br><span class="line">    interval,</span><br><span class="line">    TimeUnit.MILLISECONDS</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+            <h3 id="RoundingMode"><a href="#RoundingMode" class="headerlink" title="RoundingMode"></a>RoundingMode</h3><h4 id="ROUND-CEILING"><a href="#ROUND-CEILING" class="headerlink" title="ROUND_CEILING"></a>ROUND_CEILING</h4><p>向正无限大方向舍入</p>
+<p>如果结果为正，则舍入行为类似于 RoundingMode.UP；如果结果为负，则舍入行为类似于RoundingMode.DOWN。</p>
+<p>例如：</p>
+<p>1.1 -&gt; 2</p>
+<p>5.5 -&gt; 6</p>
+<p>-1.1 -&gt; -1</p>
+<p>-2.5 -&gt; -2</p>
+<h4 id="ROUND-FLOOR"><a href="#ROUND-FLOOR" class="headerlink" title="ROUND_FLOOR"></a>ROUND_FLOOR</h4><p>向负无限大方向舍入。</p>
+<p>如果结果为正，则舍入行为类似于 RoundingMode.DOWN；如果结果为负，则舍入行为类似于RoundingMode.UP。</p>
+<p>例如：</p>
+<p>5.6 -&gt; 5</p>
+<p>1.1 -&gt; 1</p>
+<p>-1.1 -&gt; -2</p>
+<p>-1.6 -&gt; -2</p>
+<h4 id="HALF-UP"><a href="#HALF-UP" class="headerlink" title="HALF_UP"></a>HALF_UP</h4><p>向最接近的数字方向舍入，如果与两个相邻数字的距离相等，则向上舍入。</p>
+<p>如果被舍弃部分 &gt;= 0.5，则舍入行为同 RoundingMode.UP；否则舍入行为同RoundingMode.DOWN。注意，此舍入模式就是通常学校里讲的四舍五入。</p>
+<p>例如：</p>
+<p>2.5 -&gt; 3</p>
+<p>1.1 -&gt; 1</p>
+<p>-1.0 -&gt; -1</p>
+<p>-1.6 -&gt; -2</p>
+<h4 id="HALF-DOWN"><a href="#HALF-DOWN" class="headerlink" title="HALF_DOWN"></a>HALF_DOWN</h4><h4 id="HALF-EVEN"><a href="#HALF-EVEN" class="headerlink" title="HALF_EVEN"></a>HALF_EVEN</h4><p>向最接近数字方向舍入，如果与两个相邻数字的距离相等，则向相邻的偶数舍入。</p>
+<p>如果舍弃部分左边的数字为奇数，则舍入行为同 RoundingMode.HALF_UP；如果为偶数，则舍入行为同RoundingMode.HALF_DOWN。</p>
+<p>注意，在重复进行一系列计算时，根据统计学，此舍入模式可以在统计上将累加错误减到最小。此舍入模式也称为“银行家舍入法”，主要在美国使用。此舍入模式类似于Java 中对float 和double 算法使用的舍入策略。</p>
+<p>例如：</p>
+<p>5.5 -&gt; 6</p>
+<p>2.5 -&gt; 2</p>
+<p>-2.5 -&gt; 2</p>
+<ul>
+<li>5.5 -&gt; -5</li>
+</ul>
+<p>参考链接：<a href="https://my.oschina.net/sunchp/blog/670909" target="_blank" rel="noopener">https://my.oschina.net/sunchp/blog/670909</a></p>
+<h3 id="Error"><a href="#Error" class="headerlink" title="Error"></a>Error</h3><h4 id="java-lang-ArithmeticException-Rounding-necessary"><a href="#java-lang-ArithmeticException-Rounding-necessary" class="headerlink" title="java.lang.ArithmeticException: Rounding necessary"></a>java.lang.ArithmeticException: Rounding necessary</h4><p>设置结果小数位数小于当前位数时，如果未设置进位方式会抛出异常：java.lang.ArithmeticException: Rounding necessary，提示我们进位方式必须，当我们设置四舍五入后即可，其他方式可查看RoundingMode枚举类。</p>
+<h4 id="Jackson"><a href="#Jackson" class="headerlink" title="Jackson"></a>Jackson</h4><p>必须设置浮点数使用BigDecimal类型</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ObjectMapper().enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)</span><br></pre></td></tr></table></figure>
+<h4 id="计算出错"><a href="#计算出错" class="headerlink" title="计算出错"></a>计算出错</h4><p>BigDecimal BigDecimal(double d); //不允许使用<br>BigDecimal BigDecimal(String s); //常用,推荐使用<br>static BigDecimal valueOf(double d); //常用,推荐使用</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/29/Java/Best Practices to Handle Exceptions/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/06/29/Java/Best Practices to Handle Exceptions/" itemprop="url">Best Practices to Handle Exceptions</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-29T11:01:22+08:00">
+                2018-06-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Case"><a href="#Case" class="headerlink" title="Case"></a>Case</h3><h4 id="Don’t-Catch-Throwable"><a href="#Don’t-Catch-Throwable" class="headerlink" title="Don’t Catch Throwable"></a>Don’t Catch Throwable</h4><p>Throwable 是所有 exceptions 和 errors 的父类。虽然你可以在 catch 子句中使用它，但你应该永远别这样做！</p>
+<p>如果你在 catch 子句中使用了 Throwable ，它将不仅捕获所有异常，还会捕获所有错误。这些错误是由 JVM 抛出的，用来表明不打算由应用处理的严重错误。 OutOfMemoryError 和 StackOverflowError 就是典型的例子，这两种情况都是由一些超出应用控制范围的情况导致的，无法处理。</p>
+<p>所以，最好不要在 catch 中使用 Throwable ，除非你能确保自己处于一些特定情况下，比如你自己足以处理错误，又或被要求处理错误。</p>
+<h4 id="Don’t-Log-and-Throw"><a href="#Don’t-Log-and-Throw" class="headerlink" title="Don’t Log and Throw"></a>Don’t Log and Throw</h4><p>That is probably the most often ignored best practice in this list. You can find lots of code snippets and even libraries in which an exception gets caught, logged and rethrown.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">new</span> Long(<span class="string">"xyz"</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">    log.error(e);</span><br><span class="line">    <span class="keyword">throw</span> e;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>It might feel intuitive to log an exception when it occurred and then rethrow it so that the caller can handle it appropriately. But it will write multiple error messages for the same exception.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">17</span>:<span class="number">44</span>:<span class="number">28</span>,<span class="number">945</span> ERROR TestExceptionHandling:<span class="number">65</span> - java.lang.NumberFormatException: For input string: <span class="string">"xyz"</span></span><br><span class="line">Exception in thread <span class="string">"main"</span> java.lang.NumberFormatException: For input string: <span class="string">"xyz"</span></span><br><span class="line">at java.lang.NumberFormatException.forInputString(NumberFormatException.java:<span class="number">65</span>)</span><br><span class="line">at java.lang.Long.parseLong(Long.java:<span class="number">589</span>)</span><br><span class="line">at java.lang.Long.(Long.java:<span class="number">965</span>)</span><br><span class="line">at com.stackify.example.TestExceptionHandling.logAndThrowException(TestExceptionHandling.java:<span class="number">63</span>)</span><br><span class="line">at com.stackify.example.TestExceptionHandling.main(TestExceptionHandling.java:<span class="number">58</span>)</span><br></pre></td></tr></table></figure>
+<p>The additional messages also don’t add any information. As explained in best practice #4, the exception message should describe the exceptional event. And the stack trace tells you in which class, method, and line the exception was thrown.</p>
+<p>If you need to add additional information, you should catch the exception and wrap it in a custom one. But make sure to follow best practice number 9.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">wrapException</span><span class="params">(String input)</span> <span class="keyword">throws</span> MyBusinessException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> MyBusinessException(<span class="string">"A message that describes the error."</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>So, only catch an exception if you want to handle it. Otherwise, specify it in the method signature and let the caller take care of it.</p>
+<h4 id="Wrap-the-Exception-Without-Consuming-it"><a href="#Wrap-the-Exception-Without-Consuming-it" class="headerlink" title="Wrap the Exception Without Consuming it"></a>Wrap the Exception Without Consuming it</h4><p>It’s sometimes better to catch a standard exception and to wrap it into a custom one. A typical example for such an exception is an application or framework specific business exception. That allows you to add additional information and you can also implement a special handling for your exception class.</p>
+<p>When you do that, make sure to set the original exception as the cause. The Exception class provides specific constructor methods that accept a Throwable as a parameter. Otherwise, you lose the stack trace and message of the original exception which will make it difficult to analyze the exceptional event that caused your exception.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">wrapException</span><span class="params">(String input)</span> <span class="keyword">throws</span> MyBusinessException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> MyBusinessException(<span class="string">"A message that describes the error."</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://dzone.com/articles/9-best-practices-to-handle-exceptions-in-java" target="_blank" rel="noopener">https://dzone.com/articles/9-best-practices-to-handle-exceptions-in-java</a></p>
+
           
         
       
@@ -2018,7 +2057,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">517</span>
+                <span class="site-state-item-count">519</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2029,7 +2068,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">232</span>
+                <span class="site-state-item-count">234</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2040,7 +2079,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">580</span>
+                <span class="site-state-item-count">582</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
