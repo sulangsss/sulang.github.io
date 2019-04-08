@@ -284,6 +284,1364 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/" itemprop="url">JVM NewRatio与SurvivorRatio</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-08T18:41:22+08:00">
+                2019-04-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Optimize/" itemprop="url" rel="index">
+                    <span itemprop="name">Optimize</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>-XX:NewRatio：新生代(Eden + 2*S)与老年代(不包括永久区)的比值。假如设置为4，4表示新生代:老年代 = 1:4，意思是老年代占 4/5。</p>
+<img src="/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/pc1.png">
+<hr>
+<p>-XX:SurvivorRatio：2个Survivor区和Eden区的比值，假如设置为8，8表示两个Survivor:Eden = 2:8，每个Survivor占 1/10。</p>
+<img src="/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/pc2.png">
+<hr>
+<h3 id="如何确定-NewRatio-和-SurvivorRatio-的最优值"><a href="#如何确定-NewRatio-和-SurvivorRatio-的最优值" class="headerlink" title="如何确定 NewRatio 和 SurvivorRatio 的最优值"></a>如何确定 NewRatio 和 SurvivorRatio 的最优值</h3><p>JVM Options：-server -Xmx4g -Xms4g -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+ExplicitGCInvokesConcurrent -XX:NewRatio=1 -XX:SurvivorRatio=5 -XX:MetaspaceSize=32m -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:/opt/logs/gc/gc.lo</p>
+<h4 id="初始化GC"><a href="#初始化GC" class="headerlink" title="初始化GC"></a>初始化GC</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">2.459: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">2.459: [CMS-concurrent-preclean-start]</span><br><span class="line">2.462: [CMS-concurrent-preclean: 0.004/0.004 secs] [Times: user=0.02 sys=0.00, real=0.00 secs]</span><br><span class="line">2.462: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line"> CMS: abort preclean due to time 7.523: [CMS-concurrent-abortable-preclean: 0.325/5.061 secs] [Times: user=7.40 sys=3.62, real=5.07 secs]</span><br><span class="line">7.524: [GC (CMS Final Remark) [YG occupancy: 1108516 K (1797568 K)]7.524: [Rescan (parallel) , 0.2107730 secs]7.735: [weak refs processing, 0.0000480 secs]7.735: [class unloading, 0.0094960 secs]7.744: [scrub symbol table, 0.0088638 secs]7.753: [scrub string table, 0.0007320 secs][1 CMS-remark: 0K(2097152K)] 1108516K(3894720K), 0.2317200 secs] [Times: user=1.71 sys=0.00, real=0.23 secs]</span><br><span class="line">7.756: [CMS-concurrent-sweep-start]</span><br><span class="line">7.756: [CMS-concurrent-sweep: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">7.756: [CMS-concurrent-reset-start]</span><br><span class="line">7.785: [CMS-concurrent-reset: 0.029/0.029 secs] [Times: user=0.01 sys=0.05, real=0.03 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>新生代大小：1797568 KB = 1755.43 MB，当前已经占用 1108516 KB = 1082 MB；</li>
+</ul>
+<h4 id="GC-Allocation-Failure"><a href="#GC-Allocation-Failure" class="headerlink" title="[GC (Allocation Failure)"></a>[GC (Allocation Failure)</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[GC (Allocation Failure) 938.900: [ParNew: 1507180K-&gt;7820K(1797568K), 0.0121347 secs] 1594391K-&gt;95047K(3894720K), 0.0122274 secs] [Times: user=0.05 sys=0.00, real=0.01 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>[GC与[Full GC：表示GC类型；</li>
+<li>[ParNew: 1507180K-&gt;7820K(1797568K)：[ParNew表示GC发生的区域，显示的区域与使用的GC收集器密切相关。1507180K 表示收集前该内存区域（新生代）已经使用的容量，820K(1797568K)表示GC后该内存区域已使用容量(该内存区域总容量)</li>
+<li>1594391K-&gt;95047K(3894720K)：表示GC前堆已使用容量-&gt;GC后堆已使用容量(堆总容量)</li>
+<li>估算出老年大大小：3894720K - 1507180K = 2387540K = 2331.58 MB</li>
+</ul>
+<p>433.231: [GC (Allocation Failure) 433.231: [ParNew: 2255562K-&gt;8497K(2696384K), 0.0112992 secs] 2342952K-&gt;95887K(3744960K), 0.0114044 secs] [Times: user=0.08 sys=0.00, real=0.01 secs]</p>
+<p>老年代大小 = 1 GB</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://plumbr.io/handbook/gc-tuning-in-practice" target="_blank" rel="noopener">https://plumbr.io/handbook/gc-tuning-in-practice</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/07/Kubenetes/CPU-Management-Policies/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/07/Kubenetes/CPU-Management-Policies/" itemprop="url">Kuberntes CPU Management Policies on Node</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-07T15:35:06+08:00">
+                2019-04-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="CPU-Management-Policies"><a href="#CPU-Management-Policies" class="headerlink" title="CPU Management Policies"></a>CPU Management Policies</h4><p>By default, the kubelet uses CFS quota to enforce pod CPU limits.  When the node runs many CPU-bound pods, the workload can move to different CPU cores depending on whether the pod is throttled and which CPU cores are available at scheduling time.  Many workloads are not sensitive to this migration and thus work fine without any intervention.</p>
+<blockquote>
+<p>CFS：The Completely Fair Scheduler (CFS) is a process scheduler which was merged into the 2.6.23 (October 2007) release of the Linux kernel and is the default scheduler. It handles CPU resource allocation for executing processes, and aims to maximize overall CPU utilization while also maximizing interactive performance. </p>
+</blockquote>
+<p>There are two supported policies:</p>
+<ul>
+<li><strong>none</strong>: the default, which represents the existing scheduling behavior.</li>
+<li><strong>static</strong>: allows pods with certain resource characteristics to be granted increased CPU affinity and exclusivity on the node.</li>
+</ul>
+<blockquote>
+<p>The CPU manager periodically writes resource updates through the CRI in order to reconcile in-memory CPU assignments with cgroupfs. The reconcile frequency is set through a new Kubelet configuration value –cpu-manager-reconcile-period. If not specified, it defaults to the same duration as –node-status-update-frequency</p>
+</blockquote>
+<hr>
+<h3 id="None-policy"><a href="#None-policy" class="headerlink" title="None policy"></a>None policy</h3><p>The none policy explicitly enables the existing default CPU affinity scheme, providing no affinity beyond what the OS scheduler does automatically.  Limits on CPU usage for Guaranteed pods are enforced using <strong>CFS</strong> quota.</p>
+<hr>
+<h3 id="Static-policy"><a href="#Static-policy" class="headerlink" title="Static policy"></a>Static policy</h3><p>The static policy allows containers in Guaranteed pods with integer CPU requests access to exclusive CPUs on the node. This exclusivity is enforced using the cpuset cgroup controller.</p>
+<hr>
+<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="Case-BestEffort"><a href="#Case-BestEffort" class="headerlink" title="Case: BestEffort"></a>Case: BestEffort</h4><p>This pod runs in the BestEffort QoS class because no resource requests or limits are specified. It runs in the shared pool.</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br></pre></td></tr></table></figure>
+<h4 id="Case-Burstable"><a href="#Case-Burstable" class="headerlink" title="Case: Burstable"></a>Case: Burstable</h4><ol>
+<li>This pod runs in the <strong>Burstable</strong> QoS class because resource requests do not equal limits and the cpu quantity is not specified. It runs in the shared pool.</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">      requests:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"100Mi"</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>This pod runs in the Burstable QoS class because resource requests do not equal limits. It runs in the shared pool.</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"2"</span></span><br><span class="line"><span class="attr">      requests:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"100Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"1"</span></span><br></pre></td></tr></table></figure>
+<h4 id="Case-Guaranteed"><a href="#Case-Guaranteed" class="headerlink" title="Case: Guaranteed"></a>Case: Guaranteed</h4><ol>
+<li>This pod runs in the Guaranteed QoS class because requests are equal to limits. And the container’s resource limit for the CPU resource is an integer greater than or equal to one. <strong>The nginx container is granted 2 exclusive CPUs.</strong></li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"2"</span></span><br><span class="line"><span class="attr">      requests:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"2"</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>This pod runs in the Guaranteed QoS class because requests are equal to limits. But the container’s resource limit for the CPU resource is a fraction. It runs in the shared pool.</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"1.5"</span></span><br><span class="line"><span class="attr">      requests:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"1.5"</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>This pod runs in the Guaranteed QoS class because only limits are specified and requests are set equal to limits when not explicitly specified. And the container’s resource limit for the CPU resource is an integer greater than or equal to one. The nginx container is granted 2 exclusive CPUs.</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"2"</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://en.wikipedia.org/wiki/Completely_Fair_Scheduler" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Completely_Fair_Scheduler</a><br><a href="https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/" target="_blank" rel="noopener">https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/06/SpringBoot/ReactiveWeb/Introduction-ReactiveWeb/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/06/SpringBoot/ReactiveWeb/Introduction-ReactiveWeb/" itemprop="url">Spring Boot ReactiveWeb</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-06T14:21:22+08:00">
+                2019-04-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/ReactiveWeb/" itemprop="url" rel="index">
+                    <span itemprop="name">ReactiveWeb</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Netty-Configuration"><a href="#Netty-Configuration" class="headerlink" title="Netty Configuration"></a>Netty Configuration</h3><ul>
+<li><p>reactor.netty.ioWorkerCount</p>
+<blockquote>
+<p>Math.max(availableProcessors(), 4)</p>
+</blockquote>
+</li>
+<li><p>reactor.netty.ioSelectCount</p>
+</li>
+<li><p>reactor.netty.pool.maxConnections</p>
+</li>
+</ul>
+<ol>
+<li>How to change them?</li>
+</ol>
+<blockquote>
+<p>System.setProperty(“reactor.netty.ioWorkerCount”, “100”);</p>
+</blockquote>
+<hr>
+<h3 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h3><h4 id="Why-concatMap-is-better-than-flatMap"><a href="#Why-concatMap-is-better-than-flatMap" class="headerlink" title="Why concatMap is better than flatMap?"></a>Why concatMap is better than flatMap?</h4><p>In its essence, flatMap is designed to merge elements from the multiple substreams that is executing at a time. It means that flatMap should have asynchronous streams underneath so, they could potentially process data on the multiple threads or that could be a several network calls. Subsequently, such expectations impact implementation a lot so flatMap should be able to handle data from the multiple streams (Threads) (means usage of concurrent data structures), enqueue elements if there is a draining from another stream (means additional memory allocation for Queues for each substream) and do not violate Reactive Streams specification rules (means really complex implementation). Counting all these facts and the fact that we replace a plain map operation (which is synchronous) onto the more convenient way of throwing an exception using Flux/Mono.error (which does not change synchronicity of execution) leads to the fact that we do not need such a complex operator and we can use much simpler concatMap which is designed for asynchronous handling of a single stream at a time and has a couple of optimization in order to handle scalar, cold stream. </p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://projectreactor.io/" target="_blank" rel="noopener">https://projectreactor.io/</a><br><a href="https://www.callicoder.com/spring-5-reactive-webclient-webtestclient-examples/" target="_blank" rel="noopener">https://www.callicoder.com/spring-5-reactive-webclient-webtestclient-examples/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/05/SpringBoot/ReactiveWeb/WebFlux/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/05/SpringBoot/ReactiveWeb/WebFlux/" itemprop="url">Spring Boot WebFlux</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-05T14:21:22+08:00">
+                2019-04-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/ReactiveWeb/" itemprop="url" rel="index">
+                    <span itemprop="name">ReactiveWeb</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <hr>
+<h3 id="Unit-Test"><a href="#Unit-Test" class="headerlink" title="Unit Test"></a>Unit Test</h3><h4 id="Simple"><a href="#Simple" class="headerlink" title="Simple"></a>Simple</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">@WebFluxTest(controllers = [OrderController::class])</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OrderControllerTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    lateinit var client: WebTestClient</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function">fun <span class="title">shouldPlaceLimitOrder</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        client.post()</span><br><span class="line">                .uri(RestfulPath.addOrderPath)</span><br><span class="line">                .contentType(MediaType.APPLICATION_JSON_UTF8)</span><br><span class="line">                .accept(MediaType.APPLICATION_JSON_UTF8)</span><br><span class="line">                .body(Mono.just(limit), ReqOrder::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>)</span></span><br><span class="line"><span class="class">                .<span class="title">exchange</span>()</span></span><br><span class="line"><span class="class">                .<span class="title">expectStatus</span>()</span></span><br><span class="line"><span class="class">                .<span class="title">isOk</span></span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
+<h4 id="Filter-Configration"><a href="#Filter-Configration" class="headerlink" title="Filter Configration"></a>Filter Configration</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">@WebFluxTest(controllers = [OrderController::class])</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OrderControllerTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    lateinit var client: WebTestClient</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> lateinit var context: ApplicationContext</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function">fun <span class="title">shouldPlaceLimitOrder</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        val serverSpec = WebTestClient.bindToApplicationContext(context)</span><br><span class="line"></span><br><span class="line">        serverSpec.webFilter&lt;Nothing&gt;(AuthFilter())</span><br><span class="line">        val webTestClient = serverSpec.build()</span><br><span class="line"></span><br><span class="line">        val limit = TestingHelper.getLimit(</span><br><span class="line">                limitPrice = <span class="string">"1000.00"</span>,</span><br><span class="line">                quantity = <span class="string">"1"</span>,</span><br><span class="line">                contractId = Contract.BTCUSD.contractId</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        webTestClient.post()</span><br><span class="line">                .uri(RestfulPath.addOrderPath)</span><br><span class="line">                .contentType(MediaType.APPLICATION_JSON_UTF8)</span><br><span class="line">                .accept(MediaType.APPLICATION_JSON_UTF8)</span><br><span class="line">                .body(Mono.just(limit), ReqOrder::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>)</span></span><br><span class="line"><span class="class">                .<span class="title">exchange</span>()</span></span><br><span class="line"><span class="class">                .<span class="title">expectStatus</span>()</span></span><br><span class="line"><span class="class">                .<span class="title">isOk</span></span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://grokonez.com/testing/springboot-webflux-test-webfluxtest" target="_blank" rel="noopener">https://grokonez.com/testing/springboot-webflux-test-webfluxtest</a><br><a href="https://www.callicoder.com/spring-5-reactive-webclient-webtestclient-examples/" target="_blank" rel="noopener">https://www.callicoder.com/spring-5-reactive-webclient-webtestclient-examples/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/05/Testing/Stress/wrk/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/05/Testing/Stress/wrk/" itemprop="url">wrk</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-05T12:12:18+08:00">
+                2019-04-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Testing/" itemprop="url" rel="index">
+                    <span itemprop="name">Testing</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Testing/Stress/" itemprop="url" rel="index">
+                    <span itemprop="name">Stress</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="Function"><a href="#Function" class="headerlink" title="Function"></a>Function</h4><ul>
+<li>function setup(thread) 在创建线程时调用</li>
+<li>function init(args) 在线程启动时调用</li>
+<li>function request() 每个请求都会调用，特别说明，此函数调用频繁，所以不要在这里写入耗时的操作，如果复杂的请求，在init函数就构造好，这里直接引用。</li>
+<li>function delay()</li>
+<li>function response(status, headers, body) ，频繁调用。</li>
+</ul>
+<hr>
+<h3 id="Experience"><a href="#Experience" class="headerlink" title="Experience"></a>Experience</h3><h4 id="参数执行对比"><a href="#参数执行对比" class="headerlink" title="参数执行对比"></a>参数执行对比</h4><p>机器配置：GCP 4 core, 3.6G Memory</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">wrk -t4 -c400 -d1m -&gt; 32803.27</span><br><span class="line"></span><br><span class="line">wrk -t4 -c800 -d1m -&gt; 33405.82</span><br><span class="line"></span><br><span class="line">wrk -t8 -c400 -d1m -&gt; 34530.65</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://juejin.im/post/5a59e74f5188257353008fea" target="_blank" rel="noopener">https://juejin.im/post/5a59e74f5188257353008fea</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/04/SpringBoot/SpringBoot-Configuration/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/04/SpringBoot/SpringBoot-Configuration/" itemprop="url">Spring Boot Configration</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-04T17:21:22+08:00">
+                2019-04-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Jetty-On-Web"><a href="#Jetty-On-Web" class="headerlink" title="Jetty On Web"></a>Jetty On Web</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">exclusions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">exclusion</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-tomcat<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">exclusion</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">exclusions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-jetty<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="Self4J-Conflict"><a href="#Self4J-Conflict" class="headerlink" title="Self4J Conflict"></a>Self4J Conflict</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-webflux<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">exclusions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">exclusion</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-logging<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">exclusion</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">exclusions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="Unite-Test"><a href="#Unite-Test" class="headerlink" title="Unite Test"></a>Unite Test</h3><h4 id="Configration-Application-Class"><a href="#Configration-Application-Class" class="headerlink" title="Configration Application Class"></a>Configration Application Class</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RunWith</span>(SpringRunner::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">@SpringBootTest(classes = [NoProducerApplication::class])</span><br><span class="line"><span class="comment">// or use @ContextConfiguration(classes = [MockApplication::class])</span></span><br><span class="line"></span><br><span class="line">spring.main.allow-bean-definition-overriding=<span class="keyword">true</span></span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/03/Java/Advance/AffinityThread/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/03/Java/Advance/AffinityThread/" itemprop="url">Java AffinityThread</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-03T15:55:06+08:00">
+                2019-04-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="AffinityStrategies"><a href="#AffinityStrategies" class="headerlink" title="AffinityStrategies"></a>AffinityStrategies</h4><ul>
+<li>ANY: Any free cpu.</li>
+<li>SAME_CORE: Must be a cpu on the same core.</li>
+<li>SAME_SOCKET: Must be a cpu on the same socket/chip but different core.</li>
+<li>DIFFERENT_CORE: Must be a cpu on any other core (or socket)</li>
+<li>DIFFERENT_SOCKET: Must be a cpu on any other socket.</li>
+</ul>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="http://ifeve.com/thread-affinity/" target="_blank" rel="noopener">http://ifeve.com/thread-affinity/</a><br><a href="http://codingtutortips.blogspot.com/2012/01/java-thread-affinity-support-for-hyper.html" target="_blank" rel="noopener">http://codingtutortips.blogspot.com/2012/01/java-thread-affinity-support-for-hyper.html</a><br><a href="http://ifeve.com/java-context-switch/" target="_blank" rel="noopener">http://ifeve.com/java-context-switch/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/" itemprop="url">Kubernetes Pod on /dev/shm</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-29T20:35:06+08:00">
+                2019-03-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Solution/" itemprop="url" rel="index">
+                    <span itemprop="name">Solution</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Linux共享内存机制"><a href="#Linux共享内存机制" class="headerlink" title="Linux共享内存机制"></a>Linux共享内存机制</h4><p>理想很美好，现实很残酷。首先要解决的问题是，有些组件Agent与业务Pod之间是通过共享内存通信的，这跟Kubernetes&amp;微服务的最佳实践背道而驰。</p>
+<p>大家都知道，Kubernetes单个Pod内是共享IPC的，并且可以通过挂载Medium为Memory的EmptyDir Volume共享同一块内存Volume。</p>
+<p>Linux共享内存的两种机制：</p>
+<ul>
+<li>POSIX共享内存（shm_open()、shm_unlink()）</li>
+<li>System V共享内存（shmget()、shmat()、shmdt()）</li>
+</ul>
+<p>System V共享内存历史悠久，一般的UNIX系统上都有这套机制；而POSIX共享内存机制接口更加方便易用，一般是结合内存映射mmap使用。</p>
+<p>mmap和System V共享内存的主要区别在于：</p>
+<ul>
+<li>sysv shm是持久化的，除非被一个进程明确的删除，否则它始终存在于内存里，直到系统关机；</li>
+<li>mmap映射的内存在不是持久化的，如果进程关闭，映射随即失效，除非事先已经映射到了一个文件上。</li>
+<li>/dev/shm 是Linux下sysv共享内存的默认挂载点。</li>
+</ul>
+<p>POSIX共享内存是基于tmpfs来实现的。实际上，不仅PSM(POSIX shared memory)，而且SSM(System V shared memory)在内核也是基于tmpfs实现的。</p>
+<p>虽然System V与POSIX共享内存都是通过tmpfs实现，但是受的限制却不相同。也就是说 /proc/sys/kernel/shmmax只会影响SYS V共享内存，/dev/shm只会影响Posix共享内存 。实际上，System V与Posix共享内存本来就是使用的两个不同的tmpfs实例(instance)。</p>
+<p>小结：</p>
+<ul>
+<li>POSIX共享内存与SYS V共享内存在内核都是通过tmpfs实现，但对应两个不同的tmpfs实例，相互独立。</li>
+<li>通过/proc/sys/kernel/shmmax可以限制SYS V共享内存的最大值，通过/dev/shm可以限制POSIX共享内存的最大值(所有之和)。</li>
+</ul>
+<hr>
+<h3 id="Pod-share-memory-on-same-node"><a href="#Pod-share-memory-on-same-node" class="headerlink" title="Pod share memory on same node"></a>Pod share memory on same node</h3><p>基础组件Agents DaemonSet部署后，Agents和业务Pod分别在同一个Node上不同的Pod，那么Kubernetes该如何支持这两种类型的共享内存机制呢？</p>
+<img src="/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/k8s-overview.png">
+<p>当然，安全性上做出了牺牲，但在非容器化之前IPC的隔离也是没有的，所以这一点是可以接受的。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">DaemonSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  selector:</span></span><br><span class="line"><span class="attr">    matchLabels:</span></span><br><span class="line"><span class="attr">      name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      annotations:</span></span><br><span class="line">        <span class="string">scheduler.alpha.kubernetes.io/critical-pod:</span> <span class="string">""</span></span><br><span class="line"><span class="attr">      labels:</span></span><br><span class="line"><span class="attr">        name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      tolerations:</span></span><br><span class="line"><span class="attr">      - key:</span> <span class="string">"AgentsDaemonSet"</span></span><br><span class="line"><span class="attr">        operator:</span> <span class="string">"Equal"</span></span><br><span class="line"><span class="attr">        value:</span> <span class="string">"YES"</span></span><br><span class="line"><span class="attr">        effect:</span> <span class="string">"NoSchedule"</span></span><br><span class="line"><span class="attr">      hostNetwork:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">      hostIPC:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">      nodeSelector:</span></span><br><span class="line"><span class="attr">        AgentsDaemonSet:</span> <span class="string">"YES"</span></span><br><span class="line"><span class="attr">      containers:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">        image:</span> <span class="attr">demo_agent:1.0</span></span><br><span class="line"><span class="attr">        volumeMounts:</span></span><br><span class="line"><span class="attr">        - mountPath:</span> <span class="string">/dev/shm</span></span><br><span class="line"><span class="attr">          name:</span> <span class="string">shm</span></span><br><span class="line"><span class="attr">        resources:</span></span><br><span class="line"><span class="attr">          limits:</span></span><br><span class="line"><span class="attr">            cpu:</span> <span class="number">200</span><span class="string">m</span></span><br><span class="line"><span class="attr">            memory:</span> <span class="number">200</span><span class="string">Mi</span></span><br><span class="line"><span class="attr">          requests:</span></span><br><span class="line"><span class="attr">            cpu:</span> <span class="number">100</span><span class="string">m</span></span><br><span class="line"><span class="attr">            memory:</span> <span class="number">100</span><span class="string">Mi</span></span><br><span class="line"><span class="attr">      volumes:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">shm</span></span><br><span class="line"><span class="attr">        hostPath:</span></span><br><span class="line"><span class="attr">          path:</span> <span class="string">/dev/shm</span></span><br><span class="line"><span class="attr">          type:</span> <span class="string">Directory</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://my.oschina.net/jxcdwangtao/blog/3006365" target="_blank" rel="noopener">https://my.oschina.net/jxcdwangtao/blog/3006365</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/27/Kubenetes/GCP/Builder/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -568,1296 +1926,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/23/Kubenetes/Helm/HelmIn-stallation/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/03/23/Kubenetes/Helm/HelmIn-stallation/" itemprop="url">Helm Installation</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-23T20:15:19+08:00">
-                2019-03-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kuberntes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kuberntes</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kuberntes/Helm/" itemprop="url" rel="index">
-                    <span itemprop="name">Helm</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="What-Is-Helm"><a href="#What-Is-Helm" class="headerlink" title="What Is Helm?"></a>What Is Helm?</h4><ul>
-<li><strong>Helm</strong> is a Package Manager for Kubernetes.</li>
-</ul>
-<blockquote>
-<p>NodeJS is to Kubernetes as NPM is to HELM!<br>Ruby is to Kubernetes as Gems are to HELM!<br>Swift is to Kubernetes as CocoaPods are to HELM!<br>Java is to Kubernetes as Maven is to HELM!</p>
-</blockquote>
-<ul>
-<li><p>A <strong>Helm Chart</strong> is a Helm Package. This is the chart or “instructions” of how to put together your releasable package.</p>
-</li>
-<li><p><strong>Tiller</strong> is a server that runs inside your Kubernetes Cluster anytime you install Helm. Tiller manages installations of your Helm Charts. As Tiller installs containers into your Kubernetes Cluster on your behalf, security around this process should be a high priority for you.</p>
-</li>
-</ul>
-<hr>
-<h3 id="Installation-on-GKE"><a href="#Installation-on-GKE" class="headerlink" title="Installation on GKE"></a>Installation on GKE</h3><hr>
-<h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><ul>
-<li><p>helm install</p>
-<blockquote>
-<p>source from repository、tar、local and url<br>helm install stable/nginx<br>helm install ./nginx-1.2.3.tgz<br>helm install ./nginx<br>helm install <a href="https://example.com/charts/nginx-1.2.3.tgz" target="_blank" rel="noopener">https://example.com/charts/nginx-1.2.3.tgz</a></p>
-</blockquote>
-</li>
-<li><p>helm search</p>
-</li>
-<li>helm ls</li>
-<li>helm delete</li>
-<li>helm rollback</li>
-<li>helm repo update</li>
-<li>helm status</li>
-</ul>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://medium.com/google-cloud/installing-helm-in-google-kubernetes-engine-7f07f43c536e" target="_blank" rel="noopener">https://medium.com/google-cloud/installing-helm-in-google-kubernetes-engine-7f07f43c536e</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/17/Testing/TechStack/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/03/17/Testing/TechStack/" itemprop="url">Technology Stack On Testing</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-17T14:49:22+08:00">
-                2019-03-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Testing/" itemprop="url" rel="index">
-                    <span itemprop="name">Testing</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <hr>
-<h3 id="Performance-Metric"><a href="#Performance-Metric" class="headerlink" title="Performance Metric"></a>Performance Metric</h3><h4 id="业务指标"><a href="#业务指标" class="headerlink" title="业务指标"></a>业务指标</h4><ul>
-<li><p>Response Time：业务响应时间，一般情况下，不同系统的业务响应时间期望值是不同的，１秒以内最佳；</p>
-<ul>
-<li><blockquote>
-<p>平均响应时间：一段时间内响应时间的平均值。无法体现响应时间的波动情况。</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>中间响应时间：一段时间内响应时间的中间值，50%响应时间，有一半的服务器响应时间低于该值而另一半高于该值。</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>90%响应时间：一段时间内90%的事务响应时间比此数值要小。反应总体响应速度，和高于该值的10%超时率。是用来评估系统容量的重要指标之一。</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>最小响应时间：响应时间的最小值。反映服务最快处理能力。</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>最大响应时间：响应时间的最大值。反映服务器最慢处理能力。</p>
-</blockquote>
-</li>
-</ul>
-</li>
-<li><p>Transaction Per Second(吞吐量)：业务处理能力，这个指标是衡量系统的处理能力的一个非常重要的指标，TPS可以参照同行业系统和结合具体业务，中小企业TPS值为50~1000笔/秒，银行TPS值为1000~50000笔/秒，淘宝TPS值为30000~300000笔/秒。</p>
-<ul>
-<li><blockquote>
-<p>平均吞吐量：一段时间内吞吐量的平均值。无法体现吞吐量的瞬间变化。</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>峰值吞吐量：一段时间内吞吐量的最大值。是用来评估系统容量的重要指标之一。</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>最低吞吐量：一段时间内吞吐量的最小值。如果最小值接近0，说明系统有“卡”的现象。</p>
-</blockquote>
-</li>
-<li><blockquote>
-<p>70%的吞吐量集中区间：通过统计15%和85%的吞吐量边界值，计算出70%的吞吐量集中区间。区间越集中，吞吐量越稳定。</p>
-</blockquote>
-</li>
-</ul>
-</li>
-<li><p>成功率：这个指标是衡量系统处于压力下，业务的成功率，一般业界成功率要大于99.6%。</p>
-</li>
-<li><p>Top Percentile(TP)：例如，TP90 = The tp90 is a minimum time under which 90% of requests have been served。</p>
-<blockquote>
-<p>TP50：指在一个时间段内（如5分钟），统计该方法每次调用所消耗的时间，并将这些时间按从小到大的顺序进行排序，取第50%的那个值作为TP50值；配置此监控指标对应的报警阀值后，需要保证在这个时间段内该方法所有调用的消耗时间至少有50%的值要小于此阀值，否则系统将会报警。<br>TP90，TP99，TP999与TP50值计算方式一致，它们分别代表着对方法的不同性能要求，TP50相对较低，TP90则比较高，TP99，TP999则对方法性能要求很高。<br>举例，假设现在有4次请求耗时分别为<br>10s，1000s，100s，2s<br>计算TP百分线的方法就是：</p>
-<ol>
-<li>先按升序排列 [2s, 10s, 100s, 1000s]</li>
-<li>找到你需要用做统计的最后一个条目（向高取整）对应的数值，比如：TP50就是第 ceil(4<em>0.5)=2 个，即 10s ；TP90就是第 ceil(4</em>0.9)=4 个，即1000s。</li>
-</ol>
-</blockquote>
-</li>
-</ul>
-<hr>
-<h4 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h4>
-<ul>
-<li>Running：正在运行的进程。</li>
-<li>Waiting：已准备就绪，等待运行的进程。</li>
-<li>Blocked：因为等待某些事件完成而阻塞的进程，通常是在等待I/O，如Disk I/O，Network I/O等。</li>
-</ul>
-<p>这里的Running和Waiting共同构成Linux进程状态中的可运行状态(task_running)，而Blocked状态可以对应Linux进程状态中的不可中断睡眠状态(task_uninterruptible)。</p>
-<p>Linux命令<strong>vmstat 1</strong>(1秒采集1次)可以读取相关状态数据，例如</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line"> r  b   swpd   free   buff  cache      si   so    bi    bo   <span class="keyword">in</span>   cs    us  sy  id   wa st</span><br><span class="line"> 2  0     0   142064 374032 1951676    0    0     0     0    351  670    0  0   100   0  0</span><br></pre></td></tr></table></figure>
-<ul>
-<li>us：用户占用CPU的百分比</li>
-<li>sy：系统(内核和中断)占用CPU的百分比</li>
-<li>id：CPU空闲的百分比</li>
-<li>r：表示运行队列(就是说多少个进程真的分配到CPU)，当这个值超过了CPU数目，就会出现CPU瓶颈了。</li>
-<li>in：每秒CPU的中断次数，包括时间中断。</li>
-<li>cs：秒上下文切换次数。</li>
-<li>b：表示阻塞的进程。</li>
-<li>si：每秒从磁盘读入虚拟内存的大小，如果这个值大于0，表示物理内存不够用或者内存泄露了，要查找耗内存进程解决掉。</li>
-<li>so：每秒虚拟内存写入磁盘的大小，如果这个值大于0，同上。</li>
-<li>bi：块设备每秒接收的块数量，这里的块设备是指系统上所有的磁盘和其他块设备，默认块大小是1024byte。</li>
-<li>bo：块设备每秒发送的块数量，例如我们读取文件，bo就要大于0。</li>
-<li>wt：等待IO</li>
-</ul>
-<p>性能测试指标中，CPU使用率通常用<strong>us + sy</strong>来计算，其可接受上限通常在70%~80%。另外需要注意的是，在测试过程中，如果sy的值长期大于25%，应该关注in(系统中断)和cs(上下文切换)的数值，并根据被测应用的实现逻辑来分析是否合理。</p>
-<hr>
-<ul>
-<li><p>CPU Utilization Percentages(CPU使用率)：有进程处于Running状态的时间/总时间。</p>
-<blockquote>
-<p>在vmstat主要通过us、sys和id三列数据来体现。</p>
-</blockquote>
-</li>
-<li><p>Processes on run queue(运行队列进程数)：Running状态 + Waiting状态的进程数，展示了正在运行和等待CPU资源的任务数，可以看作CPU的工作清单，是判断CPU资源是否成为瓶颈的重要依据。vmstat通过r的值来体现。</p>
-<blockquote>
-<p>如果r的值等于系统CPU总核数，则说明CPU已经满负荷。在负载测试中，其可接受上限通常不超过CPU核数的2倍。</p>
-</blockquote>
-</li>
-<li><p>Context Switches(上下文切换)：简单来说，context指CPU寄存器和程序计数器在某时间点的内容，(进程)上下文切换即kernel挂起一个进程并将该进程此时的状态存储到内存，然后从内存中恢复下一个要执行的进程原来的状态到寄存器，从其上次暂停的执行代码开始继续执行至频繁的上下文切换将导致sy值增长。vmstat通过cs的值来体现</p>
-</li>
-<li><p>Load Average(平均负载)：在UNIX系统中，Load是对系统工作量的度量。Load取值有两种情况，多数UNIX系统取运行队列的值(vmstat输出的r)，而Linux系统取运行队列的值 + 处于task_uninterruptible状态的进程数(vmstat输出的b)，所以会出现CPU使用率不高但Load值很高的情况。</p>
-<blockquote>
-<p>Load Average就是在一段时间内的平均负载，系统工具top、uptime等提供1分钟、5分钟和15分钟的平均负载值。<br>top - 13:38:38 up 42 days,  3:25,  1 user,  load average: 0.80, 0.60, 0.53<br>当需要了解当前系统负载情况时，可以先查看Load average的值，如果系统持续处于高负载(如15分钟平均负载大于CPU总核数的两倍)，则查看vmstat的r值和b值来确认是CPU负荷重还是等待I/O的进程太多。</p>
-</blockquote>
-</li>
-</ul>
-<hr>
-<h4 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h4><p>Memory资源也有三方面需要重点关注：<strong>Free Memory、Swap和Paging</strong>。</p>
-<img src="/2019/03/17/Testing/TechStack/virtual-memory.jpg" title="进程状态">
-<p>物理内存和硬盘上的一块空间(SWAP)组合起来作为虚拟内存(Virtual Memory)为进程的运行提供一个连续的内存空间，这样的好处是进程可用的内存变大了，但需要注意的是，SWAP的读写速度远低于物理内存，并且物理内存和swap之间的数据交换会增加系统负担。</p>
-<p>虚拟内存被分成页(x86系统默认页大小为4k)，内核读写虚拟内存以页为单位，当物理内存空间不足时，内存调度会将物理内存上不常使用的内存页数据存储到磁盘的SWAP空间，物理内存与swap空间之间的数据交换过程称为页面交换(Paging)。</p>
-<ul>
-<li><p>Free Memory(可用内存)：内存占用的直观数据，vmstat输出free的值，可用内存过小将影响整个系统的运行效率，对于稳定运行的系统，free可接受的范围通常应该大于物理内存的20%，即内存占用应该小于物理内存的80%。在压力测试时，系统内存资源的情况应该用可用内存结合页面交换情况来判断，如果可以内存很少，但页面交换也很少，此时可以认为内存资源还对系统性能构成严重影响。</p>
-</li>
-<li><p>Paging(页面交换)：页面交换包括从SWAP交换到内存和从内存交换到SWAP，如果系统出现频繁的页面交换，需要引起注意。可以从vmstat的si和so获取。</p>
-<blockquote>
-<p>si：每秒从SWAP读取到内存的数据大小；so：每秒从内存写入到SWAP的数据大小。</p>
-</blockquote>
-</li>
-<li><p>Swap：可以从vmstat的swpd来获取当前SWAP空间的使用情况，应该和页面交换结合来分析，比如当swpd不为0，但si，so持续保持为0时，内存资源并没有成为系统的瓶颈。</p>
-</li>
-</ul>
-<hr>
-<h4 id="Disk"><a href="#Disk" class="headerlink" title="Disk"></a>Disk</h4><p>磁盘IO分为随机IO和顺序IO两种类型，在性能测试中应该先了解被测系统是偏向哪种类型。</p>
-<ul>
-<li>随机IO：随机读写数据，读写请求多，每次读写的数据量较小，其IO速度更依赖于磁盘每秒能IO次数(IOPS)。</li>
-<li>顺序IO：顺序请求大量数据，读写请求个数相对较少，每次读写的数据量较大，顺序IO更重视每次IO的数据吞吐量。</li>
-</ul>
-<p>对于磁盘，首要关注使用率，IOPS和数据吞吐量，在Linux服务区，可以使用iostat来获取这些数据。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">iostat -dxk 1</span><br><span class="line"><span class="comment"># -d 显示设备（磁盘）使用状态</span></span><br><span class="line"><span class="comment"># -k 某些使用block为单位的列强制使用Kilobytes为单位</span></span><br><span class="line"><span class="comment"># 1 表示刷新间隔为1秒</span></span><br><span class="line"></span><br><span class="line">Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># simple top-like I/O monitor</span></span><br><span class="line"><span class="comment"># apt install iotop</span></span><br><span class="line">iotop</span><br><span class="line">TID  PRIO  USER   DISK READ  DISK WRITE   SWAPIN   IO&gt;   COMMAND</span><br><span class="line"></span><br><span class="line"><span class="comment"># --version #显示版本号</span></span><br><span class="line"><span class="comment"># -h, --help #显示帮助信息</span></span><br><span class="line"><span class="comment"># -o, --only #显示进程或者线程实际上正在做的I/O，而不是全部的，可以随时切换按o</span></span><br><span class="line"><span class="comment"># -b, --batch #运行在非交互式的模式</span></span><br><span class="line"><span class="comment"># -n NUM, --iter=NUM #在非交互式模式下，设置显示的次数，</span></span><br><span class="line"><span class="comment"># -d SEC, --delay=SEC #设置显示的间隔秒数，支持非整数值</span></span><br><span class="line"><span class="comment"># -p PID, --pid=PID #只显示指定PID的信息</span></span><br><span class="line"><span class="comment"># -u USER, --user=USER #显示指定的用户的进程的信息</span></span><br><span class="line"><span class="comment"># -P, --processes #只显示进程，一般为显示所有的线程</span></span><br><span class="line"><span class="comment"># -a, --accumulated #显示从iotop启动后每个线程完成了的IO总数</span></span><br><span class="line"><span class="comment"># -k, --kilobytes #以千字节显示</span></span><br><span class="line"><span class="comment"># -t, --time #在每一行前添加一个当前的时间</span></span><br><span class="line"><span class="comment"># -q, --quiet #suppress some lines of header (implies --batch). This option can be specified up to three times to remove header lines.</span></span><br><span class="line"><span class="comment"># -q column names are only printed on the first iteration,</span></span><br><span class="line"><span class="comment"># -qq column names are never printed,</span></span><br><span class="line"><span class="comment"># -qqq the I/O summary is never printed.</span></span><br><span class="line"><span class="comment"># https://www.cnblogs.com/legendbaby/p/5056967.html</span></span><br></pre></td></tr></table></figure>
-<p><strong>重点性能指标</strong></p>
-<ul>
-<li><p>%util：在统计时间内，所有处理IO时间除以总共统计时间。</p>
-<blockquote>
-<p>例如如果统计间隔1秒，该设备有0.8秒在处理IO，而0.2秒闲置，那么该设备的%util = 0.8/1 = 80%，所以该参数暗示了设备的繁忙程度。<br>一般地，如果该参数是100%表示设备已经接近满负荷运行了（当然如果是多磁盘，即使%util是100%，因为磁盘的并发能力，所以磁盘使用未必就到了瓶颈）。</p>
-</blockquote>
-</li>
-<li><p>await：每一个IO请求的处理的平均时间（单位是微秒毫秒）。这里可以理解为IO的响应时间，一般地系统IO响应时间应该低于5ms，如果大于10ms就比较大了。</p>
-<blockquote>
-<p>这个时间包括了队列时间和服务时间，也就是说，一般情况下，await大于svctm，它们的差值越小，则说明队列时间越短，反之差值越大，队列时间越长，说明系统出了问题。</p>
-</blockquote>
-</li>
-<li>svctm：表示平均每次设备I/O操作的服务时间（以毫秒为单位）。如果svctm的值与await很接近，表示几乎没有I/O等待，磁盘性能很好，如果await的值远高于svctm的值，则表示I/O队列等待太长，       系统上运行的应用程序将变慢。</li>
-</ul>
-<hr>
-<ul>
-<li>kB_read/s：每秒从设备读取的数据量；</li>
-<li>kB_wrtn/s：每秒向设备写入的数据量；</li>
-<li>kB_read：读取的总数据量；</li>
-<li>kB_wrtn：写入的总数量数据量；<br>-rrqm/s：每秒这个设备相关的读取请求有多少被Merge了（当系统调用需要读取数据的时候，VFS将请求发到各个FS，如果FS发现不同的读取请求读取的是相同Block的数据，FS会将这个请求合并Merge）；wrqm/s：每秒这个设备相关的写入请求有多少被Merge了。</li>
-<li>rsec/s：每秒读取的扇区数；</li>
-<li>wsec/：每秒写入的扇区数。</li>
-<li>rKB/s：The number of read requests that were issued to the device per second；</li>
-<li>wKB/s：The number of write requests that were issued to the device per second；</li>
-<li>avgrq-sz：平均请求扇区的大小</li>
-<li>avgqu-sz：是平均请求队列的长度。毫无疑问，队列长度越短越好。    </li>
-</ul>
-<hr>
-<ul>
-<li><p>IOPS：每秒处理读/写请求的数量，即iostat输出中的r/s和w/s，个人PC的机械硬盘IOPS一般在100左右，而各种公有云/私有云的普通服务器，也只在百这个数量级。</p>
-<blockquote>
-<p>预先获取到所用服务区的IOPS能力，然后在性能测试中监控试试的IOPS数据，来衡量当前的磁盘是否能满足系统的IO需求。</p>
-</blockquote>
-</li>
-<li><p>数据吞吐量：每秒读/写的数据大小，即iostat输出中的rkB/s和wkB/s，通常磁盘的数据吞吐量与IO类型有直接关系，顺序IO的吞吐能力明显优与随机读写，可以预先测得磁盘在随机IO和顺序IO下的吞吐量，以便于测试时监控到的数据进行比较衡量。</p>
-</li>
-</ul>
-<hr>
-<h4 id="Network"><a href="#Network" class="headerlink" title="Network"></a>Network</h4><p>网络本身是系统中一个非常复杂的部分，但常规的服务端性能测试通常放在一个局域网进行，因为我们首先关注被测系统自身的性能表现，并且需要保证能在较少的成本下发起足够大的压力。</p>
-<p>因此对于多数系统的性能测试，我们主要关注<strong>网络吞吐量</strong>即可，对于稳定运行的系统，需要为被测场景外的业务流出足够的带宽；在压力测试过程中，需要注意瓶颈可能来自于带宽。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iptraf -d eth0</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Performance-Tools"><a href="#Performance-Tools" class="headerlink" title="Performance Tools"></a>Performance Tools</h3><ul>
-<li>wrk</li>
-<li>ab</li>
-<li>locust</li>
-<li>Jmeter</li>
-</ul>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://testerhome.com/topics/17068" target="_blank" rel="noopener">https://testerhome.com/topics/17068</a><br><a href="https://zhuanlan.zhihu.com/p/22070862" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/22070862</a><br><a href="http://www.aloo.me/2016/08/01/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E4%B8%AD%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%85%B3%E9%94%AE%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87%E6%B5%85%E6%9E%90/" target="_blank" rel="noopener">http://www.aloo.me/2016/08/01/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E4%B8%AD%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%85%B3%E9%94%AE%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87%E6%B5%85%E6%9E%90/</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/16/DB/Influxdb/Influxdb-Command/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/03/16/DB/Influxdb/Influxdb-Command/" itemprop="url">Influxdb Command</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-16T15:00:27+08:00">
-                2019-03-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/Influxdb/" itemprop="url" rel="index">
-                    <span itemprop="name">Influxdb</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Basic-Command"><a href="#Basic-Command" class="headerlink" title="Basic Command"></a>Basic Command</h3><h4 id="Connect"><a href="#Connect" class="headerlink" title="Connect"></a>Connect</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">influx -precision rfc3339</span><br><span class="line"></span><br><span class="line"><span class="comment"># The -precision argument specifies the format/precision of any returned timestamps</span></span><br><span class="line"><span class="comment"># rfc3339 tells InfluxDB to return timestamps in RFC3339 format (YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ)</span></span><br></pre></td></tr></table></figure>
-<h4 id="Auth"><a href="#Auth" class="headerlink" title="Auth"></a>Auth</h4><ol>
-<li><p>Auth User</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">auth</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Authenticate Telegraf requests to InfluxDB</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## Write timeout (for the InfluxDB client), formatted as a string.</span></span><br><span class="line"><span class="comment">## If not provided, will default to 5s. 0s means no timeout (not recommended).</span></span><br><span class="line">timeout = <span class="string">"5s"</span></span><br><span class="line">username = <span class="string">"telegraf"</span> <span class="comment">#💥</span></span><br><span class="line">password = <span class="string">"metricsmetricsmetricsmetrics"</span> <span class="comment">#💥</span></span><br></pre></td></tr></table></figure></li>
-</ol>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/16/Kubenetes/MultipleContainerOnDeployment/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/03/16/Kubenetes/MultipleContainerOnDeployment/" itemprop="url">Multi-container pods and container communication in Kubernetes</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-16T14:00:27+08:00">
-                2019-03-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kubernetes</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://www.mirantis.com/blog/multi-container-pods-and-container-communication-in-kubernetes/" target="_blank" rel="noopener">https://www.mirantis.com/blog/multi-container-pods-and-container-communication-in-kubernetes/</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/02/13/Security/Web/DDoS/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/02/13/Security/Web/DDoS/" itemprop="url">未命名</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-02-13T12:29:10+08:00">
-                2019-02-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/02/13/Security/Web/SQL-Injection/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/02/13/Security/Web/SQL-Injection/" itemprop="url">未命名</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-02-13T12:28:48+08:00">
-                2019-02-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/02/13/Security/Web/XSS/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/02/13/Security/Web/XSS/" itemprop="url">未命名</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-02-13T12:28:36+08:00">
-                2019-02-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/02/13/Security/Web/CSRF/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/02/13/Security/Web/CSRF/" itemprop="url">未命名</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-02-13T12:28:23+08:00">
-                2019-02-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/52/">52</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/53/">53</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1904,7 +1977,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">519</span>
+                <span class="site-state-item-count">527</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1915,7 +1988,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">234</span>
+                <span class="site-state-item-count">236</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1926,7 +1999,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">582</span>
+                <span class="site-state-item-count">589</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

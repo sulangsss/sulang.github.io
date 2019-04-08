@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Java,JVM,NewRatio,SurvivorRatio,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="Introduction-XX:NewRatio：新生代(Eden + 2*S)与老年代(不包括永久区)的比值。假如设置为4，4表示新生代:老年代 = 1:4，意思是老年代占 4/5。   -XX:SurvivorRatio：2个Survivor区和Eden区的比值，假如设置为8，8表示两个Survivor:Eden = 2:8，每个Survivor占 1/10。   如何确定 NewRatio">
+<meta name="keywords" content="Java,JVM,NewRatio,SurvivorRatio">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM NewRatio与SurvivorRatio">
+<meta property="og:url" content="https://sulangsss.github.io/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="Introduction-XX:NewRatio：新生代(Eden + 2*S)与老年代(不包括永久区)的比值。假如设置为4，4表示新生代:老年代 = 1:4，意思是老年代占 4/5。   -XX:SurvivorRatio：2个Survivor区和Eden区的比值，假如设置为8，8表示两个Survivor:Eden = 2:8，每个Survivor占 1/10。   如何确定 NewRatio">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://sulangsss.github.io/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/pc1.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/pc2.png">
+<meta property="og:updated_time" content="2019-04-08T12:52:59.604Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM NewRatio与SurvivorRatio">
+<meta name="twitter:description" content="Introduction-XX:NewRatio：新生代(Eden + 2*S)与老年代(不包括永久区)的比值。假如设置为4，4表示新生代:老年代 = 1:4，意思是老年代占 4/5。   -XX:SurvivorRatio：2个Survivor区和Eden区的比值，假如设置为8，8表示两个Survivor:Eden = 2:8，每个Survivor占 1/10。   如何确定 NewRatio">
+<meta name="twitter:image" content="https://sulangsss.github.io/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/pc1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>JVM NewRatio与SurvivorRatio | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">JVM NewRatio与SurvivorRatio</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-08T18:41:22+08:00">
+                2019-04-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Optimize/" itemprop="url" rel="index">
+                    <span itemprop="name">Optimize</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>-XX:NewRatio：新生代(Eden + 2*S)与老年代(不包括永久区)的比值。假如设置为4，4表示新生代:老年代 = 1:4，意思是老年代占 4/5。</p>
+<img src="/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/pc1.png">
+<hr>
+<p>-XX:SurvivorRatio：2个Survivor区和Eden区的比值，假如设置为8，8表示两个Survivor:Eden = 2:8，每个Survivor占 1/10。</p>
+<img src="/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/pc2.png">
+<hr>
+<h3 id="如何确定-NewRatio-和-SurvivorRatio-的最优值"><a href="#如何确定-NewRatio-和-SurvivorRatio-的最优值" class="headerlink" title="如何确定 NewRatio 和 SurvivorRatio 的最优值"></a>如何确定 NewRatio 和 SurvivorRatio 的最优值</h3><p>JVM Options：-server -Xmx4g -Xms4g -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+ExplicitGCInvokesConcurrent -XX:NewRatio=1 -XX:SurvivorRatio=5 -XX:MetaspaceSize=32m -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:/opt/logs/gc/gc.lo</p>
+<h4 id="初始化GC"><a href="#初始化GC" class="headerlink" title="初始化GC"></a>初始化GC</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">2.459: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">2.459: [CMS-concurrent-preclean-start]</span><br><span class="line">2.462: [CMS-concurrent-preclean: 0.004/0.004 secs] [Times: user=0.02 sys=0.00, real=0.00 secs]</span><br><span class="line">2.462: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line"> CMS: abort preclean due to time 7.523: [CMS-concurrent-abortable-preclean: 0.325/5.061 secs] [Times: user=7.40 sys=3.62, real=5.07 secs]</span><br><span class="line">7.524: [GC (CMS Final Remark) [YG occupancy: 1108516 K (1797568 K)]7.524: [Rescan (parallel) , 0.2107730 secs]7.735: [weak refs processing, 0.0000480 secs]7.735: [class unloading, 0.0094960 secs]7.744: [scrub symbol table, 0.0088638 secs]7.753: [scrub string table, 0.0007320 secs][1 CMS-remark: 0K(2097152K)] 1108516K(3894720K), 0.2317200 secs] [Times: user=1.71 sys=0.00, real=0.23 secs]</span><br><span class="line">7.756: [CMS-concurrent-sweep-start]</span><br><span class="line">7.756: [CMS-concurrent-sweep: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">7.756: [CMS-concurrent-reset-start]</span><br><span class="line">7.785: [CMS-concurrent-reset: 0.029/0.029 secs] [Times: user=0.01 sys=0.05, real=0.03 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>新生代大小：1797568 KB = 1755.43 MB，当前已经占用 1108516 KB = 1082 MB；</li>
+</ul>
+<h4 id="GC-Allocation-Failure"><a href="#GC-Allocation-Failure" class="headerlink" title="[GC (Allocation Failure)"></a>[GC (Allocation Failure)</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[GC (Allocation Failure) 938.900: [ParNew: 1507180K-&gt;7820K(1797568K), 0.0121347 secs] 1594391K-&gt;95047K(3894720K), 0.0122274 secs] [Times: user=0.05 sys=0.00, real=0.01 secs]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>[GC与[Full GC：表示GC类型；</li>
+<li>[ParNew: 1507180K-&gt;7820K(1797568K)：[ParNew表示GC发生的区域，显示的区域与使用的GC收集器密切相关。1507180K 表示收集前该内存区域（新生代）已经使用的容量，820K(1797568K)表示GC后该内存区域已使用容量(该内存区域总容量)</li>
+<li>1594391K-&gt;95047K(3894720K)：表示GC前堆已使用容量-&gt;GC后堆已使用容量(堆总容量)</li>
+<li>估算出老年大大小：3894720K - 1507180K = 2387540K = 2331.58 MB</li>
+</ul>
+<p>433.231: [GC (Allocation Failure) 433.231: [ParNew: 2255562K-&gt;8497K(2696384K), 0.0112992 secs] 2342952K-&gt;95887K(3744960K), 0.0114044 secs] [Times: user=0.08 sys=0.00, real=0.01 secs]</p>
+<p>老年代大小 = 1 GB</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://plumbr.io/handbook/gc-tuning-in-practice" target="_blank" rel="noopener">https://plumbr.io/handbook/gc-tuning-in-practice</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+            <a href="/tags/NewRatio/" rel="tag"># NewRatio</a>
+          
+            <a href="/tags/SurvivorRatio/" rel="tag"># SurvivorRatio</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/04/07/Kubenetes/CPU-Management-Policies/" rel="next" title="Kuberntes CPU Management Policies on Node">
+                <i class="fa fa-chevron-left"></i> Kuberntes CPU Management Policies on Node
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">527</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">236</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">589</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何确定-NewRatio-和-SurvivorRatio-的最优值"><span class="nav-number">2.</span> <span class="nav-text">如何确定 NewRatio 和 SurvivorRatio 的最优值</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#初始化GC"><span class="nav-number">2.1.</span> <span class="nav-text">初始化GC</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GC-Allocation-Failure"><span class="nav-number">2.2.</span> <span class="nav-text">[GC (Allocation Failure)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">3.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
