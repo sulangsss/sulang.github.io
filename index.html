@@ -284,6 +284,353 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/12/Network/MTU/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/12/Network/MTU/" itemprop="url">What's MTU and MSS?</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-12T15:40:00+08:00">
+                2019-04-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>MTU：最大传输单元，是网络设备传输的信息包最大值。对于各种路由器，最佳的MTU值通常都是默认值。</p>
+<img src="/2019/04/12/Network/MTU/seven-layer-network-protocol.jpg">
+<img src="/2019/04/12/Network/MTU/layer-network-protocol-detail.png">
+<p>在7层网络协议中，MTU是数据链路层的概念。MTU限制的是数据链路层的payload，也就是上层协议的大小，例如IP，ICMP等。</p>
+<p>MSS：Maxitum Segment Size，MSS加包头数据就等于MTU，即TCP数据包每次能够传输的最大数据分段。</p>
+<hr>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>举一个最简单的场景，你在家用自己的笔记本上网，用的是路由器，路由器连接电信网络，然后访问了<a href="http://www.baidu.com，从你的笔记本出发的一个以太网数据帧总共经过了以下路径：" target="_blank" rel="noopener">www.baidu.com，从你的笔记本出发的一个以太网数据帧总共经过了以下路径：</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1500     1500                 1500    </span><br><span class="line">笔记本 -&gt; 路由器 -&gt; 电信机房  -&gt; 服务器</span><br></pre></td></tr></table></figure>
+<p>假设现在我把笔记本的MTU最大值设置成了1700，然后发送了一个超大的ip数据包（2000），这时候在以外网传输的时候会被拆成2个包，一个1700，一个300，然后加上头信息进行传输。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1700     1500                 1500    </span><br><span class="line">笔记本 -&gt; 路由器 -&gt; 电信机房  -&gt; 服务器</span><br></pre></td></tr></table></figure>
+<p>路由器接收到了一个1700的帧，发现大于自己设置的最大值：1500，如果IP包DF标志位为1，也就是不允许分包，那么路由器直接就把这个包丢弃了，根本就不会到达电信机房，也就到不了服务器了，所以，到这里我们就会发现，MTU其实就是在每一个节点的管控值，只要是大于这个值的数据帧，要么选择分片，要么直接丢弃。</p>
+<hr>
+<h3 id="为什么MTU通常设置为1500"><a href="#为什么MTU通常设置为1500" class="headerlink" title="为什么MTU通常设置为1500?"></a>为什么MTU通常设置为1500?</h3><p>其实一个标准的以太网数据帧大小是：1518，头信息有14字节，尾部校验和FCS占了4字节，所以真正留给上层协议传输数据的大小就是：1518 - 14 - 4 = 1500，那么，1518这个值又是从哪里来的呢？</p>
+<p><strong>假设取一个更大的MTU值会怎么样？</strong></p>
+<p>假设MTU值和IP数据包大小一致，一个IP数据包的大小是：65535，那么加上以太网帧头和为，一个以太网帧的大小就是：65535 + 14 + 4 = 65553，看起来似乎很完美，发送方也不需要拆包，接收方也不需要重组。</p>
+<p>那么假设我们现在的带宽是：100Mbps，因为以太网帧是传输中的最小可识别单元，再往下就是0101所对应的光信号了，所以我们的一条带宽同时只能发送一个以太网帧。如果同时发送多个，那么对端就无法重组成一个以太网帧了，在100Mbps的带宽中（假设中间没有损耗），我们计算一下发送这一帧需要的时间：</p>
+<p>( 65553 <em> 8 ) / ( 100 </em> 1024 * 1024 ) ≈ <strong>0.005(s)</strong></p>
+<p>在100M网络下传输一帧就需要5ms，也就是说这5ms其他进程发送不了任何数据。如果是早先的电话拨号，网速只有2M的情况下：</p>
+<p>( 65553 <em> 8 ) / ( 2 </em> 1024 * 1024 ) ≈ <strong>0.100(s)</strong></p>
+<p>100ms，这简直是噩梦。其实这就像红绿灯，时间要设置合理，交替通行，不然同一个方向如果一直是绿灯，那么另一个方向就要堵成翔了。</p>
+<p><strong>MTU值既然大了不行，那把MTU的值设置小一点可以么？</strong></p>
+<p>假设MTU值设置为100，那么单个帧传输的时间，在2Mbps带宽下需要：</p>
+<p>( 100 <em> 8 ) / ( 2 </em> 1024 <em> 1024 ) </em> 1000 ≈ 5(ms)</p>
+<p>时间上已经能接受了，问题在于，不管MTU设置为多少，以太网头帧尾大小是固定的，都是14 + 4，所以在MTU为100的时候，一个以太网帧的传输效率为：</p>
+<p>( 100 - 14 - 4 ) / 100 = <strong>82%</strong></p>
+<p>写成公式就是：( T - 14 - 4 ) / T，当T趋于无穷大的时候，效率接近100%，也就是MTU的值越大，传输效率最高，但是基于上一点传输时间的问题，来个折中的选择吧，既然头加尾是18，那就凑个整来个1500，总大小就是1518，传输效率：</p>
+<p>1500 / 1518 =  98.8%</p>
+<p>100Mbps传输时间：( 1518 <em> 8 ) / ( 100 </em> 1024 <em> 1024 ) </em> 1000 = 0.11(ms)</p>
+<p>2Mbps传输时间：( 1518 <em> 8 ) / ( 2 </em> 1024 <em> 1024 ) </em> 1000 = 5.79(ms)</p>
+<blockquote>
+<p>至于MUT的值最少是64，这个值是因为和以太网帧在半双工下的碰撞有关。</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.zhihu.com/question/31460305" target="_blank" rel="noopener">https://www.zhihu.com/question/31460305</a><br>什么是MTU: <a href="https://www.vps234.com/vps-mtu-config-tutorials/" target="_blank" rel="noopener">https://www.vps234.com/vps-mtu-config-tutorials/</a><br>GCP and AWS MTU: <a href="http://www.cloudnetworkstuff.com/index.php/2018/04/19/multicloud-path-mtu-aws-gcp/" target="_blank" rel="noopener">http://www.cloudnetworkstuff.com/index.php/2018/04/19/multicloud-path-mtu-aws-gcp/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/09/Security/JWT-Algorithm/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/09/Security/JWT-Algorithm/" itemprop="url">How select a best jwt cryptographic algorithm</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-09T15:31:22+08:00">
+                2019-04-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Security/" itemprop="url" rel="index">
+                    <span itemprop="name">Security</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>The common data security concerns:</p>
+<ul>
+<li>Integrity: That data has not been tampered with</li>
+<li>Authenticity: That the origin of the data can be verified</li>
+<li>Non-repudiation: The origin of the data must be verifiable by others</li>
+<li>Confidentiality: That data is kept secret from unauthorised parties and processes</li>
+</ul>
+<hr>
+<h3 id="Digital-signatures"><a href="#Digital-signatures" class="headerlink" title="Digital signatures"></a>Digital signatures</h3><h4 id="Key-Type"><a href="#Key-Type" class="headerlink" title="Key Type"></a>Key Type</h4><ul>
+<li>RSA</li>
+<li>EC </li>
+<li>OKP</li>
+</ul>
+<hr>
+<h4 id="Algorithms"><a href="#Algorithms" class="headerlink" title="Algorithms"></a>Algorithms</h4><ul>
+<li>RSA signature with PKCS #1 and SHA-2: RS256 RS384 RS512</li>
+<li>RSA PSS signature with SHA-2: PS256</li>
+<li>EC DSA signature with SHA-2:</li>
+<li>Edwards-curve DSA signature with SHA-2:</li>
+</ul>
+<hr>
+<h3 id="RSA、DSA、ECDSA-三者的区别"><a href="#RSA、DSA、ECDSA-三者的区别" class="headerlink" title="RSA、DSA、ECDSA 三者的区别"></a>RSA、DSA、ECDSA 三者的区别</h3><h4 id="EdDSA与ECDSA-的区别"><a href="#EdDSA与ECDSA-的区别" class="headerlink" title="EdDSA与ECDSA 的区别"></a>EdDSA与ECDSA 的区别</h4><p>ECDSA签名算法的安全性是比较依赖于安全的随机数生成算法的，如果随机数算法存在问题，使用了相同的k进行签名，那么攻击者是可以根据签名信息恢复私钥的，历史上也出过几次这样的事故，比如10年索尼的PS3私钥遭破解以及12年受Java某随机数生成库的影响造成的比特币被盗事件。所以说ECDSA签名在设计上还是存在一些问题的， 这也激励了新的EdDSA算法的出现。</p>
+<p>EdDSA签名算法由Schnorr签名发展变化而来，可以在RFC8032中看到它的定义实现，由曲线和参数的选择不同又可以划分为Ed25519和Ed448算法，顾命思义，它们两分别是基于curve25519和curve448曲线，一般用的比较多的是Ed25519算法，相比Ed448而言运算速度要更快，秘钥与签名空间也较小，二者的使用场景还是有点区别。</p>
+<p>Ed25519所使用的曲线由curve25519变换而来，curve25519是蒙哥马利曲线，经过变换得到Ed25519使用的扭爱德华曲线edwards25519，curve25519曲线的安全性是非常高的。</p>
+<p>EdDSA的运算速度也比ECDSA算法要快很多，优势可以说是非常明显的，门罗币和zcash等加密货币已经将算法切换到了EdDSA了，目前其也被确认为下一代椭圆曲线算法。</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://connect2id.com/products/nimbus-jose-jwt/algorithm-selection-guide" target="_blank" rel="noopener">https://connect2id.com/products/nimbus-jose-jwt/algorithm-selection-guide</a><br><a href="https://security.stackexchange.com/questions/194830/recommended-asymmetric-algorithms-for-jwt" target="_blank" rel="noopener">https://security.stackexchange.com/questions/194830/recommended-asymmetric-algorithms-for-jwt</a><br>数字签名算法介绍和区别: <a href="https://zhuanlan.zhihu.com/p/33195438" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/33195438</a><br>算法性能测试: <a href="https://zhuanlan.zhihu.com/p/27615345" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/27615345</a><br>针对EdDSA的fault attack: <a href="https://www.anquanke.com/post/id/167018" target="_blank" rel="noopener">https://www.anquanke.com/post/id/167018</a><br>ECDSA Digital Signature Verification in Java: <a href="https://metamug.com/article/sign-verify-digital-signature-ecdsa-java.html" target="_blank" rel="noopener">https://metamug.com/article/sign-verify-digital-signature-ecdsa-java.html</a><br>Google Implementation Libary: <a href="https://github.com/google/tink" target="_blank" rel="noopener">https://github.com/google/tink</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/08/Java/JVM/Optimize/NewRatio与SurvivorRatio/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -581,26 +928,26 @@
 <hr>
 <h3 id="Static-policy"><a href="#Static-policy" class="headerlink" title="Static policy"></a>Static policy</h3><p>The static policy allows containers in Guaranteed pods with integer CPU requests access to exclusive CPUs on the node. This exclusivity is enforced using the cpuset cgroup controller.</p>
 <hr>
-<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="Case-BestEffort"><a href="#Case-BestEffort" class="headerlink" title="Case: BestEffort"></a>Case: BestEffort</h4><p>This pod runs in the BestEffort QoS class because no resource requests or limits are specified. It runs in the shared pool.</p>
+<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="Case-BestEffort"><a href="#Case-BestEffort" class="headerlink" title="Case: BestEffort"></a>Case: BestEffort</h4><p>This pod runs in the <strong>BestEffort</strong> QoS class because no resource requests or limits are specified. It runs in the shared pool.</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br></pre></td></tr></table></figure>
 <h4 id="Case-Burstable"><a href="#Case-Burstable" class="headerlink" title="Case: Burstable"></a>Case: Burstable</h4><ol>
 <li>This pod runs in the <strong>Burstable</strong> QoS class because resource requests do not equal limits and the cpu quantity is not specified. It runs in the shared pool.</li>
 </ol>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">      requests:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"100Mi"</span></span><br></pre></td></tr></table></figure>
 <ol start="2">
-<li>This pod runs in the Burstable QoS class because resource requests do not equal limits. It runs in the shared pool.</li>
+<li>This pod runs in the <strong>Burstable</strong> QoS class because resource requests do not equal limits. It runs in the shared pool.</li>
 </ol>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"2"</span></span><br><span class="line"><span class="attr">      requests:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"100Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"1"</span></span><br></pre></td></tr></table></figure>
 <h4 id="Case-Guaranteed"><a href="#Case-Guaranteed" class="headerlink" title="Case: Guaranteed"></a>Case: Guaranteed</h4><ol>
-<li>This pod runs in the Guaranteed QoS class because requests are equal to limits. And the container’s resource limit for the CPU resource is an integer greater than or equal to one. <strong>The nginx container is granted 2 exclusive CPUs.</strong></li>
+<li>This pod runs in the <strong>Guaranteed</strong> QoS class because requests are equal to limits. And the container’s resource limit for the CPU resource is an integer greater than or equal to one. <strong>The nginx container is granted 2 exclusive CPUs.</strong></li>
 </ol>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"2"</span></span><br><span class="line"><span class="attr">      requests:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"2"</span></span><br></pre></td></tr></table></figure>
 <ol start="2">
-<li>This pod runs in the Guaranteed QoS class because requests are equal to limits. But the container’s resource limit for the CPU resource is a fraction. It runs in the shared pool.</li>
+<li>This pod runs in the <strong>Guaranteed</strong> QoS class because requests are equal to limits. But the container’s resource limit for the CPU resource is a fraction. It runs in the shared pool.</li>
 </ol>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"1.5"</span></span><br><span class="line"><span class="attr">      requests:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"1.5"</span></span><br></pre></td></tr></table></figure>
 <ol start="3">
-<li>This pod runs in the Guaranteed QoS class because only limits are specified and requests are set equal to limits when not explicitly specified. And the container’s resource limit for the CPU resource is an integer greater than or equal to one. The nginx container is granted 2 exclusive CPUs.</li>
+<li>This pod runs in the <strong>Guaranteed</strong> QoS class because only limits are specified and requests are set equal to limits when not explicitly specified. And the container’s resource limit for the CPU resource is an integer greater than or equal to one. The nginx container is granted 2 exclusive CPUs.</li>
 </ol>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">nginx</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line"><span class="attr">      limits:</span></span><br><span class="line"><span class="attr">        memory:</span> <span class="string">"200Mi"</span></span><br><span class="line"><span class="attr">        cpu:</span> <span class="string">"2"</span></span><br></pre></td></tr></table></figure>
 <hr>
@@ -1629,303 +1976,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/27/Kubenetes/GCP/Builder/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/03/27/Kubenetes/GCP/Builder/" itemprop="url">GCP Builder</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-27T18:00:06+08:00">
-                2019-03-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kubernetes</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/GCP/" itemprop="url" rel="index">
-                    <span itemprop="name">GCP</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Custom-Building-Machine"><a href="#Custom-Building-Machine" class="headerlink" title="Custom Building Machine"></a>Custom Building Machine</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># view machine on region</span></span><br><span class="line">gcloud compute machine-types list | grep asia-east1</span><br><span class="line"></span><br><span class="line"><span class="comment"># build</span></span><br><span class="line">kbuild cloudbuild-dev.yaml --machine-type=n1-highcpu-8 .</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><a href="https://cloud.google.com/compute/docs/machine-types?hl=zh-cn" target="_blank" rel="noopener">https://cloud.google.com/compute/docs/machine-types?hl=zh-cn</a><br><a href="https://cloud.google.com/cloud-build/docs/build-config" target="_blank" rel="noopener">https://cloud.google.com/cloud-build/docs/build-config</a><br><a href="https://docs.docker.com/engine/reference/run/" target="_blank" rel="noopener">https://docs.docker.com/engine/reference/run/</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/25/Grafana/Grafana-Configuration/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/03/25/Grafana/Grafana-Configuration/" itemprop="url">Grafana Configuration</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-25T19:13:06+08:00">
-                2019-03-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Grafana/" itemprop="url" rel="index">
-                    <span itemprop="name">Grafana</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Kuberntes-Configuration"><a href="#Kuberntes-Configuration" class="headerlink" title="Kuberntes Configuration"></a>Kuberntes Configuration</h3><h4 id="GF-PATHS-DATA-’-var-lib-grafana’-is-not-writable"><a href="#GF-PATHS-DATA-’-var-lib-grafana’-is-not-writable" class="headerlink" title="GF_PATHS_DATA=’/var/lib/grafana’ is not writable"></a>GF_PATHS_DATA=’/var/lib/grafana’ is not writable</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StatefulSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">grafana-core</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    app:</span> <span class="string">grafana-core</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  serviceName:</span> <span class="string">"grafana-core-headless-service"</span></span><br><span class="line"><span class="attr">  replicas:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">  selector:</span></span><br><span class="line"><span class="attr">    matchLabels:</span></span><br><span class="line"><span class="attr">      app:</span> <span class="string">grafana-core</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      labels:</span></span><br><span class="line"><span class="attr">        app:</span> <span class="string">grafana-core</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      initContainers:</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">grafana-chown</span></span><br><span class="line"><span class="attr">          command:</span> <span class="string">["chown",</span> <span class="string">"-R"</span><span class="string">,</span> <span class="string">"472:472"</span><span class="string">,</span> <span class="string">"/var/lib/grafana"</span><span class="string">]</span></span><br><span class="line"><span class="attr">          image:</span> <span class="string">busybox</span></span><br><span class="line"><span class="attr">          volumeMounts:</span></span><br><span class="line"><span class="attr">            - name:</span> <span class="string">grafana-core-pvc</span></span><br><span class="line"><span class="attr">              mountPath:</span> <span class="string">/var/lib/grafana</span></span><br><span class="line"><span class="attr">      containers:</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">grafana-core</span></span><br><span class="line"><span class="attr">          image:</span> </span><br><span class="line"><span class="attr">          resources:</span></span><br><span class="line"><span class="attr">            requests:</span></span><br><span class="line"><span class="attr">              memory:</span> <span class="number">256</span><span class="string">M</span></span><br><span class="line"><span class="attr">            limits:</span></span><br><span class="line"><span class="attr">              memory:</span> <span class="number">1</span><span class="string">G</span></span><br><span class="line"><span class="attr">          ports:</span></span><br><span class="line"><span class="attr">            - containerPort:</span> <span class="number">3000</span></span><br><span class="line"><span class="attr">          volumeMounts:</span></span><br><span class="line"><span class="attr">            - name:</span> <span class="string">grafana-core-pvc</span></span><br><span class="line"><span class="attr">              mountPath:</span> <span class="string">/var/lib/grafana</span></span><br><span class="line"><span class="attr">  volumeClaimTemplates:</span></span><br><span class="line"><span class="attr">    - metadata:</span></span><br><span class="line"><span class="attr">        name:</span> <span class="string">grafana-core-pvc</span></span><br><span class="line"><span class="attr">      spec:</span></span><br><span class="line"><span class="attr">        accessModes:</span> <span class="string">[</span> <span class="string">"ReadWriteOnce"</span> <span class="string">]</span></span><br><span class="line"><span class="attr">        storageClassName:</span> <span class="string">"pd-standard"</span></span><br><span class="line"><span class="attr">        resources:</span></span><br><span class="line"><span class="attr">          requests:</span></span><br><span class="line"><span class="attr">            storage:</span> <span class="number">1</span><span class="string">Gi</span></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1977,7 +2027,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">527</span>
+                <span class="site-state-item-count">530</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1999,7 +2049,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">589</span>
+                <span class="site-state-item-count">590</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
