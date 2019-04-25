@@ -284,6 +284,216 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/02/DB/MySQL/连接机制/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/02/DB/MySQL/连接机制/" itemprop="url">MySQL 连接机制及运维</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-02T22:00:18+08:00">
+                2018-10-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="MySQL连接方式"><a href="#MySQL连接方式" class="headerlink" title="MySQL连接方式"></a>MySQL连接方式</h3><h4 id="查看当前连接方式"><a href="#查看当前连接方式" class="headerlink" title="查看当前连接方式"></a>查看当前连接方式</h4><p>SELECT DISTINCT connection_type from performance_schema.threads where connection_type is not null</p>
+<hr>
+<h4 id="类型"><a href="#类型" class="headerlink" title="类型"></a>类型</h4><ul>
+<li><p>TCP/IP</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql --protocol=tcp -uroot</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>TLS/SSL</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql --protocol=tcp -uroot --ssl=on</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>Unix Sockets</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql -uroot</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Shared Memory</p>
+</li>
+<li>Named pipes</li>
+</ul>
+<hr>
+<h4 id="如何选择连接类型"><a href="#如何选择连接类型" class="headerlink" title="如何选择连接类型"></a>如何选择连接类型</h4><ol>
+<li>如果程序和数据库在同一台机子 (类 Unix 系统) 上，推荐使用 Unix Sockets，因为它效率更高；</li>
+<li>若数据库分布在不同的机子上，且能确保连接安全或者安全性要求不是那么高，推荐使用 TCP/IP，反之使用 TLS/SSL；</li>
+</ol>
+<hr>
+<h4 id="长短连接"><a href="#长短连接" class="headerlink" title="长短连接"></a>长短连接</h4><p>当数据库服务器和客户端位于不同的主机时，就需要通过建立网络连接来进行通信。客户端必须使用数据库连接来发送命令和接收应答、数据。根据服务器的处理机制分为短连接和长连接。</p>
+<ol>
+<li>短连接</li>
+</ol>
+<p>短连接是指程序和数据库通信时需要建立连接，执行操作后，连接关闭。短连接简单来说就是每一次操作数据库，都要打开和关闭数据库连接，基本步骤是：连接→数据传输→关闭连接。</p>
+<p>在慢速网络下使用短连接，连接的开销会很大；在生产繁忙的系统中，连接也可能会受到系统端口数的限制，如果要每秒建立几千个连接，那么连接断开后，端口不会被马上回收利用，必须经历一个“FIN”阶段的等待，直到可被回收利用为止，这样就可能会导致端口资源不够用。</p>
+<p>在 Linux 上，可以通过调整 /proc/sys/net/ipv4/ip_local_port_range 来扩大端口的使用范围；调整 /proc/sys/net/ipv4/tcp_fin_timeout 来减少回收延期（如果想在应用服务器上调整这个参数，一定要慎重！）。</p>
+<p>另外一个办法是主机使用多个IP地址。端口数的限制其实是基于同一个IP:PORT 的，如果主机增加了IP，MySQL 就可以监听多个IP地址，客户端也可以选择连接某个IP:PORT，这样就增加了端口资源。</p>
+<ol start="2">
+<li>长连接</li>
+</ol>
+<p>长连接是指程序之间的连接在建立之后，就一直打开，被后续程序重用。使用长连接的初衷是减少连接的开销，尽管MySQL的连接比其他数据库要快得多。</p>
+<p>以 PHP 程序为例，当收到一个永久连接的请求时，PHP 将检查是否已经存在一个（前面已经开启了的）相同的永久连接。如果存在，则将直接使用这个连接；如果不存在，则建立一个新的连接。所谓“相同”的连接是指用相同的用户名和密码到相同主机的连接。</p>
+<p>从客户端的角度来说，使用长连接有一个好处，可以不用每次创建新连接，若客户端对 MySQL 服务器的连接请求很频繁，永久连接将更加高效。对于高并发业务，如果可能会碰到连接的冲击，推荐使用长连接或连接池。</p>
+<p>从服务器的角度来看，情况则略有不同，它可以节省创建连接的开销，但维持连接也是需要内存的。如果滥用长连接的话，可能会使用过多的 MySQL 服务器连接。现代的操作系统可以拥有几千个 MySQL 连接，但很有可能绝大部分都是睡眠（sleep）状态的，这样的工作方式不够高效，而且连接占据内存，也会导致内存的浪费。</p>
+<p>对于扩展性好的站点来说，其实大部分的访问并不需要连接数据库。如果用户需要频繁访问数据库，那么可能会在流量增大的时候产生性能问题，此时长短连接都是无法解决问题的，所以应该进行合理的设计和优化来避免性能问题。</p>
+<p>如果客户端和 MySQL 数据库之间有连接池或 Proxy 代理，一般在客户端推荐使用短连接。对于长连接的使用一定要慎重，不可滥用。如果没有每秒几百、上千的新连接请求，就不一定需要长连接，也无法从长连接中得到太多好处。在 Java 语言中，由于有连接池，如果控制得当，则不会对数据库有较大的冲击，但PHP的长连接可能导致数据库的连接数超过限制，或者占用过多的内存。</p>
+<ol start="3">
+<li>连接池</li>
+</ol>
+<p>由于一些数据库创建和销毁连接的开销很大，或者相对于所执行的具体数据操作，连接所耗的资源过多，此时就可能需要添加连接池来改进性能。</p>
+<p>数据库连接池是一些网络代理服务或应用服务器实现的特性，如 J2EE 服务器，它实现了一个持久连接的“池”，允许其他程序、客户端来连接，这个连接池将被所有连接的客户端共享使用，连接池可以加速连接，也可以减少数据库连接，降低数据库服务器的负载。</p>
+<hr>
+<h4 id="持久连接和连接池的区别"><a href="#持久连接和连接池的区别" class="headerlink" title="持久连接和连接池的区别"></a>持久连接和连接池的区别</h4><p>长连接是一些驱动、驱动框架、ORM 工具的特性，由驱动来保持连接句柄的打开，以便后续的数据库操作可以重用连接，从而减少数据库的连接开销。而连接池是应用服务器的组件，它可以通过参数来配置连接数、连接检测、连接的生命周期等。</p>
+<p>如果连接池或长连接使用的连接数很多，有可能会超过数据库实例的限制，那么就需要留意连接相关的设置了，比如连接池的最小、最大连接数设置，以及 php-fpm 的进程个数等，否则程序将不能申请新的连接。</p>
+<hr>
+<h4 id="MySQL如何管理连接"><a href="#MySQL如何管理连接" class="headerlink" title="MySQL如何管理连接"></a>MySQL如何管理连接</h4><p>MySQL 连接管理器线程负责处理服务器侦听的网络接口上的客户端连接请求。连接管理器线程将每个客户端连接与专用于它的线程相关联，以处理该连接的身份验证和请求处理。</p>
+<p>连接管理线程在必要时创建一个新线程，但是会先尝试避免这样做，MySQL 连接管理器线程首先会查看线程缓存是否包含空闲可用于连接的线程，如果有，则从线程缓存中选取一个空闲的线程分配给客户端，如果没有，则重新创建一个线程。当连接结束时，如果缓存未满，则其线程返回到线程缓存中，用于下次使用。</p>
+<p>在这种连接线​​程模型中，存在与当前连接的客户端一样多的线程，这在服务器工作负载高还必须以处理大量的连接时具有一些缺点，例如，线程创建和处理变得昂贵。此外，每个线程都需要消耗服务器的内核资源，如堆栈空间。所以为了适应大量的并发连接，每个线程的堆栈大小必须保持较小，否则会由于太大导致消耗服务器大量内存的情况，也可能耗尽其他资源，调度开销也会变得很大。</p>
+<p>为了控制和监视服务器如何管理客户端连接的线程，有几个系统和状态变量可以查看。</p>
+<p>线程缓存由 thread_cache_size 系统变量确定其大小，默认值为 0（无缓存），这将导致为每个新连接设置一个线程，并在连接终止时进行处理。设置 thread_cache_size 为 N，启用 N 个非活动连接线程被缓存。thread_cache_size 可以在服务器启动时设置或在服务器运行时更​​改，连接线程在与其关联的客户端连接终止时变为不活动。</p>
+<p>通过 MySQL 状态变量 Threads_cached 和 Threads_created 可以监控高速缓存中的线程数和已经创建了多少个线程。另外你也可以通过 max_connections 变量控制可以同时连接的最大客户端数。</p>
+<p>但当线程堆栈太小时，会限制了服务器可以处理的 SQL 语句的复杂性，存储过程的递归深度和其他内存消耗的操作。</p>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>MySQL连接机制浅析及运维：<a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/02/DB/MySQL/Optimize/索引优化分析/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -752,6 +962,169 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/01/Server/SpringBoot/Maven/Config/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/01/Server/SpringBoot/Maven/Config/" itemprop="url">Maven Config</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-01T17:49:18+08:00">
+                2018-10-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/Maven/" itemprop="url" rel="index">
+                    <span itemprop="name">Maven</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="Jetty"><a href="#Jetty" class="headerlink" title="Jetty"></a>Jetty</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">exclusions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">exclusion</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-tomcat<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">exclusion</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">exclusions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-jetty<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/01/Git/Commit Message/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -806,18 +1179,7 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tools/" itemprop="url" rel="index">
-                    <span itemprop="name">Tools</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tools/Git/" itemprop="url" rel="index">
+                  <a href="/categories/Git/" itemprop="url" rel="index">
                     <span itemprop="name">Git</span>
                   </a>
                 </span>
@@ -1007,7 +1369,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/01/Server/SpringBoot/Maven/Config/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/28/Docker/CMD与ENTRYPOINT区别/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1026,7 +1388,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/10/01/Server/SpringBoot/Maven/Config/" itemprop="url">Maven Config</a></h2>
+                <a class="post-title-link" href="/2018/09/28/Docker/CMD与ENTRYPOINT区别/" itemprop="url">Docker CMD 与 ENTRYPOINT 的区别</a></h2>
         
 
         <div class="post-meta">
@@ -1038,8 +1400,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-01T17:49:18+08:00">
-                2018-10-01
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-28T17:28:19+08:00">
+                2018-09-28
               </time>
             
 
@@ -1061,30 +1423,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/" itemprop="url" rel="index">
-                    <span itemprop="name">Server</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Server/SpringBoot/Maven/" itemprop="url" rel="index">
-                    <span itemprop="name">Maven</span>
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
                   </a>
                 </span>
 
@@ -1122,7 +1462,47 @@
       
         
           
-            <h4 id="Jetty"><a href="#Jetty" class="headerlink" title="Jetty"></a>Jetty</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">exclusions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">exclusion</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-tomcat<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">exclusion</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">exclusions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-jetty<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+            <hr>
+<h3 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h3><p>The main purpose of a CMD is to provide defaults for an executing container. These defaults can include an executable, or they can omit the executable, in which case you must specify an ENTRYPOINT instruction as well.</p>
+<p>CMD给出的是一个容器的默认的可执行体。也就是容器启动以后，默认的执行的命令。重点就是这个“默认”。意味着，如果docker run没有指定任何的执行命令或者dockerfile里面也没有entrypoint，那么就会使用CMD指定的默认的执行命令执行。同时也从侧面说明了entrypoint的含义，它才是真正的容器启动以后要执行命令。</p>
+<p>这句话就给出了CMD命令的一个角色定位，它主要作用是默认的容器启动执行命令。（注意不是“全部”作用）</p>
+<p>这也是为什么大多数网上博客论坛说的“CMD会被覆盖”，其实为什么会覆盖？因为CMD的角色定位就是默认，如果你不额外指定，那么就执行CMD的命令，否则呢？只要你指定了，那么就不会执行CMD，也就是CMD会被覆盖。</p>
+<p>The CMD instruction has three forms:</p>
+<ul>
+<li>CMD [“executable”,”param1”,”param2”] (exec form, this is the preferred form)</li>
+</ul>
+<p>命令没有再任何shell终端环境下，如果我们要执行shell，必须把shell加入到中括号的参数中，比如</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FROM centos</span><br><span class="line">CMD [<span class="string">"/bin/bash"</span>, <span class="string">"-c"</span>, <span class="string">"echo 'hello cmd!'"</span>]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>CMD [“param1”,”param2”] (as default parameters to ENTRYPOINT)</li>
+</ul>
+<ul>
+<li>CMD command param1 param2 (shell form)</li>
+</ul>
+<p>command默认是在“/bin/sh -c”下执行的，比如</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FROM centos</span><br><span class="line">CMD <span class="built_in">echo</span> <span class="string">"hello cmd!"</span></span><br></pre></td></tr></table></figure>
+<p>结果：命令行输出hello cmd!</p>
+<p>Note：如果我们在run时指定了命令或者有entrypoint，那么CMD就会被覆盖，比如</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run nginx <span class="built_in">echo</span> hello</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="ENTRYPOINT"><a href="#ENTRYPOINT" class="headerlink" title="ENTRYPOINT"></a>ENTRYPOINT</h3><p>An ENTRYPOINT allows you to configure a container that will run as an executable.</p>
+<p>ENTRYPOINT才是正统地用于定义容器启动以后的执行体的，其实我们从名字也可以理解，这个是容器的“入口”。</p>
+<p>ENTRYPOINT has two forms:</p>
+<ul>
+<li><p>ENTRYPOINT [“executable”, “param1”, “param2”] (exec form, preferred)</p>
+</li>
+<li><p>ENTRYPOINT command param1 param2 (shell form)</p>
+</li>
+</ul>
+<p>在使用开源Docker时候需要注意: <strong>第一种格式，与CMD有区别。如果run命令后面有东西，那么后面的全部都会作为entrypoint的参数，此时会覆盖CMD命令</strong></p>
+<p>如果run后面没有额外的东西，但是CMD有，那么CMD的全部内容会作为entrypoint的参数，这同时是CMD的第二种用法，这也是网上说的entrypoint不会被覆盖。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ENTRYPOINT [<span class="string">"docker-entrypoint.sh"</span>]</span><br><span class="line">CMD [<span class="string">"mysqld"</span>]</span><br></pre></td></tr></table></figure>
+<p>当然如果要在run里面覆盖，也是有办法的，使用–entrypoint即可。</p>
+<hr>
+<h3 id="Refference"><a href="#Refference" class="headerlink" title="Refference"></a>Refference</h3><blockquote>
+<p><a href="https://blog.csdn.net/u010900754/article/details/78526443" target="_blank" rel="noopener">https://blog.csdn.net/u010900754/article/details/78526443</a></p>
+</blockquote>
+
           
         
       
@@ -1273,187 +1653,6 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash ./test.sh 1.2.3.4.5</span><br></pre></td></tr></table></figure>
 <p>输出结果</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">args:1.2.3.4.5</span><br><span class="line">arg: 1.2.3.4.5</span><br><span class="line">1.2.3.4</span><br><span class="line">2.3.4.5</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/28/Docker/CMD与ENTRYPOINT区别/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/28/Docker/CMD与ENTRYPOINT区别/" itemprop="url">Docker CMD 与 ENTRYPOINT 的区别</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-28T17:28:19+08:00">
-                2018-09-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Docker/" itemprop="url" rel="index">
-                    <span itemprop="name">Docker</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <hr>
-<h3 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h3><p>The main purpose of a CMD is to provide defaults for an executing container. These defaults can include an executable, or they can omit the executable, in which case you must specify an ENTRYPOINT instruction as well.</p>
-<p>CMD给出的是一个容器的默认的可执行体。也就是容器启动以后，默认的执行的命令。重点就是这个“默认”。意味着，如果docker run没有指定任何的执行命令或者dockerfile里面也没有entrypoint，那么就会使用CMD指定的默认的执行命令执行。同时也从侧面说明了entrypoint的含义，它才是真正的容器启动以后要执行命令。</p>
-<p>这句话就给出了CMD命令的一个角色定位，它主要作用是默认的容器启动执行命令。（注意不是“全部”作用）</p>
-<p>这也是为什么大多数网上博客论坛说的“CMD会被覆盖”，其实为什么会覆盖？因为CMD的角色定位就是默认，如果你不额外指定，那么就执行CMD的命令，否则呢？只要你指定了，那么就不会执行CMD，也就是CMD会被覆盖。</p>
-<p>The CMD instruction has three forms:</p>
-<ul>
-<li>CMD [“executable”,”param1”,”param2”] (exec form, this is the preferred form)</li>
-</ul>
-<p>命令没有再任何shell终端环境下，如果我们要执行shell，必须把shell加入到中括号的参数中，比如</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FROM centos</span><br><span class="line">CMD [<span class="string">"/bin/bash"</span>, <span class="string">"-c"</span>, <span class="string">"echo 'hello cmd!'"</span>]</span><br></pre></td></tr></table></figure>
-<ul>
-<li>CMD [“param1”,”param2”] (as default parameters to ENTRYPOINT)</li>
-</ul>
-<ul>
-<li>CMD command param1 param2 (shell form)</li>
-</ul>
-<p>command默认是在“/bin/sh -c”下执行的，比如</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FROM centos</span><br><span class="line">CMD <span class="built_in">echo</span> <span class="string">"hello cmd!"</span></span><br></pre></td></tr></table></figure>
-<p>结果：命令行输出hello cmd!</p>
-<p>Note：如果我们在run时指定了命令或者有entrypoint，那么CMD就会被覆盖，比如</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run nginx <span class="built_in">echo</span> hello</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="ENTRYPOINT"><a href="#ENTRYPOINT" class="headerlink" title="ENTRYPOINT"></a>ENTRYPOINT</h3><p>An ENTRYPOINT allows you to configure a container that will run as an executable.</p>
-<p>ENTRYPOINT才是正统地用于定义容器启动以后的执行体的，其实我们从名字也可以理解，这个是容器的“入口”。</p>
-<p>ENTRYPOINT has two forms:</p>
-<ul>
-<li><p>ENTRYPOINT [“executable”, “param1”, “param2”] (exec form, preferred)</p>
-</li>
-<li><p>ENTRYPOINT command param1 param2 (shell form)</p>
-</li>
-</ul>
-<p>在使用开源Docker时候需要注意: <strong>第一种格式，与CMD有区别。如果run命令后面有东西，那么后面的全部都会作为entrypoint的参数，此时会覆盖CMD命令</strong></p>
-<p>如果run后面没有额外的东西，但是CMD有，那么CMD的全部内容会作为entrypoint的参数，这同时是CMD的第二种用法，这也是网上说的entrypoint不会被覆盖。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ENTRYPOINT [<span class="string">"docker-entrypoint.sh"</span>]</span><br><span class="line">CMD [<span class="string">"mysqld"</span>]</span><br></pre></td></tr></table></figure>
-<p>当然如果要在run里面覆盖，也是有办法的，使用–entrypoint即可。</p>
-<hr>
-<h3 id="Refference"><a href="#Refference" class="headerlink" title="Refference"></a>Refference</h3><blockquote>
-<p><a href="https://blog.csdn.net/u010900754/article/details/78526443" target="_blank" rel="noopener">https://blog.csdn.net/u010900754/article/details/78526443</a></p>
-</blockquote>
-
           
         
       
@@ -1840,164 +2039,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/09/16/Java/Thread/Future/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/16/Java/Thread/Future/" itemprop="url">Java Future</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-16T15:01:22+08:00">
-                2018-09-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Thread/" itemprop="url" rel="index">
-                    <span itemprop="name">Thread</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Future"><a href="#Future" class="headerlink" title="Future"></a>Future</h3><p>JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。</p>
-<p>Future模式是多线程设计常用的一种设计模式。Future模式可以理解成：我有一个任务，提交给了Future，Future替我完成这个任务。期间我自己可以去做任何想做的事情。一段时间之后，我就便可以从Future那儿取出结果。</p>
-<h3 id="CompletableFuture"><a href="#CompletableFuture" class="headerlink" title="CompletableFuture"></a>CompletableFuture</h3><p>Future虽然可以实现获取异步执行结果的需求，但是它没有提供通知的机制，我们无法得知Future什么时候完成。要么使用阻塞，在future.get()的地方等待future返回的结果，这时又变成同步操作。要么使用isDone()轮询地判断Future是否完成，这样会耗费CPU的资源。</p>
-<p>Netty、Guava分别扩展了Java的Future 接口，方便异步编程。Java 8新增的CompletableFuture类正是吸收了所有Google Guava中ListenableFuture和SettableFuture的特征，还提供了其它强大的功能，让Java拥有了完整的非阻塞编程模型：Future、Promise 和 Callback(在Java8之前，只有无Callback 的Future)。</p>
-<p>CompletableFuture能够将回调放到与任务不同的线程中执行，也能将回调作为继续执行的同步函数，在与任务相同的线程中执行。它避免了传统回调最大的问题，那就是能够将控制流分离到不同的事件处理器中。</p>
-<p>CompletableFuture弥补了Future模式的缺点。在异步的任务完成后，需要用其结果继续操作时，无需等待。可以直接通过thenAccept、thenApply、thenCompose等方式将前面异步处理的结果交给另外一个异步事件处理线程来处理。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2060,7 +2101,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">236</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2071,7 +2112,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">590</span>
+                <span class="site-state-item-count">587</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

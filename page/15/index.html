@@ -284,6 +284,177 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/11/DB/MySQL/Slow-Query/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/11/DB/MySQL/Slow-Query/" itemprop="url">MySQL Slow Query</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-11T15:13:06+08:00">
+                2018-11-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Enable-Slow-Query"><a href="#Enable-Slow-Query" class="headerlink" title="Enable Slow Query"></a>Enable Slow Query</h3><h4 id="MariaDB"><a href="#MariaDB" class="headerlink" title="MariaDB"></a>MariaDB</h4><p>开启了慢查询日志只对当前数据库生效，如果重启后则会失效。如果要永久生效，就必须修改配置文件my.cnf</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">variables</span>  <span class="keyword">like</span> <span class="string">'%slow_query_log%'</span>;</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> slow_query_log=<span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+<p>输出结果</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">slow_query_log	ON</span><br><span class="line">slow_query_log_file	/var/log/mysql/mariadb-slow.log</span><br></pre></td></tr></table></figure>
+<h3 id="mysqldumpslow"><a href="#mysqldumpslow" class="headerlink" title="mysqldumpslow"></a>mysqldumpslow</h3><ul>
+<li>t：返回前面多少条的数据</li>
+<li>g：一个正则匹配模式，大小写不敏感</li>
+<li>c：访问计数</li>
+<li>l：锁定时间</li>
+<li>r：返回记录</li>
+<li>t：查询时间</li>
+<li>al：平均锁定时间</li>
+<li>ar：平均返回记录数</li>
+<li>at：平均查询时间</li>
+</ul>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#得到返回记录集最多的10个SQL。</span></span><br><span class="line"></span><br><span class="line">mysqldumpslow -s r -t 10 log_path</span><br><span class="line"></span><br><span class="line"><span class="comment">#得到访问次数最多的10个SQL</span></span><br><span class="line"></span><br><span class="line">mysqldumpslow -s c -t 10 log_path</span><br><span class="line"></span><br><span class="line"><span class="comment">#得到按照时间排序的前10条里面含有左连接的查询语句。</span></span><br><span class="line"></span><br><span class="line">mysqldumpslow -s t -t 10 -g “left join” log_path</span><br><span class="line"></span><br><span class="line"><span class="comment">#另外建议在使用这些命令时结合 | 和more 使用 ，否则有可能出现刷屏的情况。</span></span><br></pre></td></tr></table></figure>
+<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
+<p>MySQL慢查询日志总结 <a href="http://www.cnblogs.com/kerrycode/p/5593204.html" target="_blank" rel="noopener">http://www.cnblogs.com/kerrycode/p/5593204.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/09/Kubenetes/PV-And-PVC/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1163,6 +1334,14 @@
 </ol>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">System.setProperty(<span class="string">"hostName"</span>, InetAddress.getLocalHost().hostName)</span><br></pre></td></tr></table></figure>
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">Configuration</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Appenders</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">Console</span> <span class="attr">name</span>=<span class="string">"Console"</span> <span class="attr">target</span>=<span class="string">"SYSTEM_OUT"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">PatternLayout</span> <span class="attr">pattern</span>=<span class="string">"host:$&#123;hostName&#125;-%d&#123;HH:mm:ss.SSS&#125;-[%t]-%-5level-%logger&#123;36&#125;-%msg%n"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">Console</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">Appenders</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Loggers</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">Loggers</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">Configuration</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>Java 设置 log4j2 的配置文件名字</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  src</span></span><br><span class="line"><span class="comment">//   - main</span></span><br><span class="line"><span class="comment">//      - java</span></span><br><span class="line"><span class="comment">//      - resource</span></span><br><span class="line"><span class="comment">//          - log4j2-uat.xml</span></span><br><span class="line">-Dlog4j.configurationFile=log4j2-uat.xml</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>SpringBoot 在properties设置配置文件名字</li>
+</ol>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">logging.config=classpath:/log4j2-dev.xml</span><br></pre></td></tr></table></figure>
 <hr>
 <h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="分别只打印-debug、info、error-日志到对应的log文件"><a href="#分别只打印-debug、info、error-日志到对应的log文件" class="headerlink" title="分别只打印 debug、info、error 日志到对应的log文件"></a>分别只打印 debug、info、error 日志到对应的log文件</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 文件路径，在当前工程路径的logs</span></span><br><span class="line"><span class="string">property.filePath=logs</span></span><br><span class="line"><span class="string">property.filePattern=logs/%d&#123;yyyy-MM-dd&#125;</span></span><br><span class="line"><span class="comment"># 输出格式</span></span><br><span class="line"><span class="string">property.layoutPattern=%highlight&#123;%d&#123;MM-dd</span> <span class="attr">HH:mm:ss.SSS&#125;</span> <span class="string">[%5p]</span> <span class="string">[%40.40c&#123;1.&#125;:%3L]</span> <span class="bullet">-</span> <span class="string">%m%n&#125;&#123;FATAL=white,</span> <span class="string">ERROR=red,</span> <span class="string">WARN=blue,</span> <span class="string">INFO=Green,</span> <span class="string">DEBUG=Yellow,</span> <span class="string">TRACE=blue&#125;</span></span><br><span class="line"><span class="comment"># 记录器</span></span><br><span class="line"><span class="string">appenders=Console,Debug,Info,Error</span></span><br><span class="line"><span class="comment"># 根记录器，所有记录器的父辈</span></span><br><span class="line"><span class="string">rootLogger.level=debug</span></span><br><span class="line"><span class="comment"># 级别过滤（过滤日志记录）</span></span><br><span class="line"><span class="comment"># filters = threshold</span></span><br><span class="line"><span class="string">filter.threshold.type=ThresholdFilter</span></span><br><span class="line"><span class="comment"># 只记录debug级别以上的日志，大小写无关：(ALL&lt;)TRACE&lt;DEBUG&lt;INFO&lt;WARN&lt;ERROR&lt;FATAL(&lt;OFF)</span></span><br><span class="line"><span class="string">filter.threshold.level=debug</span></span><br><span class="line"><span class="comment"># console</span></span><br><span class="line"><span class="string">appender.Console.type=Console</span></span><br><span class="line"><span class="string">appender.Console.name=Stdout</span></span><br><span class="line"><span class="string">appender.Console.layout.type=PatternLayout</span></span><br><span class="line"><span class="string">appender.Console.layout.pattern=$&#123;layoutPattern&#125;</span></span><br><span class="line"><span class="string">rootLogger.appenderRef.stdout.ref=Stdout</span></span><br><span class="line"><span class="comment"># debug rolling file</span></span><br><span class="line"><span class="string">appender.Debug.type=RollingFile</span></span><br><span class="line"><span class="string">appender.Debug.name=DebugRollingFile</span></span><br><span class="line"><span class="string">appender.Debug.fileName=$&#123;filePath&#125;/debug.log</span></span><br><span class="line"><span class="string">appender.Debug.filePattern=$&#123;filePattern&#125;/debug_%d&#123;yyyy-MM-dd&#125;_%i.log</span></span><br><span class="line"><span class="string">appender.Debug.layout.type=PatternLayout</span></span><br><span class="line"><span class="string">appender.Debug.layout.pattern=$&#123;layoutPattern&#125;</span></span><br><span class="line"><span class="string">appender.Debug.policies.type=Policies</span></span><br><span class="line"><span class="string">appender.Debug.policies.time.type=TimeBasedTriggeringPolicy</span></span><br><span class="line"><span class="string">appender.Debug.policies.time.interval=1</span></span><br><span class="line"><span class="string">appender.Debug.policies.time.modulate=true</span></span><br><span class="line"><span class="string">appender.Debug.policies.size.type=SizeBasedTriggeringPolicy</span></span><br><span class="line"><span class="string">appender.Debug.policies.size.size=20M</span></span><br><span class="line"><span class="string">appender.Debug.strategy.type=DefaultRolloverStrategy</span></span><br><span class="line"><span class="string">appender.Debug.strategy.max=100</span></span><br><span class="line"><span class="comment"># 过滤debug以上信息</span></span><br><span class="line"><span class="string">appender.Debug.filter.threshold.type=ThresholdFilter</span></span><br><span class="line"><span class="string">appender.Debug.filter.threshold.level=INFO</span></span><br><span class="line"><span class="string">appender.Debug.filter.threshold.onMatch=DENY</span></span><br><span class="line"><span class="string">appender.Debug.filter.threshold.onMisMatch=NEUTRAL</span></span><br><span class="line"><span class="comment"># InfoRollingFile 日志级别</span></span><br><span class="line"><span class="string">rootLogger.appenderRef.Debug.level=debug</span></span><br><span class="line"><span class="string">rootLogger.appenderRef.Debug.ref=DebugRollingFile</span></span><br><span class="line"><span class="comment"># info rolling file</span></span><br><span class="line"><span class="string">appender.Info.type=RollingFile</span></span><br><span class="line"><span class="string">appender.Info.name=InfoRollingFile</span></span><br><span class="line"><span class="string">appender.Info.fileName=$&#123;filePath&#125;/info.log</span></span><br><span class="line"><span class="string">appender.Info.filePattern=$&#123;filePattern&#125;/info_%d&#123;yyyy-MM-dd&#125;_%i.log</span></span><br><span class="line"><span class="string">appender.Info.layout.type=PatternLayout</span></span><br><span class="line"><span class="string">appender.Info.layout.pattern=$&#123;layoutPattern&#125;</span></span><br><span class="line"><span class="string">appender.Info.policies.type=Policies</span></span><br><span class="line"><span class="string">appender.Info.policies.time.type=TimeBasedTriggeringPolicy</span></span><br><span class="line"><span class="string">appender.Info.policies.time.interval=1</span></span><br><span class="line"><span class="string">appender.Info.policies.time.modulate=true</span></span><br><span class="line"><span class="string">appender.Info.policies.size.type=SizeBasedTriggeringPolicy</span></span><br><span class="line"><span class="string">appender.Info.policies.size.size=20M</span></span><br><span class="line"><span class="string">appender.Info.strategy.type=DefaultRolloverStrategy</span></span><br><span class="line"><span class="string">appender.Info.strategy.max=100</span></span><br><span class="line"><span class="comment"># 过滤 info 以上信息,只输出 info 级别日志</span></span><br><span class="line"><span class="string">appender.Info.filter.threshold.type=ThresholdFilter</span></span><br><span class="line"><span class="string">appender.Info.filter.threshold.level=warn</span></span><br><span class="line"><span class="string">appender.Info.filter.threshold.onMatch=DENY</span></span><br><span class="line"><span class="string">appender.Info.filter.threshold.onMisMatch=NEUTRAL</span></span><br><span class="line"><span class="comment"># InfoRollingFile 日志级别</span></span><br><span class="line"><span class="string">rootLogger.appenderRef.Info.level=info</span></span><br><span class="line"><span class="string">rootLogger.appenderRef.Info.ref=InfoRollingFile</span></span><br><span class="line"><span class="comment"># error rolling file</span></span><br><span class="line"><span class="string">appender.Error.type=RollingFile</span></span><br><span class="line"><span class="string">appender.Error.name=ErrorRollingFile</span></span><br><span class="line"><span class="string">appender.Error.fileName=$&#123;filePath&#125;/error.log</span></span><br><span class="line"><span class="string">appender.Error.filePattern=$&#123;filePattern&#125;/error_%d&#123;yyyy-MM-dd&#125;_%i.log</span></span><br><span class="line"><span class="string">appender.Error.layout.type=PatternLayout</span></span><br><span class="line"><span class="string">appender.Error.layout.pattern=$&#123;layoutPattern&#125;</span></span><br><span class="line"><span class="string">appender.Error.policies.type=Policies</span></span><br><span class="line"><span class="string">appender.Error.policies.time.type=TimeBasedTriggeringPolicy</span></span><br><span class="line"><span class="string">appender.Error.policies.time.interval=1</span></span><br><span class="line"><span class="string">appender.Error.policies.time.modulate=true</span></span><br><span class="line"><span class="string">appender.Error.policies.size.type=SizeBasedTriggeringPolicy</span></span><br><span class="line"><span class="string">appender.Error.policies.size.size=20M</span></span><br><span class="line"><span class="string">appender.Error.strategy.type=DefaultRolloverStrategy</span></span><br><span class="line"><span class="string">appender.Error.strategy.max=100</span></span><br><span class="line"><span class="comment"># 过滤 error 以上信息,只输出 error 级别日志</span></span><br><span class="line"><span class="string">appender.Error.filter.threshold.type=ThresholdFilter</span></span><br><span class="line"><span class="string">appender.Error.filter.threshold.level=fatal</span></span><br><span class="line"><span class="string">appender.Error.filter.threshold.onMatch=DENY</span></span><br><span class="line"><span class="string">appender.Error.filter.threshold.onMisMatch=NEUTRAL</span></span><br><span class="line"><span class="comment"># ErrorRollingFile 日志级别</span></span><br><span class="line"><span class="string">rootLogger.appenderRef.Error.level=error</span></span><br><span class="line"><span class="string">rootLogger.appenderRef.Error.ref=ErrorRollingFile</span></span><br></pre></td></tr></table></figure>
           
@@ -1677,169 +1856,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/11/01/CS/Compiler/LLVM/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/11/01/CS/Compiler/LLVM/" itemprop="url">LLVM</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-01T10:31:19+08:00">
-                2018-11-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/" itemprop="url" rel="index">
-                    <span itemprop="name">CS</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="What’s-LLVM"><a href="#What’s-LLVM" class="headerlink" title="What’s LLVM"></a>What’s LLVM</h3><p>LLVM is Low Level Virtual Machine.</p>
-<p>LLVM可以被看作是一系列的编译器和工具链技术的集合，而且它们是模块化并且是可重用的。</p>
-<p>原话是：<strong>The LLVM Project is a collection of modular and reusable compiler and toolchain technologies.</strong></p>
-<p><strong>特性</strong></p>
-<ul>
-<li>LLVM的“中间表示”（IR）是一项大创新。LLVM的程序表示方法真的“可读”（如果你会读汇编）。虽然看上去这没什么要紧，但要知道，其他编译器的中间表示大多是种内存中的复杂数据结构，以至于很难写出来，这让其他编译器既难懂又难以实现。</li>
-<li>然而LLVM并非如此。其架构远比其他编译器要模块化得多。这种优点可能部分来自于它的最初实现者。</li>
-<li>尽管LLVM给我们这些狂热的学术黑客提供了一种研究工具的选择，它还是一款有大公司做后台的工业级编译器。这意味着你不需要去在“强大的编译器”和“可玩的编译器”之间做妥协——不像你在Java世界中必须在HotSpot和Jikes之间权衡那样。</li>
-</ul>
-<p><strong>特别注意：LLVM不是只用来实现编译优化的！</strong></p>
-<h3 id="Components"><a href="#Components" class="headerlink" title="Components"></a>Components</h3><p>LLVM架构的主要组成部分如下（事实上也是所有现代编译器架构）：</p>
-<p><strong>前端 -&gt; 流程（Pass) -&gt; 后端</strong></p>
-<img src="/2018/11/01/CS/Compiler/LLVM/components.png">
-<ul>
-<li><p>前端获取你的源代码然后将它转变为某种中间表示。这种翻译简化了编译器其他部分的工作，这样它们就不需要面对比如C++源码的所有复杂性了。作为一个豪迈人，你很可能不想再做这部分工作；可以不加改动地使用Clang来完成。</p>
-</li>
-<li><p>“流程”将程序在中间表示之间互相变换。一般情况下，流程也用来优化代码：流程输出的（中间表示）程序和它输入的（中间表示）程序相比在功能上完全相同，只是在性能上得到改进。这部分通常是给你发挥的地方。你的研究工具可以通过观察和修改编译过程流中的IR来完成任务。</p>
-</li>
-<li><p>后端部分可以生成实际运行的机器码。你几乎肯定不想动这部分了。</p>
-</li>
-</ul>
-<p>虽然当今大多数编译器都使用了这种架构，但是LLVM有一点值得注意而与众不同：整个过程中，程序都使用了同一种中间表示。在其他编译器中，可能每一个流程产出的代码都有一种独特的格式。LLVM在这一点上对hackers大为有利。我们不需要担心我们的改动该插在哪个位置，只要放在前后端之间某个地方就足够了。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1902,7 +1918,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">236</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1913,7 +1929,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">590</span>
+                <span class="site-state-item-count">587</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

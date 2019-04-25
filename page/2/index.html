@@ -284,6 +284,188 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/" itemprop="url">Kubernetes Pod on /dev/shm</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-29T20:35:06+08:00">
+                2019-03-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Solution/" itemprop="url" rel="index">
+                    <span itemprop="name">Solution</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Linux共享内存机制"><a href="#Linux共享内存机制" class="headerlink" title="Linux共享内存机制"></a>Linux共享内存机制</h4><p>理想很美好，现实很残酷。首先要解决的问题是，有些组件Agent与业务Pod之间是通过共享内存通信的，这跟Kubernetes&amp;微服务的最佳实践背道而驰。</p>
+<p>大家都知道，Kubernetes单个Pod内是共享IPC的，并且可以通过挂载Medium为Memory的EmptyDir Volume共享同一块内存Volume。</p>
+<p>Linux共享内存的两种机制：</p>
+<ul>
+<li>POSIX共享内存（shm_open()、shm_unlink()）</li>
+<li>System V共享内存（shmget()、shmat()、shmdt()）</li>
+</ul>
+<p>System V共享内存历史悠久，一般的UNIX系统上都有这套机制；而POSIX共享内存机制接口更加方便易用，一般是结合内存映射mmap使用。</p>
+<p>mmap和System V共享内存的主要区别在于：</p>
+<ul>
+<li>sysv shm是持久化的，除非被一个进程明确的删除，否则它始终存在于内存里，直到系统关机；</li>
+<li>mmap映射的内存在不是持久化的，如果进程关闭，映射随即失效，除非事先已经映射到了一个文件上。</li>
+<li>/dev/shm 是Linux下sysv共享内存的默认挂载点。</li>
+</ul>
+<p>POSIX共享内存是基于tmpfs来实现的。实际上，不仅PSM(POSIX shared memory)，而且SSM(System V shared memory)在内核也是基于tmpfs实现的。</p>
+<p>虽然System V与POSIX共享内存都是通过tmpfs实现，但是受的限制却不相同。也就是说 /proc/sys/kernel/shmmax只会影响SYS V共享内存，/dev/shm只会影响Posix共享内存 。实际上，System V与Posix共享内存本来就是使用的两个不同的tmpfs实例(instance)。</p>
+<p>小结：</p>
+<ul>
+<li>POSIX共享内存与SYS V共享内存在内核都是通过tmpfs实现，但对应两个不同的tmpfs实例，相互独立。</li>
+<li>通过/proc/sys/kernel/shmmax可以限制SYS V共享内存的最大值，通过/dev/shm可以限制POSIX共享内存的最大值(所有之和)。</li>
+</ul>
+<hr>
+<h3 id="Pod-share-memory-on-same-node"><a href="#Pod-share-memory-on-same-node" class="headerlink" title="Pod share memory on same node"></a>Pod share memory on same node</h3><p>基础组件Agents DaemonSet部署后，Agents和业务Pod分别在同一个Node上不同的Pod，那么Kubernetes该如何支持这两种类型的共享内存机制呢？</p>
+<img src="/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/k8s-overview.png">
+<p>当然，安全性上做出了牺牲，但在非容器化之前IPC的隔离也是没有的，所以这一点是可以接受的。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">DaemonSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  selector:</span></span><br><span class="line"><span class="attr">    matchLabels:</span></span><br><span class="line"><span class="attr">      name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      annotations:</span></span><br><span class="line">        <span class="string">scheduler.alpha.kubernetes.io/critical-pod:</span> <span class="string">""</span></span><br><span class="line"><span class="attr">      labels:</span></span><br><span class="line"><span class="attr">        name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      tolerations:</span></span><br><span class="line"><span class="attr">      - key:</span> <span class="string">"AgentsDaemonSet"</span></span><br><span class="line"><span class="attr">        operator:</span> <span class="string">"Equal"</span></span><br><span class="line"><span class="attr">        value:</span> <span class="string">"YES"</span></span><br><span class="line"><span class="attr">        effect:</span> <span class="string">"NoSchedule"</span></span><br><span class="line"><span class="attr">      hostNetwork:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">      hostIPC:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">      nodeSelector:</span></span><br><span class="line"><span class="attr">        AgentsDaemonSet:</span> <span class="string">"YES"</span></span><br><span class="line"><span class="attr">      containers:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">        image:</span> <span class="attr">demo_agent:1.0</span></span><br><span class="line"><span class="attr">        volumeMounts:</span></span><br><span class="line"><span class="attr">        - mountPath:</span> <span class="string">/dev/shm</span></span><br><span class="line"><span class="attr">          name:</span> <span class="string">shm</span></span><br><span class="line"><span class="attr">        resources:</span></span><br><span class="line"><span class="attr">          limits:</span></span><br><span class="line"><span class="attr">            cpu:</span> <span class="number">200</span><span class="string">m</span></span><br><span class="line"><span class="attr">            memory:</span> <span class="number">200</span><span class="string">Mi</span></span><br><span class="line"><span class="attr">          requests:</span></span><br><span class="line"><span class="attr">            cpu:</span> <span class="number">100</span><span class="string">m</span></span><br><span class="line"><span class="attr">            memory:</span> <span class="number">100</span><span class="string">Mi</span></span><br><span class="line"><span class="attr">      volumes:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">shm</span></span><br><span class="line"><span class="attr">        hostPath:</span></span><br><span class="line"><span class="attr">          path:</span> <span class="string">/dev/shm</span></span><br><span class="line"><span class="attr">          type:</span> <span class="string">Directory</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://my.oschina.net/jxcdwangtao/blog/3006365" target="_blank" rel="noopener">https://my.oschina.net/jxcdwangtao/blog/3006365</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/27/Kubenetes/GCP/Builder/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -392,6 +574,7 @@
 <blockquote>
 <p><a href="https://cloud.google.com/compute/docs/machine-types?hl=zh-cn" target="_blank" rel="noopener">https://cloud.google.com/compute/docs/machine-types?hl=zh-cn</a><br><a href="https://cloud.google.com/cloud-build/docs/build-config" target="_blank" rel="noopener">https://cloud.google.com/cloud-build/docs/build-config</a><br><a href="https://docs.docker.com/engine/reference/run/" target="_blank" rel="noopener">https://docs.docker.com/engine/reference/run/</a></p>
 </blockquote>
+<h3 id="Trigger-rule"><a href="#Trigger-rule" class="headerlink" title="Trigger rule"></a>Trigger rule</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">^release\/[0-9]&#123;1&#125;\.[0-9]&#123;1,2&#125;\.[0-9]&#123;1,2&#125;$|^hotfix|^master$</span><br></pre></td></tr></table></figure>
 <h3 id="substitutions"><a href="#substitutions" class="headerlink" title="substitutions"></a>substitutions</h3><h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">steps:</span></span><br><span class="line"><span class="attr">images:</span></span><br><span class="line"><span class="bullet">  -</span> <span class="string">"gcr.io/$PROJECT_ID/image:$&#123;_IMAGE_VERSION&#125;"</span></span><br><span class="line"><span class="attr">substitutions:</span></span><br><span class="line"><span class="attr">  _IMAGE_VERSION:</span> <span class="string">"my_image"</span></span><br></pre></td></tr></table></figure>
           
         
@@ -1737,125 +1920,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/02/13/Security/Web/CSRF/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/02/13/Security/Web/CSRF/" itemprop="url">未命名</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-02-13T12:28:23+08:00">
-                2019-02-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1918,7 +1982,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">236</span>
+                <span class="site-state-item-count">232</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1929,7 +1993,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">590</span>
+                <span class="site-state-item-count">587</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
