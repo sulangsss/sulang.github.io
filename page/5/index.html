@@ -284,6 +284,258 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/28/Java/JVM/Case/ResizeMetaspaceCauseOfFullGC/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/28/Java/JVM/Case/ResizeMetaspaceCauseOfFullGC/" itemprop="url">Resize Metaspace Cause Of Full GC</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-28T13:30:22+08:00">
+                2018-12-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Why-Remove-the-Permanent-Generation-From-Hotspot-JVM"><a href="#Why-Remove-the-Permanent-Generation-From-Hotspot-JVM" class="headerlink" title="Why Remove the Permanent Generation From Hotspot JVM"></a>Why Remove the Permanent Generation From Hotspot JVM</h3><blockquote>
+<p><a href="http://openjdk.java.net/jeps/122" target="_blank" rel="noopener">http://openjdk.java.net/jeps/122</a></p>
+</blockquote>
+<p>PermGen space的全称是Permanent Generation space，是指内存的永久保存区域。</p>
+<p>PermGen 被移除，方法区移至 Metaspace，字符串常量移至 Java Heap。</p>
+<ol>
+<li>PermGen 大小是在启动时固定好的，很难进行调优。</li>
+<li><p>由于 PermGen 内存经常会溢出，引发恼人的 java.lang.OutOfMemoryError: PermGen，因此 JVM 的开发者希望这一块内存可以更灵活地被管理，不要再经常出现这样的OOM。</p>
+<blockquote>
+<p>PermGen 为什么会内存溢出？PermGen主要用于存放 Class 和 Meta 的信息，即加载的 Class 会被放入 PermGen space 区域。<br>Pergen和存放Instance的Heap区域不同，所以如果你的APP加载过多 Class 就很可能出现PermGen space错误。例如，在Web服务器对JSP进行pre compile的时候就经常会发生。</p>
+</blockquote>
+</li>
+<li><p>移除 PermGen 可以促进 HotSpot JVM 与 JRockit VM 的融合，因为 JRockit 没有永久代。</p>
+</li>
+</ol>
+<hr>
+<h3 id="What’s-Metaspace"><a href="#What’s-Metaspace" class="headerlink" title="What’s Metaspace"></a>What’s Metaspace</h3><p>In JDK 8, classes metadata is now stored in the native heap and this space is called Metaspace.</p>
+<p>Advantage:</p>
+<ul>
+<li>OOM问题将不复存在，因为默认的类的元数据分配只受本地内存大小的限制，也就是说本地内存剩余多少，理论上Metaspace就可以有多大。</li>
+<li>take advantage of Java Language Specification property : Classes and associated metadata lifetimes match class loader’s</li>
+<li>Linear allocation only</li>
+<li>No individual reclamation (except for RedefineClasses and class loading failure)</li>
+<li>No GC scan or compaction</li>
+<li>No relocation for metaspace objects</li>
+</ul>
+<p>如果Metaspace的空间占用达到了设定的最大值，那么就会触发GC来收集死亡对象和类的加载器。根据JDK 8的特性，G1和CMS都会很好地收集Metaspace区(一般都伴随着Full GC)。</p>
+<p>为了减少垃圾回收的频率及时间，控制吞吐量，对Metaspace进行适当的监控和调优是非常有必要的。如果在Metaspace区发生了频繁的Full GC，那么可能表示存在内存泄露或Metaspace区的空间太小了。</p>
+<hr>
+<h3 id="Notice"><a href="#Notice" class="headerlink" title="Notice"></a>Notice</h3><ul>
+<li>默认情况下，Metaspace 容量受限于本地内存(Native Memory)，默认是几乎无穷大，如果 Metaspace 发生内存泄漏，可以把系统内存耗尽。</li>
+<li>MaxMetaspaceSize JVM Option用于限制 Metaspace 本地内存大小，如果没有设置该选项，JVM会根据程序的运行情况，进行动态调整 Metaspace 的大小。</li>
+<li>如果 Metaspace 使用大小达到了 MaxMetaspaceSize，会触发Full GC回收，回收无用的类和类加载器。在完成Full GC后，会增加 Metaspace 的大小，延迟下次Full GC的时间。</li>
+<li>为了控制在 Metaspace 的GC频率，调整 Metaspace 的大小是非常必要的，频繁的在 Metaspace 是类和类加载器发生内存泄漏的征兆，同时也说明你的程序的 Metaspace 大小不合适，需要进行适当地调整。</li>
+<li>JVM的参数 PermSize 和 MaxPermSize 会被忽略并给出警告。</li>
+</ul>
+<hr>
+<h3 id="JVM-Options"><a href="#JVM-Options" class="headerlink" title="JVM Options"></a>JVM Options</h3><ul>
+<li>-XX:MetaspaceSize：初始值。垃圾回收过后，MetaspaceSize可能会扩大。</li>
+<li>-XX:MaxMetaspaceSize：最大值，超过此值就会触发Full GC。此值默认没有限制，取决于系统内存的大小。JVM会动态地改变此值。</li>
+<li>-XX:MinMetaspaceFreeRatio：在GC之后，当前剩余可用 Metaspace 占总可用 Metaspace 的百分比小于MinMetaspaceFreeRatio，那么将对 Metaspace 进行扩容，Min默认为40。</li>
+<li>-XX:MaxMetaspaceFreeRatio：默认为70。</li>
+</ul>
+<hr>
+<h3 id="Analyze-CMS-Case"><a href="#Analyze-CMS-Case" class="headerlink" title="Analyze CMS Case"></a>Analyze CMS Case</h3><h4 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h4><ol>
+<li><p>每次docker container启动都会触发一次CMS GC，刚开始以为是分配给container的内存太小，后来检查发现分配给contianer的内存为4G，基本排除因为分配内存太小而造成的。</p>
+</li>
+<li><p>每次发布应用后，应用还没有启动完毕就会触发一次CMS GC，此时老年代使用量为0K。</p>
+</li>
+</ol>
+<h4 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Java HotSpot(TM) 64-Bit Server VM (25.65-b01) for linux-amd64 JRE (1.8.0_65-b17), built on Oct  6 2015 17:16:12 by "java_re" with gcc 4.3.0 20080428 (Red Hat 4.3.0-8)</span><br><span class="line">Memory: 4k page, physical 131779324k(4738628k free), swap 0k(0k free)</span><br><span class="line">CommandLine flags: -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:+DisableExplicitGC -XX:InitialHeapSize=4294967296 -XX:LargePageSizeInBytes=134217728 -XX:MaxHeapSize=4294967296 -XX:MaxNewSize=2684354560 -XX:MaxTenuringThreshold=6 -XX:NewSize=2684354560 -XX:OldPLABSize=16 -XX:+PrintGC -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:ThreadStackSize=256 -XX:+UseCMSCompactAtFullCollection -XX:+UseCMSInitiatingOccupancyOnly -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseConcMarkSweepGC -XX:+UseFastAccessorMethods -XX:+UseParNewGC</span><br><span class="line">2.133: [GC (CMS Initial Mark) [1 CMS-initial-mark: 0K(1572864K)] 796919K(3932160K), 0.0577900 secs] [Times: user=0.08 </span><br><span class="line">//  老年代已经使用为0K，最大可用大小为1572864K</span><br><span class="line">//  Heap已经使用大小796919K，Heap最大可用大小为3932160K</span><br><span class="line">2.191: [CMS-concurrent-mark-start]</span><br><span class="line">2.191: [CMS-concurrent-mark: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">2.191: [CMS-concurrent-preclean-start]</span><br><span class="line">2.195: [CMS-concurrent-preclean: 0.003/0.003 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]</span><br><span class="line">2.195: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line">4.144: [GC (GCLocker Initiated GC) 2018-08-20T11:38:38.811+0800: 4.145: [ParNew: 2097152K-&gt;30361K(2359296K), 0.0289636 secs] 0.0296327 secs] [Times: user=0.36 sys=0.11, real=0.03 secs]</span><br><span class="line">//  年轻代变化情况2097152K-&gt;30361K，最大可用为2359296K</span><br><span class="line">5.358: [CMS-concurrent-abortable-preclean: 0.892/3.164 secs] [Times: user=8.26 sys=0.57, real=3.16 secs]</span><br><span class="line">5.359: [GC (CMS Final Remark) [YG occupancy: 1218768 K (2359296 K)]2018-08-20T11:38:40.025+0800: 5.359: [Rescan (parallel) , :38:40.096+0800: 5.429: [weak refs processing, 0.0000365 secs]2018-08-20T11:38:40.096+0800: 5.429: [class unloading, 0.0069690 +0800: 5.436: [scrub symbol table, 0.0036416 secs]5.440: [scrub string table, 0.0006395 secs][1 18768K(3932160K), 0.0839617 secs] [Times: user=1.94 sys=0.01, real=0.08 secs]</span><br><span class="line">5.443: [CMS-concurrent-sweep-start]</span><br><span class="line">5.443: [CMS-concurrent-sweep: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br><span class="line">5.443: [CMS-concurrent-reset-start]</span><br><span class="line">5.450: [CMS-concurrent-reset: 0.007/0.007 secs] [Times: user=0.02 sys=0.01, real=0.00 secs]</span><br></pre></td></tr></table></figure>
+<p>2.133: [GC (CMS Initial Mark) [1 CMS-initial-mark: 0K(1572864K)] 796919K(3932160K), 0.0577900 secs]，可知老年代已经使用0K，最大可用大小为1572864K，Heap已经使用796919K，Heap最大可用大小为3932160K。</p>
+<p>4.144: [GC (GCLocker Initiated GC) 2018-08-20T11:38:38.811+0800: 4.145: [ParNew: 2097152K-&gt;30361K(2359296K)，可知年轻代变化情况2097152K-&gt;30361K，最大可用为2359296K。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">-server -Xmx4g -Xms4g -Xmn2g -XX:PermSize=128m -Xss256k </span><br><span class="line">-XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled </span><br><span class="line">-XX:+UseCMSCompactAtFullCollection -XX:LargePageSizeInBytes=128m -XX:+UseFastAccessorMethods </span><br><span class="line">-XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 </span><br><span class="line">-XX:+PrintGCDetails -XX:+PrintGCDateStamps</span><br></pre></td></tr></table></figure>
+<p>注意看JVM参数，-XX:+DisableExplicitGC已经显式禁止程序调用System.gc()进行回收操作，可以排除程序主动触发的GC回收操作。</p>
+<p>如果不是程序触发的GC回收，那就是JVM触发的，JVM在内存不够用的时候才会触发该操作。但是我们在启动的时候已经设置了-XX:PermSize=128m。</p>
+<p>使用命令jstat -gc pid 1000查看，结果如下</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">S0C         S1C    S0U    S1U      EC       EU        OC         OU         MC     MU    CCSC   CCSU     YGC     YGCT    FGC    FGCT     GCT</span><br><span class="line"><span class="number">262144.0</span> <span class="number">262144.0</span>  <span class="number">0.0</span>   <span class="number">1601.7</span> <span class="number">2097152.0</span> <span class="number">687465.5</span> <span class="number">1572864.0</span>   <span class="number">522538.5</span>  <span class="number">47724.0</span> <span class="number">46235.0</span> <span class="number">5288.0</span> <span class="number">4900.6</span>   <span class="number">3141</span>   <span class="number">45.946</span>   <span class="number">2</span>      <span class="number">0.142</span>   <span class="number">46.087</span></span><br></pre></td></tr></table></figure>
+<p>MC，MU显示 perm 实际使用大小都不到50MB。再检查JDK版本，实际使用的是JDK 8，对于该版本来说，permSize和maxPermSize已经失效。</p>
+<blockquote>
+<p>MC: Metaspace capacity (kB)，MU: Metacspace utilization (kB).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th style="text-align:center">含义</th>
+<th style="text-align:right">默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-XX:MetaspaceSize</td>
+<td style="text-align:center">Metaspace扩容时触发FullGC的初始化阈值，也是最小的阈值</td>
+<td style="text-align:right">依照系统而区别，可以在运行时查看，线上机子大概在20MB</td>
+</tr>
+<tr>
+<td>-XX:MaxMetaspaceSize</td>
+<td style="text-align:center">jdk8 MaxMetaspace上限，配置太小会触发OOM</td>
+<td style="text-align:right">默认是几乎无穷大，如果Metaspace发生内存泄漏，可以把系统内存吃掉</td>
+</tr>
+</tbody>
+</table>
+<p>因为使用的是JDK 8，配置的 XX:PermSize 无效，应用启动之后，meta区很快到达默认值(20MB)，然后触发Full GC，GC完后 Metaspace 被扩容。</p>
+<p>建议解决方案：稳定运行一段时间后通过<strong>jstat -gc pid</strong>确认 Metaspace 的值，一般情况下，设置 128MB 或者 256Mb 即可。</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p>Metaspace 之一：Metaspace整体介绍（永久代被替换原因、元空间特点、元空间内存查看分析方法）: <a href="https://www.cnblogs.com/duanxz/p/3520829.html" target="_blank" rel="noopener">https://www.cnblogs.com/duanxz/p/3520829.html</a><br><a href="https://lishoubo.github.io/2018/08/25/%E4%B8%80%E6%AC%A1CMS%E9%97%AE%E9%A2%98%E6%8E%92%E9%99%A4/" target="_blank" rel="noopener">https://lishoubo.github.io/2018/08/25/%E4%B8%80%E6%AC%A1CMS%E9%97%AE%E9%A2%98%E6%8E%92%E9%99%A4/</a><br><a href="https://www.sczyh30.com/posts/Java/jvm-metaspace/" target="_blank" rel="noopener">https://www.sczyh30.com/posts/Java/jvm-metaspace/</a><br>Java 8-从持久代到metaspace: <a href="https://juejin.im/post/59e969ca51882561a05a3340" target="_blank" rel="noopener">https://juejin.im/post/59e969ca51882561a05a3340</a><br>一次CMS问题排除: <a href="https://lishoubo.github.io/2018/08/25/%E4%B8%80%E6%AC%A1CMS%E9%97%AE%E9%A2%98%E6%8E%92%E9%99%A4/" target="_blank" rel="noopener">https://lishoubo.github.io/2018/08/25/%E4%B8%80%E6%AC%A1CMS%E9%97%AE%E9%A2%98%E6%8E%92%E9%99%A4/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/28/Java/JVM/Basic/CMS/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2082,152 +2334,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/Network/Nonce/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/24/Network/Nonce/" itemprop="url">HTTP Nonce</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-24T18:28:19+08:00">
-                2018-12-24
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Why-need-it"><a href="#Why-need-it" class="headerlink" title="Why need it?"></a>Why need it?</h4><p>All requests must contain a <strong>nonce</strong>, a number that will never be repeated and must increase between requests. </p>
-<p>This is to <strong>prevent an attacker who has captured a previous request from simply replaying that request</strong>. We recommend using a timestamp at millisecond or higher precision. The nonce need only be increasing with respect to the session that the message is on.</p>
-<blockquote>
-<p>A single account may have multiple API keys provisioned. In this document, we’ll refer to these as “sessions”. All orders will be recorded with the session that created them. The nonce associated with a request needs to be increasing with respect to the session that the nonce is used on.This allows multithreaded or distributed trading systems to place orders independently of each other, without needing to synchronize clocks to avoid race conditions.<br>In addition, some operations (such as Cancel All Session Orders) act on the orders associated with a specific session.<br>简单来说，每个session关联一个nonce，nonce必须递增。在应用程序里面，一个Thread对应一个Session，多Thread对应多个Session，进而确保nonce是递增不重复的。</p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2279,7 +2385,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">531</span>
+                <span class="site-state-item-count">532</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2301,7 +2407,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">588</span>
+                <span class="site-state-item-count">589</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
