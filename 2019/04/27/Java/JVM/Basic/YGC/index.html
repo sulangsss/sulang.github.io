@@ -118,7 +118,7 @@
 <meta property="og:image" content="https://sulangsss.github.io/2019/04/27/Java/JVM/Basic/YGC/do_oop_work.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/04/27/Java/JVM/Basic/YGC/copy_to_survivor_space.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/04/27/Java/JVM/Basic/YGC/saved_market_word_2.png">
-<meta property="og:updated_time" content="2019-04-27T15:59:10.946Z">
+<meta property="og:updated_time" content="2019-04-27T17:13:04.205Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM YGC">
 <meta name="twitter:description" content="Introduction预备知识otSpot JVM把年轻代分为了三部分：1个Eden区和2个Survivor区（分别叫from和to）。默认比例为8：1,为啥默认会是这个比例，接下来我们会聊到。一般情况下，新创建的对象都会被分配到Eden区(一些大对象特殊处理),这些对象经过第一次YGC后，如果仍然存活，将会被移到Survivor区。对象在Survivor区中每熬过一次YGC，年龄就会增加1岁，">
@@ -432,7 +432,19 @@
 <li>如果一个old generation的对象引用了young generation，那么这个old generation的对象肯定也属于Strong root的一部分，这部分逻辑并没有在process_strong_roots中实现，而是在绿色框中实现了，其中rem_set中保存了old generation中dirty card的对应区域，每次对象的拷贝移动都会检查一下是否产生了新的跨代引用，<strong>比如有对象晋升到了old generation，而该对象还引用了young generation的对象，这种情况下会把相应的card置为dirty，下次YGC的时候只会扫描dirty card所指内存的对象，避免扫描所有的old generation对象。</strong></li>
 </ul>
 <blockquote>
-<p>process_strong_roots的实现，主要包括了以下东西：<br>Universe类中所引用的一些必须存活的对象 Universe::oops_do(roots)<br>所有JNI Handles JNIHandles::oops_do(roots)<br>所有线程的栈 Threads::oops_do(roots, code_roots)<br>所有被Synchronize锁持有的对象  ObjectSynchronizer::oops_do(roots)<br>VM内实现的MBean所持有的对象 Management::oops_do(roots)<br>JVMTI所持有的对象 JvmtiExport::oops_do(roots)<br>（可选）所有已加载的类 或 所有已加载的系统类 SystemDictionary::oops_do(roots)<br>（可选）所有驻留字符串（StringTable） StringTable::oops_do(roots)<br>（可选）代码缓存（CodeCache） CodeCache::scavenge_root_nmethods_do(code_roots)<br>（可选）PermGen的remember set所记录的存在跨代引用的区域  rem_set()-&gt;younger_refs_iterate(perm_gen(), perm_blk)<br>注意：YGC在执行时只收集young generation，不收集old generation和perm generation，并不会做类的卸载行为，所以上述可选部分都作为Strong root，但是在FGC时就不会当作Strong root了。</p>
+<p>process_strong_roots的实现，主要包括了以下东西：</p>
+<ul>
+<li>Universe类中所引用的一些必须存活的对象 Universe::oops_do(roots)</li>
+<li>所有JNI Handles JNIHandles::oops_do(roots)</li>
+<li>所有线程的栈 Threads::oops_do(roots, code_roots)</li>
+<li>所有被Synchronize锁持有的对象  ObjectSynchronizer::oops_do(roots)</li>
+<li>VM内实现的MBean所持有的对象 Management::oops_do(roots)</li>
+<li>JVMTI所持有的对象 JvmtiExport::oops_do(roots)</li>
+<li>(可选)所有已加载的类 或 所有已加载的系统类 SystemDictionary::oops_do(roots)</li>
+<li>(可选)所有驻留字符串（StringTable） StringTable::oops_do(roots)</li>
+<li>(可选)代码缓存（CodeCache） CodeCache::scavenge_root_nmethods_do(code_roots)</li>
+<li>(可选)PermGen的remember set所记录的存在跨代引用的区域  rem_set()-&gt;younger_refs_iterate(perm_gen(), perm_blk)<br>注意：YGC在执行时只收集young generation，不收集old generation和perm generation，并不会做类的卸载行为，所以上述可选部分都作为Strong root，但是在FGC时就不会当作Strong root了。</li>
+</ul>
 </blockquote>
 <hr>
 <h3 id="Recurse-Roots"><a href="#Recurse-Roots" class="headerlink" title="Recurse Roots"></a>Recurse Roots</h3><p>在查找GC Roots的步骤中，已经找出了第一批存活的对象，这些存活对象可能在 to-space，也有可能直接晋升到了 old generation，这些区域都是需要进行遍历的，保证所有的活跃对象都能存活下来。<br>遍历过程的实现由FastEvacuateFollowersClosure类的do_void方法完成，这是一个*-Closure 方式命名的类，实现如下：</p>

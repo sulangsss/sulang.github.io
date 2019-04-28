@@ -572,7 +572,7 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[GC (Allocation Failure) [ParNew: 81920K-&gt;8306K(92160K), 0.0087308 secs] 81920K-&gt;8306K(2086912K), 0.0087759 secs] [Times: user=0.06 sys=0.01, real=0.01 secs]</span><br><span class="line">.....</span><br><span class="line">[GC (Allocation Failure) [ParNew: 92158K-&gt;10240K(92160K), 0.1632875 secs] 1089021K-&gt;1017720K(2086912K), 0.1633312 secs] [Times: user=1.51 sys=0.02, real=0.16 secs]</span><br></pre></td></tr></table></figure>
 <p>从输出的Log来看，发现YGC不断发生，并且每次YGC时间不断在增长，从9ms慢慢增长到了163ms，甚至还会继续涨下去。原因是什么？</p>
 <hr>
-<h3 id="String-intern"><a href="#String-intern" class="headerlink" title="String.intern()"></a>String.intern()</h3><p>我们先来了解下intern方法的实现，这是String提供的一个方法，jvm提供这个方法的目的是希望对于某个同名字符串使用非常多的场景，在jvm里只保留一份，比如我们不断new String(“Hello”)，其实在java heap里会有多个String的对象，并且值都是Hello，如果我们只希望内存里只保留一个Hello，或者希望我接下来用到的地方都返回同一个Hello，那就可以用String.intern这个方法了。</p>
+<h3 id="String-intern"><a href="#String-intern" class="headerlink" title="String.intern()"></a>String.intern()</h3><p>我们先来了解下intern方法的实现，这是String提供的一个方法，JVM提供这个方法的目的是希望对于某个同名字符串使用非常多的场景，在JVM里只保留一份，比如我们不断new String(“Hello”)，其实在java heap里会有多个String的对象，并且值都是Hello，如果我们只希望内存里只保留一个Hello，或者希望我接下来用到的地方都返回同一个Hello，那就可以用String.intern这个方法了。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">val h1 = <span class="string">"Hello"</span>.intern()</span><br><span class="line">val h2 = h1.intern()</span><br></pre></td></tr></table></figure>
 <p>这样 h1 和 h2 都是指向内存里的同一个String对象，那JVM里到底怎么做到的呢？</p>
 <p>intern这个方法其实是一个native方法，具体对应到JVM里的逻辑是：</p>
@@ -616,7 +616,7 @@
 <p>对比上面的结果，Average bucket size降低很明显。</p>
 <p>设置StringTableSize一个合适的值，即bucket数量为期望的数量后，碰撞的概率明显降低，由Average bucket size和Maximum bucket size的值明显小于未配置StringTableSize参数时的值可知，且YGC时间也明显降低。另外, 最好通过BTrace分析是哪里频繁调用String.intern(), 确实String.intern()没有滥用的前提下, 再增大StringTableSize的值。</p>
 <hr>
-<h3 id="为什么StringTable不能扩大？"><a href="#为什么StringTable不能扩大？" class="headerlink" title="为什么StringTable不能扩大？"></a>为什么StringTable不能扩大？</h3><p>既然StringTable是Hashtable数据结构，那为什么不能自己通过rehash扩大bucket数量来提高性能呢？JVM中StringTable的rehash有点不一样, JVM中StringTable的rehash不会扩大bucket数量，而是在bucket不变的前提下，通过一个新的seed尝试摊平每个bucket中LinkedList的长度。</p>
+<h3 id="为什么StringTable不能扩大？"><a href="#为什么StringTable不能扩大？" class="headerlink" title="为什么StringTable不能扩大？"></a>为什么StringTable不能扩大？</h3><p>既然StringTable是Hashtable数据结构，那为什么不能自己通过rehash扩大bucket数量来提高性能呢？JVM中StringTable的rehash有点不一样，JVM中StringTable的rehash不会扩大bucket数量，而是在bucket不变的前提下，通过一个新的seed尝试摊平每个bucket中LinkedList的长度。</p>
 <p>rehash大概是一个如下图所示的过程，rehash前后bucket数量不变，这是重点：</p>
 <p>假设reash前数据分布(23，4，8，2，1，5)<br><img src="/2019/04/27/Java/JVM/Case/StringTable造成YGC越来越慢/refresh_before.png"></p>
 <p>假设reash前数据分布(6，8，8，9，5，7)<br><img src="/2019/04/27/Java/JVM/Case/StringTable造成YGC越来越慢/refresh_after.png"></p>
@@ -636,7 +636,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">val factory = JsonFactory().disable(JsonFactory.Feature.INTERN_FIELD_NAMES)</span><br><span class="line">val mapper = ObjectMapper(factory).setTimeZone(TimeZone.getDefault())</span><br></pre></td></tr></table></figure>
 <hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="http://lovestblog.cn/blog/2016/11/06/string-intern/" target="_blank" rel="noopener">http://lovestblog.cn/blog/2016/11/06/string-intern/</a><br><a href="https://juejin.im/post/5ab99afff265da23a2291dee" target="_blank" rel="noopener">https://juejin.im/post/5ab99afff265da23a2291dee</a><br>Refresh：<a href="https://coolshell.cn/articles/9606.html" target="_blank" rel="noopener">https://coolshell.cn/articles/9606.html</a><br><a href="https://www.jianshu.com/p/5524fce8b08f" target="_blank" rel="noopener">https://www.jianshu.com/p/5524fce8b08f</a><br><a href="http://hellojava.info/?p=514" target="_blank" rel="noopener">http://hellojava.info/?p=514</a><br>Jackson 触发的String.intern() bug, 导致内存持续增加，JVM-Java内存泄漏：<a href="https://www.cnblogs.com/halberts/p/7473857.html" target="_blank" rel="noopener">https://www.cnblogs.com/halberts/p/7473857.html</a></p>
+<p><a href="http://lovestblog.cn/blog/2016/11/06/string-intern/" target="_blank" rel="noopener">http://lovestblog.cn/blog/2016/11/06/string-intern/</a><br><a href="https://juejin.im/post/5ab99afff265da23a2291dee" target="_blank" rel="noopener">https://juejin.im/post/5ab99afff265da23a2291dee</a><br>Refresh：<a href="https://coolshell.cn/articles/9606.html" target="_blank" rel="noopener">https://coolshell.cn/articles/9606.html</a><br><a href="https://www.jianshu.com/p/5524fce8b08f" target="_blank" rel="noopener">https://www.jianshu.com/p/5524fce8b08f</a><br><a href="http://hellojava.info/?p=514" target="_blank" rel="noopener">http://hellojava.info/?p=514</a><br>Jackson触发的String.intern()：<a href="https://www.cnblogs.com/halberts/p/7473857.html" target="_blank" rel="noopener">https://www.cnblogs.com/halberts/p/7473857.html</a></p>
 </blockquote>
 
           
@@ -824,7 +824,19 @@
 <li>如果一个old generation的对象引用了young generation，那么这个old generation的对象肯定也属于Strong root的一部分，这部分逻辑并没有在process_strong_roots中实现，而是在绿色框中实现了，其中rem_set中保存了old generation中dirty card的对应区域，每次对象的拷贝移动都会检查一下是否产生了新的跨代引用，<strong>比如有对象晋升到了old generation，而该对象还引用了young generation的对象，这种情况下会把相应的card置为dirty，下次YGC的时候只会扫描dirty card所指内存的对象，避免扫描所有的old generation对象。</strong></li>
 </ul>
 <blockquote>
-<p>process_strong_roots的实现，主要包括了以下东西：<br>Universe类中所引用的一些必须存活的对象 Universe::oops_do(roots)<br>所有JNI Handles JNIHandles::oops_do(roots)<br>所有线程的栈 Threads::oops_do(roots, code_roots)<br>所有被Synchronize锁持有的对象  ObjectSynchronizer::oops_do(roots)<br>VM内实现的MBean所持有的对象 Management::oops_do(roots)<br>JVMTI所持有的对象 JvmtiExport::oops_do(roots)<br>（可选）所有已加载的类 或 所有已加载的系统类 SystemDictionary::oops_do(roots)<br>（可选）所有驻留字符串（StringTable） StringTable::oops_do(roots)<br>（可选）代码缓存（CodeCache） CodeCache::scavenge_root_nmethods_do(code_roots)<br>（可选）PermGen的remember set所记录的存在跨代引用的区域  rem_set()-&gt;younger_refs_iterate(perm_gen(), perm_blk)<br>注意：YGC在执行时只收集young generation，不收集old generation和perm generation，并不会做类的卸载行为，所以上述可选部分都作为Strong root，但是在FGC时就不会当作Strong root了。</p>
+<p>process_strong_roots的实现，主要包括了以下东西：</p>
+<ul>
+<li>Universe类中所引用的一些必须存活的对象 Universe::oops_do(roots)</li>
+<li>所有JNI Handles JNIHandles::oops_do(roots)</li>
+<li>所有线程的栈 Threads::oops_do(roots, code_roots)</li>
+<li>所有被Synchronize锁持有的对象  ObjectSynchronizer::oops_do(roots)</li>
+<li>VM内实现的MBean所持有的对象 Management::oops_do(roots)</li>
+<li>JVMTI所持有的对象 JvmtiExport::oops_do(roots)</li>
+<li>(可选)所有已加载的类 或 所有已加载的系统类 SystemDictionary::oops_do(roots)</li>
+<li>(可选)所有驻留字符串（StringTable） StringTable::oops_do(roots)</li>
+<li>(可选)代码缓存（CodeCache） CodeCache::scavenge_root_nmethods_do(code_roots)</li>
+<li>(可选)PermGen的remember set所记录的存在跨代引用的区域  rem_set()-&gt;younger_refs_iterate(perm_gen(), perm_blk)<br>注意：YGC在执行时只收集young generation，不收集old generation和perm generation，并不会做类的卸载行为，所以上述可选部分都作为Strong root，但是在FGC时就不会当作Strong root了。</li>
+</ul>
 </blockquote>
 <hr>
 <h3 id="Recurse-Roots"><a href="#Recurse-Roots" class="headerlink" title="Recurse Roots"></a>Recurse Roots</h3><p>在查找GC Roots的步骤中，已经找出了第一批存活的对象，这些存活对象可能在 to-space，也有可能直接晋升到了 old generation，这些区域都是需要进行遍历的，保证所有的活跃对象都能存活下来。<br>遍历过程的实现由FastEvacuateFollowersClosure类的do_void方法完成，这是一个*-Closure 方式命名的类，实现如下：</p>
