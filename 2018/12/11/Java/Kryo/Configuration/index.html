@@ -109,7 +109,7 @@
 <meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
 <meta property="og:description" content="Reuse Object Pools12345678910111213//  一般对象kryo.register(Event::class.java, object : FieldSerializer&amp;lt;Event&amp;gt;(kryo, Event::class.java) &amp;#123;    override fun create(kryo: Kryo?, input: Input?, typ">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-12-12T06:49:39.150Z">
+<meta property="og:updated_time" content="2019-04-29T10:11:31.809Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Kryo Configuration">
 <meta name="twitter:description" content="Reuse Object Pools12345678910111213//  一般对象kryo.register(Event::class.java, object : FieldSerializer&amp;lt;Event&amp;gt;(kryo, Event::class.java) &amp;#123;    override fun create(kryo: Kryo?, input: Input?, typ">
@@ -389,6 +389,21 @@
 
       
         <h3 id="Reuse-Object-Pools"><a href="#Reuse-Object-Pools" class="headerlink" title="Reuse Object Pools"></a>Reuse Object Pools</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  一般对象</span></span><br><span class="line">kryo.register(Event::class.java, object : FieldSerializer&lt;Event&gt;(kryo, Event::class.java) &#123;</span><br><span class="line">    <span class="function">override fun <span class="title">create</span><span class="params">(kryo: Kryo?, input: Input?, type: Class&lt;Event&gt;?)</span>: Event </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Pools.borrow(Event::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>)</span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line"><span class="class">&#125;)</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">//  <span class="title">List</span>对象</span></span><br><span class="line"> kryo.register(ReferenceArrayList::class.java, object :CollectionSerializer() &#123;</span><br><span class="line">    <span class="function">override fun <span class="title">create</span><span class="params">(kryo: Kryo?, input: Input?, type: Class&lt;MutableCollection&lt;Any?&gt;&gt;?)</span>: MutableCollection&lt;Any?&gt; </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Pools.borrow(ReferenceArrayList::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>) <span class="title">as</span> <span class="title">ReferenceArrayList</span>&lt;<span class="title">Any</span>&gt;</span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line"><span class="class">&#125;)</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Ignore-Field"><a href="#Ignore-Field" class="headerlink" title="Ignore Field"></a>Ignore Field</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@field</span>:FieldSerializer.Optional(<span class="string">"ignored"</span>)</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h3><ul>
+<li>对于跨服务进行序列化的类，不论是发送方还是接收方，都需要对该类进行注册。先注册父类，再注册父类里面嵌套的子类。标准库的类不需要注册，比如MutableList等等。</li>
+<li>如果先注册子类，再注册父类，可能会造成接收方反序列化失败。</li>
+<li>在Kotlin中，如果A类和B类字段一样，如果A类被Open修饰，B类没有Open修饰，使用B类反序列化A类的数据是失败的。A类会因为Open关键字造成序列化出来的数据多个Byte。</li>
+</ul>
+<h4 id="Register-List"><a href="#Register-List" class="headerlink" title="Register List"></a>Register List</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// A类</span></span><br><span class="line">&#123;</span><br><span class="line">	timestamp: Long</span><br><span class="line">	list: MutableList&lt;C&gt;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// B类</span></span><br><span class="line">&#123;</span><br><span class="line">	price: Long</span><br><span class="line">	list: MutableList&lt;D&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>虽然A类和B类中的list的元素类型不同，但是都用到了MutableList(其他List类型同样)，因此在序列化或反序列的时候，用不同的SerializerUtil对象来注册和使用。</p>
+<ul>
+<li>aSerializerUtilInstance负责注册A类，序列化和反序列化A类；</li>
+<li>bSerializerUtilInstance负责注册B类，序列化和反序列化B类</li>
+</ul>
+
       
     </div>
     
@@ -422,8 +437,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/12/09/Books/HTTP/" rel="next" title="HTTP Books">
-                <i class="fa fa-chevron-left"></i> HTTP Books
+              <a href="/2018/12/09/Network/HTTP/HTTP,HTTPS代理原理/" rel="next" title="HTTP,HTTPS代理原理">
+                <i class="fa fa-chevron-left"></i> HTTP,HTTPS代理原理
               </a>
             
           </div>
@@ -512,7 +527,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">534</span>
+                <span class="site-state-item-count">533</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -576,7 +591,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Reuse-Object-Pools"><span class="nav-number">1.</span> <span class="nav-text">Reuse Object Pools</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Reuse-Object-Pools"><span class="nav-number">1.</span> <span class="nav-text">Reuse Object Pools</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Ignore-Field"><span class="nav-number">2.</span> <span class="nav-text">Ignore Field</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Note"><span class="nav-number">3.</span> <span class="nav-text">Note</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Register-List"><span class="nav-number">3.1.</span> <span class="nav-text">Register List</span></a></li></ol></li></ol></div>
             
 
           </div>

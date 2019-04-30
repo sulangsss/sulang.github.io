@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DB/MySQL/Configuration/Connection/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DB/MySQL/ViewStatus/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/10/03/DB/MySQL/Configuration/Connection/" itemprop="url">MySQL Connection Configuration</a></h2>
+                <a class="post-title-link" href="/2018/10/03/DB/MySQL/ViewStatus/" itemprop="url">MySQL View Status</a></h2>
         
 
         <div class="post-meta">
@@ -356,17 +356,6 @@
 
                 
                 
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Configuration/" itemprop="url" rel="index">
-                    <span itemprop="name">Configuration</span>
-                  </a>
-                </span>
-
-                
-                
               
             </span>
           
@@ -399,233 +388,65 @@
       
         
           
-            <h3 id="参数说明"><a href="#参数说明" class="headerlink" title="参数说明"></a>参数说明</h3><ol>
-<li>skip-networking</li>
-</ol>
-<p>开启该选项可以彻底关闭 MySQL 的 TCP/IP 连接方式，如果 WEB 服务器是以远程连接的方式访问MySQL数据库服务器则不要开启该选项！否则将无法正常连接！</p>
-<ol start="2">
-<li>skip-name-resolve</li>
-</ol>
-<p>禁止 MySQL 对外部连接进行 DNS 解析，使用这一选项可以消除 MySQL 进行 DNS 解析的时间。但需要注意，如果开启该选项，则所有远程主机连接授权都要使用 IP 地址方式，否则 MySQL 将无法正常处理连接请求！</p>
-<ol start="3">
-<li>max_connections</li>
-</ol>
-<p>max_connections 是指 MySql 的最大连接数，如果服务器的并发连接请求量比较大，建议调高此值，以增加并行连接数量，当然这建立在服务器能支撑的情况下，因为如果连接数越多，由于 MySQL 会为每个连接提供连接缓冲区，就会开销越多的内存，所以要适当调整该值，不能盲目提高设值。</p>
-<ol start="4">
-<li>max_user_connections</li>
-</ol>
-<p>max_user_connections 是指每个数据库用户的最大连接针对某一个账号的所有客户端并行连接到 MYSQL 服务的最大并行连接数。简单说是指同一个账号能够同时连接到 mysql 服务的最大连接数。设置为 0 表示不限制。</p>
-<ol start="5">
-<li>max_connect_errors</li>
-</ol>
-<p>设置每个主机的连接请求异常中断的最大次数，当超过该次数，MySQL 服务器将禁止 host 的连接请求，直到 mysql 服务器重启或通过 flush hosts 命令清空此 host 的相关信息</p>
-<ol start="6">
-<li>thread_handing</li>
-</ol>
-<p>Mysql 服务中线程处理模式包括两种：</p>
-<ul>
-<li>no-threads(单线程处理，多用于 debug)</li>
-<li>one- thread-per-connection（每个请求对应一个线程，目前被作为默认值 )；</li>
+            <h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status  <span class="comment"># 输出所有记录的状态</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status like <span class="string">'%xxxx%'</span>  <span class="comment"># 输出记录带有xxx关键字的状态，show global status like ‘thread%’</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Status"><a href="#Status" class="headerlink" title="Status"></a>Status</h3><h4 id="Connection"><a href="#Connection" class="headerlink" title="Connection"></a>Connection</h4><ul>
+<li>Aborted_clients<ul>
+<li>由于客户端没有正确关闭连接导致客户端终止而中断的连接数。 如，客户端和服务端建立连接好之后，等待 wait_time 时间后，客户端和服务器之间的连接自动退出，此时会发现 Aborted_clients 计数器加 1。</li>
 </ul>
-<ol start="7">
-<li>thread_cache_size</li>
-</ol>
-<p>这个值表示可以重新利用保存在缓存中线程的数量, 当断开连接时如果缓存中还有空间, 那么客户端的线程将被放到缓存中, 如果线程重新被请求，那么请求将从缓存中读取。</p>
-<p>如果缓存中是空的或者是新的请求，那么这个线程将被重新创建, 如果有很多新的线程，增加这个值可以改善系统性能. 因为当应用发起一个对数据库的操作时，在整个应用中是一个不小的开销，从建立连接之初，CPU 要给它划分一定的 thread stack，然后进行用户身份认证，建立上下文信息，最后请求完成，关闭连接，同时释放资源，可以称的上是秒级的过程。</p>
-<p>在高并发的情况下，将给系统带来巨大的压力更不能保证性能。所以，采用线程重用，减小这部分的消耗。通过比较 Connections 和 Threads_created 状态的变量，可以看到这个变量的作用。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show status like <span class="string">'thread%'</span>;</span><br><span class="line">+-------------------+-------+</span><br><span class="line">| Variable_name     | Value |</span><br><span class="line">+-------------------+-------+</span><br><span class="line">| Threads_cached    | 649   | &lt;—当前被缓存的空闲线程的数量</span><br><span class="line">| Threads_connected | 93    | &lt;—正在使用（处于连接状态）的线程</span><br><span class="line">| Threads_created   | 742   | &lt;—服务启动以来，创建了多少个线程</span><br><span class="line">| Threads_running   | 5     | &lt;—正在忙的线程（正在查询数据，传输数据等等操作）</span><br><span class="line">+-------------------+-------+</span><br></pre></td></tr></table></figure>
-<p>查看开机起来数据库被连接了多少次？</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show global status like <span class="string">'%connections%'</span>;</span><br><span class="line">+-----------------------------------+---------------------+</span><br><span class="line">| Variable_name                     | Value               |</span><br><span class="line">+-----------------------------------+---------------------+</span><br><span class="line">| Connection\_errors\_max_connections | 0                   |</span><br><span class="line">| Connections                       | 101395055             |   &lt;–服务启动以来，历史连接数</span><br><span class="line">| Max\_used\_connections              | 742                 |</span><br><span class="line">| Max\_used\_connections_time         | 2018-08-21 15:42:38 |</span><br><span class="line">+-----------------------------------+---------------------+</span><br></pre></td></tr></table></figure>
-<p>通过连接线程池的命中率来判断设置值是否合适？命中率超过90%以上, 设定合理。(Connections - Threads_created) / Connections * 100%</p>
-<ol start="8">
-<li>thread_stack</li>
-</ol>
-<p>每个连接线程被创建时，MySQL给它分配的内存大小。当MySQL创建一个新的连接线程时，需要给它分配一定大小的内存堆栈空间，以便存放客户端的请求的 Query 及自身的各种状态和处理信息。当然如果遇到下面的错误提示就应该考虑增加这个值了。mysql-debug: Thread stack overrun 如:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java.sql.SQLException: Thread stack overrun: 5456 bytes used of a 131072 byte stack, and 128000 bytes needed. Use <span class="string">'mysqld --thread_stack=#'</span> to specify a bigger stack.</span><br></pre></td></tr></table></figure>
-<ol start="9">
-<li>Connect_Timeout</li>
-</ol>
-<p>字面上看意思是连接超时，指的是 MySQL 连接过程中握手的超时时间，在 5.0.52 以后默认为 10 秒，之前版本默认是 5 秒。</p>
-<p>mysql的基本原理是有个监听线程循环接收请求，当有请求来时，创建线程（或者从线程池中取）来处理这个请求。由于 mysql 连接采用 TCP 协议，那么之前势必是需要进行TCP三次握手的。</p>
-<p>TCP三次握手成功之后，客户端会进入阻塞，等待服务端的消息。服务端这个时候会创建一个线程 (或者从线程池中取一个线程) 来处理请求，主要验证部分包括host和用户名密码验证。host验证我们比较熟悉，因为在用grant命令授权用户的时候是有指定host的。用户名密码认证则是服务端先生成一个随机数发送给客户端，客户端用该随机数和密码进行多次 sha1 加密后发送给服务端验证。如果通过，整个连接握手过程完成。</p>
-<p>由此可见，整个连接握手可能会有各种可能出错。所以这个 connect_timeout 值就是指这个超时时间了。可以简单测试下，运行下面的 telnet 命令会发现客户端会在 10 秒后超时返回。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$time</span> telnet mysql\_ip\_addr port</span><br><span class="line">$ time telnet 127.0.0.1 5051</span><br><span class="line">Trying 127.0.0.1...</span><br><span class="line">Connected to 127.0.0.1.</span><br><span class="line">Escape character is <span class="string">'^\]'</span>.</span><br><span class="line">?</span><br><span class="line">Connection closed by foreign</span><br><span class="line">host.</span><br><span class="line">real    0m5.005s <span class="comment">#这里的5秒即mysql默认的连接超时</span></span><br><span class="line">user    0m0.000s</span><br><span class="line">sys 0m0.000s</span><br></pre></td></tr></table></figure>
-<p>Telnet 未退出前通过 show processlist 查看各线程状态可见，当前该连接处于授权认证阶段，此时的用户为“unauthenticated user”。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">256 | unauthenticated user | localhost:60595 | NULL | Connect | NULL | Reading from net | NULL</span><br></pre></td></tr></table></figure>
-<ol start="10">
-<li>wait_timeout&amp;interactive_timeout</li>
-</ol>
-<p>等待超时，那MySQL等什么呢？确切的说是 MySQL 在等用户的请求 (query)，如果发现一个线程已经 sleep 的时间超过 wait_timeout 了那么这个线程将被清理掉，从文档上来看 wait_timeout 和 interactive_timeout 都是指不活跃的连接超时时间，而 interactive_timeout 针对交互式连接，wait_timeout 针对非交互式连接。</p>
-<p>MySQL 连接线程启动的时候 wait_timeout 会根据是交互模式还是非交互模式被设置为这两个值中的一个。如果我们运行 MySQL -uroot -p 命令登陆到 MySQL，wait_timeout 就会被设置为 interactive_timeout 的值。如果我们在 wait_timeout 时间内没有进行任何操作，那么再次操作的时候就会提示超时，这是 MySQL client 会重新连接。</p>
-<ol start="11">
-<li>net_read_timeout</li>
-<li>net_write_timeout</li>
-<li>net_retry_count</li>
-</ol>
-<p>如果 MySQL 服务端在读写数据时，出现连接中断，会重试 net_retry_count 指定的次数。在系统 FreeBSD 中有效，Linux 中只有在 build 的时候指定 NO_ALARM 参数时 net_retry_count 才会起作用。</p>
-<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>connect_timeout在获取连接阶段（authenticate）起作用，interactive_timeout 和 wait_timeout 在连接空闲阶段（sleep）起作用，而net_read_timeout和net_write_timeout则是在连接繁忙阶段（query）起作用。</p>
-<p>获取MySQL连接是多次握手的结果，除了用户名和密码的匹配校验外，还有 IP-&gt;HOST-&gt;DNS-&gt;IP 验证，任何一步都可能因为网络问题导致线程阻塞。为了防止线程浪费在不必要的校验等待上，超过connect_timeout的连接请求将会被拒绝。<br>即使没有网络问题，也不能允许客户端一直占用连接。对于保持 sleep 状态超过了 wait_timeout（或 interactive_timeout，取决于 CLIENT_INTERACTIVE 标志）的客户端，MySQL 会主动断开连接。</p>
-<p>即使连接没有处于 sleep 状态，即客户端忙于计算或者存储数据，MySQL 也选择了有条件的等待。在数据包的分发过程中，客户端可能来不及响应（发送、接收、或者处理数据包太慢）。为了保证连接不被浪费在无尽的等待中，MySQL 也会选择有条件（net_read_timeout 和 net_write_timeout）地主动断开连接。比如我在客户端用 load data infile 的方式导入很大的一个文件到数据库中，然后中途用 iptables 禁用掉 mysql 的 3306 端口，这个时候服务器端该连接状态是 reading from net，在等待 net_read_timeout 后关闭该连接。同理，在程序里面查询一个很大的表时，在查询过程中同样禁用掉端口，制造网络不通的情况，这样该连接状态是 writing to net，然后在 net_write_timeout 后关闭该连接。</p>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>MySQL 连接机制浅析及运维：<a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
+</li>
+</ul>
+<ul>
+<li>Aborted_connects<ul>
+<li>试图连接到 MySQL 服务器而失败的连接数。如:telnet 127.0.0.1 3306， 然后什么都不做，ctrl+]，quit 退出，就会发现 aborted_connects 计数器加 1。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>connections<ul>
+<li>试图连接到 (不管成功与否)MySQL 服务器的连接数计数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Bytes_received<ul>
+<li>从所有客户端接收到的字节数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Bytes_sent<ul>
+<li>发送给所有客户端的字节数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_cached<ul>
+<li>代表当前此时此刻线程缓存中有多少空闲线程。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_connected<ul>
+<li>代表当前已建立连接的数量，因为一个连接就需要一个线程，所以也可以看成当前被使用的线程数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_created<ul>
+<li>创建用来处理连接的线程数。如果 Threads_created 较大，则需要增加 thread_cached_size 的值。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_running<ul>
+<li>代表当前激活的（非睡眠状态）线程数。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
 
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Command/node/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/03/Kubenetes/Command/node/" itemprop="url">kubectl node</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T11:13:06+08:00">
-                2018-10-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kubernetes</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h3><h4 id="Running-with-Shell"><a href="#Running-with-Shell" class="headerlink" title="Running with Shell"></a>Running with Shell</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run pod-name -i --rm --image nginx:lastes -- sh -c</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">Examples:</span><br><span class="line">  <span class="comment"># Start a single instance of nginx.</span></span><br><span class="line">  kubectl run nginx --image=nginx</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and let the container expose port 5701 .</span></span><br><span class="line">  kubectl run hazelcast --image=hazelcast --port=5701</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and set environment variables "DNS_DOMAIN=cluster" and "POD_NAMESPACE=default" in the container.</span></span><br><span class="line">  kubectl run hazelcast --image=hazelcast --env=<span class="string">"DNS_DOMAIN=cluster"</span> --env=<span class="string">"POD_NAMESPACE=default"</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and set labels "app=hazelcast" and "env=prod" in the container.</span></span><br><span class="line">  kubectl run hazelcast --image=nginx --labels=<span class="string">"app=hazelcast,env=prod"</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a replicated instance of nginx.</span></span><br><span class="line">  kubectl run nginx --image=nginx --replicas=5</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Dry run. Print the corresponding API objects without creating them.</span></span><br><span class="line">  kubectl run nginx --image=nginx --dry-run</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of nginx, but overload the spec of the deployment with a partial set of values parsed from JSON.</span></span><br><span class="line">  kubectl run nginx --image=nginx --overrides=<span class="string">'&#123; "apiVersion": "v1", "spec": &#123; ... &#125; &#125;'</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a pod of busybox and keep it in the foreground, don't restart it if it exits.</span></span><br><span class="line">  kubectl run -i -t busybox --image=busybox --restart=Never</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the nginx container using the default command, but use custom arguments (arg1 .. argN) for that command.</span></span><br><span class="line">  kubectl run nginx --image=nginx -- &lt;arg1&gt; &lt;arg2&gt; ... &lt;argN&gt;</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the nginx container using a different command and custom arguments.</span></span><br><span class="line">  kubectl run nginx --image=nginx --<span class="built_in">command</span> -- &lt;cmd&gt; &lt;arg1&gt; ... &lt;argN&gt;</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the perl container to compute π to 2000 places and print it out.</span></span><br><span class="line">  kubectl run pi --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the cron job to compute π to 2000 places and print it out every 5 minutes.</span></span><br><span class="line">  kubectl run pi --schedule=<span class="string">"0/5 * * * ?"</span> --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span></span><br></pre></td></tr></table></figure>
-<h3 id="Label"><a href="#Label" class="headerlink" title="Label"></a>Label</h3><h4 id="Add-label-to-node"><a href="#Add-label-to-node" class="headerlink" title="Add label to node"></a>Add label to node</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl label nodes &lt;node-name&gt; &lt;label-key&gt;=&lt;label-value&gt;</span><br></pre></td></tr></table></figure>
-<p>example：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl label nodes gke-xxx-cc361276-cvfg node=elasticsearch</span><br></pre></td></tr></table></figure>
-<h4 id="Adding-or-updating-labels-for-existing-clusters"><a href="#Adding-or-updating-labels-for-existing-clusters" class="headerlink" title="Adding or updating labels for existing clusters"></a>Adding or updating labels for existing clusters</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container clusters update [CLUSTER_NAME] --update-labels [KEY]=[VALUE]</span><br></pre></td></tr></table></figure>
-<h4 id="Remove-labels-for-existing-clusters"><a href="#Remove-labels-for-existing-clusters" class="headerlink" title="Remove labels for existing clusters"></a>Remove labels for existing clusters</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container clusters update example-cluster --remove-labels env=dev</span><br></pre></td></tr></table></figure>
           
         
       
@@ -790,6 +611,164 @@
 </blockquote>
 <h3 id="Kind"><a href="#Kind" class="headerlink" title="Kind"></a>Kind</h3><h4 id="ReplicationController"><a href="#ReplicationController" class="headerlink" title="ReplicationController"></a>ReplicationController</h4><p>A ReplicationController ensures that a specified number of pod replicas are running at any one time. In other words, a ReplicationController makes sure that a pod or a homogeneous set of pods is always up and available.</p>
 <h4 id="ReplicaSet"><a href="#ReplicaSet" class="headerlink" title="ReplicaSet"></a>ReplicaSet</h4><h4 id="Deployment"><a href="#Deployment" class="headerlink" title="Deployment"></a>Deployment</h4>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Command/node/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/Kubenetes/Command/node/" itemprop="url">kubectl node</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T11:13:06+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h3><h4 id="Running-with-Shell"><a href="#Running-with-Shell" class="headerlink" title="Running with Shell"></a>Running with Shell</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run pod-name -i --rm --image nginx:lastes -- sh -c</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">Examples:</span><br><span class="line">  <span class="comment"># Start a single instance of nginx.</span></span><br><span class="line">  kubectl run nginx --image=nginx</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and let the container expose port 5701 .</span></span><br><span class="line">  kubectl run hazelcast --image=hazelcast --port=5701</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and set environment variables "DNS_DOMAIN=cluster" and "POD_NAMESPACE=default" in the container.</span></span><br><span class="line">  kubectl run hazelcast --image=hazelcast --env=<span class="string">"DNS_DOMAIN=cluster"</span> --env=<span class="string">"POD_NAMESPACE=default"</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and set labels "app=hazelcast" and "env=prod" in the container.</span></span><br><span class="line">  kubectl run hazelcast --image=nginx --labels=<span class="string">"app=hazelcast,env=prod"</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a replicated instance of nginx.</span></span><br><span class="line">  kubectl run nginx --image=nginx --replicas=5</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Dry run. Print the corresponding API objects without creating them.</span></span><br><span class="line">  kubectl run nginx --image=nginx --dry-run</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of nginx, but overload the spec of the deployment with a partial set of values parsed from JSON.</span></span><br><span class="line">  kubectl run nginx --image=nginx --overrides=<span class="string">'&#123; "apiVersion": "v1", "spec": &#123; ... &#125; &#125;'</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a pod of busybox and keep it in the foreground, don't restart it if it exits.</span></span><br><span class="line">  kubectl run -i -t busybox --image=busybox --restart=Never</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the nginx container using the default command, but use custom arguments (arg1 .. argN) for that command.</span></span><br><span class="line">  kubectl run nginx --image=nginx -- &lt;arg1&gt; &lt;arg2&gt; ... &lt;argN&gt;</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the nginx container using a different command and custom arguments.</span></span><br><span class="line">  kubectl run nginx --image=nginx --<span class="built_in">command</span> -- &lt;cmd&gt; &lt;arg1&gt; ... &lt;argN&gt;</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the perl container to compute π to 2000 places and print it out.</span></span><br><span class="line">  kubectl run pi --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the cron job to compute π to 2000 places and print it out every 5 minutes.</span></span><br><span class="line">  kubectl run pi --schedule=<span class="string">"0/5 * * * ?"</span> --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span></span><br></pre></td></tr></table></figure>
+<h3 id="Label"><a href="#Label" class="headerlink" title="Label"></a>Label</h3><h4 id="Add-label-to-node"><a href="#Add-label-to-node" class="headerlink" title="Add label to node"></a>Add label to node</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl label nodes &lt;node-name&gt; &lt;label-key&gt;=&lt;label-value&gt;</span><br></pre></td></tr></table></figure>
+<p>example：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl label nodes gke-xxx-cc361276-cvfg node=elasticsearch</span><br></pre></td></tr></table></figure>
+<h4 id="Adding-or-updating-labels-for-existing-clusters"><a href="#Adding-or-updating-labels-for-existing-clusters" class="headerlink" title="Adding or updating labels for existing clusters"></a>Adding or updating labels for existing clusters</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container clusters update [CLUSTER_NAME] --update-labels [KEY]=[VALUE]</span><br></pre></td></tr></table></figure>
+<h4 id="Remove-labels-for-existing-clusters"><a href="#Remove-labels-for-existing-clusters" class="headerlink" title="Remove labels for existing clusters"></a>Remove labels for existing clusters</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container clusters update example-cluster --remove-labels env=dev</span><br></pre></td></tr></table></figure>
           
         
       
@@ -1677,7 +1656,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/01/Server/SpringBoot/Maven/Config/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/01/SpringBoot/Maven/Config/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1696,7 +1675,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/10/01/Server/SpringBoot/Maven/Config/" itemprop="url">Maven Config</a></h2>
+                <a class="post-title-link" href="/2018/10/01/SpringBoot/Maven/Config/" itemprop="url">Maven Config</a></h2>
         
 
         <div class="post-meta">
@@ -2122,7 +2101,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">534</span>
+                <span class="site-state-item-count">533</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
