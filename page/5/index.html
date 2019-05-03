@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/05/Java/JVM/Basic/Collectors/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/11/DB/TechStack/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/01/05/Java/JVM/Basic/Collectors/" itemprop="url">Introduction to JVM Collectors</a></h2>
+                <a class="post-title-link" href="/2019/01/11/DB/TechStack/" itemprop="url">Technology Stack On DB</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-05T16:20:22+08:00">
-                2019-01-05
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-11T12:19:22+08:00">
+                2019-01-11
               </time>
             
 
@@ -338,30 +338,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
-                    <span itemprop="name">JVM</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
                   </a>
                 </span>
 
@@ -399,101 +377,385 @@
       
         
           
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>GC需要完成的三件事：</p>
-<ul>
-<li>哪些内存需要回收？</li>
-<li>什么时候回收？</li>
-<li>如何回收？</li>
+            <h3 id="MySQL"><a href="#MySQL" class="headerlink" title="MySQL"></a>MySQL</h3><h4 id="Operation"><a href="#Operation" class="headerlink" title="Operation"></a>Operation</h4><ul>
+<li>percona-toolkit：一组高级命令行工具的集合，可以查看当前服务的摘要信息，磁盘检测，分析慢查询日志，查找重复索引，实现表同步等等。</li>
+<li>Percona XtraBackup：简称PXB，是Percona公司开发的一个用于MySQL数据库物理热备的备份工具，支持 MySQl（Oracle）、Percona Server 和 MariaDB。</li>
 </ul>
-<hr>
-<h3 id="Terms"><a href="#Terms" class="headerlink" title="Terms"></a>Terms</h3><ul>
-<li>Parallel，并行：多条垃圾收集线程并行工作，但此时用户线程处于等待状态。</li>
-<li>Concurrent，并发：用户线程与垃圾收集线程同时执行，用户程序继续运行，而垃圾收集程序运行在另一个CPU上。</li>
-</ul>
-<hr>
-<h3 id="Arithmetic"><a href="#Arithmetic" class="headerlink" title="Arithmetic"></a>Arithmetic</h3><h4 id="Mark-Sweep-标记-清除"><a href="#Mark-Sweep-标记-清除" class="headerlink" title="Mark-Sweep - 标记-清除"></a>Mark-Sweep - 标记-清除</h4><p>这是最基础的收集算法，顾名思义，算法分为两个阶段：</p>
-<ul>
-<li>标记：标记处所有需要回收的对象。</li>
-<li>清除：统一回收所有被标记的对象。</li>
-</ul>
-<p>算法缺陷：</p>
-<ul>
-<li>效率问题，标记和清除两个过程的效率不高。</li>
-<li>空间问题，标记清除之后会产生大量不连续的内存碎片。<blockquote>
-<p>过多的内存碎片可能会造成后续在分配比较大的对象时，无法找到足够的连续内存而不得不提前触发另一次GC。</p>
-</blockquote>
-</li>
-</ul>
-<h4 id="Copying-复制"><a href="#Copying-复制" class="headerlink" title="Copying - 复制"></a>Copying - 复制</h4><p>该算法的出现是为了解决Mark-Sweep的效率问题。</p>
-<p>它将可用内存按容量划分为大小相等的两块，每次只使用其中的一块。当这一块的内存用完了，就将还存活着的对象复制到另一块内存上面，然后再把已使用过的内存空间一次性清理掉。</p>
-<p>这样每次都只是对整个半区进行内存回收，内存分配时也不需要考虑内存碎片等复杂情况，只要移动堆顶指针，按顺序分配内存即可，实现简单，运行高效。缺点是可用的内存空间缩小了一半。</p>
-<h4 id="Mark-Compact-标记-整理"><a href="#Mark-Compact-标记-整理" class="headerlink" title="Mark-Compact - 标记-整理"></a>Mark-Compact - 标记-整理</h4><p>Copying算法在对象存活率较高时就要进行比较多的复制操作，效率将会降低。</p>
-<p>更重要的是，如果不想浪费50%的空间，就需要额外的空间进行分配担保，以应对被使用的内存中所有对象都100%存活的极端情况，所以在老年代一般不能直接选用这种算法。</p>
-<p>根据老年代的特点，提出了Mark-Compact算法，标记过程与Mark-Sweep算法一样，但是清理过程不一样。</p>
-<p>Mark-Compact算法的清理过程是<strong>让所有存活的对象都向一端移动，然后直接清理掉边界以外的内存</strong>。</p>
-<img src="/2019/01/05/Java/JVM/Basic/Collectors/mark-compact-example.png">
-<h4 id="Generational-Collection-分代收集"><a href="#Generational-Collection-分代收集" class="headerlink" title="Generational Collection - 分代收集"></a>Generational Collection - 分代收集</h4><p>这种算法并没有什么新的思想，只是根据对象存活周期的不同进行划分内存块。一般把Java堆分为新生代和老年代，这样就可以根据各个年代的特点采用适当的收集算法。</p>
-<p>在新生代中，每次GC时都发现有大批对象死去，只有少量对象存活下来，那就选用复制算法，只需要付出少量存活对象的复制成本就可以完成回收。</p>
-<p>在老年代中，因为对象的存活率高，没有额外空间对它进行分配担保，就必须使用Mark-Sweep或者Mark-Compact算法进行回收。</p>
-<hr>
-<h3 id="Collectors"><a href="#Collectors" class="headerlink" title="Collectors"></a>Collectors</h3><p>如果说收集算法是内存回收的方法论，那么垃圾回收器就是内存回收的具体实现。</p>
-<img src="/2019/01/05/Java/JVM/Basic/Collectors/collectors-category.png">
-<ul>
-<li>两个收集器之间存在连线：它们之间可以搭配使用。</li>
-<li>虚拟机所处的区域：它属于新生代收集器还是老年代收集器。</li>
-</ul>
-<h4 id="Serial"><a href="#Serial" class="headerlink" title="Serial"></a>Serial</h4><p>Serial是最基本的，发展历史最悠久的Collector，在JDK 1.3.1之前，是虚拟机收集新生代的唯一选择。</p>
-<p>它是一个单线程的Collector，但它的“单线程”的意义并不仅仅说明它只会使用一个CPU或一条线程去完成GC，更重要的是在它进行GC时，必须暂停其他所有的工作线程(应用程序的线程)，直到它GC结束。</p>
 
-<p>单线程是它的劣势，也是它的优势。</p>
-<ul>
-<li>简单而高效</li>
-<li>对于限定单个CPU的环境来说，Serial没有线程交互开销，专心做GC工作自然可以获得最高的单线程GC效率。</li>
-<li>在桌面应用场景中，Serial是JVM运行在Client模式下的一个很好的选择。</li>
-</ul>
-<h4 id="Serial-Old"><a href="#Serial-Old" class="headerlink" title="Serial Old"></a>Serial Old</h4><p>Serial Old是Serial的老年代版本，同样以单线程GC。它主要用于Client模式。</p>
-<p>如果用于Sever模式，一种用途是在JDK 1.5之前版本中与Parallel Scavenge搭配使用，另一种用途就是作为CMS的后备预案，在并发收集发生Concurrent Mode Failure时使用。</p>
+          
+        
+      
+    </div>
+    
+    
+    
 
-<h4 id="ParNew"><a href="#ParNew" class="headerlink" title="ParNew"></a>ParNew</h4><p>ParNew其实是Serial的多线程版本，除了以多线程GC外，其余行为和设置与Serial是一样的，比如控制参数(-XX:SuvivorRatio)、收集算法、STW对象分配规则、回收策略等等。</p>
-<img src="/2019/01/05/Java/JVM/Basic/Collectors/parnew.png">
-<p>ParNew除了多线程GC之外，其他与Serial相比并没有太多创新之处，但它却是许多运行在Server模式下JVM首选的新生代Collector，其中还有一个与性能无关但很重要的原因是，除了Serial外，目前只有它可以与CMS配合使用。</p>
-<h4 id="Parallel-Scavenge"><a href="#Parallel-Scavenge" class="headerlink" title="Parallel Scavenge"></a>Parallel Scavenge</h4><p>Parallel Scavenge是一个新生代的Collector，它使用的收集算法是Copying，以多线程进行GC。</p>
-<p>它的目标是达到一个可控制的吞吐量(Throughput)，CMS是尽可能地缩短在GC时用户线程的停顿时间。</p>
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/07/Docker/Dockerfile-Synax/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/07/Docker/Dockerfile-Synax/" itemprop="url">Dockerfile Synax</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-07T13:15:19+08:00">
+                2019-01-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Env"><a href="#Env" class="headerlink" title="Env"></a>Env</h3><p>Format：$variable_name、${variable_name}</p>
+<ul>
+<li>${variable:-word} indicates that if variable is set then the result will be that value. If variable is not set then word will be the result.</li>
+<li>${variable:+word} indicates that if variable is set then word will be the result, otherwise the result is the empty string.</li>
+</ul>
+<h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">ENV</span> <span class="string">abc=hello</span></span><br><span class="line"><span class="string">ENV</span> <span class="string">abc=bye</span> <span class="string">def=$abc</span></span><br><span class="line"><span class="string">ENV</span> <span class="string">ghi=$abc</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">FROM</span> <span class="string">busybox</span></span><br><span class="line"><span class="string">ENV</span> <span class="string">foo</span> <span class="string">/bar</span></span><br><span class="line"><span class="string">WORKDIR</span> <span class="string">$&#123;foo&#125;</span>   <span class="comment"># WORKDIR /bar</span></span><br><span class="line"><span class="string">ADD</span> <span class="string">.</span> <span class="string">$foo</span>       <span class="comment"># ADD . /bar</span></span><br><span class="line"><span class="string">COPY</span> <span class="string">\$foo</span> <span class="string">/quux</span> <span class="comment"># COPY $foo /quux</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">CMD</span> <span class="string">["sh",</span> <span class="string">"-c"</span><span class="string">,</span> <span class="string">"django-admin startproject $PROJECTNAME"</span><span class="string">]</span></span><br></pre></td></tr></table></figure>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><ol>
+<li>Java Use Environment Parameter</li>
+</ol>
+<p>需要注意点：</p>
+<ul>
+<li>CMD[“java”, “$environment”, “-jar”, “jar_path”]，其中的环境变量是无法解析的。</li>
+<li>CMD [“sh”, “-c”, “echo $environment”]，可以解析环境变量，是因为调用sh进行执行。</li>
+</ul>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 基础镜像</span></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">"/entrypoint.sh"</span>]</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">CMD [<span class="string">"/bin/sh"</span>, <span class="string">"/execute.sh"</span>]</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># entrypoint.sh</span></span><br><span class="line">FROM anapsix/alpine-java:8_jdk</span><br><span class="line"></span><br><span class="line">ADD ./entrypoint.sh /entrypoint.sh</span><br><span class="line">ADD ./execute.sh /execute.sh</span><br><span class="line"></span><br><span class="line">RUN chmod +x /entrypoint.sh</span><br><span class="line">RUN chmod +x /execute.sh</span><br><span class="line"></span><br><span class="line">ENTRYPOINT [<span class="string">"/entrypoint.sh"</span>]</span><br><span class="line"></span><br><span class="line">CMD [<span class="string">"/bin/sh"</span>, <span class="string">"/execute.sh"</span>]</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># execute.sh</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"Java JVM_OPS=<span class="variable">$JVM_OPS</span>, Jar Path=<span class="variable">$JAR_PATH</span>"</span></span><br><span class="line">java <span class="variable">$JVM_OPS</span> -jar <span class="variable">$JAR_PATH</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="ARG"><a href="#ARG" class="headerlink" title="ARG"></a>ARG</h3><p>The ARG instruction defines a variable that users can pass at build-time to the builder with the docker build command using the –build-arg <varname>=<value> flag. </value></varname></p>
+<p>If a user specifies a build argument that was not defined in the Dockerfile, the build outputs a warning.</p>
+<h4 id="Usage-1"><a href="#Usage-1" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker build --build-arg user=what_user .</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/05/Java/Advance/off-heap memory/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/05/Java/Advance/off-heap memory/" itemprop="url">堆外内存(off-heap memory)</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-05T23:35:06+08:00">
+                2019-01-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>堆外内存就是把内存对象分配在Java虚拟机的堆以外的内存，这些内存直接受操作系统管理(不是虚拟机)，这样做的结果就是能够在一定程度上减少垃圾回收对应用程序造成的影响。</p>
+<p>我们经常用 java.nio.DirectByteBuffer 对象进行堆外内存的管理和使用，它会在对象创建的时候就分配堆外内存。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ByteBuffer buffer = ByteBuffer.allocateDirect(numBytes);</span><br></pre></td></tr></table></figure>
+<p>当内存不够时候，会抛出 java.lang.OutOfMemoryError: Direct buffer memory 异常。</p>
+<p>堆外内存的优点：</p>
+<ul>
+<li>减少了垃圾回收。因为垃圾回收会暂停其他的工作。</li>
+<li>加快了复制的速度。堆内存在flush到远程时，会先复制到直接内存(非堆内存)，然后在发送。而堆外内存直接发送，不需要复制。</li>
+</ul>
+<p>堆外内存的缺点：</p>
+<ul>
+<li>内存难以控制，使用了堆外内存就间接失去了JVM管理内存的可行性，改由自己来管理，当发生内存溢出时排查起来非常困难。</li>
+</ul>
+<hr>
+<h3 id="Notices"><a href="#Notices" class="headerlink" title="Notices"></a>Notices</h3><p>java.nio.DirectByteBuffer 对象在创建过程中会先通过Unsafe接口直接通过os::malloc来分配内存，然后将内存的起始地址和大小存到 java.nio.DirectByteBuffer 对象里，这样就可以直接操作这些内存。</p>
+<p>这些内存只有在 DirectByteBuffer 对象回收掉之后才有机会被回收，因此如果这些对象大部分都移到了old，但是一直没有触发 CMS GC 或者 Full GC，那么悲剧将会发生，因为你的物理内存被他们耗尽，因此为了避免这种悲剧的发生，通过-XX:MaxDirectMemorySize来指定最大的堆外内存大小，当使用达到了阈值的时候将调用System.gc来做一次 Full GC 来回收掉没有被使用的堆外内存。</p>
 <blockquote>
-<p>吞吐量：CPU用于运行用户代码的时间与CPU总消耗时间的比值，即吞吐量=运行用户代码时间 / (运行用户代码时间 + GC时间)。例如，虚拟机运行100分钟，其中GC花费了1分钟，那么吞吐量就是99%。</p>
+<p>前提是没有启用DisableExplicitGC</p>
 </blockquote>
-<p>停顿时间越短就越适合需要与用户交互的程序，良好的响应速度能提升用户体验，而高吞吐量则可以高效率地利用CPU，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务。</p>
+<p>在写NIO程序经常使用ByteBuffer来读取或者写入数据，那么使用 ByteBuffer.allocate(capability) 还是使用 ByteBuffer.allocteDirect(capability) 来分配缓存了？</p>
+<p>第一种方式是分配JVM堆内存，属于GC管辖范围，由于需要拷贝所以速度相对较慢；第二种方式是分配OS本地内存，不属于GC管辖范围，由于不需要内存拷贝所以速度相对较快。</p>
+<hr>
+<h3 id="回收方法"><a href="#回收方法" class="headerlink" title="回收方法"></a>回收方法</h3><ol>
+<li>Full GC，一般发生在年老代垃圾回收以及调用System.gc的时候。</li>
+<li>调用ByteBuffer的cleaner的clean()，内部还是调用System.gc()，所以一定不要-XX:+DisableExplicitGC。</li>
+</ol>
+<hr>
+<h3 id="ByteBuffer的堆外内存回收"><a href="#ByteBuffer的堆外内存回收" class="headerlink" title="ByteBuffer的堆外内存回收"></a>ByteBuffer的堆外内存回收</h3><h4 id="Allocate-And-Free-By-GC"><a href="#Allocate-And-Free-By-GC" class="headerlink" title="Allocate And Free By GC"></a>Allocate And Free By GC</h4><p>JVM Options: -Xms128m -Xmx128m -XX:MaxDirectMemorySize=40M -XX:+PrintGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">fun <span class="title">main</span><span class="params">(args: Array&lt;String&gt;)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        val buffer = ByteBuffer.allocateDirect(<span class="number">8</span> * <span class="number">1024</span> * <span class="number">1024</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">2019-01-06T00:14:39.446-0800: [GC (System.gc()) [PSYoungGen: 3370K-&gt;688K(38400K)] 3370K-&gt;696K(125952K), 0.0007600 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] </span><br><span class="line">2019-01-06T00:14:39.447-0800: [Full GC (System.gc()) [PSYoungGen: 688K-&gt;0K(38400K)] [ParOldGen: 8K-&gt;475K(87552K)] 696K-&gt;475K(125952K), [Metaspace: 3335K-&gt;3335K(1056768K)], 0.0036042 secs] [Times: user=0.02 sys=0.00, real=0.01 secs] </span><br><span class="line"></span><br><span class="line">2019-01-06T00:14:39.485-0800: [GC (System.gc()) [PSYoungGen: 681K-&gt;128K(38400K)] 1157K-&gt;611K(125952K), 0.0006844 secs] [Times: user=0.01 sys=0.00, real=0.00 secs] </span><br><span class="line">2019-01-06T00:14:39.486-0800: [Full GC (System.gc()) [PSYoungGen: 128K-&gt;0K(38400K)] [ParOldGen: 483K-&gt;444K(87552K)] 611K-&gt;444K(125952K), [Metaspace: 3339K-&gt;3339K(1056768K)], 0.0039458 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="Allocate-Failure"><a href="#Allocate-Failure" class="headerlink" title="Allocate Failure"></a>Allocate Failure</h4><p>JVM Options: 同上</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">fun <span class="title">main</span><span class="params">(args: Array&lt;String&gt;)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">//  allocate 50M</span></span><br><span class="line">        val buffer = ByteBuffer.allocateDirect(<span class="number">50</span> * <span class="number">1024</span> * <span class="number">1024</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>抛出异常<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread <span class="string">"main"</span> java.lang.OutOfMemoryError: Direct buffer memory</span><br><span class="line">	at java.nio.Bits.reserveMemory(Bits.java:<span class="number">694</span>)</span><br><span class="line">	at java.nio.DirectByteBuffer.&lt;init&gt;(DirectByteBuffer.java:<span class="number">123</span>)</span><br><span class="line">	at java.nio.ByteBuffer.allocateDirect(ByteBuffer.java:<span class="number">311</span>)</span><br><span class="line">	at com.demo.bytebuffer.AllocateByteBufferKt.main(AllocateByteBuffer.kt:<span class="number">14</span>)</span><br></pre></td></tr></table></figure></p>
+<hr>
+<h4 id="XX-DisableExplicitGC"><a href="#XX-DisableExplicitGC" class="headerlink" title="-XX:+DisableExplicitGC"></a>-XX:+DisableExplicitGC</h4><p>JVM Options: JVM Options: -Xms128m -Xmx128m -XX:MaxDirectMemorySize=40M -XX:+DisableExplicitGC -XX:+PrintGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">fun <span class="title">main</span><span class="params">(args: Array&lt;String&gt;)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">//  allocate 50M</span></span><br><span class="line">        val buffer = ByteBuffer.allocateDirect(<span class="number">8</span> * <span class="number">1024</span> * <span class="number">1024</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>抛出异常<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread <span class="string">"main"</span> java.lang.OutOfMemoryError: Direct buffer memory</span><br><span class="line">	at java.nio.Bits.reserveMemory(Bits.java:<span class="number">694</span>)</span><br><span class="line">	at java.nio.DirectByteBuffer.&lt;init&gt;(DirectByteBuffer.java:<span class="number">123</span>)</span><br><span class="line">	at java.nio.ByteBuffer.allocateDirect(ByteBuffer.java:<span class="number">311</span>)</span><br><span class="line">	at com.demo.bytebuffer.AllocateByteBufferKt.main(AllocateByteBuffer.kt:<span class="number">14</span>)</span><br></pre></td></tr></table></figure></p>
+<p>结果说明，NIO的DirectMemory回收需要依赖于System.gc()</p>
+<p>从DirectByteBuffer的源码可知，ByteBuffer.allocateDirect()会调用Bits.reservedMemory()方法，在该方法中显示调用了System.gc()用户内存回收，如果-XX:+DisableExplicitGC打开，则让System.gc()无效，内存无法有效回收而导致OOM。</p>
+<p>Direct Memory是受GC控制的。例如，ByteBuffer bb = ByteBuffer.allocateDirect(1024)，这段代码的执行会在堆外占用1k的内存，Java堆内只会占用一个对象的指针引用的大小，堆外的这1k的空间只有当bb对象被回收时，才会被回收，这里会发现一个明显的不对称现象，就是堆外可能占用了很多，而堆内没占用多少，导致还没触发GC，那就很容易出现Direct Memory造成物理内存耗光。</p>
+<hr>
+<h4 id="Free-ByteBuffer-By-Manual-Control"><a href="#Free-ByteBuffer-By-Manual-Control" class="headerlink" title="Free ByteBuffer By Manual Control"></a>Free ByteBuffer By Manual Control</h4><p>JVM Options: 同上</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">val buffer = ByteBuffer.allocateDirect(<span class="number">40</span> * <span class="number">1024</span> * <span class="number">1024</span>)</span><br><span class="line">TimeUnit.SECONDS.sleep(<span class="number">3</span>)</span><br><span class="line">(buffer as DirectBuffer).cleaner().clean()</span><br><span class="line">TimeUnit.SECONDS.sleep(<span class="number">3</span>)</span><br><span class="line">println(<span class="string">"free is ok"</span>)</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="开源堆外缓存框架"><a href="#开源堆外缓存框架" class="headerlink" title="开源堆外缓存框架"></a>开源堆外缓存框架</h3><ul>
+<li>Ehcache 3.0</li>
+<li>Chronical Map：OpenHFT包括很多类库，使用这些类库很少产生垃圾，并且应用程序使用这些类库后也很少发生Minor GC。类库主要包括：Chronicle Map，Chronicle Queue等等。</li>
+<li>OHC</li>
+</ul>
+<hr>
+<h3 id="Summary-of-understanding-“-XX-MaxDirectMemorySize”-setting"><a href="#Summary-of-understanding-“-XX-MaxDirectMemorySize”-setting" class="headerlink" title="Summary of understanding “-XX:MaxDirectMemorySize” setting"></a>Summary of understanding “-XX:MaxDirectMemorySize” setting</h3><blockquote>
+<p><a href="https://developer.ibm.com/answers/questions/398383/summary-of-understanding-xxmaxdirectmemorysize-set/" target="_blank" rel="noopener">https://developer.ibm.com/answers/questions/398383/summary-of-understanding-xxmaxdirectmemorysize-set/</a></p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.cnblogs.com/duanxz/p/6089485.html" target="_blank" rel="noopener">https://www.cnblogs.com/duanxz/p/6089485.html</a><br><a href="https://www.jianshu.com/p/50be08b54bee" target="_blank" rel="noopener">https://www.jianshu.com/p/50be08b54bee</a></p>
+</blockquote>
 
-<p>JVM调优关键参数：</p>
-<ul>
-<li>-XX:MaxGCPauseMillis：尽可能地保证GC的时间不超过该值。</li>
-<li>-XX:GCTimeRatio：范围是0~100，GC时间占总时间的比率。例如，设置为19，即GC时间的最大占比为5%(1 / (1+19))，默认值为99，即GC最大占比为1%(1 / (1+99))</li>
-<li>-XX:+UseAdaptiveSizePolicy：不需要手工指定新生代的大小、Eden与Survivor比例、晋升老年代对象年龄等等细节参数，JVM根据当前系统的运行情况进行动态调整这些参数以提供最适合的停顿时间和最大的吞吐量(GC自适应的调节策略 GC Ergonomics)。</li>
-</ul>
-<h4 id="Parallel-Old"><a href="#Parallel-Old" class="headerlink" title="Parallel Old"></a>Parallel Old</h4><p>Parallel Old是Parallel Scavenger的老年代版本，以多线程GC，使用Mark-Compact算法。</p>
-
-<h4 id="CMS-Concurrent-Mark-Sweep"><a href="#CMS-Concurrent-Mark-Sweep" class="headerlink" title="CMS - Concurrent Mark Sweep"></a>CMS - Concurrent Mark Sweep</h4><p>Concurrent Low Pause Collector</p>
-<p>CMS是一种期望得到最短GC时间为目标的Collector。CMS是基于Mark-Sweep实现的，整个过程分为以下几个步骤：</p>
-<ul>
-<li>初始标记(STW) - CMS initial mark，仅仅只是标记一下GC Roots能直接关联到的对象，速度很快。</li>
-<li>并发标记 - CMS concurrent mark，进行GC Roots Tracing的过程。</li>
-<li>重新标记(STW) - CMS remark，为了修正并发标记期间因用户程序继续运行而导致标记产生变动的那一部分对象的标记记录，一般停顿时间比初始标记长一些，但远比并发标记短。</li>
-<li>并发清除 - CMS concurrent sweep</li>
-</ul>
-<img src="/2019/01/05/Java/JVM/Basic/Collectors/cms.png">
-<p>整个过程中最耗时的并发标记和并发清除过程都可以与用户线程一起运行。所以，从总体上来说，CMS内存回收过程与用户线程一起并发执行的。</p>
-<p>与CMS配合使用的Collector：</p>
-<ul>
-<li>Young Generation：Serial、ParNew</li>
-<li>Tenured Generation：SerialOld</li>
-</ul>
-<p>CMS缺点：</p>
-<ul>
-<li>对CPU资源非常敏感。在并发阶段，它虽然不会导致用户线程停顿，但是会因为占用一部分CPU资源而导致应用程序慢，总吞吐量会降低。CMS默认启动的GC线程数为(CPU + 3) / 4。</li>
-<li>无法处理浮动垃圾(Floating Garbage)，可能出现Concurrent Mode Failure失败而导致另一次Full GC的产生。</li>
-<li>空间碎片，因为它是基于Mark-Sweep算法实现的。</li>
-</ul>
-<h4 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h4>
           
         
       
@@ -656,7 +918,97 @@
       
         
           
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>在G1提出之前，经典的垃圾收集器主要有三种类型：串行收集器、并行收集器和并发标记清除收集器，这三种收集器分别可以是满足Java应用三种不同的需求：内存占用及并发开销最小化、应用吞吐量最大化和应用GC暂停时间最小化。但是，上述三种垃圾收集器都有几个共同的问题：</p>
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>The Garbage-First (G1) garbage collector is a server-style garbage collector, <strong>targeted for multiprocessor machines with large memories</strong>. It attempts to meet garbage collection (GC) pause time goals with high probability while achieving high throughput. Whole-heap operations, such as <strong>global marking</strong>, are performed concurrently with the application threads. This prevents interruptions proportional(比例的，均衡的) to heap or live-data size.</p>
+<p>The G1 collector achieves high performance and pause time goals through several techniques.</p>
+<ul>
+<li><p>The heap is partitioned(分割) into a set of equally sized <strong>heap regions</strong>, each a contiguous range of virtual memory.</p>
+</li>
+<li><p>G1 performs a concurrent global marking phase to determine the liveness of objects throughout the heap. After the marking phase completes, G1 knows which regions are mostly empty. It collects these regions first, which often yields(产生) a large amount of free space. This is why this method of garbage collection is called <strong>Garbage-First</strong>. </p>
+</li>
+<li><p>As the name suggests, G1 concentrates(集中) its <strong>collection</strong> and <strong>compaction</strong> activity on the areas of the heap that are likely to be full of reclaimable(可回收的) objects, that is(即，就是说), garbage. G1 uses a pause prediction model to meet a user-defined pause time target and selects the number of regions to collect based on the specified pause time target.</p>
+</li>
+<li><p>G1 copies objects from one or more regions of the heap to a single region on the heap, and in the process both compacts and frees up memory. This evacuation(回收操作) is performed in parallel on multiprocessors to decrease pause times and increase throughput. Thus, with each garbage collection, G1 continuously works to reduce fragmentation. This is beyond the capability of both of the previous methods. <strong>CMS (Concurrent Mark Sweep) garbage collection does not do compaction. Parallel compaction performs only whole-heap compaction, which results in considerable pause times.</strong></p>
+</li>
+</ul>
+<p>It is important to note that G1 is not a real-time collector. It meets the set pause time target with high probability but not absolute certainty. Based on data from previous collections, G1 estimates how many regions can be collected within the target time. Thus, the collector has a reasonably accurate model of the cost of collecting the regions, and it uses this model to determine which and how many regions to collect while staying within the pause time target.</p>
+<p>The first focus of G1 is to provide a solution for users running applications that require large heaps with limited GC latency. This means heap sizes of around 6 GB or larger, and a stable and predictable pause time below 0.5 seconds.</p>
+<p>Applications running today with either the CMS or the with parallel compaction would benefit from switching to G1 if the application has one or more of the following traits(特性，特点).</p>
+<ul>
+<li><p>More than 50% of the Java heap is occupied with live data.</p>
+</li>
+<li><p>The rate of object allocation rate or promotion varies(改变，变化) significantly(明显地).</p>
+</li>
+<li><p>The application is experiencing undesired(不希望的) long garbage collection or compaction pauses (longer than 0.5 to 1 second).</p>
+</li>
+</ul>
+<p>G1 is planned as the long-term replacement for the Concurrent Mark-Sweep Collector (CMS). Comparing G1 with CMS reveals differences that make G1 a better solution. One difference is that G1 is a compacting collector. Also, G1 offers more predictable garbage collection pauses than the CMS collector, and allows users to specify desired pause targets.</p>
+<p>As with CMS, <strong>G1 is designed for applications that require shorter GC pauses.</strong></p>
+<hr>
+<h3 id="Young-GC-And-Mixed-GC"><a href="#Young-GC-And-Mixed-GC" class="headerlink" title="Young GC And Mixed GC"></a>Young GC And Mixed GC</h3><p>G1提供了两种GC模式，<strong>Young GC</strong>和<strong>Mixed GC</strong>，两种都是完全<strong>Stop The World</strong>：</p>
+<ul>
+<li>Young GC：选定所有年轻代里的Region。通过控制年轻代的region个数，即年轻代内存大小，来控制young GC的时间开销。</li>
+<li>Mixed GC：选定所有年轻代里的Region，外加根据global concurrent marking统计得出收集收益高的若干老年代Region。在用户指定的开销目标范围内尽可能选择收益高的老年代Region。</li>
+</ul>
+<p>由上述可知，Mixed GC不是Full GC，它只能回收部分老年代的Region，如果Mixed GC实在无法跟上程序分配内存的速度，导致老年代填满无法继续进行Mixed GC，就会使用Serial Old GC(Full GC)来收集整个GC Heap。所以我们可以知道，G1是不提供Full GC的。</p>
+<blockquote>
+<p>global concurrent marking：它的执行过程类似CMS，但是不同的是，在G1 GC中，它主要是为Mixed GC提供标记服务的，并不是一次GC过程的一个必须环节。<br>执行过程分为四个步骤：</p>
+<ul>
+<li>初始标记（initial mark，STW）。它标记了从GC Root开始直接可达的对象。</li>
+<li>并发标记（Concurrent Marking）。这个阶段从GC Root开始对heap中的对象标记，标记线程与应用程序线程并行执行，并且收集各个Region的存活对象信息。</li>
+<li>最终标记（Remark，STW）。标记那些在并发标记阶段发生变化的对象，将被回收。</li>
+<li>清除垃圾（Cleanup）。清除空Region（没有存活对象的），加入到free list。<br>第一阶段initial mark是共用了Young GC的暂停，这是因为他们可以复用root scan操作，所以可以说global concurrent marking是伴随Young GC而发生的。第四阶段Cleanup只是回收了没有存活对象的Region，所以它并不需要STW。</li>
+</ul>
+</blockquote>
+<h4 id="什么时候触发Mixed-GC"><a href="#什么时候触发Mixed-GC" class="headerlink" title="什么时候触发Mixed GC"></a>什么时候触发Mixed GC</h4><ul>
+<li><p>G1HeapWastePercent：在global concurrent marking结束之后，我们可以知道old gen regions中有多少空间要被回收，在每次YGC之后和再次发生Mixed GC之前，会检查垃圾占比是否达到此参数，只有达到了，下次才会发生Mixed GC。</p>
+</li>
+<li><p>G1MixedGCLiveThresholdPercent：old generation region中的存活对象的占比，只有在此参数之下，才会被选入CSet。</p>
+</li>
+<li><p>G1MixedGCCountTarget：一次global concurrent marking之后，最多执行Mixed GC的次数。</p>
+</li>
+<li><p>G1OldCSetRegionThresholdPercent：一次Mixed GC中能被选入CSet的最多old generation region数量。</p>
+</li>
+</ul>
+<hr>
+<h3 id="Region"><a href="#Region" class="headerlink" title="Region"></a>Region</h3><img src="/2019/01/05/Java/JVM/Basic/G1/g1_heap_region.png" title="Heap Division by G1">
+<p>G1 is generational in a logical sense. A set of empty regions is designated as the logical young generation. In the figure, the young generation is light blue. Allocations are done out of(从..) that logical young generation, and when the young generation is full, that set of regions is garbage collected (a young collection).</p>
+<p>In some cases, regions outside the set of young regions (old regions in dark blue) can be garbage collected at the same time. This is referred to as a <strong>mixed collection</strong>. </p>
+<p>In the figure, the regions being collected are marked by <strong>red boxes</strong>. The figure illustrates a mixed collection because both young regions and old regions are being collected. The garbage collection is a compacting collection that copies live objects to selected, initially empty regions.</p>
+<p>Based on the age of a surviving object, the object can be copied to a survivor region (marked by “S”) or to an old region (not specifically shown). The regions marked by “H” contain humongous objects that are larger than half a region and are treated specially.</p>
+<h4 id="Humongous-Objects-and-Humongous-Allocations"><a href="#Humongous-Objects-and-Humongous-Allocations" class="headerlink" title="Humongous Objects and Humongous Allocations"></a>Humongous Objects and Humongous Allocations</h4><p>For G1 GC, <strong>any object that is more than half a region size is considered a humongous object</strong>. Such an object is allocated directly in the old generation into humongous regions. These humongous regions are a contiguous set of regions. StartsHumongous marks the start of the contiguous set and ContinuesHumongous marks the continuation of the set.</p>
+<p>Before allocating any humongous region, the marking threshold is checked, initiating a concurrent cycle, if necessary.</p>
+<p>Dead humongous objects are freed at the end of the marking cycle during the cleanup phase and also during a full garbage collection cycle.</p>
+<p>To reduce copying overhead, the humongous objects are not included in any evacuation pause. A full garbage collection cycle compacts humongous objects in place.</p>
+<p>Because each individual set of StartsHumongous and ContinuesHumongous regions contains just one humongous object, the space between the end of the humongous object and the end of the last region spanned by the object is unused. For objects that are just slightly larger than a multiple of the heap region size, this unused space can cause the heap to become fragmented.</p>
+<p>If you see back-to-back concurrent cycles initiated due to humongous allocations and if such allocations are fragmenting your old generation, then increase the value of -XX:G1HeapRegionSize such that previous humongous objects are no longer humongous and will follow the regular allocation path.</p>
+<hr>
+<h3 id="Allocation-Evacuation-Failure"><a href="#Allocation-Evacuation-Failure" class="headerlink" title="Allocation (Evacuation) Failure"></a>Allocation (Evacuation) Failure</h3><p>As with <strong>CMS</strong>, the <strong>G1</strong> collector runs parts of its collection while the application continues to run and there is a risk that <strong>the application will allocate objects faster than the garbage collector can recover free space</strong>. </p>
+<blockquote>
+<p>See the section Concurrent Mode Failure in Concurrent Mark Sweep (CMS) Collector for the analogous CMS behavior. </p>
+</blockquote>
+<p>In G1, the failure (exhaustion of the Java heap) occurs while G1 is copying live data out of one region (evacuating) into another region. The copying is done to compact the live data. If a free (empty) region cannot be found during the evacuation of a region being garbage collected, then an allocation failure occurs (because there is no space to allocate the live objects from the region being evacuated) and a stop-the-world (STW) full collection is done.</p>
+<hr>
+<h3 id="Floating-Garbage"><a href="#Floating-Garbage" class="headerlink" title="Floating Garbage"></a>Floating Garbage</h3><p>Objects can die during a G1 collection and not be collected. G1 uses a technique called <strong>snapshot-at-the-beginning (SATB)</strong> to guarantee that all live objects are found by the garbage collector. SATB states(声明) that any object that is live at the start of the concurrent marking (a marking over the entire heap) is considered live for the purpose of the collection. SATB allows floating garbage in a way analogous(类似的) to that of a CMS incremental update.</p>
+<hr>
+<h3 id="Pauses"><a href="#Pauses" class="headerlink" title="Pauses"></a>Pauses</h3><p><strong>G1 pauses the application to copy live objects to new regions.</strong> These pauses can either be young collection pauses where only young regions are collected or mixed collection pauses where young and old regions are evacuated. </p>
+<p>As with CMS there is a final marking or remark pause to complete the marking while the application is stopped. Whereas CMS also had an initial marking pause, G1 does the initial marking work as part of an evacuation pause. G1 has a cleanup phase at the end of a collection which is partly STW and partly concurrent. The STW part of the cleanup phase identifies empty regions and determines old regions that are candidates for the next collection.</p>
+<hr>
+<h3 id="Card-Tables-and-Concurrent-Phases"><a href="#Card-Tables-and-Concurrent-Phases" class="headerlink" title="Card Tables and Concurrent Phases"></a>Card Tables and Concurrent Phases</h3><p>If a garbage collector does not collect the entire heap (<strong>an incremental collection</strong>), the garbage collector needs to know where there are <strong>pointers from the uncollected part of the heap into the part of the heap that is being collected</strong>. </p>
+<p>This is typically for a generational garbage collector in which the uncollected part of the heap is usually the old generation, and the collected part of the heap is the young generation. </p>
+<p>The data structure for keeping this information (old generation pointers to young generation objects), is a <strong>remembered set</strong>. A card table is a particular type of remembered set. </p>
+<p>Java HotSpot VM uses an array of bytes as a card table. Each byte is referred to as a card. A card corresponds to a range of addresses in the heap. <strong>Dirtying a card means changing the value of the byte to a dirty value; a dirty value might contain a new pointer from the old generation to the young generation in the address range covered by the card</strong>.</p>
+<blockquote>
+<p>Processing a card means looking at the card to see if there is an old generation to young generation pointer and perhaps doing something with that information such as transferring it to another data structure.</p>
+</blockquote>
+<p>G1 has concurrent marking phase which marks live objects found from the application. The concurrent marking extends from the end of a evacuation pause (where the initial marking work is done) to the remark. The concurrent cleanup phase adds regions emptied by the collection to the list of free regions and clears the remembered sets of those regions. In addition, a concurrent refinement thread runs as needed to process card table entries that have been dirtied by application writes and which may have cross region references.</p>
+<hr>
+<h3 id="Starting-a-Concurrent-Collection-Cycle"><a href="#Starting-a-Concurrent-Collection-Cycle" class="headerlink" title="Starting a Concurrent Collection Cycle"></a>Starting a Concurrent Collection Cycle</h3><p>As mentioned previously, both young and old regions are garbage collected in a mixed collection. To collect old regions, G1 does a complete marking of the live objects in the heap. Such a marking is done by a concurrent marking phase. </p>
+<p>A concurrent marking phase is started when the occupancy of the entire Java heap reaches the value of the parameter <strong>InitiatingHeapOccupancyPercent</strong>. Set the value of this parameter with the command-line option -XX:InitiatingHeapOccupancyPercent=<nn>. The default value of InitiatingHeapOccupancyPercent is 45.</nn></p>
+<hr>
+<h3 id="Pause-Time-Goal"><a href="#Pause-Time-Goal" class="headerlink" title="Pause Time Goal"></a>Pause Time Goal</h3><p>Set a pause time goal for G1 with the flag <strong>MaxGCPauseMillis</strong>. G1 uses a prediction model to decide how much garbage collection work can be done within that target pause time. </p>
+<p>At the end of a collection, G1 chooses the regions to be collected in the next collection (the collection set). The collection set will contain young regions (the sum of whose sizes determines the size of the logical young generation). It is partly through the selection of the number of young regions in the collection set that G1 exerts control over the length of the GC pauses. You can specify the size of the young generation on the command line as with the other garbage collectors, but doing so may hamper the ability of G1 to attain the target pause time. </p>
+<p>In addition to the pause time goal, you can specify the length of the time period during which the pause can occur. You can specify the minimum mutator usage with this time span (GCPauseIntervalMillis) along with the pause time goal. The default value for MaxGCPauseMillis is 200 milliseconds. The default value for GCPauseIntervalMillis (0) is the equivalent of no requirement on the time span.</p>
+<p>在G1提出之前，经典的垃圾收集器主要有三种类型：串行收集器、并行收集器和并发标记清除收集器，这三种收集器分别可以是满足Java应用三种不同的需求：内存占用及并发开销最小化、应用吞吐量最大化和应用GC暂停时间最小化。但是，上述三种垃圾收集器都有几个共同的问题：</p>
 <ul>
 <li>所有针对老年代的操作必须扫描整个老年代空间；</li>
 <li>年轻地和老年代是独立的连续的内存块，必须先决定年轻代和老年代在虚拟地址空间的位置。</li>
@@ -684,7 +1036,7 @@
 <li>Do not require a much larger Java heap.</li>
 </ul>
 </blockquote>
-<h3 id="Terms"><a href="#Terms" class="headerlink" title="Terms"></a>Terms</h3><h4 id="Region"><a href="#Region" class="headerlink" title="Region"></a>Region</h4><p>传统的GC收集器将连续的内存空间划分为新生代、老年代和永久代（JDK 8去除了永久代，引入了元空间Metaspace），这种划分的特点是各代的存储地址(逻辑地址)是连续的。如下图所示：</p>
+<h3 id="Terms"><a href="#Terms" class="headerlink" title="Terms"></a>Terms</h3><h4 id="Region-1"><a href="#Region-1" class="headerlink" title="Region"></a>Region</h4><p>传统的GC收集器将连续的内存空间划分为新生代、老年代和永久代（JDK 8去除了永久代，引入了元空间Metaspace），这种划分的特点是各代的存储地址(逻辑地址)是连续的。如下图所示：</p>
 <img src="/2019/01/05/Java/JVM/Basic/G1/g1-heap-allocation.png">
 <p>而G1的各代存储地址是不连续的，每一代都使用了n个不连续的大小相同的Region，每个Region占有一块连续的虚拟内存地址。如下图所示：</p>
 <img src="/2019/01/05/Java/JVM/Basic/G1/g1_gc_layout.png">
@@ -724,33 +1076,8 @@
 <h4 id="Pause-Prediction-Model"><a href="#Pause-Prediction-Model" class="headerlink" title="Pause Prediction Model"></a>Pause Prediction Model</h4><p>Pause Prediction Model 即停顿预测模型。它在G1中的作用是：G1 uses a pause prediction model to meet a user-defined pause time target and selects the number of regions to collect based on the specified pause time target.</p>
 <p>G1 GC是一个响应时间优先的GC算法，它与CMS最大的不同是，用户可以设定整个GC过程的期望停顿时间，参数-XX:MaxGCPauseMillis指定一个G1收集过程目标停顿时间，默认值200ms，不过它不是硬性条件，只是期望值。那么G1怎么满足用户的期望呢？就需要这个停顿预测模型了。G1根据这个模型统计计算出来的历史数据来预测本次收集需要选择的Region数量，从而尽量满足用户设定的目标停顿时间。</p>
 <hr>
-<h3 id="Phase"><a href="#Phase" class="headerlink" title="Phase"></a>Phase</h3><h4 id="G1-GC模式"><a href="#G1-GC模式" class="headerlink" title="G1 GC模式"></a>G1 GC模式</h4><p>G1提供了两种GC模式，<strong>Young GC</strong>和<strong>Mixed GC</strong>，两种都是完全<strong>Stop The World</strong>：</p>
-<ul>
-<li>Young GC：选定所有年轻代里的Region。通过控制年轻代的region个数，即年轻代内存大小，来控制young GC的时间开销。</li>
-<li>Mixed GC：选定所有年轻代里的Region，外加根据global concurrent marking统计得出收集收益高的若干老年代Region。在用户指定的开销目标范围内尽可能选择收益高的老年代Region。</li>
-</ul>
-<p>由上面的描述可知，Mixed GC不是Full GC，它只能回收部分老年代的Region，如果Mixed GC实在无法跟上程序分配内存的速度，导致老年代填满无法继续进行Mixed GC，就会使用Serial Old GC(Full GC)来收集整个GC Heap。所以我们可以知道，G1是不提供Full GC的。</p>
-<h4 id="global-concurrent-marking"><a href="#global-concurrent-marking" class="headerlink" title="global concurrent marking"></a>global concurrent marking</h4><p>它的执行过程类似CMS，但是不同的是，在G1 GC中，它主要是为Mixed GC提供标记服务的，并不是一次GC过程的一个必须环节。</p>
-<p>global concurrent marking的执行过程分为四个步骤：</p>
-<ul>
-<li>初始标记（initial mark，STW）。它标记了从GC Root开始直接可达的对象。</li>
-<li>并发标记（Concurrent Marking）。这个阶段从GC Root开始对heap中的对象标记，标记线程与应用程序线程并行执行，并且收集各个Region的存活对象信息。</li>
-<li>最终标记（Remark，STW）。标记那些在并发标记阶段发生变化的对象，将被回收。</li>
-<li>清除垃圾（Cleanup）。清除空Region（没有存活对象的），加入到free list。</li>
-</ul>
-<p>第一阶段initial mark是共用了Young GC的暂停，这是因为他们可以复用root scan操作，所以可以说global concurrent marking是伴随Young GC而发生的。第四阶段Cleanup只是回收了没有存活对象的Region，所以它并不需要STW。</p>
-<h4 id="Mixed-GC"><a href="#Mixed-GC" class="headerlink" title="Mixed GC"></a>Mixed GC</h4><p>在什么时候触发Mixed GC？</p>
-<ul>
-<li><p>G1HeapWastePercent：在global concurrent marking结束之后，我们可以知道old gen regions中有多少空间要被回收，在每次YGC之后和再次发生Mixed GC之前，会检查垃圾占比是否达到此参数，只有达到了，下次才会发生Mixed GC。</p>
-</li>
-<li><p>G1MixedGCLiveThresholdPercent：old generation region中的存活对象的占比，只有在此参数之下，才会被选入CSet。</p>
-</li>
-<li>G1MixedGCCountTarget：一次global concurrent marking之后，最多执行Mixed GC的次数。</li>
-<li>G1OldCSetRegionThresholdPercent：一次Mixed GC中能被选入CSet的最多old generation region数量。</li>
-</ul>
-<hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://tech.meituan.com/g1.html" target="_blank" rel="noopener">https://tech.meituan.com/g1.html</a></p>
+<p><a href="https://tech.meituan.com/g1.html" target="_blank" rel="noopener">https://tech.meituan.com/g1.html</a><br><a href="https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/g1_gc.html#garbage_first_garbage_collection" target="_blank" rel="noopener">https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/g1_gc.html#garbage_first_garbage_collection</a></p>
 </blockquote>
 
           
@@ -2031,387 +2358,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/26/Mac/Solution/PerformanceTesting/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/26/Mac/Solution/PerformanceTesting/" itemprop="url">MacOS Performance Testing</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-26T09:45:18+08:00">
-                2018-12-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/MacOS/" itemprop="url" rel="index">
-                    <span itemprop="name">MacOS</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h3><h4 id="Solution-1"><a href="#Solution-1" class="headerlink" title="Solution 1"></a>Solution 1</h4><p>打开终端，输入“yes &gt; /dev/null &amp;”，即可创建一项名为“yes”的进程，这种进程会耗费一定量的CPU使用率，你可以再连续输入“yes &gt; /dev/null &amp;”命令，创建更多的“yes”进程，直到CPU使用率达到100%。</p>
-<p>完事后赶快清除“yes”进程哦，输入“killall yes”瞬间搞定！</p>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://www.waerfa.com/stress-test-a-mac-by-overload-cpu" target="_blank" rel="noopener">https://www.waerfa.com/stress-test-a-mac-by-overload-cpu</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/25/DistributedSystem/JWT与Session的作用/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/25/DistributedSystem/JWT与Session的作用/" itemprop="url">JWT与Session的作用</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-25T12:29:18+08:00">
-                2018-12-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Distributed/" itemprop="url" rel="index">
-                    <span itemprop="name">Distributed</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="What’s-Session"><a href="#What’s-Session" class="headerlink" title="What’s Session"></a>What’s Session</h4><p>In computer science, in particular networking, <strong>a session is a temporary and interactive information interchange(交换)</strong> between two or more communicating devices, or between a computer and user (see login session).</p>
-<p>sessions consist of three phases:</p>
-<ol>
-<li>The client establishes a TCP connection (or the appropriate connection if the transport layer is not TCP).</li>
-<li>The client sends its request, and waits for the answer.</li>
-<li>The server processes the request, sending back its answer, providing a status code and appropriate data.</li>
-</ol>
-<p>As of HTTP/1.1, <strong>the connection is no longer closed after completing the third phase</strong>, and the client is now granted a further request: this means the second and third phases can now be performed any number of times.</p>
-<p><strong>Theory</strong></p>
-<img src="/2018/12/25/DistributedSystem/JWT与Session的作用/session-theory.png">
-<p>当client通过用户名密码请求server并通过身份认证后，server就会生成身份认证相关的session数据，并且保存在内存或者内存数据库。并将对应的sesssion_id返回给client，client会把保存session_id（可以加密签名下防止篡改在cookie。</p>
-<p>此后client的所有请求都会附带该session_id（毕竟默认会把cookie传给server），以确定server是否存在对应的session数据以及检验登录状态以及拥有什么权限，如果通过校验就该干嘛干嘛，否则重新登录。</p>
-<p>对比JWT的优势：</p>
-<ul>
-<li>最大的优势就在于可以主动清除session了；</li>
-<li>session保存在服务器端，相对较为安全；</li>
-<li>结合cookie使用，较为灵活，兼容性较好；</li>
-</ul>
-<p>劣势：</p>
-<ul>
-<li>cookie + session 在跨域场景表现并不好；</li>
-<li>如果是分布式部署，需要做多机共享session机制，实现方法可将session存储到数据库中或者redis中；</li>
-<li>基于cookie的机制很容易被CSRF；</li>
-<li>查询session信息可能会有数据库查询操作；</li>
-<li>服务之间依赖访问不好处理。每个服务需要有单独的cookies。</li>
-</ul>
-<h4 id="What’s-JWT"><a href="#What’s-JWT" class="headerlink" title="What’s JWT"></a>What’s JWT</h4><p>JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact(契约) and self-contained way for securely transmitting information between parties as a JSON object. This information can be verified and trusted because it is digitally signed. JWTs can be signed using a secret (with the HMAC algorithm) or a public/private key pair using RSA or ECDSA.</p>
-<p>if the token is sent in the Authorization header, Cross-Origin Resource Sharing (CORS) won’t be an issue as it doesn’t use cookies.</p>
-<p>The following diagram shows how a JWT is obtained and used to access APIs or resources:</p>
-<img src="/2018/12/25/DistributedSystem/JWT与Session的作用/request-jwt-token.png">
-<ol>
-<li>The application or client requests authorization to the authorization server. This is performed through one of the different authorization flows. For example, a typical OpenID Connect compliant web application will go through the /oauth/authorize endpoint using the authorization code flow.</li>
-<li>When the authorization is granted, the authorization server returns an access token to the application.</li>
-<li>The application uses the access token to access a protected resource (like an API).</li>
-</ol>
-<blockquote>
-<p>using it on HTTP Headers, Authorization: Bearer <token></token></p>
-</blockquote>
-<p>对比Session的优势：</p>
-<ul>
-<li>可扩展性，方便服务进行扩展。</li>
-<li>安全性</li>
-<li>RESTful API 服务</li>
-</ul>
-<p>劣势：</p>
-<ul>
-<li>传输开销比 Session 大，特别是大量数据编码在JWT里面的时候。</li>
-<li>实效性，无状态JWT的实效性相比session太差，只有等到过期才可销毁，而session则可手动销毁。</li>
-</ul>
-<hr>
-<p>JSON Web Token structure:</p>
-<ul>
-<li><p>Header</p>
-<blockquote>
-<p>The header typically consists of two parts: the <strong>type</strong> of the token, which is JWT, and the <strong>signing algorithm</strong> being used, such as HMAC SHA256 or RSA</p>
-</blockquote>
-</li>
-<li><p>Payload</p>
-<blockquote>
-<p>The second part of the token is the payload, which contains the <strong>claims</strong>. Claims are statements about an entity (typically, the user) and additional data. There are three types of claims: registered, public, and private claims.</p>
-</blockquote>
-</li>
-<li><p>Signature</p>
-<blockquote>
-<p>To create the signature part you have to take the encoded header, the encoded payload, a secret, the algorithm specified in the header, and sign that.</p>
-</blockquote>
-</li>
-</ul>
-<hr>
-<h3 id="QA"><a href="#QA" class="headerlink" title="QA"></a>QA</h3><h4 id="当用户注销时，如何使该Token失效"><a href="#当用户注销时，如何使该Token失效" class="headerlink" title="当用户注销时，如何使该Token失效"></a>当用户注销时，如何使该Token失效</h4><p>因为JWT无状态，不保存用户设备信息，没法单纯使用它完成以上问题，因此需要利用数据库保存一些状态完成。</p>
-<ul>
-<li>session: 只需要把user_id对应的token清掉即可</li>
-<li>JWT: 使用Redis，维护一张黑名单，用户注销时加入黑名单(签名)，其中key的过期时间与JWT的过期时间保持一致，确保注销后的Token不能再被使用。</li>
-</ul>
-<hr>
-<h4 id="如何允许用户只能在一个设备登录，如微信"><a href="#如何允许用户只能在一个设备登录，如微信" class="headerlink" title="如何允许用户只能在一个设备登录，如微信"></a>如何允许用户只能在一个设备登录，如微信</h4><ul>
-<li>session: 假设使用MySQL，对用户数据库表添加token字段并加索引，每次登陆重置token字段。每次请求需要权限接口时，根据token查找user_id。</li>
-<li>JWT: 假设使用MySQL，对用户数据库表添加token字段(不需要添加索引)，每次登陆重置token字段。每次请求需要权限接口时，根据JWT获取user_id，根据user_id查用户表获取token判断token是否一致。另外也可以使用计数器的方法。</li>
-</ul>
-<hr>
-<h4 id="如何允许用户只能在最近五个设备登录"><a href="#如何允许用户只能在最近五个设备登录" class="headerlink" title="如何允许用户只能在最近五个设备登录"></a>如何允许用户只能在最近五个设备登录</h4><ul>
-<li>session: 假设使用MySQL，创建token数据库表，有id、token和user_id三个字段，user与token表为1:m关系。每次登录添加一行记录。根据token获取user_id，再根据user_id获取该用户有多少设备登录，超过5个，则删除最小id一行。</li>
-<li>JWT: 假设使用MySQL，使用计数器，在用户表中添加字段count，默认值为0，每次登录count字段自增1，每次登录创建的JWT的Payload中携带数据current_count为用户的count值。每次请求权限接口时，根据JWT获取count以及current_count，根据user_id查用户表获取count，判断与current_count差值是否小于5。</li>
-</ul>
-<hr>
-<h4 id="如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备"><a href="#如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备" class="headerlink" title="如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备"></a>如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备</h4><ul>
-<li>session: 在上一个问题的基础上，删掉该设备以外其它所有的token记录。</li>
-<li>JWT: 在上一个问题的基础上，对count+5，并对该设备重新赋值为新的count。</li>
-</ul>
-<hr>
-<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>从以上问题得知，如果不需要控制登录设备数量以及设备信息，无状态的JWT是一个不错的选择。一旦涉及到了设备信息，就需要对JWT添加额外的状态支持，增加了认证的复杂度，此时选用session是一个不错的选择。JWT不是万能的，是否采用JWT，需要根据业务需求来确定。</p>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p>A typical HTTP session: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Session" target="_blank" rel="noopener">https://developer.mozilla.org/en-US/docs/Web/HTTP/Session</a><br>Session (computer science): <a href="https://en.wikipedia.org/wiki/Session_(computer_science)" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Session_(computer_science)</a><br>What is JSON Web Token: <a href="https://jwt.io/introduction/" target="_blank" rel="noopener">https://jwt.io/introduction/</a><br>jwt 实践以及与 session 对比: <a href="https://juejin.im/post/5b532492e51d455d6825c0cc" target="_blank" rel="noopener">https://juejin.im/post/5b532492e51d455d6825c0cc</a><br>聊一聊JWT与session: <a href="https://juejin.im/post/5a437441f265da43294e54c3" target="_blank" rel="noopener">https://juejin.im/post/5a437441f265da43294e54c3</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2485,7 +2431,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">589</span>
+                <span class="site-state-item-count">590</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

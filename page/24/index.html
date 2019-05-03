@@ -805,162 +805,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/29/Java/Best Practices to Handle Exceptions/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/29/Java/Best Practices to Handle Exceptions/" itemprop="url">Best Practices to Handle Exceptions</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-29T11:01:22+08:00">
-                2018-06-29
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Case"><a href="#Case" class="headerlink" title="Case"></a>Case</h3><h4 id="Don’t-Catch-Throwable"><a href="#Don’t-Catch-Throwable" class="headerlink" title="Don’t Catch Throwable"></a>Don’t Catch Throwable</h4><p>Throwable 是所有 exceptions 和 errors 的父类。虽然你可以在 catch 子句中使用它，但你应该永远别这样做！</p>
-<p>如果你在 catch 子句中使用了 Throwable ，它将不仅捕获所有异常，还会捕获所有错误。这些错误是由 JVM 抛出的，用来表明不打算由应用处理的严重错误。 OutOfMemoryError 和 StackOverflowError 就是典型的例子，这两种情况都是由一些超出应用控制范围的情况导致的，无法处理。</p>
-<p>所以，最好不要在 catch 中使用 Throwable ，除非你能确保自己处于一些特定情况下，比如你自己足以处理错误，又或被要求处理错误。</p>
-<h4 id="Don’t-Log-and-Throw"><a href="#Don’t-Log-and-Throw" class="headerlink" title="Don’t Log and Throw"></a>Don’t Log and Throw</h4><p>That is probably the most often ignored best practice in this list. You can find lots of code snippets and even libraries in which an exception gets caught, logged and rethrown.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">new</span> Long(<span class="string">"xyz"</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">    log.error(e);</span><br><span class="line">    <span class="keyword">throw</span> e;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>It might feel intuitive to log an exception when it occurred and then rethrow it so that the caller can handle it appropriately. But it will write multiple error messages for the same exception.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">17</span>:<span class="number">44</span>:<span class="number">28</span>,<span class="number">945</span> ERROR TestExceptionHandling:<span class="number">65</span> - java.lang.NumberFormatException: For input string: <span class="string">"xyz"</span></span><br><span class="line">Exception in thread <span class="string">"main"</span> java.lang.NumberFormatException: For input string: <span class="string">"xyz"</span></span><br><span class="line">at java.lang.NumberFormatException.forInputString(NumberFormatException.java:<span class="number">65</span>)</span><br><span class="line">at java.lang.Long.parseLong(Long.java:<span class="number">589</span>)</span><br><span class="line">at java.lang.Long.(Long.java:<span class="number">965</span>)</span><br><span class="line">at com.stackify.example.TestExceptionHandling.logAndThrowException(TestExceptionHandling.java:<span class="number">63</span>)</span><br><span class="line">at com.stackify.example.TestExceptionHandling.main(TestExceptionHandling.java:<span class="number">58</span>)</span><br></pre></td></tr></table></figure>
-<p>The additional messages also don’t add any information. As explained in best practice #4, the exception message should describe the exceptional event. And the stack trace tells you in which class, method, and line the exception was thrown.</p>
-<p>If you need to add additional information, you should catch the exception and wrap it in a custom one. But make sure to follow best practice number 9.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">wrapException</span><span class="params">(String input)</span> <span class="keyword">throws</span> MyBusinessException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> MyBusinessException(<span class="string">"A message that describes the error."</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>So, only catch an exception if you want to handle it. Otherwise, specify it in the method signature and let the caller take care of it.</p>
-<h4 id="Wrap-the-Exception-Without-Consuming-it"><a href="#Wrap-the-Exception-Without-Consuming-it" class="headerlink" title="Wrap the Exception Without Consuming it"></a>Wrap the Exception Without Consuming it</h4><p>It’s sometimes better to catch a standard exception and to wrap it into a custom one. A typical example for such an exception is an application or framework specific business exception. That allows you to add additional information and you can also implement a special handling for your exception class.</p>
-<p>When you do that, make sure to set the original exception as the cause. The Exception class provides specific constructor methods that accept a Throwable as a parameter. Otherwise, you lose the stack trace and message of the original exception which will make it difficult to analyze the exceptional event that caused your exception.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">wrapException</span><span class="params">(String input)</span> <span class="keyword">throws</span> MyBusinessException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> MyBusinessException(<span class="string">"A message that describes the error."</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://dzone.com/articles/9-best-practices-to-handle-exceptions-in-java" target="_blank" rel="noopener">https://dzone.com/articles/9-best-practices-to-handle-exceptions-in-java</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/29/Java/Advance/Serializer/BasicSerializer/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1121,6 +965,162 @@
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
 <p><a href="https://www.ibm.com/developerworks/cn/java/j-lo-serial/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/java/j-lo-serial/index.html</a><br><a href="https://juejin.im/post/5a7111535188257350518592" target="_blank" rel="noopener">https://juejin.im/post/5a7111535188257350518592</a></p>
 </blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/06/29/Java/Best Practices to Handle Exceptions/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/06/29/Java/Best Practices to Handle Exceptions/" itemprop="url">Best Practices to Handle Exceptions</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-29T11:01:22+08:00">
+                2018-06-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Case"><a href="#Case" class="headerlink" title="Case"></a>Case</h3><h4 id="Don’t-Catch-Throwable"><a href="#Don’t-Catch-Throwable" class="headerlink" title="Don’t Catch Throwable"></a>Don’t Catch Throwable</h4><p>Throwable 是所有 exceptions 和 errors 的父类。虽然你可以在 catch 子句中使用它，但你应该永远别这样做！</p>
+<p>如果你在 catch 子句中使用了 Throwable ，它将不仅捕获所有异常，还会捕获所有错误。这些错误是由 JVM 抛出的，用来表明不打算由应用处理的严重错误。 OutOfMemoryError 和 StackOverflowError 就是典型的例子，这两种情况都是由一些超出应用控制范围的情况导致的，无法处理。</p>
+<p>所以，最好不要在 catch 中使用 Throwable ，除非你能确保自己处于一些特定情况下，比如你自己足以处理错误，又或被要求处理错误。</p>
+<h4 id="Don’t-Log-and-Throw"><a href="#Don’t-Log-and-Throw" class="headerlink" title="Don’t Log and Throw"></a>Don’t Log and Throw</h4><p>That is probably the most often ignored best practice in this list. You can find lots of code snippets and even libraries in which an exception gets caught, logged and rethrown.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">new</span> Long(<span class="string">"xyz"</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">    log.error(e);</span><br><span class="line">    <span class="keyword">throw</span> e;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>It might feel intuitive to log an exception when it occurred and then rethrow it so that the caller can handle it appropriately. But it will write multiple error messages for the same exception.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">17</span>:<span class="number">44</span>:<span class="number">28</span>,<span class="number">945</span> ERROR TestExceptionHandling:<span class="number">65</span> - java.lang.NumberFormatException: For input string: <span class="string">"xyz"</span></span><br><span class="line">Exception in thread <span class="string">"main"</span> java.lang.NumberFormatException: For input string: <span class="string">"xyz"</span></span><br><span class="line">at java.lang.NumberFormatException.forInputString(NumberFormatException.java:<span class="number">65</span>)</span><br><span class="line">at java.lang.Long.parseLong(Long.java:<span class="number">589</span>)</span><br><span class="line">at java.lang.Long.(Long.java:<span class="number">965</span>)</span><br><span class="line">at com.stackify.example.TestExceptionHandling.logAndThrowException(TestExceptionHandling.java:<span class="number">63</span>)</span><br><span class="line">at com.stackify.example.TestExceptionHandling.main(TestExceptionHandling.java:<span class="number">58</span>)</span><br></pre></td></tr></table></figure>
+<p>The additional messages also don’t add any information. As explained in best practice #4, the exception message should describe the exceptional event. And the stack trace tells you in which class, method, and line the exception was thrown.</p>
+<p>If you need to add additional information, you should catch the exception and wrap it in a custom one. But make sure to follow best practice number 9.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">wrapException</span><span class="params">(String input)</span> <span class="keyword">throws</span> MyBusinessException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> MyBusinessException(<span class="string">"A message that describes the error."</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>So, only catch an exception if you want to handle it. Otherwise, specify it in the method signature and let the caller take care of it.</p>
+<h4 id="Wrap-the-Exception-Without-Consuming-it"><a href="#Wrap-the-Exception-Without-Consuming-it" class="headerlink" title="Wrap the Exception Without Consuming it"></a>Wrap the Exception Without Consuming it</h4><p>It’s sometimes better to catch a standard exception and to wrap it into a custom one. A typical example for such an exception is an application or framework specific business exception. That allows you to add additional information and you can also implement a special handling for your exception class.</p>
+<p>When you do that, make sure to set the original exception as the cause. The Exception class provides specific constructor methods that accept a Throwable as a parameter. Otherwise, you lose the stack trace and message of the original exception which will make it difficult to analyze the exceptional event that caused your exception.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">wrapException</span><span class="params">(String input)</span> <span class="keyword">throws</span> MyBusinessException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (NumberFormatException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> MyBusinessException(<span class="string">"A message that describes the error."</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://dzone.com/articles/9-best-practices-to-handle-exceptions-in-java" target="_blank" rel="noopener">https://dzone.com/articles/9-best-practices-to-handle-exceptions-in-java</a></p>
 
           
         
@@ -2032,7 +2032,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">589</span>
+                <span class="site-state-item-count">590</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
