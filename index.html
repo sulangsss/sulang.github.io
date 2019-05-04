@@ -284,6 +284,326 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/04/Java/JVM/Basic/Optimize-GC-Knowledge/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/04/Java/JVM/Basic/Optimize-GC-Knowledge/" itemprop="url">Java Optimize GC Knowledge</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-04T14:01:22+08:00">
+                2019-05-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><h3 id="Heap-Space"><a href="#Heap-Space" class="headerlink" title="Heap Space"></a>Heap Space</h3><p>选择堆的大小其实是一种平衡。如果分配的堆过于小，程序的大部分时间可能都消耗在 GC 上，没有足够的时间去运行应用程序的逻辑。但是，简单粗暴地设置一个特别大的堆也不是解决问题的方法。GC 停顿消耗的时间取决于堆的大小，如果增大堆的空间，停顿的持续时间也会变长。这种情况下，停顿的频率会变得更少，但是它们持续的时间会让程序的整体性能变慢。</p>
+<p>使用超大堆还有另一个风险。操作系统使用虚拟内存机制管理机器的物理内存。一台机器可能有8G的物理内存，不过操作系统可能让你感觉有更多的可用内存。虚拟内存的数量取决于操作系统的设置，譬如操作系统可能让你感觉它的内存达到了16G。操作系统通过名为“交换”(swapping)(或者称之为分页)。你可以载入需要16G内存的应用程序，操作系统在需要时会将程序运行时不活跃的数据由内存复制到磁盘。再次需这部分内存的内容时，操作系统再将它们由磁盘重新载入到内存(为了腾出空间，通常它会先将另一部分内存的内容复制到磁盘)。</p>
+<p>系统中运行着大量不同的应用程序时，这个流程工作得很顺畅，因为大多数的应用程序不会同时处于活跃状态。但是对于 Java 应用，它工作得并不那么好。如果一个 Java 应用使用了这个系统上大约 12G 的堆，操作系统可能在 RAM 上分配了 8G 的堆空间， 另外 4G 的空间存在于磁盘(这个假设对实际情况进行了一些简化，因为应用程序也会使用部分的RAM)。JVM 不会了解这些(操作系统完全屏蔽了内存交换的细节)。这样 JVM 愉快地填满了分配给它的 12G 堆空间。但这样就导致了严重的性能问题，因为操作系统需要将相当一部分的数据由磁盘交换到内存(这是一个昂贵操作的开始)。</p>
+<p>另外就是，当发生 Full GC 的时候，JVM 必须访问整个堆的内容，此时如果触发了 swapping 操作，停顿时间将会比正常停顿时间更长(可能会是多个数量级增长)。同理可知，如果使用 Concurrent 收集器，后台线程在回收堆时，它的速度也可能会被拖慢，因为需要等待从磁盘复制数据到内存，结果导致发生代价昂贵的并发模式失效。</p>
+<p>堆的大小由2个参数值控制：分别是初始值(通过 -Xms 设置)和最大值(通过 -Xmx 设置)。默认值的调节取决于多个因素，包括操作系统类型、系统内存大小、使用的 JVM。 其他的命令行标志也会对该值造成影响。</p>
+<p><strong>堆大小的调节是 JVM 自适应调优的核心。</strong></p>
+<p>JVM 的目标是依据系统可用的资源情况找到一个”合理的”默认初始值，当且仅当应用程序需要更多的内存(依据垃圾回收时消耗的时间来决定)时将堆的大小增大到一个合理的最大值。</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Xms</th>
+<th>Xmx</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linux Client 32</td>
+<td>16MB</td>
+<td>256MB</td>
+</tr>
+<tr>
+<td>Linux Server 32</td>
+<td>64MB</td>
+<td>Min(1GB, 1/4 physical memory)</td>
+</tr>
+<tr>
+<td>Linux Server 64</td>
+<td>Min(512MB, 1/64 physical memory)</td>
+<td>Min(32GB, 1/4 physical memory)</td>
+</tr>
+<tr>
+<td>MacOS Server 64</td>
+<td>64MB</td>
+<td>Min(1GB, 1/4 physical memory)</td>
+</tr>
+</tbody>
+</table>
+<p>如果 JVM 发现使用初始的堆大小，频繁地发生 GC，它就会尝试增大堆的空间，直到 JVM 的 GC 的频率回归到正常的范围，或者直到堆大小增大到它的上限值。</p>
+<p>选择Heap Size的一个经验法则：<strong>完成 Full GC 后，应该释放出70%的空间，30%的空间仍然占用。</strong></p>
+<p>注意，即使你设置了堆的最大值，还是会发生堆的自动调节：初始时堆以默认的大小开始运行，为了达到根据垃圾收集算法设置的性能目标，JVM 会逐步增大堆的大小。</p>
+<p>将堆的大小设置得比实际需要更大不一定会带来性能损耗：堆并不会无限地增大，JVM 会调节堆的大小直到其满足 GC 的性能目标。</p>
+<p>另一方面，如果你确切地了解应用程序需要多大的堆，那么你可以将堆的初始值和最大值直接设置成对应的数值(例如，-Xms4096m -Xmx4096m)。这种设置能稍微提高 GC 的运行效率，因为它不再需要估算堆是否需要调整大小了。</p>
+<h4 id="ParallelScavenge-Throughput"><a href="#ParallelScavenge-Throughput" class="headerlink" title="ParallelScavenge(Throughput)"></a>ParallelScavenge(Throughput)</h4><p>ParallelScavenge 的调优几乎都是围绕停顿时间进行的，寻求堆的总体大小、新生代的大小以及老年代大小之间平衡。</p>
+<p>调优方案时有两种取舍。首先比较经典的是编程技术上的取舍，即时间与空间的取舍。第二个取舍与完成垃圾回收所需的时长相关。</p>
+<p>增大堆能够减少 Full GC 停顿发生的频率，但也有其局限性:由于 GC 时间变得更长，平均响应时间也会变长。类似地，为新生代分配更多的堆空间可以缩短 Full GC 的停顿时间，不过这又会增大老年代垃圾回收的频率(因为老年代空间保持不变或者变得更小了)。</p>
+<img src="/2019/05/04/Java/JVM/Basic/Optimize-GC-Knowledge/scavenge_increase_heap_size.png" title="使用不同大小的堆时吞吐量的变化">
+<p>使用 256 MB 的小堆时，应用服务器在垃圾回收上消耗了大量的时间(实际消耗的时间高达总时间的 36%)，吞吐量因此受到限制，比较低。随着堆大小的增加，吞吐量迅速提升——直到堆的容量增大到 1500 MB。这之后吞吐量的增速迅速减缓，这时应用程序实际已经不太受垃圾回收的影响(垃圾回收消耗的时间仅仅只占总时间的6%左右)。收益递减规律逐渐凸显出来：虽然应用程序可以通过增加内存的方式提升吞吐量，不过其效果已经很有限了。</p>
+<p>堆的大小达到 4500 MB 后，吞吐量开始出现少量下滑。这时应用程序面临着第二个选择：增加的内存导致 GC 周期愈加冗长，虽然它们发生的频率小得多，但这些超长的 GC 周期也会影响系统整体的吞吐量。</p>
+<p>这幅图中的数据取自关闭了自适应调整的 JVM，即它的最大、最小堆的容量设置成了同样的大小。对任何一种应用，我们都可以通过实验确定堆和代的最佳大小，但是让 JVM 自己来选择通常是更容易的方法(这也是最通常的做法，因为默认情况下自适应调整就是开启的)。</p>
+<hr>
+<h3 id="Generation-Space"><a href="#Generation-Space" class="headerlink" title="Generation Space"></a>Generation Space</h3><p>一旦堆的大小确定下来，接着就需要决定分配多少堆给新生代空间，多少给老年代空间。</p>
+<p>我们应该清楚地了解代的划分对性能的影响：如果新生代分配得比较大，垃圾收集发生的频率就比较低，从新生代晋升到老年代的对象也更少。任何事物都有两面性，采用这种分配方法，老年代就相对比较小，比较容易被填满，会更频繁地触发 Full GC。</p>
+<p>所有用于调整代空间的命令行标志调整的都是新生代空间，新生代空间剩下的所有空间都被老年代占用。</p>
+<ul>
+<li>-XX:NewRatio=N 设置新生代与老年代的空间占用比率，Default is 2。计算公式：Initial Young Gen Size = Initial Heap Size / (1 + NewRatio)，Default is 33%。</li>
+<li>-XX:NewSize=N 设置新生代空间的初始大小。</li>
+<li>-XX:MaxNewSize=N 设置新生代空间的最大大小。</li>
+<li>-XmnN 将 NewSize 和 MaxNewSize 设定为同一个值的快捷方法。</li>
+</ul>
+<hr>
+<h3 id="Permanent-Generation-and-Metaspace"><a href="#Permanent-Generation-and-Metaspace" class="headerlink" title="Permanent Generation and Metaspace"></a>Permanent Generation and Metaspace</h3><ul>
+<li>Java 7：Permanent Generation</li>
+<li>Java 8：Metaspace</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>JVM Type</th>
+<th>Min</th>
+<th>Max</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Client 32</td>
+<td>12MB</td>
+<td>64MB</td>
+<td>Infinite</td>
+</tr>
+<tr>
+<td>Server 32</td>
+<td>16MB</td>
+<td>64MB</td>
+<td>Infinite</td>
+</tr>
+<tr>
+<td>Server 64</td>
+<td>20.75MB 82MB</td>
+<td>Infinite</td>
+</tr>
+</tbody>
+</table>
+<p>对于永久代而言，可以通过 -XX:PermSize=N、-XX:MaxPermSize=N 标志调整大小。而元空间的大小可以通过 -XX:MetaspaceSize=N 和 -XX:MaxMetaspaceSize=N 调整。</p>
+<blockquote>
+<p>由于元空间默认的大小是没有作限制的，因此 Java 8(尤其是 32 位系统)的应用可能 由于元空间被填满而耗尽内存。如果元空间增长得过大，通过设置 MaxMetaspaceSize 你可以调整元空间的上限，将其限制为一个更小的值，不过这又会导 致应用程序最后由于元空间耗尽，发生 OutOfMemoryError 异常。解决这类问题的终极方 法还是定位出为什么类的元空间会变得如此巨大。</p>
+</blockquote>
+<p>如果程序在启动时发生大量的 Full GC(因为需要载入数量巨大的类)，通常都是由于永久代或者元空间发生了大小调 整，因此这种情况下为了改善启动速度，增大初始值是个不错的主意。对于定义了大量类的 Java 7 应用，同时还需要增大永久代空间的最大值。譬如，通常情况下应用服务器永久代的最大值会设置为 128 MB、192 MB 或者更多。</p>
+<hr>
+<h2 id="Thread"><a href="#Thread" class="headerlink" title="Thread"></a>Thread</h2><h3 id="GC-Thread"><a href="#GC-Thread" class="headerlink" title="GC Thread"></a>GC Thread</h3><p>除 Serial 收集器之外几乎所有的垃圾收集器使用的算法都基于多线程。启动的线程数由<br><strong>-XX:ParallelGCThreads=N</strong> 参数控制。</p>
+<p>受到该参数影响的 GC 分别是：</p>
+<ul>
+<li>-XX:+UseParallelGC 收集新生代空间</li>
+<li>-XX:+UseParallelOldGC 收集老年代空间</li>
+<li>-XX:+UseParNewGC 收集新生代空间</li>
+<li>-XX:+UseG1GC 收集新生代空间</li>
+<li>CMS的 STW 阶段(非 Full GC)</li>
+<li>G1的 STW 阶段(非 Full GC)</li>
+</ul>
+<p>由于 GC 操作会暂停所有的应用程序线程，JVM 为了尽量缩短停顿时间就必须尽可能地利用更多的 CPU 资源。这意味着，默认情况下，JVM 会在机器的每个 CPU 上运行一个线程，最多同时运行 8 个。一旦达到这个上限，JVM 会调整算法，每超出 5/8 个 CPU 启动一个新的线程。所以总的线程数就是(这里的 N 代表 CPU 的数目):</p>
+<p><strong>ParallelGCThreads = 8 + ((N - 8) * 5 / 8)</strong></p>
+<blockquote>
+<p>5 / 8 = 0.625</p>
+</blockquote>
+<p>有时候使用这个算法估算出来的线程数目会偏大。如果应用程序使用一个较小的堆(譬如大小为 1 GB)运行在一个八颗 CPU 的机器上，使用4个线程或者6个线程处理这个堆可 能会更高效。在一个 128 颗 CPU 的机器上，启动83个垃圾收集线程可能也太多了，除非系统使用的堆已经达到了最大上限。</p>
+<p>除此之外，如果机器上同时运行了多个 JVM 实例，限制所有 JVM 使用的线程总数是个不错的主意。这时，垃圾收集线程运行起来会更加高效，每个线程都能 100% 地利用各 CPU 的资源。在拥有更多 CPU、运行了多个 JVM 的机器上，通常出现的问题是有太多的垃圾回收 线程在同时并发运行。</p>
+<p>以16核 CPU 的机器同时运行4个 JVM 实例为例，每个 JVM 默认会启动13个垃圾收集线程。如果4个 JVM 同时进行垃圾回收操作，机器上会启动大约52个 CPU 密集型线程竞争 CPU 资源。这会导致大量的冲突，如果能够限制每个 JVM 最多启动4个垃圾收集线程，效率会高很多。即使在同一个时刻，4个 JVM 中的线程不大可能同时进行 GC 操作， 一个 JVM 上同时运行13个线程也意味着其他 JVM 上的应用程序线程不得不在一台总共有16个 CPU，且其中13个 CPU 被繁忙的垃圾收集任务100%占用的机器上竞争资源。 这种情况下，将每个 JVM 的垃圾收集线程数限制到4个是一个比较合理的平衡。注意，这个标志不会对 CMS 收集器或者 G1 收集器的后台线程数作设定(虽然它们也会受设置的影响)。</p>
+<hr>
+<h2 id="Monitor"><a href="#Monitor" class="headerlink" title="Monitor"></a>Monitor</h2><h3 id="GC-Log"><a href="#GC-Log" class="headerlink" title="GC Log"></a>GC Log</h3><p>Enable Print Log Flag：</p>
+<ul>
+<li>-XX:+PrintGCDetails</li>
+<li>-XX:+PrintGCTimeStamps：相对于 JVM 启动的时间的值。</li>
+<li>-XX:+PrintGCDateStamps：实际的日期字符串。由于需要格式化时间，需要一点额外开销。</li>
+<li>-Xloggc：filename：输出到文件。</li>
+<li>-Xloggc：自动地开启基本日志模式。</li>
+<li>-XX:+UseGCLogfileRotation、-XX:NumberOfGCLogfiles=N and -XX:GCLogfileSize=N：控制日志文件的循环。<blockquote>
+<p>默认情况下，UseGCLogfileRotation 标志是关闭的。开启 UseGCLogfileRotation 标志后，默认的文件数目是0(意味着不作任 何限制)，默认的日志文件大小是0(同样也是不作任何限制)。因此，为了让日志循环功能真正生效，我们必须为所有这些标志设定值。需要注意的是，如果设定的数值不足 8 KB 的话，日志文件的大小会以 8 KB 为单位规整。</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="ParallelScavenge-Log"><a href="#ParallelScavenge-Log" class="headerlink" title="ParallelScavenge Log"></a>ParallelScavenge Log</h4><p>ParallelScavenge 会进行两种操作：</p>
+<ul>
+<li>Minor GC </li>
+<li>Full GC</li>
+</ul>
+<p><strong>Minor GC 日志形式</strong><br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">17.806: [GC [PSYoungGen: 227983K-&gt;14463K(264128K)] 280122K-&gt;66610K(613696K), 0.0169320 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]</span><br></pre></td></tr></table></figure></p>
+<p>这次 GC 在程序开始运行 17.806 秒后发生。现在新生代中对象占用的空间为 14463 KB (约为 14 MB，位于 Survivor 空间内)；GC 之前，新生代对象占用的空间为 227983 KB (约为 227 MB)。新生代这时总的大小为 264 MB。</p>
+<blockquote>
+<p>1000 KB = 1 MB</p>
+</blockquote>
+<p>与此同时，堆的空间总的使用情况(包含新生代和老年代)从 280 MB 减少到了 66 MB，这个时刻整个堆的大小为 613 MB。完成垃圾回收操作耗时 0.02 秒(排在输出最后的 Real 时间是 0.0 169 320 秒——实际时间进行了归整)。程序消耗的 CPU 时间比 Real 时间往往更多，原因是新生代垃圾回收会使用多个线程(GC使用了4个并行的线程)。</p>
+<blockquote>
+<p>PSYoungGen：-XX:+UseParallelOldGC，新生代和老年代都使用并行回收收集器。如果只启用-XX:+UseParallelGC，则表示新生代使用并行回收收集器，老年代使用串行收集器。<br>ParNew：-XX:+UseParNewGC，新生代使用并行收集器，老年代使用串行回收收集器。如果增加了-XX:+UseConcMarkSweepGC，则表示老年代使用CMS。<br>Throughput GC 通常是指 ParallelScavenge。它的目标是达到一个可控制的吞吐量(Throughput)，而CMS是尽可能地缩短在GC时用户线程的停顿时间。</p>
+</blockquote>
+<hr>
+<p><strong>Full GC 日志形式</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">64.546: [Full GC [PSYoungGen: 15808K-&gt;0K(339456K)] [ParOldGen: 457753K-&gt;392528K(554432K)] 473561K-&gt;392528K(893888K) [PSPermGen: 56728K-&gt;56728K(115392K)], 1.3367080 secs] [Times: user=4.44 sys=0.01, real=1.34 secs]</span><br></pre></td></tr></table></figure>
+<p>新生代的空间使用在经历 Full GC 之后变为 0 字节(新生代的大小为 339 MB)。老年代中的空间使用从 457 MB 减少到了 392 MB，因此整个堆的使用从 473 MB 减少到了 392 MB。</p>
+<p>永久代空间的使用没有发生变化；在多数的 Full GC 中，永久代的对象都不会被回收。由于 Full GC 要进行大量的工作，所以消耗了约 1.3 秒的 Real 时间，4.4 秒的 CPU 时间(GC使用了4个并行的线程)。</p>
+<blockquote>
+<p>如果永久代空间耗尽，JVM 会发起 Full GC 回收永久代中的对象，这时你会观察到永久代空 间的变化——这是永久代进行回收唯一的情况。这个例子使用的是 Java 7；在 Java 8 中， 类似的信息可以在元空间中找到。</p>
+</blockquote>
+<hr>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><blockquote>
+<p><a href="https://hllvm-group.iteye.com/group/topic/37095" target="_blank" rel="noopener">https://hllvm-group.iteye.com/group/topic/37095</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/03/Java/JVM/Basic/Prearraygement-Knowledge/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -500,7 +820,7 @@
 <li>两个收集器之间存在连线：它们之间可以搭配使用。</li>
 <li>虚拟机所处的区域：它属于新生代收集器还是老年代收集器。</li>
 </ul>
-<h4 id="Serial"><a href="#Serial" class="headerlink" title="Serial"></a>Serial</h4><p>Serial是最基本的，发展历史最悠久的Collector，在JDK 1.3.1之前，是虚拟机收集新生代的唯一选择。</p>
+<h4 id="Serial"><a href="#Serial" class="headerlink" title="Serial"></a>Serial</h4><p>Serial是最基本的，发展历史最悠久的Collector，在JDK 1.3.1之前，是虚拟机收集新生代的唯一选择。最适用于内存使用小于100MB的应用程序，这时候不论是CMS或G1都发挥不了太大的作用。</p>
 <p>它是一个单线程的Collector，但它的“单线程”的意义并不仅仅说明它只会使用一个CPU或一条线程去完成GC，更重要的是在它进行GC时，必须暂停其他所有的工作线程(应用程序的线程)，直到它GC结束。</p>
 
 <p>单线程是它的劣势，也是它的优势。</p>
@@ -2324,176 +2644,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/09/Security/JWT-Algorithm/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/04/09/Security/JWT-Algorithm/" itemprop="url">How select a best jwt cryptographic algorithm</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-09T15:31:22+08:00">
-                2019-04-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Security/" itemprop="url" rel="index">
-                    <span itemprop="name">Security</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>The common data security concerns:</p>
-<ul>
-<li>Integrity: That data has not been tampered with</li>
-<li>Authenticity: That the origin of the data can be verified</li>
-<li>Non-repudiation: The origin of the data must be verifiable by others</li>
-<li>Confidentiality: That data is kept secret from unauthorised parties and processes</li>
-</ul>
-<hr>
-<h3 id="Digital-signatures"><a href="#Digital-signatures" class="headerlink" title="Digital signatures"></a>Digital signatures</h3><h4 id="Key-Type"><a href="#Key-Type" class="headerlink" title="Key Type"></a>Key Type</h4><ul>
-<li>RSA</li>
-<li>EC </li>
-<li>OKP</li>
-</ul>
-<hr>
-<h4 id="Algorithms"><a href="#Algorithms" class="headerlink" title="Algorithms"></a>Algorithms</h4><ul>
-<li>RSA signature with PKCS #1 and SHA-2: RS256 RS384 RS512</li>
-<li>RSA PSS signature with SHA-2: PS256</li>
-<li>EC DSA signature with SHA-2:</li>
-<li>Edwards-curve DSA signature with SHA-2:</li>
-</ul>
-<hr>
-<h3 id="RSA、DSA、ECDSA-三者的区别"><a href="#RSA、DSA、ECDSA-三者的区别" class="headerlink" title="RSA、DSA、ECDSA 三者的区别"></a>RSA、DSA、ECDSA 三者的区别</h3><h4 id="EdDSA与ECDSA-的区别"><a href="#EdDSA与ECDSA-的区别" class="headerlink" title="EdDSA与ECDSA 的区别"></a>EdDSA与ECDSA 的区别</h4><p>ECDSA签名算法的安全性是比较依赖于安全的随机数生成算法的，如果随机数算法存在问题，使用了相同的k进行签名，那么攻击者是可以根据签名信息恢复私钥的，历史上也出过几次这样的事故，比如10年索尼的PS3私钥遭破解以及12年受Java某随机数生成库的影响造成的比特币被盗事件。所以说ECDSA签名在设计上还是存在一些问题的， 这也激励了新的EdDSA算法的出现。</p>
-<p>EdDSA签名算法由Schnorr签名发展变化而来，可以在RFC8032中看到它的定义实现，由曲线和参数的选择不同又可以划分为Ed25519和Ed448算法，顾命思义，它们两分别是基于curve25519和curve448曲线，一般用的比较多的是Ed25519算法，相比Ed448而言运算速度要更快，秘钥与签名空间也较小，二者的使用场景还是有点区别。</p>
-<p>Ed25519所使用的曲线由curve25519变换而来，curve25519是蒙哥马利曲线，经过变换得到Ed25519使用的扭爱德华曲线edwards25519，curve25519曲线的安全性是非常高的。</p>
-<p>EdDSA的运算速度也比ECDSA算法要快很多，优势可以说是非常明显的，门罗币和zcash等加密货币已经将算法切换到了EdDSA了，目前其也被确认为下一代椭圆曲线算法。</p>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://connect2id.com/products/nimbus-jose-jwt/algorithm-selection-guide" target="_blank" rel="noopener">https://connect2id.com/products/nimbus-jose-jwt/algorithm-selection-guide</a><br><a href="https://security.stackexchange.com/questions/194830/recommended-asymmetric-algorithms-for-jwt" target="_blank" rel="noopener">https://security.stackexchange.com/questions/194830/recommended-asymmetric-algorithms-for-jwt</a><br>数字签名算法介绍和区别: <a href="https://zhuanlan.zhihu.com/p/33195438" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/33195438</a><br>算法性能测试: <a href="https://zhuanlan.zhihu.com/p/27615345" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/27615345</a><br>针对EdDSA的fault attack: <a href="https://www.anquanke.com/post/id/167018" target="_blank" rel="noopener">https://www.anquanke.com/post/id/167018</a><br>ECDSA Digital Signature Verification in Java: <a href="https://metamug.com/article/sign-verify-digital-signature-ecdsa-java.html" target="_blank" rel="noopener">https://metamug.com/article/sign-verify-digital-signature-ecdsa-java.html</a><br>Google Implementation Libary: <a href="https://github.com/google/tink" target="_blank" rel="noopener">https://github.com/google/tink</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2545,7 +2695,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">533</span>
+                <span class="site-state-item-count">534</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2567,7 +2717,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">590</span>
+                <span class="site-state-item-count">591</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
