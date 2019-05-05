@@ -284,6 +284,208 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/12/Network/MTU/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/12/Network/MTU/" itemprop="url">What's MTU and MSS?</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-12T15:40:00+08:00">
+                2019-04-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>如果发送的TCP报文段很长的话，会在发送时发生分段，在接收端进行重组，同样IP数据报在长度超过一定值时也会发生分片，在接收端再将分片重组。</p>
+<img src="/2019/04/12/Network/MTU/seven-layer-network-protocol.jpg">
+<img src="/2019/04/12/Network/MTU/layer-network-protocol-detail.png">
+<p>在7层网络协议中，MTU是数据链路层的概念。MTU限制的是数据链路层的payload，也就是上层协议的大小，例如IP，ICMP等。</p>
+<h4 id="MTU-Maximum-Transmission-Unit"><a href="#MTU-Maximum-Transmission-Unit" class="headerlink" title="MTU - Maximum Transmission Unit"></a>MTU - Maximum Transmission Unit</h4><p>MTU 是链路层中的网络对数据帧的一个限制，依然以以太网为例，MTU为1500个字节。一个IP数据报在以太网中传输，如果它的长度大于该MTU值，就要进行分片传输，使得每片数据报的长度小于MTU。分片传输的IP数据报不一定按序到达，但IP首部中的信息能让这些数据报片按序组装。IP数据报的分片与重组是在网络层进完成的。</p>
+<p><strong>如何确定 UDP 包的数据大小？</strong></p>
+<ul>
+<li>在链路层，由以太网的物理特性决定了数据帧的长度为 46＋18 ~ 1500＋18，其中的18是数据帧的头和尾，也就是说数据帧的内容最大为1500（不包括帧头和帧尾），即MTU（Maximum Transmission Unit）为1500；</li>
+<li>在网络层，因为IP包的首部要占用20字节，所以这的MTU为1500－20＝1480；</li>
+<li>在传输层，对于UDP包的首部要占用8字节，所以这的MTU为1480－8＝1472；</li>
+</ul>
+<p>所以，在应用层，你的Data最大长度为1472。当我们的UDP包中的数据多于MTU(1472)时，发送方的IP层需要分片进行传输，而在接收方IP层则需要进行数据报重组，由于UDP是不可靠的传输协议，如果分片丢失导致重组失败，将导致UDP数据包被丢弃。</p>
+<p>从上面的分析来看，在普通的局域网环境下，UDP的数据最大为1472字节最好(避免分片重组)。但在网络编程中，Internet中的路由器可能有设置成不同的值（小于默认值），Internet上的标准MTU值为576，所以Internet的UDP编程时数据长度最好在576－20－8＝548字节以内。</p>
+<p><strong>如何查看路由的MTU值？</strong></p>
+<p>Theory：ping程序使用ICMP报文，ICMP报文首部占8字节，IP数据报首部占20字节，因此在数据大小基础上加上28字节为MTU值。</p>
+<ul>
+<li>Windows: ping -f -l 1472 192.168.0.1</li>
+<li>Linux: ping -c 1 -M do -s 1472 192.168.0.1</li>
+</ul>
+<hr>
+<h4 id="MSS-Maxitum-Segment-Size"><a href="#MSS-Maxitum-Segment-Size" class="headerlink" title="MSS - Maxitum Segment Size"></a>MSS - Maxitum Segment Size</h4><p>MSS是TCP里的一个概念。MSS是TCP数据包每次能够传输的最大数据分段，TCP报文段的长度大于MSS时，要进行分段传输。</p>
+<p>TCP协议在建立连接的时候通常要协商双方的MSS值，每一方都有用于通告它期望接收的MSS选项（MSS选项只出现在SYN报文段中，即TCP三次握手的前两次）。MSS的值一般为MTU值减去两个首部大小（需要减去IP数据包包头的大小20Bytes和TCP数据段的包头20Bytes），所以如果用链路层以太网，MSS的值往往为1460。而Internet上标准的MTU（最小的MTU，链路层网络为x2.5时）为576，那么如果不设置，则MSS的默认值就为536个字节。很多时候，MSS的值最好取512的倍数。TCP报文段的分段与重组是在运输层完成的。</p>
+<blockquote>
+<p>MSS = MTU - IP首部大小 - TCP首部大小。</p>
+</blockquote>
+<hr>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>TCP分段的原因是MSS，IP分片的原因是MTU，由于一直有MSS &lt;= MTU，很明显，分段后的每一段TCP报文段再加上IP首部后的长度不可能超过MTU，因此也就不需要在网络层进行IP分片了。因此TCP报文段很少会发生IP分片的情况。</p>
+<p>再来看UDP数据报，由于UDP数据报不会自己进行分段，因此当长度超过了MTU时，会在网络层进行IP分片。同样，ICMP（在网络层中）同样会出现IP分片情况。</p>
+<p>另外，IP数据报分片后，只有第一片带有UDP首部或ICMP首部，其余的分片只有IP头部，到了端点后根据IP头部中的信息再网络层进行重组。而TCP报文段的每个分段中都有TCP首部，到了端点后根据TCP首部的信息在传输层进行重组。IP数据报分片后，只有到达目的地后才进行重组，而不是向其他网络协议，在下一站就要进行重组。</p>
+<p>最后一点，对IP分片的数据报来说，即使只丢失一片数据也要重新传整个数据报（既然有重传，说明运输层使用的是具有重传功能的协议，如TCP协议）。这是因为IP层本身没有超时重传机制，则由更高层（比如TCP）来负责超时和重传。当来自TCP报文段的某一段（在IP数据报的某一片中）丢失后，TCP在超时后会重发整个TCP报文段，该报文段对应于一份IP数据报（可能有多个IP分片），没有办法只重传数据报中的一个数据分片。</p>
+<hr>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>举一个最简单的场景，你在家用自己的笔记本上网，用的是路由器，路由器连接电信网络，然后访问了<a href="http://www.baidu.com，从你的笔记本出发的一个以太网数据帧总共经过了以下路径：" target="_blank" rel="noopener">www.baidu.com，从你的笔记本出发的一个以太网数据帧总共经过了以下路径：</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1500     1500                 1500    </span><br><span class="line">笔记本 -&gt; 路由器 -&gt; 电信机房  -&gt; 服务器</span><br></pre></td></tr></table></figure>
+<p>假设现在我把笔记本的MTU最大值设置成了1700，然后发送了一个超大的ip数据包（2000），这时候在以外网传输的时候会被拆成2个包，一个1700，一个300，然后加上头信息进行传输。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1700     1500                 1500    </span><br><span class="line">笔记本 -&gt; 路由器 -&gt; 电信机房  -&gt; 服务器</span><br></pre></td></tr></table></figure>
+<p>路由器接收到了一个1700的帧，发现大于自己设置的最大值：1500，如果IP包DF标志位为1，也就是不允许分包，那么路由器直接就把这个包丢弃了，根本就不会到达电信机房，也就到不了服务器了，所以，到这里我们就会发现，MTU其实就是在每一个节点的管控值，只要是大于这个值的数据帧，要么选择分片，要么直接丢弃。</p>
+<hr>
+<h3 id="为什么MTU通常设置为1500"><a href="#为什么MTU通常设置为1500" class="headerlink" title="为什么MTU通常设置为1500?"></a>为什么MTU通常设置为1500?</h3><p>其实一个标准的以太网数据帧大小是：1518，头信息有14字节，尾部校验和FCS占了4字节，所以真正留给上层协议传输数据的大小就是：1518 - 14 - 4 = 1500，那么，1518这个值又是从哪里来的呢？</p>
+<p><strong>假设取一个更大的MTU值会怎么样？</strong></p>
+<p>假设MTU值和IP数据包大小一致，一个IP数据包的大小是：65535，那么加上以太网帧头和为，一个以太网帧的大小就是：65535 + 14 + 4 = 65553，看起来似乎很完美，发送方也不需要拆包，接收方也不需要重组。</p>
+<p>那么假设我们现在的带宽是：100Mbps，因为以太网帧是传输中的最小可识别单元，再往下就是0101所对应的光信号了，所以我们的一条带宽同时只能发送一个以太网帧。如果同时发送多个，那么对端就无法重组成一个以太网帧了，在100Mbps的带宽中（假设中间没有损耗），我们计算一下发送这一帧需要的时间：</p>
+<p>( 65553 <em> 8 ) / ( 100 </em> 1024 * 1024 ) ≈ <strong>0.005(s)</strong></p>
+<p>在100M网络下传输一帧就需要5ms，也就是说这5ms其他进程发送不了任何数据。如果是早先的电话拨号，网速只有2M的情况下：</p>
+<p>( 65553 <em> 8 ) / ( 2 </em> 1024 * 1024 ) ≈ <strong>0.100(s)</strong></p>
+<p>100ms，这简直是噩梦。其实这就像红绿灯，时间要设置合理，交替通行，不然同一个方向如果一直是绿灯，那么另一个方向就要堵成翔了。</p>
+<p><strong>MTU值既然大了不行，那把MTU的值设置小一点可以么？</strong></p>
+<p>假设MTU值设置为100，那么单个帧传输的时间，在2Mbps带宽下需要：</p>
+<p>( 100 <em> 8 ) / ( 2 </em> 1024 <em> 1024 ) </em> 1000 ≈ 5(ms)</p>
+<p>时间上已经能接受了，问题在于，不管MTU设置为多少，以太网头帧尾大小是固定的，都是14 + 4，所以在MTU为100的时候，一个以太网帧的传输效率为：</p>
+<p>( 100 - 14 - 4 ) / 100 = <strong>82%</strong></p>
+<p>写成公式就是：( T - 14 - 4 ) / T，当T趋于无穷大的时候，效率接近100%，也就是MTU的值越大，传输效率最高，但是基于上一点传输时间的问题，来个折中的选择吧，既然头加尾是18，那就凑个整来个1500，总大小就是1518，传输效率：</p>
+<p>1500 / 1518 =  98.8%</p>
+<p>100Mbps传输时间：( 1518 <em> 8 ) / ( 100 </em> 1024 <em> 1024 ) </em> 1000 = 0.11(ms)</p>
+<p>2Mbps传输时间：( 1518 <em> 8 ) / ( 2 </em> 1024 <em> 1024 ) </em> 1000 = 5.79(ms)</p>
+<blockquote>
+<p>至于MUT的值最少是64，这个值是因为和以太网帧在半双工下的碰撞有关。</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.zhihu.com/question/31460305" target="_blank" rel="noopener">https://www.zhihu.com/question/31460305</a><br>什么是MTU: <a href="https://www.vps234.com/vps-mtu-config-tutorials/" target="_blank" rel="noopener">https://www.vps234.com/vps-mtu-config-tutorials/</a><br>GCP and AWS MTU: <a href="http://www.cloudnetworkstuff.com/index.php/2018/04/19/multicloud-path-mtu-aws-gcp/" target="_blank" rel="noopener">http://www.cloudnetworkstuff.com/index.php/2018/04/19/multicloud-path-mtu-aws-gcp/</a><br>关于网络编程中MTU、TCP、UDP优化配置的一些总结: <a href="https://www.cnblogs.com/maowang1991/archive/2013/04/15/3022955.html" target="_blank" rel="noopener">https://www.cnblogs.com/maowang1991/archive/2013/04/15/3022955.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/09/Security/JWT-Algorithm/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1799,163 +2001,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/27/Kubenetes/GCP/Builder/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/03/27/Kubenetes/GCP/Builder/" itemprop="url">GCP Builder</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-27T18:00:06+08:00">
-                2019-03-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kubernetes</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/GCP/" itemprop="url" rel="index">
-                    <span itemprop="name">GCP</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Custom-Building-Machine"><a href="#Custom-Building-Machine" class="headerlink" title="Custom Building Machine"></a>Custom Building Machine</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># view machine on region</span></span><br><span class="line">gcloud compute machine-types list | grep asia-east1</span><br><span class="line"></span><br><span class="line"><span class="comment"># build</span></span><br><span class="line">kbuild cloudbuild-dev.yaml --machine-type=n1-highcpu-8 .</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><a href="https://cloud.google.com/compute/docs/machine-types?hl=zh-cn" target="_blank" rel="noopener">https://cloud.google.com/compute/docs/machine-types?hl=zh-cn</a><br><a href="https://cloud.google.com/cloud-build/docs/build-config" target="_blank" rel="noopener">https://cloud.google.com/cloud-build/docs/build-config</a><br><a href="https://docs.docker.com/engine/reference/run/" target="_blank" rel="noopener">https://docs.docker.com/engine/reference/run/</a></p>
-</blockquote>
-<h3 id="Trigger-rule"><a href="#Trigger-rule" class="headerlink" title="Trigger rule"></a>Trigger rule</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">^release\/[0-9]&#123;1&#125;\.[0-9]&#123;1,2&#125;\.[0-9]&#123;1,2&#125;$|^hotfix|^master$</span><br></pre></td></tr></table></figure>
-<h3 id="substitutions"><a href="#substitutions" class="headerlink" title="substitutions"></a>substitutions</h3><h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">steps:</span></span><br><span class="line"><span class="attr">images:</span></span><br><span class="line"><span class="bullet">  -</span> <span class="string">"gcr.io/$PROJECT_ID/image:$&#123;_IMAGE_VERSION&#125;"</span></span><br><span class="line"><span class="attr">substitutions:</span></span><br><span class="line"><span class="attr">  _IMAGE_VERSION:</span> <span class="string">"my_image"</span></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2007,7 +2052,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">534</span>
+                <span class="site-state-item-count">535</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
