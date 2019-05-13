@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Network,TCP,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="AttentionTCP 的三次握手最重要的就是协商传输数据用的序列号。那这个序列号究竟有些什么用呢？ 这个序号能够帮助后续两端进行确认数据包是否收到，解决顺序、丢包问题；另外我们还可以看到有一个 win 字段，这是双方交流的窗口大小，这在每次传输数据过程中也会携带。主要是告诉对方，我窗口是这么大，别发多了或者别发太少。 TCP的特点是：  顺序问题，依靠序号 丢包问题，依靠序号 流量控制，依靠滑">
+<meta name="keywords" content="Network,TCP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP三次握手">
+<meta property="og:url" content="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="AttentionTCP 的三次握手最重要的就是协商传输数据用的序列号。那这个序列号究竟有些什么用呢？ 这个序号能够帮助后续两端进行确认数据包是否收到，解决顺序、丢包问题；另外我们还可以看到有一个 win 字段，这是双方交流的窗口大小，这在每次传输数据过程中也会携带。主要是告诉对方，我窗口是这么大，别发多了或者别发太少。 TCP的特点是：  顺序问题，依靠序号 丢包问题，依靠序号 流量控制，依靠滑">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/tcp_client_status_mechine.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/tcp_server_status_mechine.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/connect_tcp_process.jpg">
+<meta property="og:updated_time" content="2019-05-13T15:20:22.720Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TCP三次握手">
+<meta name="twitter:description" content="AttentionTCP 的三次握手最重要的就是协商传输数据用的序列号。那这个序列号究竟有些什么用呢？ 这个序号能够帮助后续两端进行确认数据包是否收到，解决顺序、丢包问题；另外我们还可以看到有一个 win 字段，这是双方交流的窗口大小，这在每次传输数据过程中也会携带。主要是告诉对方，我窗口是这么大，别发多了或者别发太少。 TCP的特点是：  顺序问题，依靠序号 丢包问题，依靠序号 流量控制，依靠滑">
+<meta name="twitter:image" content="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/tcp_client_status_mechine.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>TCP三次握手 | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">TCP三次握手</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-09T23:04:19+08:00">
+                2019-05-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><p>TCP 的三次握手最重要的就是协商传输数据用的序列号。那这个序列号究竟有些什么用呢？</p>
+<p>这个序号能够帮助后续两端进行确认数据包是否收到，解决顺序、丢包问题；另外我们还可以看到有一个 win 字段，这是双方交流的窗口大小，这在每次传输数据过程中也会携带。主要是告诉对方，我窗口是这么大，别发多了或者别发太少。</p>
+<p>TCP的特点是：</p>
+<ul>
+<li>顺序问题，依靠序号</li>
+<li>丢包问题，依靠序号</li>
+<li>流量控制，依靠滑动窗口</li>
+<li>拥塞控制，依靠拥塞窗口+滑动窗口</li>
+<li>连接维护，三次握手/四次挥手</li>
+</ul>
+<h4 id="顺序与丢包问题"><a href="#顺序与丢包问题" class="headerlink" title="顺序与丢包问题"></a>顺序与丢包问题</h4><p>由于数据在传输前我们已经有序号了，这里注意一下这个序号是随机的，重复的概率极低，避免了程序发生乱入的可能性。</p>
+<p>由于我们每个数据包有序号，虽然发送与到达可能不是顺序的，但是TCP层收到数据后，可以根据序号进行重新排列；另外在这个排列过程中，发现有了1，2，3，5，6这几个包，一检查就知道4要么延时未到达，要么丢包了，等待重传。</p>
+<p>这里需要重要说明的一点是。为了提升效率，TCP其实并不是收到一个包就发一个ack。那是如何ACK的呢？还是以上面为例，TCP收到了1，2，3，5，6这几个包，它可能会发送一个 ack(seq=3)的确认包，这样次一次确认了3个包。但是它不会发送 5，6的ack。因为4没有收到啊！一旦4延时到达或者重发到达，就会发送一个 ack(seq=6)，又一次确认了3个包。</p>
+<h4 id="流量控制与拥塞控制"><a href="#流量控制与拥塞控制" class="headerlink" title="流量控制与拥塞控制"></a>流量控制与拥塞控制</h4><p>举例子说明，A给B发送数据，通过握手后，A知道B一次可以收 1000Byte 的数据（B有这么大的处理能力），那么这个时候滑动窗口就可以设置成 1000Byte。那是不是最后真的可以一次发这么多数据给B呢？还不是，这时候得问问拥塞窗口，老兄，现在网络情况怎么样？一次运 1000Byte 的数据有压力吗？拥塞窗口一通计算说不行，现在是高峰期，最多只能有 600Byte 的货上路。最终这次传数据的时候就是 600Byte。</p>
+<blockquote>
+<p>可以关注抓包数据的 win 值，一直在动态调整。</p>
+</blockquote>
+<p>每次能够发送多少数据，有这么一个公式：<strong>LastByteSend - LastByteAcked &lt;= min{cwnd,rwnd}</strong></p>
+<blockquote>
+<p>LastByteSend 是最后一个发送的字节的序号；LastByteAcked 最后一个被确认的字节的序号。</p>
+</blockquote>
+<p>这两个相减得到的是本次能够发送的数据，这个数据一定小于或等于 cwnd 与 rwnd 中最小的一个值。</p>
+<hr>
+<h3 id="Status-Machine"><a href="#Status-Machine" class="headerlink" title="Status Machine"></a>Status Machine</h3><h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><img src="/2019/05/09/Network/TCP三次握手/tcp_client_status_mechine.png">
+<h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><img src="/2019/05/09/Network/TCP三次握手/tcp_server_status_mechine.png">
+<hr>
+<h3 id="是什么限制了你的连接"><a href="#是什么限制了你的连接" class="headerlink" title="是什么限制了你的连接"></a>是什么限制了你的连接</h3><img src="/2019/05/09/Network/TCP三次握手/connect_tcp_process.jpg">
+<p>以Nginx为服务端进行举例说明，当客户端调用 connect() 方式时，会向服务端发起三次握手操作，当连接建立成功，在服务器端会生成一个 socket 对象，称为接收数据的 socket。服务向客户端发起的 connect() 也会生成一个 socket 对象，该对象叫发送数据的 socket。</p>
+<blockquote>
+<p>确定一个 socket 所需的元素有：源IP、源Port、目标IP、目标Port和协议。</p>
+</blockquote>
+<p>这里之所针对收发数据分别建立不同的 socket 对象，主要是从效率和管理上考虑。</p>
+<h4 id="连接上限是多少？"><a href="#连接上限是多少？" class="headerlink" title="连接上限是多少？"></a>连接上限是多少？</h4><p>在服务器监听端，IP 和 Port 都是固定的，那么只有客户端的 IP 和 Port 是可变化的，假设使用的是 IPv4，那么理论上的连接数应该是 2^32(IP) * 2^16(Port) = 2^48。但实际上是服务器端是不能建立这么多连接的，因为每一个 socket 都需要消耗内存，以及每一个进程的文件描述符是有上限的，这些都限制了最终的连接数。</p>
+<h4 id="提高连接数的手段"><a href="#提高连接数的手段" class="headerlink" title="提高连接数的手段"></a>提高连接数的手段</h4><ol>
+<li>多进程</li>
+<li>多线程</li>
+<li>IO多路复用</li>
+<li>协程</li>
+</ol>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://juejin.im/post/5cd103e2f265da03804383e1" target="_blank" rel="noopener">https://juejin.im/post/5cd103e2f265da03804383e1</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Network/" rel="tag"># Network</a>
+          
+            <a href="/tags/TCP/" rel="tag"># TCP</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/08/Java/Advance/Java-Bean-Memory/" rel="next" title="Java Bean Memory">
+                <i class="fa fa-chevron-left"></i> Java Bean Memory
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/05/13/Java/Advance/volatile与CAS的区别/" rel="prev" title="Java volatile 与 CAS 的区别">
+                Java volatile 与 CAS 的区别 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">537</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">233</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">591</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Attention"><span class="nav-number">1.</span> <span class="nav-text">Attention</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#顺序与丢包问题"><span class="nav-number">1.1.</span> <span class="nav-text">顺序与丢包问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#流量控制与拥塞控制"><span class="nav-number">1.2.</span> <span class="nav-text">流量控制与拥塞控制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Status-Machine"><span class="nav-number">2.</span> <span class="nav-text">Status Machine</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Client"><span class="nav-number">2.1.</span> <span class="nav-text">Client</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Server"><span class="nav-number">2.2.</span> <span class="nav-text">Server</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#是什么限制了你的连接"><span class="nav-number">3.</span> <span class="nav-text">是什么限制了你的连接</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#连接上限是多少？"><span class="nav-number">3.1.</span> <span class="nav-text">连接上限是多少？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#提高连接数的手段"><span class="nav-number">3.2.</span> <span class="nav-text">提高连接数的手段</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

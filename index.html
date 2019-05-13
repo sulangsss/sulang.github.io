@@ -284,6 +284,387 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/13/Java/Advance/volatile与CAS的区别/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/13/Java/Advance/volatile与CAS的区别/" itemprop="url">Java volatile 与 CAS 的区别</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-13T23:35:06+08:00">
+                2019-05-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="锁的特性"><a href="#锁的特性" class="headerlink" title="锁的特性"></a>锁的特性</h4><p>锁具有两种主要特性：<strong>互斥</strong>和<strong>可见性</strong>。</p>
+<ul>
+<li>互斥指的是一次只允许一个线程持有某个特定的锁，因此可以保证共享数据内容的一致性；</li>
+<li>可见性指的是必须确保锁被释放之前对共享数据的修改，随后获得锁的另一个线程能够知道该行为。</li>
+</ul>
+<h4 id="锁的代价"><a href="#锁的代价" class="headerlink" title="锁的代价"></a>锁的代价</h4><p>锁是用来做并发最简单的方式，当然其代价也是最高的。内核态的锁的时候需要操作系统进行一次上下文切换，加锁、释放锁会导致比较多的上下文切换和调度延时，等待锁的线程会被挂起直至锁释放。在上下文切换的时候，cpu之前缓存的指令和数据都将失效，对性能有很大的损失。操作系统对多线程的锁进行判断就像两姐妹在为一个玩具在争吵，然后操作系统就是能决定他们谁能拿到玩具的父母，这是很慢的。用户态的锁虽然避免了这些问题，但是其实它们只是在没有真实的竞争时才有效。</p>
+<p>Java在JDK1.5之前都是靠synchronized关键字保证同步的，这种通过使用一致的锁定协议来协调对共享状态的访问，可以确保无论哪个线程持有守护变量的锁，都采用独占的方式来访问这些变量，如果出现多个线程同时访问锁，那第一些线线程将被挂起，当线程恢复执行时，必须等待其它线程执行完他们的时间片以后才能被调度执行，在挂起和恢复执行过程中存在着很大的开销。锁还存在着其它一些缺点，当一个线程正在等待锁时，它不能做任何事。如果一个线程在持有锁的情况下被延迟执行，那么所有需要这个锁的线程都无法执行下去。如果被阻塞的线程优先级高，而持有锁的线程优先级低，将会导致优先级反转(Priority Inversion)。</p>
+<h4 id="乐观锁和悲观锁"><a href="#乐观锁和悲观锁" class="headerlink" title="乐观锁和悲观锁"></a>乐观锁和悲观锁</h4><p>独占锁是一种<strong>悲观锁</strong>，synchronized就是一种独占锁，它假设最坏的情况，并且只有在确保其它线程不会造成干扰的情况下执行，会导致其它所有需要锁的线程挂起，等待持有锁的线程释放锁。而另一个更加有效的锁就是乐观锁。所谓<strong>乐观锁</strong>就是，每次不加锁而是假设没有冲突而去完成某项操作，如果因为冲突失败就重试，直到成功为止。</p>
+<h4 id="volatile"><a href="#volatile" class="headerlink" title="volatile"></a>volatile</h4><p>与锁相比，volatile变量是一和更轻量级的同步机制，因为在使用这些变量时不会发生上下文切换和线程调度等操作，但是volatile变量也存在一些局限：<strong>不能用于构建原子的复合操作，因此当一个变量依赖旧值时就不能使用volatile变量。</strong></p>
+<blockquote>
+<p>所有读值操作都执行一个包含获取语义的读取操作，这些方法读取由参数address引用的值，然后使得CPU高速缓存内的相应字节失效；所有写值操作都执行一个包含释放语义的写入操作，这些方法将CPU高速缓存内的字节刷到内存中，然后将address参数引用的值修改为value参数所表示的值。</p>
+</blockquote>
+<p><strong>volatile变量具有”lock”的可见性，却不具备原子特性。</strong>也就是说线程能够自动发现volatile变量的最新值。volatile变量可以实现线程安全，但其应用有限。使用volatile变量的主要原因在于它使用非常简单，至少比使用锁机制要简单的多；其次便是性能原因了，某些情况下，它的性能要优于锁机制。此外，volatile操作不会造成阻塞。</p>
+<p>使用volatile来确保线程安全的前提条件：</p>
+<ul>
+<li>对变量的写操作不依赖于当前值；</li>
+<li>该变量没有包含在具有其他变量的不变式中。</li>
+</ul>
+<h3 id="Atomic-Operations"><a href="#Atomic-Operations" class="headerlink" title="Atomic Operations"></a>Atomic Operations</h3><ul>
+<li>all assignments of primitive types except for long and double</li>
+<li>all assignments of references</li>
+<li>all operations of java.concurrent.Atomic* classes</li>
+<li>all assignments to volatile longs and doubles</li>
+</ul>
+<p>为什么long型赋值不是原子操作呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">long</span> foo = <span class="number">65465498L</span>;</span><br></pre></td></tr></table></figure>
+<p>因为在实际中，Java会分两步写入这个long变量，先写32位，再写后32位。这样就线程不安全了。如果改成下面的就线程安全了：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  volatile内部已经做了synchronized</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">long</span> foo;</span><br></pre></td></tr></table></figure>
+<h3 id="volatile不能保证原子性"><a href="#volatile不能保证原子性" class="headerlink" title="volatile不能保证原子性"></a>volatile不能保证原子性</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestVolatileAtomic</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Volatile</span></span><br><span class="line">    var count = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    val threadCount = <span class="number">100</span></span><br><span class="line">    val volatileAtomic = TestVolatileAtomic()</span><br><span class="line">    var runningTimes = <span class="number">0</span></span><br><span class="line">    var errorTimes = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        val countDownLatch = CountDownLatch(threadCount)</span><br><span class="line">        val startup = CountDownLatch(threadCount)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (index in <span class="number">0</span> until threadCount) &#123;</span><br><span class="line">            thread &#123;</span><br><span class="line">                startup.countDown()</span><br><span class="line">                <span class="comment">//  println("threadId $&#123;Thread.currentThread().id&#125; waiting")</span></span><br><span class="line">                startup.await()</span><br><span class="line">                volatileAtomic.inc()</span><br><span class="line">                countDownLatch.countDown()</span><br><span class="line">                <span class="comment">//  println("threadId $&#123;Thread.currentThread().id&#125; finish")</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        countDownLatch.await()</span><br><span class="line">        <span class="keyword">if</span> (volatileAtomic.count % threadCount != <span class="number">0</span>) &#123;</span><br><span class="line">            println(<span class="string">"count $&#123;volatileAtomic.count&#125;"</span>)</span><br><span class="line">            errorTimes += <span class="number">1</span></span><br><span class="line">        &#125;</span><br><span class="line">        volatileAtomic.count = <span class="number">0</span></span><br><span class="line">        runningTimes += <span class="number">1</span></span><br><span class="line">        println(<span class="string">"runningTimes $runningTimes, errorTimes=$errorTimes"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>测试输出结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">runningTimes 1128, errorTimes=9</span><br><span class="line">runningTimes 1129, errorTimes=9</span><br></pre></td></tr></table></figure>
+<h4 id="Synchronized-和-Atomic-Class-可以确保”原子性”"><a href="#Synchronized-和-Atomic-Class-可以确保”原子性”" class="headerlink" title="Synchronized 和 Atomic Class 可以确保”原子性”"></a>Synchronized 和 Atomic Class 可以确保”原子性”</h4><ol>
+<li>方式一：使用 <strong>Synchronized</strong></li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Synchronized</span> <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    count += <span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>方式二：使用 Atomic Class</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestVolatileAtomic</span> </span>&#123;</span><br><span class="line">    <span class="comment">//  @Volatile</span></span><br><span class="line">    var count = AtomicInteger(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count.incrementAndGet()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://cloud.tencent.com/developer/article/1152642" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1152642</a></li>
+<li><a href="http://www.cnblogs.com/Mainz/p/3546347.html" target="_blank" rel="noopener">http://www.cnblogs.com/Mainz/p/3546347.html</a></li>
+<li><a href="http://www.cnblogs.com/lucifer1982/archive/2008/03/23/1116981.html" target="_blank" rel="noopener">http://www.cnblogs.com/lucifer1982/archive/2008/03/23/1116981.html</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/09/Network/TCP三次握手/" itemprop="url">TCP三次握手</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-09T23:04:19+08:00">
+                2019-05-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><p>TCP 的三次握手最重要的就是协商传输数据用的序列号。那这个序列号究竟有些什么用呢？</p>
+<p>这个序号能够帮助后续两端进行确认数据包是否收到，解决顺序、丢包问题；另外我们还可以看到有一个 win 字段，这是双方交流的窗口大小，这在每次传输数据过程中也会携带。主要是告诉对方，我窗口是这么大，别发多了或者别发太少。</p>
+<p>TCP的特点是：</p>
+<ul>
+<li>顺序问题，依靠序号</li>
+<li>丢包问题，依靠序号</li>
+<li>流量控制，依靠滑动窗口</li>
+<li>拥塞控制，依靠拥塞窗口+滑动窗口</li>
+<li>连接维护，三次握手/四次挥手</li>
+</ul>
+<h4 id="顺序与丢包问题"><a href="#顺序与丢包问题" class="headerlink" title="顺序与丢包问题"></a>顺序与丢包问题</h4><p>由于数据在传输前我们已经有序号了，这里注意一下这个序号是随机的，重复的概率极低，避免了程序发生乱入的可能性。</p>
+<p>由于我们每个数据包有序号，虽然发送与到达可能不是顺序的，但是TCP层收到数据后，可以根据序号进行重新排列；另外在这个排列过程中，发现有了1，2，3，5，6这几个包，一检查就知道4要么延时未到达，要么丢包了，等待重传。</p>
+<p>这里需要重要说明的一点是。为了提升效率，TCP其实并不是收到一个包就发一个ack。那是如何ACK的呢？还是以上面为例，TCP收到了1，2，3，5，6这几个包，它可能会发送一个 ack(seq=3)的确认包，这样次一次确认了3个包。但是它不会发送 5，6的ack。因为4没有收到啊！一旦4延时到达或者重发到达，就会发送一个 ack(seq=6)，又一次确认了3个包。</p>
+<h4 id="流量控制与拥塞控制"><a href="#流量控制与拥塞控制" class="headerlink" title="流量控制与拥塞控制"></a>流量控制与拥塞控制</h4><p>举例子说明，A给B发送数据，通过握手后，A知道B一次可以收 1000Byte 的数据（B有这么大的处理能力），那么这个时候滑动窗口就可以设置成 1000Byte。那是不是最后真的可以一次发这么多数据给B呢？还不是，这时候得问问拥塞窗口，老兄，现在网络情况怎么样？一次运 1000Byte 的数据有压力吗？拥塞窗口一通计算说不行，现在是高峰期，最多只能有 600Byte 的货上路。最终这次传数据的时候就是 600Byte。</p>
+<blockquote>
+<p>可以关注抓包数据的 win 值，一直在动态调整。</p>
+</blockquote>
+<p>每次能够发送多少数据，有这么一个公式：<strong>LastByteSend - LastByteAcked &lt;= min{cwnd,rwnd}</strong></p>
+<blockquote>
+<p>LastByteSend 是最后一个发送的字节的序号；LastByteAcked 最后一个被确认的字节的序号。</p>
+</blockquote>
+<p>这两个相减得到的是本次能够发送的数据，这个数据一定小于或等于 cwnd 与 rwnd 中最小的一个值。</p>
+<hr>
+<h3 id="Status-Machine"><a href="#Status-Machine" class="headerlink" title="Status Machine"></a>Status Machine</h3><h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><img src="/2019/05/09/Network/TCP三次握手/tcp_client_status_mechine.png">
+<h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><img src="/2019/05/09/Network/TCP三次握手/tcp_server_status_mechine.png">
+<hr>
+<h3 id="是什么限制了你的连接"><a href="#是什么限制了你的连接" class="headerlink" title="是什么限制了你的连接"></a>是什么限制了你的连接</h3><img src="/2019/05/09/Network/TCP三次握手/connect_tcp_process.jpg">
+<p>以Nginx为服务端进行举例说明，当客户端调用 connect() 方式时，会向服务端发起三次握手操作，当连接建立成功，在服务器端会生成一个 socket 对象，称为接收数据的 socket。服务向客户端发起的 connect() 也会生成一个 socket 对象，该对象叫发送数据的 socket。</p>
+<blockquote>
+<p>确定一个 socket 所需的元素有：源IP、源Port、目标IP、目标Port和协议。</p>
+</blockquote>
+<p>这里之所针对收发数据分别建立不同的 socket 对象，主要是从效率和管理上考虑。</p>
+<h4 id="连接上限是多少？"><a href="#连接上限是多少？" class="headerlink" title="连接上限是多少？"></a>连接上限是多少？</h4><p>在服务器监听端，IP 和 Port 都是固定的，那么只有客户端的 IP 和 Port 是可变化的，假设使用的是 IPv4，那么理论上的连接数应该是 2^32(IP) * 2^16(Port) = 2^48。但实际上是服务器端是不能建立这么多连接的，因为每一个 socket 都需要消耗内存，以及每一个进程的文件描述符是有上限的，这些都限制了最终的连接数。</p>
+<h4 id="提高连接数的手段"><a href="#提高连接数的手段" class="headerlink" title="提高连接数的手段"></a>提高连接数的手段</h4><ol>
+<li>多进程</li>
+<li>多线程</li>
+<li>IO多路复用</li>
+<li>协程</li>
+</ol>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://juejin.im/post/5cd103e2f265da03804383e1" target="_blank" rel="noopener">https://juejin.im/post/5cd103e2f265da03804383e1</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/08/Java/Advance/Java-Bean-Memory/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2241,408 +2622,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/27/Java/JVM/Case/CustomClassLoader造成YGC越来越慢/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/04/27/Java/JVM/Case/CustomClassLoader造成YGC越来越慢/" itemprop="url">CustomClassLoader造成YGC越来越慢，为什么？</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-27T23:31:22+08:00">
-                2019-04-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
-                    <span itemprop="name">JVM</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/Case/" itemprop="url" rel="index">
-                    <span itemprop="name">Case</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="http://lovestblog.cn/blog/2016/03/15/ygc-classloader/" target="_blank" rel="noopener">http://lovestblog.cn/blog/2016/03/15/ygc-classloader/</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/27/Java/JVM/Case/StringTable造成YGC越来越慢/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/04/27/Java/JVM/Case/StringTable造成YGC越来越慢/" itemprop="url">StringTable造成YGC越来越慢，为什么？</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-27T21:31:22+08:00">
-                2019-04-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
-                    <span itemprop="name">JVM</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/Case/" itemprop="url" rel="index">
-                    <span itemprop="name">Case</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>测试代码</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">StringYGC</span> </span>&#123;</span><br><span class="line">    <span class="function">fun <span class="title">getUUID</span><span class="params">()</span>: String </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> UUID.randomUUID().toString().intern()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    val stringYGC = StringYGC()</span><br><span class="line">    val times = <span class="number">10000000</span></span><br><span class="line">    <span class="keyword">for</span> (i in <span class="number">1</span>..times) &#123;</span><br><span class="line">        stringYGC.getUUID()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>JVM Options：-XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xmx2G -Xms2G -Xmn100M</p>
-<p>这里特意将新生代设置比较小，老生代设置比较大，让代码在执行过程中更容易突出问题来，大量做ygc，期间不做CMS GC。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[GC (Allocation Failure) [ParNew: 81920K-&gt;8306K(92160K), 0.0087308 secs] 81920K-&gt;8306K(2086912K), 0.0087759 secs] [Times: user=0.06 sys=0.01, real=0.01 secs]</span><br><span class="line">.....</span><br><span class="line">[GC (Allocation Failure) [ParNew: 92158K-&gt;10240K(92160K), 0.1632875 secs] 1089021K-&gt;1017720K(2086912K), 0.1633312 secs] [Times: user=1.51 sys=0.02, real=0.16 secs]</span><br></pre></td></tr></table></figure>
-<p>从输出的Log来看，发现YGC不断发生，并且每次YGC时间不断在增长，从9ms慢慢增长到了163ms，甚至还会继续涨下去。原因是什么？</p>
-<hr>
-<h3 id="String-intern"><a href="#String-intern" class="headerlink" title="String.intern()"></a>String.intern()</h3><p>我们先来了解下intern方法的实现，这是String提供的一个方法，JVM提供这个方法的目的是希望对于某个同名字符串使用非常多的场景，在JVM里只保留一份，比如我们不断new String(“Hello”)，其实在java heap里会有多个String的对象，并且值都是Hello，如果我们只希望内存里只保留一个Hello，或者希望我接下来用到的地方都返回同一个Hello，那就可以用String.intern这个方法了。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">val h1 = <span class="string">"Hello"</span>.intern()</span><br><span class="line">val h2 = h1.intern()</span><br></pre></td></tr></table></figure>
-<p>这样 h1 和 h2 都是指向内存里的同一个String对象，那JVM里到底怎么做到的呢？</p>
-<p>intern这个方法其实是一个native方法，具体对应到JVM里的逻辑是：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">oop StringTable::intern(oop <span class="built_in">string</span>, TRAPS)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">string</span> == <span class="literal">NULL</span>) <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  <span class="function">ResourceMark <span class="title">rm</span><span class="params">(THREAD)</span></span>;</span><br><span class="line">  <span class="keyword">int</span> length;</span><br><span class="line">  <span class="function">Handle <span class="title">h_string</span> <span class="params">(THREAD, <span class="built_in">string</span>)</span></span>;</span><br><span class="line">  jchar* chars = java_lang_String::as_unicode_string(<span class="built_in">string</span>, length);</span><br><span class="line">  oop result = intern(h_string, chars, length, CHECK_NULL);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">oop StringTable::intern(Handle string_or_null, jchar* name,</span><br><span class="line">                        <span class="keyword">int</span> len, TRAPS) &#123;</span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">int</span> hashValue = hash_string(name, len);</span><br><span class="line">  <span class="keyword">int</span> index = the_table()-&gt;hash_to_index(hashValue);</span><br><span class="line">  oop found_string = the_table()-&gt;lookup(index, name, len, hashValue);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Found</span></span><br><span class="line">  <span class="keyword">if</span> (found_string != <span class="literal">NULL</span>) <span class="keyword">return</span> found_string;</span><br><span class="line"></span><br><span class="line">  debug_only(StableMemoryChecker smc(name, len * <span class="keyword">sizeof</span>(name[<span class="number">0</span>])));</span><br><span class="line">  assert(!Universe::heap()-&gt;is_in_reserved(name) || GC_locker::is_active(),</span><br><span class="line">         <span class="string">"proposed name of symbol must be stable"</span>);</span><br><span class="line"></span><br><span class="line">  Handle <span class="built_in">string</span>;</span><br><span class="line">  <span class="comment">// try to reuse the string if possible</span></span><br><span class="line">  <span class="keyword">if</span> (!string_or_null.is_null() &amp;&amp; (!JavaObjectsInPerm || string_or_null()-&gt;is_perm())) &#123;</span><br><span class="line">    <span class="built_in">string</span> = string_or_null;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">string</span> = java_lang_String::create_tenured_from_unicode(name, len, CHECK_NULL);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Grab the StringTable_lock before getting the_table() because it could</span></span><br><span class="line">  <span class="comment">// change at safepoint.</span></span><br><span class="line">  <span class="function">MutexLocker <span class="title">ml</span><span class="params">(StringTable_lock, THREAD)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Otherwise, add to symbol to table</span></span><br><span class="line">  <span class="keyword">return</span> the_table()-&gt;basic_add(index, <span class="built_in">string</span>, name, len,</span><br><span class="line">                                hashValue, CHECK_NULL);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其实在JVM里存在一个叫做StringTable的数据结构，这个数据结构是一个Hashtable，在我们调用String.intern的时候其实就是先去这个StringTable里查找是否存在一个同名的项，如果存在就直接返回对应的对象，否则就往这个table里插入一项，指向这个String对象，那么再下次通过intern再来访问同名的String对象的时候，就会返回上次插入的这一项指向的String对象。</p>
-<blockquote>
-<p>JVM里提供一个参数专门来控制这个table的size，-XX:StringTableSize，既然有这个参数，那么意味着StringTable是size是固定的。</p>
-</blockquote>
-<p>当发生Hash碰撞的时候，你就要对其对应的桶挨个遍历，超过了100个还是没有找到对应的同名的项，那就会设置一个flag，让下次进入到safepoint的时候做一次rehash动作，尽量减少碰撞的发生，但是当恶化到一定程度的时候，其实也没啥办法啦，因为你的数据量实在太大，桶子数就那么多，那每个桶再怎么均匀也会带着一个很长的链表，所以此时我们通过修改上面的StringTableSize将桶数变大，可能会一定程度上缓解，但是如果是java代码的问题导致泄露，那就只能定位到具体的代码进行改造了。</p>
-<blockquote>
-<p>在JDK6及之前的版本，字符串常量池是放在Perm Gen（也就是方法区）中。<br>在JDK7版本，字符串常量池被移到了堆中了。至于为什么移到堆内，大概是由于方法区的内存空间太小了。</p>
-</blockquote>
-<hr>
-<h3 id="StringTable为什么会影响YGC"><a href="#StringTable为什么会影响YGC" class="headerlink" title="StringTable为什么会影响YGC"></a>StringTable为什么会影响YGC</h3><p>YGC中对StringTable处理的具体代码：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!_process_strong_tasks-&gt;is_task_claimed(SH_PS_StringTable_oops_do)) &#123;</span><br><span class="line">    <span class="keyword">if</span> (so &amp; SO_Strings || (!collecting_perm_gen &amp;&amp; !JavaObjectsInPerm)) &#123;</span><br><span class="line">        <span class="comment">//  actually, invoke here</span></span><br><span class="line">        StringTable::oops_do(roots);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (JavaObjectsInPerm) &#123;</span><br><span class="line">      <span class="comment">// Verify the string table contents are in the perm gen</span></span><br><span class="line">      NOT_PRODUCT(StringTable::oops_do(&amp;assert_is_perm_closure));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>因为YGC过程不涉及到对perm做回收，因此collecting_perm_gen是false，而JavaObjectsInPerm默认情况下也是false，表示String.intern返回的字符串是不是在perm里分配，如果是false，表示是在heap里分配的，因此StringTable指向的字符串是在heap里分配的，所以YGC过程需要对StringTable做扫描，以保证处于新生代的String代码不会被回收掉。</p>
-<p>设想一下如果StringTable非常庞大，那是不是意味着YGC过程扫描的时间也会变长呢？这也就是解释了为什么StringTable会影响YGC了，</p>
-<p>另外一个问题是StringTable什么时候清理？</p>
-<p>YGC过程不会对StringTable做清理，这也就是我们demo里的情况会让Stringtable越来越大，但是在FGC或者CMS GC的过程中会对StringTable进行清理。</p>
-<blockquote>
-<p>如何证明？命令 jmap -histo:live <pid> 触发FGC</pid></p>
-</blockquote>
-<hr>
-<h3 id="输出SringTable统计信息"><a href="#输出SringTable统计信息" class="headerlink" title="输出SringTable统计信息"></a>输出SringTable统计信息</h3><p>JVM Option：-XX:+PrintStringTableStatistics</p>
-<p>Testing Code：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">StringYGC</span> </span>&#123;</span><br><span class="line">    <span class="function">fun <span class="title">getUUID</span><span class="params">()</span>: String </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> UUID.randomUUID().toString().intern()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    val stringYGC = StringYGC()</span><br><span class="line">    val times = <span class="number">10000000</span></span><br><span class="line">    <span class="keyword">for</span> (i in <span class="number">1</span>..times) &#123;</span><br><span class="line">        <span class="keyword">if</span> (i == times / <span class="number">2</span>) &#123;</span><br><span class="line">            System.exit(<span class="number">9</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        stringYGC.getUUID()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>GC日志：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[GC (Allocation Failure) [ParNew: 81920K-&gt;8477K(92160K), 0.0069494 secs] 81920K-&gt;8477K(2086912K), 0.0069858 secs] [Times: user=0.05 sys=0.01, real=0.01 secs]</span><br><span class="line">....</span><br><span class="line">[GC (Allocation Failure) [ParNew: 92158K-&gt;10238K(92160K), 0.0846080 secs] 611372K-&gt;540071K(2086912K), 0.0846461 secs] [Times: user=0.80 sys=0.02, real=0.09 secs]</span><br></pre></td></tr></table></figure>
-<p>SymbolTable statistics：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">StringTable statistics:</span><br><span class="line">Number of buckets       :     60013 =    480104 bytes, avg   8.000</span><br><span class="line">Number of entries       :   5002671 = 120064104 bytes, avg  24.000</span><br><span class="line">Number of literals      :   5002671 = 560195376 bytes, avg 111.979</span><br><span class="line">Total footprint         :           = 680739584 bytes</span><br><span class="line">Average bucket size     :    83.360</span><br><span class="line">Variance of bucket size :    83.687</span><br><span class="line">Std. dev. of bucket size:     9.148</span><br><span class="line">Maximum bucket size     :       130</span><br></pre></td></tr></table></figure>
-<ul>
-<li>Average bucket size：bucket中LinkedList的平均size。</li>
-<li>Maximum bucket size：表示bucket中LinkedList最大的size。</li>
-<li>Number of entries：Hashtable的entry数量。</li>
-<li>Number of buckets：bucket数量。 </li>
-</ul>
-<p>Average bucket size越大，说明Hashtable碰撞越严重，由于bucket数量固定为60013，随着StringTable添加的引用越来越多，碰撞越来越严重，YGC时间越来越长。</p>
-<h4 id="Comparing-Testing"><a href="#Comparing-Testing" class="headerlink" title="Comparing Testing"></a>Comparing Testing</h4><p>GC日志：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[GC (Allocation Failure) [ParNew: 81920K-&gt;8819K(92160K), 0.0083969 secs] 81920K-&gt;8819K(2086912K), 0.0084334 secs] [Times: user=0.06 sys=0.00, real=0.01 secs]</span><br><span class="line">...</span><br><span class="line">[GC (Allocation Failure) [ParNew: 92158K-&gt;10238K(92160K), 0.0611064 secs] 609735K-&gt;538845K(2086912K), 0.0611351 secs] [Times: user=0.57 sys=0.01, real=0.06 secs]</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">StringTable statistics:</span><br><span class="line">Number of buckets       :   2500000 =  20000000 bytes, avg   8.000</span><br><span class="line">Number of entries       :   5002673 = 120064152 bytes, avg  24.000</span><br><span class="line">Number of literals      :   5002673 = 560195520 bytes, avg 111.979</span><br><span class="line">Total footprint         :           = 700259672 bytes</span><br><span class="line">Average bucket size     :     2.001</span><br><span class="line">Variance of bucket size :     2.002</span><br><span class="line">Std. dev. of bucket size:     1.415</span><br><span class="line">Maximum bucket size     :        11</span><br></pre></td></tr></table></figure>
-<p>对比上面的结果，Average bucket size降低很明显。</p>
-<p>设置StringTableSize一个合适的值，即bucket数量为期望的数量后，碰撞的概率明显降低，由Average bucket size和Maximum bucket size的值明显小于未配置StringTableSize参数时的值可知，且YGC时间也明显降低。另外, 最好通过BTrace分析是哪里频繁调用String.intern(), 确实String.intern()没有滥用的前提下, 再增大StringTableSize的值。</p>
-<hr>
-<h3 id="为什么StringTable不能扩大？"><a href="#为什么StringTable不能扩大？" class="headerlink" title="为什么StringTable不能扩大？"></a>为什么StringTable不能扩大？</h3><p>既然StringTable是Hashtable数据结构，那为什么不能自己通过rehash扩大bucket数量来提高性能呢？JVM中StringTable的rehash有点不一样，JVM中StringTable的rehash不会扩大bucket数量，而是在bucket不变的前提下，通过一个新的seed尝试摊平每个bucket中LinkedList的长度。</p>
-<p>rehash大概是一个如下图所示的过程，rehash前后bucket数量不变，这是重点：</p>
-<p>假设reash前数据分布(23，4，8，2，1，5)<br><img src="/2019/04/27/Java/JVM/Case/StringTable造成YGC越来越慢/refresh_before.png"></p>
-<p>假设reash前数据分布(6，8，8，9，5，7)<br><img src="/2019/04/27/Java/JVM/Case/StringTable造成YGC越来越慢/refresh_after.png"></p>
-<hr>
-<h3 id="Disable-Jackson-String-intern"><a href="#Disable-Jackson-String-intern" class="headerlink" title="Disable Jackson String.intern"></a>Disable Jackson String.intern</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  com.fasterxml.jackson.core.util.InternCache.intern(InternCache.java:45)</span></span><br><span class="line"><span class="keyword">if</span> (result == <span class="keyword">null</span>) &#123;</span><br><span class="line">    result = input.intern();</span><br><span class="line">    put(result, result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>jackson之所以用intern去处理，本来是想节省点cache的内存，没想到业务场景是每次都不一样的字符串，这样直接就导致了String.intern后StringTable的大小暴涨，所以在这种场景中，这样做反而得不偿失，还好jackson代码支持通过接口来把调用intern的部分关掉。</p>
-<p><strong>CANONICALIZE_FIELD_NAMES (default: true)</strong></p>
-<ul>
-<li>Means that once name String is decoded from input (byte or char stream), it will be added in a symbol table, to reduce overhead of decoding same name next time it is seen (by any parser constructed by same factory)</li>
-</ul>
-<p><strong>INTERN_FIELD_NAMES (default: true)</strong></p>
-<ul>
-<li>If canonicalization is enabled, this feature determines whether String decoded is also interned (using String.intern()) or not – doing that can help further improve deserialization performance since identity comparison may be used.</li>
-<li>If names are unlikely to repeat, or if sheer number of distinct names is huge (in tens of thousands or above), it may make sense to disable this feature.</li>
-</ul>
-<p>Disable using String.intern() method：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">val factory = JsonFactory().disable(JsonFactory.Feature.INTERN_FIELD_NAMES)</span><br><span class="line">val mapper = ObjectMapper(factory).setTimeZone(TimeZone.getDefault())</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="http://lovestblog.cn/blog/2016/11/06/string-intern/" target="_blank" rel="noopener">http://lovestblog.cn/blog/2016/11/06/string-intern/</a><br><a href="https://juejin.im/post/5ab99afff265da23a2291dee" target="_blank" rel="noopener">https://juejin.im/post/5ab99afff265da23a2291dee</a><br>Refresh：<a href="https://coolshell.cn/articles/9606.html" target="_blank" rel="noopener">https://coolshell.cn/articles/9606.html</a><br><a href="https://www.jianshu.com/p/5524fce8b08f" target="_blank" rel="noopener">https://www.jianshu.com/p/5524fce8b08f</a><br><a href="http://hellojava.info/?p=514" target="_blank" rel="noopener">http://hellojava.info/?p=514</a><br>Jackson触发的String.intern()：<a href="https://www.cnblogs.com/halberts/p/7473857.html" target="_blank" rel="noopener">https://www.cnblogs.com/halberts/p/7473857.html</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2694,7 +2673,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">536</span>
+                <span class="site-state-item-count">537</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2716,7 +2695,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">592</span>
+                <span class="site-state-item-count">591</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

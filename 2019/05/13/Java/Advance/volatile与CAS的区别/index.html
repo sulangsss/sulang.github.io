@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Java,CAS,volatile,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="Introduction锁的特性锁具有两种主要特性：互斥和可见性。  互斥指的是一次只允许一个线程持有某个特定的锁，因此可以保证共享数据内容的一致性； 可见性指的是必须确保锁被释放之前对共享数据的修改，随后获得锁的另一个线程能够知道该行为。  锁的代价锁是用来做并发最简单的方式，当然其代价也是最高的。内核态的锁的时候需要操作系统进行一次上下文切换，加锁、释放锁会导致比较多的上下文切换和调度延时，等">
+<meta name="keywords" content="Java,CAS,volatile">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java volatile 与 CAS 的区别">
+<meta property="og:url" content="https://sulangsss.github.io/2019/05/13/Java/Advance/volatile与CAS的区别/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="Introduction锁的特性锁具有两种主要特性：互斥和可见性。  互斥指的是一次只允许一个线程持有某个特定的锁，因此可以保证共享数据内容的一致性； 可见性指的是必须确保锁被释放之前对共享数据的修改，随后获得锁的另一个线程能够知道该行为。  锁的代价锁是用来做并发最简单的方式，当然其代价也是最高的。内核态的锁的时候需要操作系统进行一次上下文切换，加锁、释放锁会导致比较多的上下文切换和调度延时，等">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-05-13T16:22:05.371Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java volatile 与 CAS 的区别">
+<meta name="twitter:description" content="Introduction锁的特性锁具有两种主要特性：互斥和可见性。  互斥指的是一次只允许一个线程持有某个特定的锁，因此可以保证共享数据内容的一致性； 可见性指的是必须确保锁被释放之前对共享数据的修改，随后获得锁的另一个线程能够知道该行为。  锁的代价锁是用来做并发最简单的方式，当然其代价也是最高的。内核态的锁的时候需要操作系统进行一次上下文切换，加锁、释放锁会导致比较多的上下文切换和调度延时，等">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2019/05/13/Java/Advance/volatile与CAS的区别/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>Java volatile 与 CAS 的区别 | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/13/Java/Advance/volatile与CAS的区别/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Java volatile 与 CAS 的区别</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-13T23:35:06+08:00">
+                2019-05-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="锁的特性"><a href="#锁的特性" class="headerlink" title="锁的特性"></a>锁的特性</h4><p>锁具有两种主要特性：<strong>互斥</strong>和<strong>可见性</strong>。</p>
+<ul>
+<li>互斥指的是一次只允许一个线程持有某个特定的锁，因此可以保证共享数据内容的一致性；</li>
+<li>可见性指的是必须确保锁被释放之前对共享数据的修改，随后获得锁的另一个线程能够知道该行为。</li>
+</ul>
+<h4 id="锁的代价"><a href="#锁的代价" class="headerlink" title="锁的代价"></a>锁的代价</h4><p>锁是用来做并发最简单的方式，当然其代价也是最高的。内核态的锁的时候需要操作系统进行一次上下文切换，加锁、释放锁会导致比较多的上下文切换和调度延时，等待锁的线程会被挂起直至锁释放。在上下文切换的时候，cpu之前缓存的指令和数据都将失效，对性能有很大的损失。操作系统对多线程的锁进行判断就像两姐妹在为一个玩具在争吵，然后操作系统就是能决定他们谁能拿到玩具的父母，这是很慢的。用户态的锁虽然避免了这些问题，但是其实它们只是在没有真实的竞争时才有效。</p>
+<p>Java在JDK1.5之前都是靠synchronized关键字保证同步的，这种通过使用一致的锁定协议来协调对共享状态的访问，可以确保无论哪个线程持有守护变量的锁，都采用独占的方式来访问这些变量，如果出现多个线程同时访问锁，那第一些线线程将被挂起，当线程恢复执行时，必须等待其它线程执行完他们的时间片以后才能被调度执行，在挂起和恢复执行过程中存在着很大的开销。锁还存在着其它一些缺点，当一个线程正在等待锁时，它不能做任何事。如果一个线程在持有锁的情况下被延迟执行，那么所有需要这个锁的线程都无法执行下去。如果被阻塞的线程优先级高，而持有锁的线程优先级低，将会导致优先级反转(Priority Inversion)。</p>
+<h4 id="乐观锁和悲观锁"><a href="#乐观锁和悲观锁" class="headerlink" title="乐观锁和悲观锁"></a>乐观锁和悲观锁</h4><p>独占锁是一种<strong>悲观锁</strong>，synchronized就是一种独占锁，它假设最坏的情况，并且只有在确保其它线程不会造成干扰的情况下执行，会导致其它所有需要锁的线程挂起，等待持有锁的线程释放锁。而另一个更加有效的锁就是乐观锁。所谓<strong>乐观锁</strong>就是，每次不加锁而是假设没有冲突而去完成某项操作，如果因为冲突失败就重试，直到成功为止。</p>
+<h4 id="volatile"><a href="#volatile" class="headerlink" title="volatile"></a>volatile</h4><p>与锁相比，volatile变量是一和更轻量级的同步机制，因为在使用这些变量时不会发生上下文切换和线程调度等操作，但是volatile变量也存在一些局限：<strong>不能用于构建原子的复合操作，因此当一个变量依赖旧值时就不能使用volatile变量。</strong></p>
+<blockquote>
+<p>所有读值操作都执行一个包含获取语义的读取操作，这些方法读取由参数address引用的值，然后使得CPU高速缓存内的相应字节失效；所有写值操作都执行一个包含释放语义的写入操作，这些方法将CPU高速缓存内的字节刷到内存中，然后将address参数引用的值修改为value参数所表示的值。</p>
+</blockquote>
+<p><strong>volatile变量具有”lock”的可见性，却不具备原子特性。</strong>也就是说线程能够自动发现volatile变量的最新值。volatile变量可以实现线程安全，但其应用有限。使用volatile变量的主要原因在于它使用非常简单，至少比使用锁机制要简单的多；其次便是性能原因了，某些情况下，它的性能要优于锁机制。此外，volatile操作不会造成阻塞。</p>
+<p>使用volatile来确保线程安全的前提条件：</p>
+<ul>
+<li>对变量的写操作不依赖于当前值；</li>
+<li>该变量没有包含在具有其他变量的不变式中。</li>
+</ul>
+<h3 id="Atomic-Operations"><a href="#Atomic-Operations" class="headerlink" title="Atomic Operations"></a>Atomic Operations</h3><ul>
+<li>all assignments of primitive types except for long and double</li>
+<li>all assignments of references</li>
+<li>all operations of java.concurrent.Atomic* classes</li>
+<li>all assignments to volatile longs and doubles</li>
+</ul>
+<p>为什么long型赋值不是原子操作呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">long</span> foo = <span class="number">65465498L</span>;</span><br></pre></td></tr></table></figure>
+<p>因为在实际中，Java会分两步写入这个long变量，先写32位，再写后32位。这样就线程不安全了。如果改成下面的就线程安全了：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  volatile内部已经做了synchronized</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">long</span> foo;</span><br></pre></td></tr></table></figure>
+<h3 id="volatile不能保证原子性"><a href="#volatile不能保证原子性" class="headerlink" title="volatile不能保证原子性"></a>volatile不能保证原子性</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestVolatileAtomic</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Volatile</span></span><br><span class="line">    var count = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    val threadCount = <span class="number">100</span></span><br><span class="line">    val volatileAtomic = TestVolatileAtomic()</span><br><span class="line">    var runningTimes = <span class="number">0</span></span><br><span class="line">    var errorTimes = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        val countDownLatch = CountDownLatch(threadCount)</span><br><span class="line">        val startup = CountDownLatch(threadCount)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (index in <span class="number">0</span> until threadCount) &#123;</span><br><span class="line">            thread &#123;</span><br><span class="line">                startup.countDown()</span><br><span class="line">                <span class="comment">//  println("threadId $&#123;Thread.currentThread().id&#125; waiting")</span></span><br><span class="line">                startup.await()</span><br><span class="line">                volatileAtomic.inc()</span><br><span class="line">                countDownLatch.countDown()</span><br><span class="line">                <span class="comment">//  println("threadId $&#123;Thread.currentThread().id&#125; finish")</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        countDownLatch.await()</span><br><span class="line">        <span class="keyword">if</span> (volatileAtomic.count % threadCount != <span class="number">0</span>) &#123;</span><br><span class="line">            println(<span class="string">"count $&#123;volatileAtomic.count&#125;"</span>)</span><br><span class="line">            errorTimes += <span class="number">1</span></span><br><span class="line">        &#125;</span><br><span class="line">        volatileAtomic.count = <span class="number">0</span></span><br><span class="line">        runningTimes += <span class="number">1</span></span><br><span class="line">        println(<span class="string">"runningTimes $runningTimes, errorTimes=$errorTimes"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>测试输出结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">runningTimes 1128, errorTimes=9</span><br><span class="line">runningTimes 1129, errorTimes=9</span><br></pre></td></tr></table></figure>
+<h4 id="Synchronized-和-Atomic-Class-可以确保”原子性”"><a href="#Synchronized-和-Atomic-Class-可以确保”原子性”" class="headerlink" title="Synchronized 和 Atomic Class 可以确保”原子性”"></a>Synchronized 和 Atomic Class 可以确保”原子性”</h4><ol>
+<li>方式一：使用 <strong>Synchronized</strong></li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Synchronized</span> <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    count += <span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>方式二：使用 Atomic Class</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestVolatileAtomic</span> </span>&#123;</span><br><span class="line">    <span class="comment">//  @Volatile</span></span><br><span class="line">    var count = AtomicInteger(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count.incrementAndGet()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://cloud.tencent.com/developer/article/1152642" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1152642</a></li>
+<li><a href="http://www.cnblogs.com/Mainz/p/3546347.html" target="_blank" rel="noopener">http://www.cnblogs.com/Mainz/p/3546347.html</a></li>
+<li><a href="http://www.cnblogs.com/lucifer1982/archive/2008/03/23/1116981.html" target="_blank" rel="noopener">http://www.cnblogs.com/lucifer1982/archive/2008/03/23/1116981.html</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/CAS/" rel="tag"># CAS</a>
+          
+            <a href="/tags/volatile/" rel="tag"># volatile</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/09/Network/TCP三次握手/" rel="next" title="TCP三次握手">
+                <i class="fa fa-chevron-left"></i> TCP三次握手
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">537</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">233</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">591</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#锁的特性"><span class="nav-number">1.1.</span> <span class="nav-text">锁的特性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#锁的代价"><span class="nav-number">1.2.</span> <span class="nav-text">锁的代价</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#乐观锁和悲观锁"><span class="nav-number">1.3.</span> <span class="nav-text">乐观锁和悲观锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#volatile"><span class="nav-number">1.4.</span> <span class="nav-text">volatile</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Atomic-Operations"><span class="nav-number">2.</span> <span class="nav-text">Atomic Operations</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#volatile不能保证原子性"><span class="nav-number">3.</span> <span class="nav-text">volatile不能保证原子性</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Synchronized-和-Atomic-Class-可以确保”原子性”"><span class="nav-number">3.1.</span> <span class="nav-text">Synchronized 和 Atomic Class 可以确保”原子性”</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

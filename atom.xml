@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://sulangsss.github.io/"/>
-  <updated>2019-05-08T06:53:37.460Z</updated>
+  <updated>2019-05-13T16:22:05.371Z</updated>
   <id>https://sulangsss.github.io/</id>
   
   <author>
@@ -15,6 +15,64 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Java volatile 与 CAS 的区别</title>
+    <link href="https://sulangsss.github.io/2019/05/13/Java/Advance/volatile%E4%B8%8ECAS%E7%9A%84%E5%8C%BA%E5%88%AB/"/>
+    <id>https://sulangsss.github.io/2019/05/13/Java/Advance/volatile与CAS的区别/</id>
+    <published>2019-05-13T15:35:06.000Z</published>
+    <updated>2019-05-13T16:22:05.371Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="锁的特性"><a href="#锁的特性" class="headerlink" title="锁的特性"></a>锁的特性</h4><p>锁具有两种主要特性：<strong>互斥</strong>和<strong>可见性</strong>。</p><ul><li>互斥指的是一次只允许一个线程持有某个特定的锁，因此可以保证共享数据内容的一致性；</li><li>可见性指的是必须确保锁被释放之前对共享数据的修改，随后获得锁的另一个线程能够知道该行为。</li></ul><h4 id="锁的代价"><a href="#锁的代价" class="headerlink" title="锁的代价"></a>锁的代价</h4><p>锁是用来做并发最简单的方式，当然其代价也是最高的。内核态的锁的时候需要操作系统进行一次上下文切换，加锁、释放锁会导致比较多的上下文切换和调度延时，等待锁的线程会被挂起直至锁释放。在上下文切换的时候，cpu之前缓存的指令和数据都将失效，对性能有很大的损失。操作系统对多线程的锁进行判断就像两姐妹在为一个玩具在争吵，然后操作系统就是能决定他们谁能拿到玩具的父母，这是很慢的。用户态的锁虽然避免了这些问题，但是其实它们只是在没有真实的竞争时才有效。</p><p>Java在JDK1.5之前都是靠synchronized关键字保证同步的，这种通过使用一致的锁定协议来协调对共享状态的访问，可以确保无论哪个线程持有守护变量的锁，都采用独占的方式来访问这些变量，如果出现多个线程同时访问锁，那第一些线线程将被挂起，当线程恢复执行时，必须等待其它线程执行完他们的时间片以后才能被调度执行，在挂起和恢复执行过程中存在着很大的开销。锁还存在着其它一些缺点，当一个线程正在等待锁时，它不能做任何事。如果一个线程在持有锁的情况下被延迟执行，那么所有需要这个锁的线程都无法执行下去。如果被阻塞的线程优先级高，而持有锁的线程优先级低，将会导致优先级反转(Priority Inversion)。</p><h4 id="乐观锁和悲观锁"><a href="#乐观锁和悲观锁" class="headerlink" title="乐观锁和悲观锁"></a>乐观锁和悲观锁</h4><p>独占锁是一种<strong>悲观锁</strong>，synchronized就是一种独占锁，它假设最坏的情况，并且只有在确保其它线程不会造成干扰的情况下执行，会导致其它所有需要锁的线程挂起，等待持有锁的线程释放锁。而另一个更加有效的锁就是乐观锁。所谓<strong>乐观锁</strong>就是，每次不加锁而是假设没有冲突而去完成某项操作，如果因为冲突失败就重试，直到成功为止。</p><h4 id="volatile"><a href="#volatile" class="headerlink" title="volatile"></a>volatile</h4><p>与锁相比，volatile变量是一和更轻量级的同步机制，因为在使用这些变量时不会发生上下文切换和线程调度等操作，但是volatile变量也存在一些局限：<strong>不能用于构建原子的复合操作，因此当一个变量依赖旧值时就不能使用volatile变量。</strong></p><blockquote><p>所有读值操作都执行一个包含获取语义的读取操作，这些方法读取由参数address引用的值，然后使得CPU高速缓存内的相应字节失效；所有写值操作都执行一个包含释放语义的写入操作，这些方法将CPU高速缓存内的字节刷到内存中，然后将address参数引用的值修改为value参数所表示的值。</p></blockquote><p><strong>volatile变量具有”lock”的可见性，却不具备原子特性。</strong>也就是说线程能够自动发现volatile变量的最新值。volatile变量可以实现线程安全，但其应用有限。使用volatile变量的主要原因在于它使用非常简单，至少比使用锁机制要简单的多；其次便是性能原因了，某些情况下，它的性能要优于锁机制。此外，volatile操作不会造成阻塞。</p><p>使用volatile来确保线程安全的前提条件：</p><ul><li>对变量的写操作不依赖于当前值；</li><li>该变量没有包含在具有其他变量的不变式中。</li></ul><h3 id="Atomic-Operations"><a href="#Atomic-Operations" class="headerlink" title="Atomic Operations"></a>Atomic Operations</h3><ul><li>all assignments of primitive types except for long and double</li><li>all assignments of references</li><li>all operations of java.concurrent.Atomic* classes</li><li>all assignments to volatile longs and doubles</li></ul><p>为什么long型赋值不是原子操作呢？</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">long</span> foo = <span class="number">65465498L</span>;</span><br></pre></td></tr></table></figure><p>因为在实际中，Java会分两步写入这个long变量，先写32位，再写后32位。这样就线程不安全了。如果改成下面的就线程安全了：</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  volatile内部已经做了synchronized</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">long</span> foo;</span><br></pre></td></tr></table></figure><h3 id="volatile不能保证原子性"><a href="#volatile不能保证原子性" class="headerlink" title="volatile不能保证原子性"></a>volatile不能保证原子性</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestVolatileAtomic</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Volatile</span></span><br><span class="line">    var count = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    val threadCount = <span class="number">100</span></span><br><span class="line">    val volatileAtomic = TestVolatileAtomic()</span><br><span class="line">    var runningTimes = <span class="number">0</span></span><br><span class="line">    var errorTimes = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        val countDownLatch = CountDownLatch(threadCount)</span><br><span class="line">        val startup = CountDownLatch(threadCount)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (index in <span class="number">0</span> until threadCount) &#123;</span><br><span class="line">            thread &#123;</span><br><span class="line">                startup.countDown()</span><br><span class="line">                <span class="comment">//  println("threadId $&#123;Thread.currentThread().id&#125; waiting")</span></span><br><span class="line">                startup.await()</span><br><span class="line">                volatileAtomic.inc()</span><br><span class="line">                countDownLatch.countDown()</span><br><span class="line">                <span class="comment">//  println("threadId $&#123;Thread.currentThread().id&#125; finish")</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        countDownLatch.await()</span><br><span class="line">        <span class="keyword">if</span> (volatileAtomic.count % threadCount != <span class="number">0</span>) &#123;</span><br><span class="line">            println(<span class="string">"count $&#123;volatileAtomic.count&#125;"</span>)</span><br><span class="line">            errorTimes += <span class="number">1</span></span><br><span class="line">        &#125;</span><br><span class="line">        volatileAtomic.count = <span class="number">0</span></span><br><span class="line">        runningTimes += <span class="number">1</span></span><br><span class="line">        println(<span class="string">"runningTimes $runningTimes, errorTimes=$errorTimes"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>测试输出结果：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">runningTimes 1128, errorTimes=9</span><br><span class="line">runningTimes 1129, errorTimes=9</span><br></pre></td></tr></table></figure><h4 id="Synchronized-和-Atomic-Class-可以确保”原子性”"><a href="#Synchronized-和-Atomic-Class-可以确保”原子性”" class="headerlink" title="Synchronized 和 Atomic Class 可以确保”原子性”"></a>Synchronized 和 Atomic Class 可以确保”原子性”</h4><ol><li>方式一：使用 <strong>Synchronized</strong></li></ol><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Synchronized</span> <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    count += <span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><ol start="2"><li>方式二：使用 Atomic Class</li></ol><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestVolatileAtomic</span> </span>&#123;</span><br><span class="line">    <span class="comment">//  @Volatile</span></span><br><span class="line">    var count = AtomicInteger(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count.incrementAndGet()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://cloud.tencent.com/developer/article/1152642" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1152642</a></li><li><a href="http://www.cnblogs.com/Mainz/p/3546347.html" target="_blank" rel="noopener">http://www.cnblogs.com/Mainz/p/3546347.html</a></li><li><a href="http://www.cnblogs.com/lucifer1982/archive/2008/03/23/1116981.html" target="_blank" rel="noopener">http://www.cnblogs.com/lucifer1982/archive/2008/03/23/1116981.html</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;h4 id=&quot;锁的特性&quot;&gt;&lt;a href=&quot;#锁的特性&quot; cla
+      
+    
+    </summary>
+    
+      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
+    
+      <category term="Advance" scheme="https://sulangsss.github.io/categories/Java/Advance/"/>
+    
+    
+      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
+    
+      <category term="CAS" scheme="https://sulangsss.github.io/tags/CAS/"/>
+    
+      <category term="volatile" scheme="https://sulangsss.github.io/tags/volatile/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>TCP三次握手</title>
+    <link href="https://sulangsss.github.io/2019/05/09/Network/TCP%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B/"/>
+    <id>https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/</id>
+    <published>2019-05-09T15:04:19.000Z</published>
+    <updated>2019-05-13T15:20:22.720Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><p>TCP 的三次握手最重要的就是协商传输数据用的序列号。那这个序列号究竟有些什么用呢？</p><p>这个序号能够帮助后续两端进行确认数据包是否收到，解决顺序、丢包问题；另外我们还可以看到有一个 win 字段，这是双方交流的窗口大小，这在每次传输数据过程中也会携带。主要是告诉对方，我窗口是这么大，别发多了或者别发太少。</p><p>TCP的特点是：</p><ul><li>顺序问题，依靠序号</li><li>丢包问题，依靠序号</li><li>流量控制，依靠滑动窗口</li><li>拥塞控制，依靠拥塞窗口+滑动窗口</li><li>连接维护，三次握手/四次挥手</li></ul><h4 id="顺序与丢包问题"><a href="#顺序与丢包问题" class="headerlink" title="顺序与丢包问题"></a>顺序与丢包问题</h4><p>由于数据在传输前我们已经有序号了，这里注意一下这个序号是随机的，重复的概率极低，避免了程序发生乱入的可能性。</p><p>由于我们每个数据包有序号，虽然发送与到达可能不是顺序的，但是TCP层收到数据后，可以根据序号进行重新排列；另外在这个排列过程中，发现有了1，2，3，5，6这几个包，一检查就知道4要么延时未到达，要么丢包了，等待重传。</p><p>这里需要重要说明的一点是。为了提升效率，TCP其实并不是收到一个包就发一个ack。那是如何ACK的呢？还是以上面为例，TCP收到了1，2，3，5，6这几个包，它可能会发送一个 ack(seq=3)的确认包，这样次一次确认了3个包。但是它不会发送 5，6的ack。因为4没有收到啊！一旦4延时到达或者重发到达，就会发送一个 ack(seq=6)，又一次确认了3个包。</p><h4 id="流量控制与拥塞控制"><a href="#流量控制与拥塞控制" class="headerlink" title="流量控制与拥塞控制"></a>流量控制与拥塞控制</h4><p>举例子说明，A给B发送数据，通过握手后，A知道B一次可以收 1000Byte 的数据（B有这么大的处理能力），那么这个时候滑动窗口就可以设置成 1000Byte。那是不是最后真的可以一次发这么多数据给B呢？还不是，这时候得问问拥塞窗口，老兄，现在网络情况怎么样？一次运 1000Byte 的数据有压力吗？拥塞窗口一通计算说不行，现在是高峰期，最多只能有 600Byte 的货上路。最终这次传数据的时候就是 600Byte。</p><blockquote><p>可以关注抓包数据的 win 值，一直在动态调整。</p></blockquote><p>每次能够发送多少数据，有这么一个公式：<strong>LastByteSend - LastByteAcked &lt;= min{cwnd,rwnd}</strong></p><blockquote><p>LastByteSend 是最后一个发送的字节的序号；LastByteAcked 最后一个被确认的字节的序号。</p></blockquote><p>这两个相减得到的是本次能够发送的数据，这个数据一定小于或等于 cwnd 与 rwnd 中最小的一个值。</p><hr><h3 id="Status-Machine"><a href="#Status-Machine" class="headerlink" title="Status Machine"></a>Status Machine</h3><h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><img src="/2019/05/09/Network/TCP三次握手/tcp_client_status_mechine.png"><h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><img src="/2019/05/09/Network/TCP三次握手/tcp_server_status_mechine.png"><hr><h3 id="是什么限制了你的连接"><a href="#是什么限制了你的连接" class="headerlink" title="是什么限制了你的连接"></a>是什么限制了你的连接</h3><img src="/2019/05/09/Network/TCP三次握手/connect_tcp_process.jpg"><p>以Nginx为服务端进行举例说明，当客户端调用 connect() 方式时，会向服务端发起三次握手操作，当连接建立成功，在服务器端会生成一个 socket 对象，称为接收数据的 socket。服务向客户端发起的 connect() 也会生成一个 socket 对象，该对象叫发送数据的 socket。</p><blockquote><p>确定一个 socket 所需的元素有：源IP、源Port、目标IP、目标Port和协议。</p></blockquote><p>这里之所针对收发数据分别建立不同的 socket 对象，主要是从效率和管理上考虑。</p><h4 id="连接上限是多少？"><a href="#连接上限是多少？" class="headerlink" title="连接上限是多少？"></a>连接上限是多少？</h4><p>在服务器监听端，IP 和 Port 都是固定的，那么只有客户端的 IP 和 Port 是可变化的，假设使用的是 IPv4，那么理论上的连接数应该是 2^32(IP) * 2^16(Port) = 2^48。但实际上是服务器端是不能建立这么多连接的，因为每一个 socket 都需要消耗内存，以及每一个进程的文件描述符是有上限的，这些都限制了最终的连接数。</p><h4 id="提高连接数的手段"><a href="#提高连接数的手段" class="headerlink" title="提高连接数的手段"></a>提高连接数的手段</h4><ol><li>多进程</li><li>多线程</li><li>IO多路复用</li><li>协程</li></ol><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://juejin.im/post/5cd103e2f265da03804383e1" target="_blank" rel="noopener">https://juejin.im/post/5cd103e2f265da03804383e1</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Attention&quot;&gt;&lt;a href=&quot;#Attention&quot; class=&quot;headerlink&quot; title=&quot;Attention&quot;&gt;&lt;/a&gt;Attention&lt;/h3&gt;&lt;p&gt;TCP 的三次握手最重要的就是协商传输数据用的序列号。那这个序列号究竟有些什么用呢？
+      
+    
+    </summary>
+    
+      <category term="Network" scheme="https://sulangsss.github.io/categories/Network/"/>
+    
+    
+      <category term="Network" scheme="https://sulangsss.github.io/tags/Network/"/>
+    
+      <category term="TCP" scheme="https://sulangsss.github.io/tags/TCP/"/>
+    
+  </entry>
   
   <entry>
     <title>Java Bean Memory</title>
@@ -41,9 +99,9 @@
     
       <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
     
-      <category term="Memory" scheme="https://sulangsss.github.io/tags/Memory/"/>
-    
       <category term="Bean" scheme="https://sulangsss.github.io/tags/Bean/"/>
+    
+      <category term="Memory" scheme="https://sulangsss.github.io/tags/Memory/"/>
     
   </entry>
   
@@ -562,69 +620,6 @@
       <category term="Spring Boot" scheme="https://sulangsss.github.io/tags/Spring-Boot/"/>
     
       <category term="ReativeWeb" scheme="https://sulangsss.github.io/tags/ReativeWeb/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Spring Boot WebFlux</title>
-    <link href="https://sulangsss.github.io/2019/04/05/SpringBoot/ReactiveWeb/WebFlux/"/>
-    <id>https://sulangsss.github.io/2019/04/05/SpringBoot/ReactiveWeb/WebFlux/</id>
-    <published>2019-04-05T06:21:22.000Z</published>
-    <updated>2019-04-08T08:26:02.291Z</updated>
-    
-    <content type="html"><![CDATA[<hr><h3 id="Unit-Test"><a href="#Unit-Test" class="headerlink" title="Unit Test"></a>Unit Test</h3><h4 id="Simple"><a href="#Simple" class="headerlink" title="Simple"></a>Simple</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">@WebFluxTest(controllers = [OrderController::class])</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OrderControllerTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    lateinit var client: WebTestClient</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function">fun <span class="title">shouldPlaceLimitOrder</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        client.post()</span><br><span class="line">                .uri(RestfulPath.addOrderPath)</span><br><span class="line">                .contentType(MediaType.APPLICATION_JSON_UTF8)</span><br><span class="line">                .accept(MediaType.APPLICATION_JSON_UTF8)</span><br><span class="line">                .body(Mono.just(limit), ReqOrder::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>)</span></span><br><span class="line"><span class="class">                .<span class="title">exchange</span>()</span></span><br><span class="line"><span class="class">                .<span class="title">expectStatus</span>()</span></span><br><span class="line"><span class="class">                .<span class="title">isOk</span></span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure><h4 id="Filter-Configration"><a href="#Filter-Configration" class="headerlink" title="Filter Configration"></a>Filter Configration</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">@WebFluxTest(controllers = [OrderController::class])</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OrderControllerTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    lateinit var client: WebTestClient</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> lateinit var context: ApplicationContext</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function">fun <span class="title">shouldPlaceLimitOrder</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        val serverSpec = WebTestClient.bindToApplicationContext(context)</span><br><span class="line"></span><br><span class="line">        serverSpec.webFilter&lt;Nothing&gt;(AuthFilter())</span><br><span class="line">        val webTestClient = serverSpec.build()</span><br><span class="line"></span><br><span class="line">        val limit = TestingHelper.getLimit(</span><br><span class="line">                limitPrice = <span class="string">"1000.00"</span>,</span><br><span class="line">                quantity = <span class="string">"1"</span>,</span><br><span class="line">                contractId = Contract.BTCUSD.contractId</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        webTestClient.post()</span><br><span class="line">                .uri(RestfulPath.addOrderPath)</span><br><span class="line">                .contentType(MediaType.APPLICATION_JSON_UTF8)</span><br><span class="line">                .accept(MediaType.APPLICATION_JSON_UTF8)</span><br><span class="line">                .body(Mono.just(limit), ReqOrder::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>)</span></span><br><span class="line"><span class="class">                .<span class="title">exchange</span>()</span></span><br><span class="line"><span class="class">                .<span class="title">expectStatus</span>()</span></span><br><span class="line"><span class="class">                .<span class="title">isOk</span></span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote><p><a href="https://grokonez.com/testing/springboot-webflux-test-webfluxtest" target="_blank" rel="noopener">https://grokonez.com/testing/springboot-webflux-test-webfluxtest</a><br><a href="https://www.callicoder.com/spring-5-reactive-webclient-webtestclient-examples/" target="_blank" rel="noopener">https://www.callicoder.com/spring-5-reactive-webclient-webtestclient-examples/</a></p></blockquote>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;hr&gt;
-&lt;h3 id=&quot;Unit-Test&quot;&gt;&lt;a href=&quot;#Unit-Test&quot; class=&quot;headerlink&quot; title=&quot;Unit Test&quot;&gt;&lt;/a&gt;Unit Test&lt;/h3&gt;&lt;h4 id=&quot;Simple&quot;&gt;&lt;a href=&quot;#Simple&quot; class=
-      
-    
-    </summary>
-    
-      <category term="Spring Boot" scheme="https://sulangsss.github.io/categories/Spring-Boot/"/>
-    
-      <category term="ReactiveWeb" scheme="https://sulangsss.github.io/categories/Spring-Boot/ReactiveWeb/"/>
-    
-    
-      <category term="Spring Boot" scheme="https://sulangsss.github.io/tags/Spring-Boot/"/>
-    
-      <category term="ReativeWeb" scheme="https://sulangsss.github.io/tags/ReativeWeb/"/>
-    
-      <category term="WebFlux" scheme="https://sulangsss.github.io/tags/WebFlux/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>wrk</title>
-    <link href="https://sulangsss.github.io/2019/04/05/Testing/Stress/wrk/"/>
-    <id>https://sulangsss.github.io/2019/04/05/Testing/Stress/wrk/</id>
-    <published>2019-04-05T04:12:18.000Z</published>
-    <updated>2019-04-04T10:06:44.998Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="Function"><a href="#Function" class="headerlink" title="Function"></a>Function</h4><ul><li>function setup(thread) 在创建线程时调用</li><li>function init(args) 在线程启动时调用</li><li>function request() 每个请求都会调用，特别说明，此函数调用频繁，所以不要在这里写入耗时的操作，如果复杂的请求，在init函数就构造好，这里直接引用。</li><li>function delay()</li><li>function response(status, headers, body) ，频繁调用。</li></ul><hr><h3 id="Experience"><a href="#Experience" class="headerlink" title="Experience"></a>Experience</h3><h4 id="参数执行对比"><a href="#参数执行对比" class="headerlink" title="参数执行对比"></a>参数执行对比</h4><p>机器配置：GCP 4 core, 3.6G Memory</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">wrk -t4 -c400 -d1m -&gt; 32803.27</span><br><span class="line"></span><br><span class="line">wrk -t4 -c800 -d1m -&gt; 33405.82</span><br><span class="line"></span><br><span class="line">wrk -t8 -c400 -d1m -&gt; 34530.65</span><br></pre></td></tr></table></figure><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote><p><a href="https://juejin.im/post/5a59e74f5188257353008fea" target="_blank" rel="noopener">https://juejin.im/post/5a59e74f5188257353008fea</a></p></blockquote>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Usage&quot;&gt;&lt;a href=&quot;#Usage&quot; class=&quot;headerlink&quot; title=&quot;Usage&quot;&gt;&lt;/a&gt;Usage&lt;/h3&gt;&lt;h4 id=&quot;Function&quot;&gt;&lt;a href=&quot;#Function&quot; class=&quot;headerlink&quot; titl
-      
-    
-    </summary>
-    
-      <category term="Testing" scheme="https://sulangsss.github.io/categories/Testing/"/>
-    
-      <category term="Stress" scheme="https://sulangsss.github.io/categories/Testing/Stress/"/>
-    
-    
-      <category term="Testing" scheme="https://sulangsss.github.io/tags/Testing/"/>
-    
-      <category term="Stress" scheme="https://sulangsss.github.io/tags/Stress/"/>
-    
-      <category term="wrk" scheme="https://sulangsss.github.io/tags/wrk/"/>
     
   </entry>
   
