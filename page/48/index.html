@@ -514,164 +514,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/DB/MySQL/Backup/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/27/DB/MySQL/Backup/" itemprop="url">MySQL 备份</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T11:55:07+08:00">
-                2017-10-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="mysqlpump"><a href="#mysqlpump" class="headerlink" title="mysqlpump"></a>mysqlpump</h2><p>命令参考链接</p>
-<p><a href="http://www.ywnds.com/?p=7272" target="_blank" rel="noopener">http://www.ywnds.com/?p=7272</a><br>官方文档</p>
-<p><a href="https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html</a></p>
-<h3 id="备份脚本-1-0"><a href="#备份脚本-1-0" class="headerlink" title="备份脚本 1.0"></a>备份脚本 1.0</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/bin/mysqlpump</span><br><span class="line"><span class="comment"># --databases（-B） 数据库名，多个以“，”间隔;</span></span><br><span class="line"><span class="comment"># --set-charset：备份文件里写SET NAMES default_character_set 到输出，此参默认开启。</span></span><br><span class="line"><span class="comment"># --single-transaction：该参数在事务隔离级别设置成Repeatable Read，并在dump之前发送start transaction 语句给服务端。</span></span><br><span class="line"><span class="comment"># --watch-progress：定期显示进度的完成，包括总数表、行和其他对象。该参数默认开启</span></span><br><span class="line"><span class="comment"># --default-parallelism 指定并行线程数，默认是2，如果设置成0，表示不使用并行备份。</span></span><br><span class="line"><span class="comment"># --exclude-tables=database.table 排除指定表，每次指定一张表，如果需要排除多张表，则使用多次即可</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -databases db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
-<h3 id="服务器centos脚本"><a href="#服务器centos脚本" class="headerlink" title="服务器centos脚本"></a>服务器centos脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/usr/bin/mysqlpump</span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -B db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
-<h3 id="恢复数据库"><a href="#恢复数据库" class="headerlink" title="恢复数据库"></a>恢复数据库</h3><h4 id="Centos7"><a href="#Centos7" class="headerlink" title="Centos7"></a>Centos7</h4><p>解压文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zlib_decompress file.zlip mysql.sql</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Linux/Command/mkpasswd/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -784,6 +626,164 @@
 <p>-C 标志定义口令必须包含的最少大写字母个数。缺省值也是2。</p>
 <p>-p 标志标明设立口令的程序。如果/etc/yppasswd存在的话则它为缺省值，否则就用/bin/passwd。</p>
 <h3 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h3><h4 id="建立一个15位包含至少3位数字和5位大写字符的口令"><a href="#建立一个15位包含至少3位数字和5位大写字符的口令" class="headerlink" title="建立一个15位包含至少3位数字和5位大写字符的口令"></a>建立一个15位包含至少3位数字和5位大写字符的口令</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkpasswd -l 15 -d 3 -C 5</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/DB/MySQL/Backup/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/27/DB/MySQL/Backup/" itemprop="url">MySQL 备份</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T11:55:07+08:00">
+                2017-10-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="mysqlpump"><a href="#mysqlpump" class="headerlink" title="mysqlpump"></a>mysqlpump</h2><p>命令参考链接</p>
+<p><a href="http://www.ywnds.com/?p=7272" target="_blank" rel="noopener">http://www.ywnds.com/?p=7272</a><br>官方文档</p>
+<p><a href="https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html</a></p>
+<h3 id="备份脚本-1-0"><a href="#备份脚本-1-0" class="headerlink" title="备份脚本 1.0"></a>备份脚本 1.0</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/bin/mysqlpump</span><br><span class="line"><span class="comment"># --databases（-B） 数据库名，多个以“，”间隔;</span></span><br><span class="line"><span class="comment"># --set-charset：备份文件里写SET NAMES default_character_set 到输出，此参默认开启。</span></span><br><span class="line"><span class="comment"># --single-transaction：该参数在事务隔离级别设置成Repeatable Read，并在dump之前发送start transaction 语句给服务端。</span></span><br><span class="line"><span class="comment"># --watch-progress：定期显示进度的完成，包括总数表、行和其他对象。该参数默认开启</span></span><br><span class="line"><span class="comment"># --default-parallelism 指定并行线程数，默认是2，如果设置成0，表示不使用并行备份。</span></span><br><span class="line"><span class="comment"># --exclude-tables=database.table 排除指定表，每次指定一张表，如果需要排除多张表，则使用多次即可</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -databases db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
+<h3 id="服务器centos脚本"><a href="#服务器centos脚本" class="headerlink" title="服务器centos脚本"></a>服务器centos脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/usr/bin/mysqlpump</span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -B db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
+<h3 id="恢复数据库"><a href="#恢复数据库" class="headerlink" title="恢复数据库"></a>恢复数据库</h3><h4 id="Centos7"><a href="#Centos7" class="headerlink" title="Centos7"></a>Centos7</h4><p>解压文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zlib_decompress file.zlip mysql.sql</span><br></pre></td></tr></table></figure></p>
+
           
         
       
