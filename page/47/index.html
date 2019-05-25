@@ -284,6 +284,178 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Command/nohup/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/30/Linux/Command/nohup/" itemprop="url">nohup 命令</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-30T14:17:57+08:00">
+                2017-10-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><img src="/2017/10/30/Linux/Command/nohup/process_session.png">
+<h4 id="进程组"><a href="#进程组" class="headerlink" title="进程组"></a>进程组</h4><p>进程组是一个或多个进程的集合，进程组方便了对多个进程的控制，在进程数较多的情况下，向进程组发送信号就行了。</p>
+<p>它的 ID 由它的组长进程的进程 ID 决定。组长进程创建了进程组，但它并不能决定进程组的存活时间，只要进程组内还有一个进程存在，进程就存在，与组长进程是否已终止无关。</p>
+<h4 id="会话"><a href="#会话" class="headerlink" title="会话"></a>会话</h4><p>会话(session)是一个或多个进程组的集合，它开始于用户登陆终端，结束于用户退出登陆。其义如其名，就是指用户与系统的一次对话的全程。</p>
+<p>会话包括控制进程（与终端建立连接的领头进程），一个前台进程组和任意后台进程组。一个会话只能有一个控制终端，通常是登录到其上的终端设备或伪终端设备，产生在控制终端上的输入和信号将发送给会话的前台进程组中的所有进程。</p>
+<h4 id="控制终端"><a href="#控制终端" class="headerlink" title="控制终端"></a>控制终端</h4><p>每当我们使用终端工具打开一个本地或远程 shell，我们便打开了一个控制终端，通过 ps 命令可以查看到 command 为 ttyn 的就是它对应的进程了，同时它对应 linux /dev/ 目录下的一个文件。</p>
+<h4 id="作业"><a href="#作业" class="headerlink" title="作业"></a>作业</h4><p>作业的概念与进程组类似，同样由一个或多个进程组成，它分为前台作业和后台作业，一个会话会有一个前台作业和多个后台作业，与进程组不同的是，作业内的某个进程产生的子进程并不属于这个作业。</p>
+<h4 id="后台执行"><a href="#后台执行" class="headerlink" title="后台执行"></a>后台执行</h4><p>我们每次在终端窗口执行命令的时候，进程总会一直占用着终端，直到进程结束。这段时间内，我们在终端的输入是没有用的。而且，当终端窗口关闭或网络连接失败后，再次打开终端，会发现进程已经中断了。这是因为用户注销或者网络断开时，SIGHUP信号会被发送到会话所属的子进程，而此 SIGHUP 的默认处理方式是终止收到该信号的进程。所以若程序中没有捕捉该信号，当终端关闭后，会话所属进程就会退出。</p>
+<h3 id="nohup"><a href="#nohup" class="headerlink" title="nohup"></a>nohup</h3><p>我们要实现后台执行的目的，实际上是要完成如下两个目标：</p>
+<ul>
+<li>使进程让出前台终端，让我们可以继续通过终端与系统进行交互。</li>
+<li>使进程不再受终端关闭的影响，即系统在终端关闭后不再向进程发送 SIGHUP 信号或即使发送了信号程序也不会退出。</li>
+</ul>
+<p>涉及两个指令 &amp; 和 nohup</p>
+<ul>
+<li>&amp;：将它附在命令后面可以使进程在后台执行，不会占用前台界面。它实际上是在会话中开启了一个后台作业。但我们会发现，如果此时终端被关闭后，进程还是会退出。这是因为，&amp; 符号只有让进程让出前台终端的功能，无法让进程不受 SIGHUP 信号的影响。</li>
+<li>nohup：使进程不受 SIGHUP 信号的影响。但我们在使用 nohup php test.php 后会发现，进程还会一直占用前台终端，但即使终端被关闭或连接断开了，程序还是会执行，另外我们会发现在当前文件夹下多了个名为 nohup.out 的文件。这是因为 nohup 的功能仅仅是让进程不受 SIGHUP 信号的影响，并不会让出前台终端，而且它还会在命令执行目录下建立 nohup.out 用以存储进程的输出。如果进程不需要输出，且不想让 nohup 创建文件，可以将标准输出和标准错误输出重定向。</li>
+</ul>
+<p>我们常将 nohup 和 &amp; 搭配到一块使用，执行命令如下 nohup command &gt;/dev/null 2&gt;&amp;1 &amp; 这样，就可以放心的等待进程运行结果了。</p>
+<p>参考链接：<a href="http://www.cnblogs.com/zhenbianshu/p/7152327.html" target="_blank" rel="noopener">http://www.cnblogs.com/zhenbianshu/p/7152327.html</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/30/Linux/Tools/aria2/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1182,6 +1354,166 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/29/Linux/Software/kernel/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/29/Linux/Software/kernel/" itemprop="url">内核管理</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-29T17:03:27+08:00">
+                2017-10-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/software/" itemprop="url" rel="index">
+                    <span itemprop="name">software</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Centos-7"><a href="#Centos-7" class="headerlink" title="Centos 7"></a>Centos 7</h2><h3 id="安装软件仓库EL"><a href="#安装软件仓库EL" class="headerlink" title="安装软件仓库EL"></a>安装软件仓库EL</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org</span><br><span class="line">rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm</span><br></pre></td></tr></table></figure>
+<h3 id="安装内核"><a href="#安装内核" class="headerlink" title="安装内核"></a>安装内核</h3><p>列出当前可用内核<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum --enablerepo=elrepo-kernel  list  |grep kernel*</span><br></pre></td></tr></table></figure></p>
+<p>查看当前内核版本<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">uname -a</span><br></pre></td></tr></table></figure></p>
+<p>安装主线内核版本<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum --enablerepo=elrepo-kernel install -y  kernel-ml-devel kernel-ml</span><br></pre></td></tr></table></figure></p>
+<p>安装长期支持版本<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum --enablerepo=elrepo-kernel install -y kernel<span class="_">-lt</span>-devel kernel<span class="_">-lt</span></span><br></pre></td></tr></table></figure></p>
+<p>注：ml = mainline，lt = longterm</p>
+<h3 id="系统启动顺序"><a href="#系统启动顺序" class="headerlink" title="系统启动顺序"></a>系统启动顺序</h3><p>查看当前启动顺序<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo awk -F\<span class="string">' '</span><span class="variable">$1</span>==<span class="string">"menuentry "</span> &#123;<span class="built_in">print</span> <span class="variable">$2</span>&#125;<span class="string">' /etc/grub2.cfg</span></span><br></pre></td></tr></table></figure></p>
+<p>修改启动顺序<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo grub2-set-default 0</span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/29/Linux/Software/cloud-disk/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1336,7 +1668,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/29/Linux/Software/kernel/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log-config/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1355,7 +1687,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/29/Linux/Software/kernel/" itemprop="url">内核管理</a></h2>
+                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log-config/" itemprop="url">Django Log 配置信息</a></h2>
         
 
         <div class="post-meta">
@@ -1367,8 +1699,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-29T17:03:27+08:00">
-                2017-10-29
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
+                2017-10-27
               </time>
             
 
@@ -1390,8 +1722,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
                   </a>
                 </span>
 
@@ -1401,8 +1733,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/software/" itemprop="url" rel="index">
-                    <span itemprop="name">software</span>
+                  <a href="/categories/python/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
                   </a>
                 </span>
 
@@ -1440,14 +1772,9 @@
       
         
           
-            <h2 id="Centos-7"><a href="#Centos-7" class="headerlink" title="Centos 7"></a>Centos 7</h2><h3 id="安装软件仓库EL"><a href="#安装软件仓库EL" class="headerlink" title="安装软件仓库EL"></a>安装软件仓库EL</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org</span><br><span class="line">rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm</span><br></pre></td></tr></table></figure>
-<h3 id="安装内核"><a href="#安装内核" class="headerlink" title="安装内核"></a>安装内核</h3><p>列出当前可用内核<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum --enablerepo=elrepo-kernel  list  |grep kernel*</span><br></pre></td></tr></table></figure></p>
-<p>查看当前内核版本<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">uname -a</span><br></pre></td></tr></table></figure></p>
-<p>安装主线内核版本<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum --enablerepo=elrepo-kernel install -y  kernel-ml-devel kernel-ml</span><br></pre></td></tr></table></figure></p>
-<p>安装长期支持版本<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum --enablerepo=elrepo-kernel install -y kernel<span class="_">-lt</span>-devel kernel<span class="_">-lt</span></span><br></pre></td></tr></table></figure></p>
-<p>注：ml = mainline，lt = longterm</p>
-<h3 id="系统启动顺序"><a href="#系统启动顺序" class="headerlink" title="系统启动顺序"></a>系统启动顺序</h3><p>查看当前启动顺序<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo awk -F\<span class="string">' '</span><span class="variable">$1</span>==<span class="string">"menuentry "</span> &#123;<span class="built_in">print</span> <span class="variable">$2</span>&#125;<span class="string">' /etc/grub2.cfg</span></span><br></pre></td></tr></table></figure></p>
-<p>修改启动顺序<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo grub2-set-default 0</span><br></pre></td></tr></table></figure></p>
+            <p>生产环境配置(包含了Sentry配置)，日志分割管理建议使用logrotate</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">LOGGING = &#123;</span><br><span class="line">    'version': 1,</span><br><span class="line">    'disable_existing_loggers': True,</span><br><span class="line">    'root': &#123;</span><br><span class="line">        'level': 'WARNING',</span><br><span class="line">        'handlers': ['sentry']</span><br><span class="line">    &#125;,</span><br><span class="line">    'formatters': &#123;</span><br><span class="line">        'verbose': &#123;</span><br><span class="line">            'format': '[%(levelname)s]%(asctime)s--[module:%(module)s, process:%(process)d, thread:%(thread)d]--'</span><br><span class="line">                      '[filename:%(filename)s][funcName:%(funcName)s]: %(message)s'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'handlers': &#123;</span><br><span class="line">        'sentry': &#123;</span><br><span class="line">            'level': 'ERROR',  # To capture more than ERROR, change to WARNING, INFO, etc.</span><br><span class="line">            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'console': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.StreamHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'file': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'class': 'logging.FileHandler',</span><br><span class="line">            'filename': './log/prod.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'loggers': &#123;</span><br><span class="line">        'root': &#123;</span><br><span class="line">            'level': 'ERROR',</span><br><span class="line">            'handlers': ['sentry']</span><br><span class="line">        &#125;,</span><br><span class="line">        'django': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'handlers': ['file', 'console', 'sentry'],</span><br><span class="line">            'propagate': True</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果日志文件需要自动分割，则file使用下面的配置<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">'file': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.handlers.RotatingFileHandler',</span><br><span class="line">            'maxBytes': 1024 * 1024 * 10,  # 文件大小</span><br><span class="line">            'backupCount': 5,  # 备份份数</span><br><span class="line">            'filename': './log/debug.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
 
           
         
@@ -1654,340 +1981,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log/" itemprop="url">Django Log</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
-                2017-10-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="Logging"><a href="#Logging" class="headerlink" title="Logging"></a>Logging</h2><p>Python logging 主要有以下四部分组成:</p>
-<ol>
-<li>Loggers</li>
-<li>Handlers</li>
-<li>Filters</li>
-<li>Formatters</li>
-</ol>
-<h3 id="Loggers"><a href="#Loggers" class="headerlink" title="Loggers"></a>Loggers</h3><p>A logger is the entry point into the logging system. Each logger is a named bucket to which messages can be written for processing.</p>
-<p>log leve: DEBUG -&gt; INFO -&gt; WARNING -&gt; ERROR -&gt; CRITICAL</p>
-<ul>
-<li>DEBUG: Low level system information for debugging purposes</li>
-<li>INFO: General system information</li>
-<li>WARNING: Information describing a minor problem that has occurred.</li>
-<li>ERROR: Information describing a major problem that has occurred.</li>
-<li>CRITICAL: Information describing a critical problem that has occurred.</li>
-</ul>
-<p>message log’level &lt;= logger’level 消息才会被logger接收，logger会把消息传递给Handler进行处理</p>
-<hr>
-<h3 id="Handlers"><a href="#Handlers" class="headerlink" title="Handlers"></a>Handlers</h3><p>The handler is the engine that determines what happens to each message in a logger. It describes a particular logging behavior, such as writing a message to the screen, to a file, or to a network socket.</p>
-<p>同Logger一样，Handler也会检查message log’level，Logger可以有多个Handler，例如，</p>
-<hr>
-<h3 id="Filters"><a href="#Filters" class="headerlink" title="Filters"></a>Filters</h3><p>A filter is used to provide additional control over which log records are passed from logger to handler.</p>
-<p>Filters can be installed on loggers or on handlers; multiple filters can be used in a chain to perform multiple filtering actions.</p>
-<hr>
-<h3 id="Formatters"><a href="#Formatters" class="headerlink" title="Formatters"></a>Formatters</h3><p>Formatters describe the exact format of that text.</p>
-<p>logrecord-attributes：<a href="https://docs.python.org/3/library/logging.html#logrecord-attributes" target="_blank" rel="noopener">https://docs.python.org/3/library/logging.html#logrecord-attributes</a></p>
-<h3 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h3><h4 id="disable-existing-loggers"><a href="#disable-existing-loggers" class="headerlink" title="disable_existing_loggers"></a>disable_existing_loggers</h4><p>If the disable_existing_loggers key in the LOGGING dictConfig is set to True (which is the default) then all loggers from the default configuration will be disabled. Disabled loggers are not the same as removed; the logger will still exist, but will silently discard anything logged to it, not even propagating entries to a parent logger. Thus you should be very careful using ‘disable_existing_loggers’: True; it’s probably not what you want. Instead, you can set disable_existing_loggers to False and redefine some or all of the default loggers; or you can set LOGGING_CONFIG to None and handle logging config yourself.</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log-config/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log-config/" itemprop="url">Django Log 配置信息</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
-                2017-10-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>生产环境配置(包含了Sentry配置)，日志分割管理建议使用logrotate</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">LOGGING = &#123;</span><br><span class="line">    'version': 1,</span><br><span class="line">    'disable_existing_loggers': True,</span><br><span class="line">    'root': &#123;</span><br><span class="line">        'level': 'WARNING',</span><br><span class="line">        'handlers': ['sentry']</span><br><span class="line">    &#125;,</span><br><span class="line">    'formatters': &#123;</span><br><span class="line">        'verbose': &#123;</span><br><span class="line">            'format': '[%(levelname)s]%(asctime)s--[module:%(module)s, process:%(process)d, thread:%(thread)d]--'</span><br><span class="line">                      '[filename:%(filename)s][funcName:%(funcName)s]: %(message)s'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'handlers': &#123;</span><br><span class="line">        'sentry': &#123;</span><br><span class="line">            'level': 'ERROR',  # To capture more than ERROR, change to WARNING, INFO, etc.</span><br><span class="line">            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'console': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.StreamHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'file': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'class': 'logging.FileHandler',</span><br><span class="line">            'filename': './log/prod.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'loggers': &#123;</span><br><span class="line">        'root': &#123;</span><br><span class="line">            'level': 'ERROR',</span><br><span class="line">            'handlers': ['sentry']</span><br><span class="line">        &#125;,</span><br><span class="line">        'django': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'handlers': ['file', 'console', 'sentry'],</span><br><span class="line">            'propagate': True</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果日志文件需要自动分割，则file使用下面的配置<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">'file': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.handlers.RotatingFileHandler',</span><br><span class="line">            'maxBytes': 1024 * 1024 * 10,  # 文件大小</span><br><span class="line">            'backupCount': 5,  # 备份份数</span><br><span class="line">            'filename': './log/debug.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2039,7 +2032,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">537</span>
+                <span class="site-state-item-count">538</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2061,7 +2054,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">593</span>
+                <span class="site-state-item-count">594</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

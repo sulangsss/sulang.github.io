@@ -284,6 +284,202 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/28/Java/Advance/Memory/FalseSharing/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/28/Java/Advance/Memory/FalseSharing/" itemprop="url">False Sharing</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-28T16:13:06+08:00">
+                2019-01-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/Memory/" itemprop="url" rel="index">
+                    <span itemprop="name">Memory</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看清楚是否会出现伪共享。 </p>
+<p>为了让可伸缩性与线程数呈线性关系，就必须确保不会有两个线程往同一个变量或缓存行中写。两个线程写同一个变量可以在代码中发现。为了确定互相独立的变量是否共享了同一个缓存行，就需要了解内存布局。</p>
+<hr>
+<img src="/2019/01/28/Java/Advance/Memory/FalseSharing/cache-line.png">
+<p>在核心1上运行的线程想更新变量X，同时核心2上的线程想要更新变量Y。不幸的是，这两个变量在同一个缓存行中。每个线程都要去竞争缓存行的所有权来更新变量。如果核心1获得了所有权，缓存子系统将会使核心2中对应的缓存行失效。当核心2获得了所有权然后执行更新操作，核心1就要使自己对应的缓存行失效。这会来来回回的经过L3缓存，大大影响了性能。如果互相竞争的核心位于不同的插槽，就要额外横跨插槽连接，问题可能更加严重。 </p>
+<hr>
+<h3 id="Java-Memory-Layout"><a href="#Java-Memory-Layout" class="headerlink" title="Java Memory Layout"></a>Java Memory Layout</h3><p>对于HotSpot JVM(32位)，所有对象都有两个字(32位 + 32位)的对象头：</p>
+<ul>
+<li>第一个字是由24位哈希码和8位标志位（如锁的状态或作为锁对象）组成的Mark Word。</li>
+<li>第二个字是对象所属类的引用(如果是数组对象还需要一个额外的字来存储数组的长度)。</li>
+</ul>
+<p>每个对象的起始地址都对齐于8字节以提高性能。因此当封装对象的时候为了高效率，对象字段声明的顺序会被重排序成下列基于字节大小的顺序：</p>
+<ul>
+<li>doubles (8) 和 longs (8)</li>
+<li>ints (4) 和 floats (4)</li>
+<li>shorts (2) 和 chars (2)</li>
+<li>booleans (1) 和 bytes (1)</li>
+<li>references (4/8)</li>
+</ul>
+<hr>
+<h3 id="Performance-Testing"><a href="#Performance-Testing" class="headerlink" title="Performance Testing"></a>Performance Testing</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VolatileLong</span>(</span></span><br><span class="line"><span class="class">    @<span class="title">Volatile</span></span></span><br><span class="line">    var value: Long = 0</span><br><span class="line">) &#123;</span><br><span class="line">   <span class="comment">// if comment below code, happen false sharing</span></span><br><span class="line">   var p1: Long = <span class="number">0</span></span><br><span class="line">   var p2: Long = <span class="number">0</span></span><br><span class="line">   var p3: Long = <span class="number">0</span></span><br><span class="line">   var p4: Long = <span class="number">0</span></span><br><span class="line">   var p5: Long = <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FalseSharing</span>(</span></span><br><span class="line">    private val threadCount: Int = 4,</span><br><span class="line">    <span class="keyword">private</span> val loopTimes: Long = <span class="number">500</span> * <span class="number">1000L</span> * <span class="number">1000L</span></span><br><span class="line">) &#123;</span><br><span class="line">    <span class="keyword">private</span> val vlongs: Array&lt;VolatileLong&gt; = Array(threadCount) &#123; VolatileLong() &#125;</span><br><span class="line">    <span class="keyword">private</span> val threads = arrayListOf&lt;Thread&gt;()</span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (index in <span class="number">0</span> until threadCount) &#123;</span><br><span class="line">            threads.add(thread &#123;</span><br><span class="line">                <span class="comment">//  println("Thread $&#123;Thread.currentThread().id&#125; start")</span></span><br><span class="line">                var end = loopTimes + index</span><br><span class="line">                <span class="keyword">while</span> (end != <span class="number">0L</span>) &#123;</span><br><span class="line">                    vlongs[index].value = end</span><br><span class="line">                    end -= <span class="number">1</span></span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">//  println("Thread $&#123;Thread.currentThread().id&#125; stop")</span></span><br><span class="line">            &#125;)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (thread in threads) &#123;</span><br><span class="line">            thread.join()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//  50亿</span></span><br><span class="line">    val times = <span class="number">500</span> * <span class="number">1000L</span> * <span class="number">1000L</span></span><br><span class="line">    val begin = System.currentTimeMillis()</span><br><span class="line">    FalseSharing(loopTimes = times).start()</span><br><span class="line">    val end = System.currentTimeMillis()</span><br><span class="line">    println(<span class="string">"consume time ($times): $&#123;end - begin&#125;"</span>)</span><br><span class="line">    <span class="comment">//  no false sharing: consume time (500000000): 3278 ms</span></span><br><span class="line">    <span class="comment">//  false sharing: consume time (500000000): 44364</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Code-Tools-jol"><a href="#Code-Tools-jol" class="headerlink" title="Code Tools: jol"></a>Code Tools: jol</h3><p>JOL (Java Object Layout) is the tiny toolbox to analyze object layout schemes in JVMs.</p>
+<h4 id="Command-Line-Tool"><a href="#Command-Line-Tool" class="headerlink" title="Command Line Tool"></a>Command Line Tool</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">java -jar jol-cli-0.9-full.jar internals java.lang.Long</span><br><span class="line"></span><br><span class="line"><span class="comment"># Running 64-bit HotSpot VM.</span></span><br><span class="line"><span class="comment"># Using compressed oop with 3-bit shift.</span></span><br><span class="line"><span class="comment"># Using compressed klass with 3-bit shift.</span></span><br><span class="line"><span class="comment"># WARNING | Compressed references base/shifts are guessed by the experiment!</span></span><br><span class="line"><span class="comment"># WARNING | Therefore, computed addresses are just guesses, and ARE NOT RELIABLE.</span></span><br><span class="line"><span class="comment"># WARNING | Make sure to attach Serviceability Agent to get the reliable addresses.</span></span><br><span class="line"><span class="comment"># Objects are 8 bytes aligned.</span></span><br><span class="line"><span class="comment"># Field sizes by type: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]</span></span><br><span class="line"><span class="comment"># Array element sizes: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]</span></span><br><span class="line"></span><br><span class="line">Instantiated the sample instance via public java.lang.Long(long)</span><br><span class="line"></span><br><span class="line">java.lang.Long object internals:</span><br><span class="line"> OFFSET  SIZE   TYPE DESCRIPTION                               VALUE</span><br><span class="line">      0     4        (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)</span><br><span class="line">      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)</span><br><span class="line">      8     4        (object header)                           f4 22 00 f8 (11110100 00100010 00000000 11111000) (-134208780)</span><br><span class="line">     12     4        (alignment/padding gap)                  </span><br><span class="line">     16     8   long Long.value                                0</span><br><span class="line">Instance size: 24 bytes</span><br><span class="line">Space losses: 4 bytes internal + 0 bytes external = 4 bytes total</span><br></pre></td></tr></table></figure>
+<h4 id="Code"><a href="#Code" class="headerlink" title="Code"></a>Code</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.openjdk.jol<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jol-core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>0.9<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VolatileLong</span>(</span></span><br><span class="line"><span class="class">    @<span class="title">Volatile</span></span></span><br><span class="line">    var value: Long = 0</span><br><span class="line">) &#123;</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    var p1: Long = 0</span></span><br><span class="line"><span class="comment">    var p2: Long = 0</span></span><br><span class="line"><span class="comment">    var p3: Long = 0</span></span><br><span class="line"><span class="comment">    var p4: Long = 0</span></span><br><span class="line"><span class="comment">    var p5: Long = 0</span></span><br><span class="line"><span class="comment">    var p6: Long = 0</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    println(VM.current().details())</span><br><span class="line">    println(ClassLayout.parseClass(VolatileLong::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>).<span class="title">toPrintable</span>())</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope</span></span><br><span class="line"><span class="comment"># Running 64-bit HotSpot VM.</span></span><br><span class="line"><span class="comment"># Using compressed oop with 3-bit shift.</span></span><br><span class="line"><span class="comment"># Using compressed klass with 3-bit shift.</span></span><br><span class="line"><span class="comment"># WARNING | Compressed references base/shifts are guessed by the experiment!</span></span><br><span class="line"><span class="comment"># WARNING | Therefore, computed addresses are just guesses, and ARE NOT RELIABLE.</span></span><br><span class="line"><span class="comment"># WARNING | Make sure to attach Serviceability Agent to get the reliable addresses.</span></span><br><span class="line"><span class="comment"># Objects are 8 bytes aligned.</span></span><br><span class="line"><span class="comment"># Field sizes by type: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]</span></span><br><span class="line"><span class="comment"># Array element sizes: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]</span></span><br><span class="line"></span><br><span class="line">com.demo.falsesharing.VolatileLong object internals:</span><br><span class="line"> OFFSET  SIZE   TYPE DESCRIPTION                               VALUE</span><br><span class="line">      0    12        (object header)                           N/A</span><br><span class="line">     12     4        (alignment/padding gap)                  </span><br><span class="line">     16     8   long VolatileLong.value                        N/A</span><br><span class="line">Instance size: 24 bytes</span><br><span class="line">Space losses: 4 bytes internal + 0 bytes external = 4 bytes total</span><br></pre></td></tr></table></figure>
+<p>如果希望VolatileLong在一个cache line上，可以修改为</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VolatileLong</span>(</span></span><br><span class="line"><span class="class">    @<span class="title">Volatile</span></span></span><br><span class="line">    var value: Long = 0</span><br><span class="line">) &#123;</span><br><span class="line">    var p1: Long = <span class="number">0</span></span><br><span class="line">    var p2: Long = <span class="number">0</span></span><br><span class="line">    var p3: Long = <span class="number">0</span></span><br><span class="line">    var p4: Long = <span class="number">0</span></span><br><span class="line">    var p5: Long = <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    println(VM.current().details())</span><br><span class="line">    println(ClassLayout.parseClass(VolatileLong::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>).<span class="title">toPrintable</span>())</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">com.demo.falsesharing.VolatileLong object internals:</span><br><span class="line"> OFFSET  SIZE   TYPE DESCRIPTION                               VALUE</span><br><span class="line">      0    12        (object header)                           N/A</span><br><span class="line">     12     4        (alignment/padding gap)                  </span><br><span class="line">     16     8   long VolatileLong.p1                           N/A</span><br><span class="line">     24     8   long VolatileLong.p2                           N/A</span><br><span class="line">     32     8   long VolatileLong.p3                           N/A</span><br><span class="line">     40     8   long VolatileLong.p4                           N/A</span><br><span class="line">     48     8   long VolatileLong.p5                           N/A</span><br><span class="line">     56     8   long VolatileLong.value                        N/A</span><br><span class="line">Instance size: 64 bytes</span><br><span class="line">Space losses: 4 bytes internal + 0 bytes external = 4 bytes total</span><br></pre></td></tr></table></figure>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://mechanical-sympathy.blogspot.com/2011/07/false-sharing.html" target="_blank" rel="noopener">https://mechanical-sympathy.blogspot.com/2011/07/false-sharing.html</a><br><a href="http://openjdk.java.net/projects/code-tools/jol/" target="_blank" rel="noopener">http://openjdk.java.net/projects/code-tools/jol/</a><br><a href="http://ifeve.com/falsesharing/" target="_blank" rel="noopener">http://ifeve.com/falsesharing/</a><br><a href="http://hg.openjdk.java.net/code-tools/jol/file/tip/jol-samples/src/main/java/org/openjdk/jol/samples/" target="_blank" rel="noopener">http://hg.openjdk.java.net/code-tools/jol/file/tip/jol-samples/src/main/java/org/openjdk/jol/samples/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/28/读书笔记/行业/金融/金融思维/1.2 Inflation/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2100,216 +2296,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/05/Java/Advance/off-heap memory/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/01/05/Java/Advance/off-heap memory/" itemprop="url">堆外内存(off-heap memory)</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-05T23:35:06+08:00">
-                2019-01-05
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
-                    <span itemprop="name">Advance</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>堆外内存就是把内存对象分配在Java虚拟机的堆以外的内存，这些内存直接受操作系统管理(不是虚拟机)，这样做的结果就是能够在一定程度上减少垃圾回收对应用程序造成的影响。</p>
-<p>我们经常用 java.nio.DirectByteBuffer 对象进行堆外内存的管理和使用，它会在对象创建的时候就分配堆外内存。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ByteBuffer buffer = ByteBuffer.allocateDirect(numBytes);</span><br></pre></td></tr></table></figure>
-<p>当内存不够时候，会抛出 java.lang.OutOfMemoryError: Direct buffer memory 异常。</p>
-<p>堆外内存的优点：</p>
-<ul>
-<li>减少了垃圾回收。因为垃圾回收会暂停其他的工作。</li>
-<li>加快了复制的速度。堆内存在flush到远程时，会先复制到直接内存(非堆内存)，然后在发送。而堆外内存直接发送，不需要复制。</li>
-</ul>
-<p>堆外内存的缺点：</p>
-<ul>
-<li>内存难以控制，使用了堆外内存就间接失去了JVM管理内存的可行性，改由自己来管理，当发生内存溢出时排查起来非常困难。</li>
-</ul>
-<hr>
-<h3 id="Notices"><a href="#Notices" class="headerlink" title="Notices"></a>Notices</h3><p>java.nio.DirectByteBuffer 对象在创建过程中会先通过Unsafe接口直接通过os::malloc来分配内存，然后将内存的起始地址和大小存到 java.nio.DirectByteBuffer 对象里，这样就可以直接操作这些内存。</p>
-<p>这些内存只有在 DirectByteBuffer 对象回收掉之后才有机会被回收，因此如果这些对象大部分都移到了old，但是一直没有触发 CMS GC 或者 Full GC，那么悲剧将会发生，因为你的物理内存被他们耗尽，因此为了避免这种悲剧的发生，通过-XX:MaxDirectMemorySize来指定最大的堆外内存大小，当使用达到了阈值的时候将调用System.gc来做一次 Full GC 来回收掉没有被使用的堆外内存。</p>
-<blockquote>
-<p>前提是没有启用DisableExplicitGC</p>
-</blockquote>
-<p>在写NIO程序经常使用ByteBuffer来读取或者写入数据，那么使用 ByteBuffer.allocate(capability) 还是使用 ByteBuffer.allocteDirect(capability) 来分配缓存了？</p>
-<p>第一种方式是分配JVM堆内存，属于GC管辖范围，由于需要拷贝所以速度相对较慢；第二种方式是分配OS本地内存，不属于GC管辖范围，由于不需要内存拷贝所以速度相对较快。</p>
-<hr>
-<h3 id="回收方法"><a href="#回收方法" class="headerlink" title="回收方法"></a>回收方法</h3><ol>
-<li>Full GC，一般发生在年老代垃圾回收以及调用System.gc的时候。</li>
-<li>调用ByteBuffer的cleaner的clean()，内部还是调用System.gc()，所以一定不要-XX:+DisableExplicitGC。</li>
-</ol>
-<hr>
-<h3 id="ByteBuffer的堆外内存回收"><a href="#ByteBuffer的堆外内存回收" class="headerlink" title="ByteBuffer的堆外内存回收"></a>ByteBuffer的堆外内存回收</h3><h4 id="Allocate-And-Free-By-GC"><a href="#Allocate-And-Free-By-GC" class="headerlink" title="Allocate And Free By GC"></a>Allocate And Free By GC</h4><p>JVM Options: -Xms128m -Xmx128m -XX:MaxDirectMemorySize=40M -XX:+PrintGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">fun <span class="title">main</span><span class="params">(args: Array&lt;String&gt;)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        val buffer = ByteBuffer.allocateDirect(<span class="number">8</span> * <span class="number">1024</span> * <span class="number">1024</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">2019-01-06T00:14:39.446-0800: [GC (System.gc()) [PSYoungGen: 3370K-&gt;688K(38400K)] 3370K-&gt;696K(125952K), 0.0007600 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] </span><br><span class="line">2019-01-06T00:14:39.447-0800: [Full GC (System.gc()) [PSYoungGen: 688K-&gt;0K(38400K)] [ParOldGen: 8K-&gt;475K(87552K)] 696K-&gt;475K(125952K), [Metaspace: 3335K-&gt;3335K(1056768K)], 0.0036042 secs] [Times: user=0.02 sys=0.00, real=0.01 secs] </span><br><span class="line"></span><br><span class="line">2019-01-06T00:14:39.485-0800: [GC (System.gc()) [PSYoungGen: 681K-&gt;128K(38400K)] 1157K-&gt;611K(125952K), 0.0006844 secs] [Times: user=0.01 sys=0.00, real=0.00 secs] </span><br><span class="line">2019-01-06T00:14:39.486-0800: [Full GC (System.gc()) [PSYoungGen: 128K-&gt;0K(38400K)] [ParOldGen: 483K-&gt;444K(87552K)] 611K-&gt;444K(125952K), [Metaspace: 3339K-&gt;3339K(1056768K)], 0.0039458 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]</span><br></pre></td></tr></table></figure>
-<hr>
-<h4 id="Allocate-Failure"><a href="#Allocate-Failure" class="headerlink" title="Allocate Failure"></a>Allocate Failure</h4><p>JVM Options: 同上</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">fun <span class="title">main</span><span class="params">(args: Array&lt;String&gt;)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">//  allocate 50M</span></span><br><span class="line">        val buffer = ByteBuffer.allocateDirect(<span class="number">50</span> * <span class="number">1024</span> * <span class="number">1024</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>抛出异常<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread <span class="string">"main"</span> java.lang.OutOfMemoryError: Direct buffer memory</span><br><span class="line">	at java.nio.Bits.reserveMemory(Bits.java:<span class="number">694</span>)</span><br><span class="line">	at java.nio.DirectByteBuffer.&lt;init&gt;(DirectByteBuffer.java:<span class="number">123</span>)</span><br><span class="line">	at java.nio.ByteBuffer.allocateDirect(ByteBuffer.java:<span class="number">311</span>)</span><br><span class="line">	at com.demo.bytebuffer.AllocateByteBufferKt.main(AllocateByteBuffer.kt:<span class="number">14</span>)</span><br></pre></td></tr></table></figure></p>
-<hr>
-<h4 id="XX-DisableExplicitGC"><a href="#XX-DisableExplicitGC" class="headerlink" title="-XX:+DisableExplicitGC"></a>-XX:+DisableExplicitGC</h4><p>JVM Options: JVM Options: -Xms128m -Xmx128m -XX:MaxDirectMemorySize=40M -XX:+DisableExplicitGC -XX:+PrintGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">fun <span class="title">main</span><span class="params">(args: Array&lt;String&gt;)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">//  allocate 50M</span></span><br><span class="line">        val buffer = ByteBuffer.allocateDirect(<span class="number">8</span> * <span class="number">1024</span> * <span class="number">1024</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>抛出异常<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread <span class="string">"main"</span> java.lang.OutOfMemoryError: Direct buffer memory</span><br><span class="line">	at java.nio.Bits.reserveMemory(Bits.java:<span class="number">694</span>)</span><br><span class="line">	at java.nio.DirectByteBuffer.&lt;init&gt;(DirectByteBuffer.java:<span class="number">123</span>)</span><br><span class="line">	at java.nio.ByteBuffer.allocateDirect(ByteBuffer.java:<span class="number">311</span>)</span><br><span class="line">	at com.demo.bytebuffer.AllocateByteBufferKt.main(AllocateByteBuffer.kt:<span class="number">14</span>)</span><br></pre></td></tr></table></figure></p>
-<p>结果说明，NIO的DirectMemory回收需要依赖于System.gc()</p>
-<p>从DirectByteBuffer的源码可知，ByteBuffer.allocateDirect()会调用Bits.reservedMemory()方法，在该方法中显示调用了System.gc()用户内存回收，如果-XX:+DisableExplicitGC打开，则让System.gc()无效，内存无法有效回收而导致OOM。</p>
-<p>Direct Memory是受GC控制的。例如，ByteBuffer bb = ByteBuffer.allocateDirect(1024)，这段代码的执行会在堆外占用1k的内存，Java堆内只会占用一个对象的指针引用的大小，堆外的这1k的空间只有当bb对象被回收时，才会被回收，这里会发现一个明显的不对称现象，就是堆外可能占用了很多，而堆内没占用多少，导致还没触发GC，那就很容易出现Direct Memory造成物理内存耗光。</p>
-<hr>
-<h4 id="Free-ByteBuffer-By-Manual-Control"><a href="#Free-ByteBuffer-By-Manual-Control" class="headerlink" title="Free ByteBuffer By Manual Control"></a>Free ByteBuffer By Manual Control</h4><p>JVM Options: 同上</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">val buffer = ByteBuffer.allocateDirect(<span class="number">40</span> * <span class="number">1024</span> * <span class="number">1024</span>)</span><br><span class="line">TimeUnit.SECONDS.sleep(<span class="number">3</span>)</span><br><span class="line">(buffer as DirectBuffer).cleaner().clean()</span><br><span class="line">TimeUnit.SECONDS.sleep(<span class="number">3</span>)</span><br><span class="line">println(<span class="string">"free is ok"</span>)</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="开源堆外缓存框架"><a href="#开源堆外缓存框架" class="headerlink" title="开源堆外缓存框架"></a>开源堆外缓存框架</h3><ul>
-<li>Ehcache 3.0</li>
-<li>Chronical Map：OpenHFT包括很多类库，使用这些类库很少产生垃圾，并且应用程序使用这些类库后也很少发生Minor GC。类库主要包括：Chronicle Map，Chronicle Queue等等。</li>
-<li>OHC</li>
-</ul>
-<hr>
-<h3 id="Summary-of-understanding-“-XX-MaxDirectMemorySize”-setting"><a href="#Summary-of-understanding-“-XX-MaxDirectMemorySize”-setting" class="headerlink" title="Summary of understanding “-XX:MaxDirectMemorySize” setting"></a>Summary of understanding “-XX:MaxDirectMemorySize” setting</h3><blockquote>
-<p><a href="https://developer.ibm.com/answers/questions/398383/summary-of-understanding-xxmaxdirectmemorysize-set/" target="_blank" rel="noopener">https://developer.ibm.com/answers/questions/398383/summary-of-understanding-xxmaxdirectmemorysize-set/</a></p>
-</blockquote>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://www.cnblogs.com/duanxz/p/6089485.html" target="_blank" rel="noopener">https://www.cnblogs.com/duanxz/p/6089485.html</a><br><a href="https://www.jianshu.com/p/50be08b54bee" target="_blank" rel="noopener">https://www.jianshu.com/p/50be08b54bee</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2361,7 +2347,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">537</span>
+                <span class="site-state-item-count">538</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2383,7 +2369,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">593</span>
+                <span class="site-state-item-count">594</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
