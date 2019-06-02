@@ -284,6 +284,1352 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/25/Security/Web/Replay-Attack/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/25/Security/Web/Replay-Attack/" itemprop="url">重放攻击 Replay Attack</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-25T13:05:06+08:00">
+                2019-01-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Security/" itemprop="url" rel="index">
+                    <span itemprop="name">Security</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Security/Web/" itemprop="url" rel="index">
+                    <span itemprop="name">Web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><img src="/2019/01/25/Security/Web/Replay-Attack/Replay_attack_on_hash.svg.png">
+<p>重放攻击(Replay attack，或重送攻击)是一种网络攻击，指攻击者发送一个目的主机已接收过的包，来达到欺骗系统的目的，主要用于身份认证过程，破坏认证的正确性。</p>
+<p>这种攻击会不断恶意或欺诈性地重复一个有效的数据传输，重放攻击可以由发起者，也可以由拦截并重发该数据的敌方进行。攻击者利用网络监听或者其他方式盗取认证凭据，之后再把它重新发给认证服务器。从这个解释上理解，加密可以有效防止会话劫持，但是却防止不了重放攻击。重放攻击任何网络通讯过程中都可能发生。</p>
+<hr>
+<h3 id="How-to-defend-against-it"><a href="#How-to-defend-against-it" class="headerlink" title="How to defend against it"></a>How to defend against it</h3><h4 id="时间戳"><a href="#时间戳" class="headerlink" title="时间戳"></a>时间戳</h4><p>首先我们认为一次HTTP请求从发出到到达服务器的时间是不会超过60s的，当你发送一个请求时必须携带一个时间戳timestamp。假设值为10，当请求到达服务器之后，服务器会取出当前时间，假设为t2=80,很明显t2 - timestamp &gt; 60s，那么服务器就认为请求不合法。</p>
+<blockquote>
+<p>发送的数据必须带上sign(比如，MD5签名生成的)，避免数据被篡改。</p>
+</blockquote>
+<p>存在的问题是：如果黑客在60s内发起攻击，那么我们就束手无策了。那是不是缩小时间范围就可以解决了？</p>
+<h4 id="时间戳-随机数nonce"><a href="#时间戳-随机数nonce" class="headerlink" title="时间戳 + 随机数nonce"></a>时间戳 + 随机数nonce</h4><p>为了避免上面时间戳的问题，可以加入一个随机数nonce，每次成功请求，服务器会保存当前成功请求的随机数nonce，比如存放在redis和数据库中，当请求再次进到服务器，先验证时间戳是否有效，如果有效，再判断携带的随机数nonce是否在缓存或者数据库中已经存在，如果存在，则认为请求非法。</p>
+<p>但你会发现，如果系统请求非常多，这个存放nonce的redis或者数据库势必会越来越大，因此，我们只需要保存服务器当前时间60秒内的nonce值即可。</p>
+<blockquote>
+<p>前提条件：保证随机数nonce绝对唯一。</p>
+</blockquote>
+<h4 id="序号"><a href="#序号" class="headerlink" title="序号"></a>序号</h4><p>通信双方必须事先协商一个初始序列号，并协商递增方法。然后双方通过消息中的序列号来判断消息的新鲜性。例如，如果nonce=1000已经请求过了，那么nonce&lt;1000的请求都是无效请求。</p>
+<blockquote>
+<p>A single account may have multiple API keys provisioned. In this document, we’ll refer to these as “sessions”. All orders will be recorded with the session that created them. The nonce associated with a request needs to be increasing with respect to the session that the nonce is used on.<br>This allows multithreaded or distributed trading systems to place orders independently of each other, without needing to synchronize clocks to avoid race conditions.<br>In addition, some operations (such as Cancel All Session Orders) act on the orders associated with a specific session.</p>
+</blockquote>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> request = <span class="built_in">require</span>(<span class="string">'request'</span>)</span><br><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> apiKey = <span class="string">'&lt;Your API key here&gt;'</span></span><br><span class="line"><span class="keyword">const</span> apiSecret = <span class="string">'&lt;Your API secret here&gt;'</span></span><br><span class="line"><span class="keyword">const</span> baseUrl = <span class="string">'https://api.xxx.com'</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> url = <span class="string">'/v1/account'</span></span><br><span class="line"><span class="keyword">const</span> nonce = <span class="built_in">Date</span>.now().toString()</span><br><span class="line"><span class="keyword">const</span> completeURL = baseUrl + url</span><br><span class="line"><span class="keyword">const</span> body = &#123;</span><br><span class="line">  request: url,</span><br><span class="line">  nonce</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> payload = <span class="keyword">new</span> Buffer(<span class="built_in">JSON</span>.stringify(body))</span><br><span class="line">	.toString(<span class="string">'base64'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> signature = crypto</span><br><span class="line">  .createHmac(<span class="string">'sha384'</span>, apiSecret)</span><br><span class="line">  .update(payload)</span><br><span class="line">  .digest(<span class="string">'hex'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> options = &#123;</span><br><span class="line">  url: completeURL,</span><br><span class="line">  headers: &#123;</span><br><span class="line">    <span class="string">'X-APIKEY'</span>: apiKey,</span><br><span class="line">    <span class="string">'X-PAYLOAD'</span>: payload,</span><br><span class="line">    <span class="string">'X-SIGNATURE'</span>: signature</span><br><span class="line">  &#125;,</span><br><span class="line">  body: <span class="built_in">JSON</span>.stringify(body)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> request.post(</span><br><span class="line">  options,</span><br><span class="line">  <span class="function"><span class="keyword">function</span>(<span class="params">error, response, body</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'response:'</span>, <span class="built_in">JSON</span>.stringify(body, <span class="number">0</span>, <span class="number">2</span>))</span><br><span class="line">  &#125;</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://blog.csdn.net/heluan123132/article/details/74375304" target="_blank" rel="noopener">https://blog.csdn.net/heluan123132/article/details/74375304</a><br><a href="https://juejin.im/post/5ad43b86f265da239236cedc" target="_blank" rel="noopener">https://juejin.im/post/5ad43b86f265da239236cedc</a><br><a href="https://docs.gemini.com/rest-api/#private-api-invocation" target="_blank" rel="noopener">https://docs.gemini.com/rest-api/#private-api-invocation</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/20/SpringBoot/Exception/HandleException/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/20/SpringBoot/Exception/HandleException/" itemprop="url">优雅处理异常</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-20T23:13:06+08:00">
+                2019-01-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/Exception/" itemprop="url" rel="index">
+                    <span itemprop="name">Exception</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>我们开发的业务系统,或者是产品,常常面临着这样的问题：</p>
+<ul>
+<li>系统运行出错,但是完全不知道错误发生的位置；</li>
+<li>我们找到了错误的位置,但是完全不知道是因为什么；</li>
+<li>系统明明出了错误,但是就是看不到错误堆栈信息。</li>
+</ul>
+<h4 id="什么时候需要自定异常？"><a href="#什么时候需要自定异常？" class="headerlink" title="什么时候需要自定异常？"></a>什么时候需要自定异常？</h4><p>经常看到一些项目，在全局定义一个 AppException，然后所有地方都只抛出这个异常，并且把捕获的异常case到这个AppException中。</p>
+<p>这样做会有如下问题：</p>
+<ul>
+<li>浪费log日志存储空间，并且栈顶并不是最接近发生异常的代码位置；</li>
+<li>只有一种异常类，无法精准区分开异常类型；</li>
+<li>异常类后期难以修改以增加其携带的信息。</li>
+</ul>
+<h4 id="什么情况需要手动处理异常？"><a href="#什么情况需要手动处理异常？" class="headerlink" title="什么情况需要手动处理异常？"></a>什么情况需要手动处理异常？</h4><ul>
+<li>你有能力处理异常，并且你知道如何处理；</li>
+<li>你有责任处理异常。</li>
+</ul>
+<hr>
+<h3 id="如何优雅地处理异常"><a href="#如何优雅地处理异常" class="headerlink" title="如何优雅地处理异常"></a>如何优雅地处理异常</h3><p>首先，有一点我们要清楚：MVC设计模式告诉我们，Controller是用来接收页面参数，并且调用逻辑处理，最后组织页面响应的地方。不建议在Controller进行逻辑处理，Controller只应该负责用户API入口和响应的处理。</p>
+<blockquote>
+<p>思考一下如果有一天Service的代码打包成jar放到另一个平台，没有controller了，该怎么办？</p>
+</blockquote>
+<h4 id="定义Service异常"><a href="#定义Service异常" class="headerlink" title="定义Service异常"></a>定义Service异常</h4><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> <span class="class"><span class="keyword">class</span> <span class="title">BaseExp</span></span>(<span class="keyword">val</span> code: <span class="built_in">Int</span>, error: String) : RuntimeException(error)&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ServiceExp</span></span>(code: <span class="built_in">Int</span>, message: String) : BaseExp(code, message) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个异常继承自RuntimeException，并且包含一个接受一个错误原因的构造器，这样Controller层也不需要知道异常，只要全局捕获到ServiceExp做统一的处理即可。</p>
+<p>这无论是在Struct1、2时代，还是SpringMVC中，甚至Servlet年代，都是极为容易的。</p>
+<p>此外，异常不能有无参构造函数，因为绝对不允许你抛出一个逻辑处理异常，但是不指明原因。</p>
+<hr>
+<h4 id="Controller处理举例"><a href="#Controller处理举例" class="headerlink" title="Controller处理举例"></a>Controller处理举例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 修改用户信息</span></span><br><span class="line"><span class="comment">* <span class="doctag">@param</span> userID 用户ID</span></span><br><span class="line"><span class="comment">* <span class="doctag">@param</span> user 修改用户信息表单数据</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">@PutMapping</span>(<span class="string">"&#123;userID&#125;"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> JSONResult <span class="title">updateUser</span><span class="params">(@PathVariable(<span class="string">"userID"</span>)</span> Integer userID, @RequestBody UpdateUserForm userForm) </span>&#123;</span><br><span class="line">    User user = <span class="keyword">new</span> User(); <span class="comment">//准备业务逻辑层使用的领域模型</span></span><br><span class="line">    BeanUtils.copyProperties(userForm, user); <span class="comment">//拷贝要修改的值</span></span><br><span class="line">    user.setUserId(userID); <span class="comment">//设置主键到用户数据中</span></span><br><span class="line">    userService.updateUser(user); <span class="comment">//调用更新业务逻辑</span></span><br><span class="line">    JSONResult json = <span class="keyword">new</span> JSONResult(); <span class="comment">//准备要响应的数据</span></span><br><span class="line">    json.put(<span class="string">"user"</span>, user); <span class="comment">//把修改后的用户数据还给页面</span></span><br><span class="line">    <span class="keyword">return</span> json;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>数据校验一般分为两部分：</strong></p>
+<ul>
+<li>有效性：比如用户所在岗位，是否属于数据库有记录的岗位ID，如果不存在，无效。</li>
+<li>合法性：比如用户名只允许输入最多12个字符，用户提交了20个字符，不合法。建议使用校验框架，比如JSR303</li>
+</ul>
+<p><strong>假如出现以下问题，如何通知用户？</strong></p>
+<ul>
+<li>要修改的用户ID不存在；</li>
+<li>用户被锁定，不允许修改；</li>
+<li>乐观锁机制发现用户已经被被人修改过等等。</li>
+</ul>
+<p>常见的处理方式有：</p>
+<ol>
+<li>在Controller调用UserService的checkUserExist()方法；</li>
+<li>在Controller直接书写业务逻辑；</li>
+<li>在Service响应一个状态码机制，比如1 2 3表示错误信息，0表示没有任何错误。</li>
+</ol>
+<p>根据MVC设计模式来说，第一种和第二种都不考虑。而第三种似乎是一种可选的方式，可是如此一来，用户保存逻辑变了，比如增加一个情况，不允许修改已经离职的用户，那么我们还需要修改Controller的代码，代码量增加，维护成本增高，并且还耦合了Service，不符合MVC设计模式。</p>
+<hr>
+<h4 id="Service处理举例"><a href="#Service处理举例" class="headerlink" title="Service处理举例"></a>Service处理举例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 修改用户信息</span></span><br><span class="line"><span class="comment">* <span class="doctag">@param</span> user 要修改的用户数据</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">updateUser</span><span class="params">(User user)</span> </span>&#123;</span><br><span class="line">    User userOrig = userDao.getUserById(user.getUserID());</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == userOrig) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ServiceExp(<span class="string">"用户不存在"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (userOrig.isLocked()) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ServiceExp(<span class="string">"用户被锁定,不允许修改"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!user.getVersion().equals(userOrig.getVersion())) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ServiceExp(<span class="string">"用户已经被别人修改过,请刷新重试"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// TODO 保存用户数据  ... </span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>只要我们检查到不允许保存的对象，我们就可以直接throw一个新的异常，异常机制会帮助我们中断代码执行。</p>
+<p>Service上层处理异常的方式有：</p>
+<ol>
+<li>在Controller使用try-catch进行处理；</li>
+<li>直接把异常抛给上层框架统一处理。</li>
+</ol>
+<p>第一种方式直接pass掉，注意我们抛出的ServiceExp，它仅仅逻辑处理异常，并且我们的方法前面也没有声明throws ServiceExp，这表示它是一个非受查异常。</p>
+<p><strong>Q：为什么不定义成受查异常？</strong> 如果是一个受查异常，那么意味着Controller必须要处理你的异常。并且如果有一天你的业务逻辑变了，可能多一种检查项，就需要增加一个异常。反之需要删除一个异常，那么你的方法签名也需要改变，Controller也随之要改变，这又变成了紧耦合。</p>
+<p><strong>Q：可以为每一种检查项定义一个异常吗？</strong>可以，但是那样显得太多余了。因为业务逻辑处理失败的时候，根据我们需求，我们只需要通知用户失败的原因(通常应该是一段字符串)，以及服务器受理失败的一个状态码，这样这需要一个包含原因属性的异常即可满足我们需求。</p>
+<hr>
+<h4 id="ControllerAdvice处理举例"><a href="#ControllerAdvice处理举例" class="headerlink" title="ControllerAdvice处理举例"></a>ControllerAdvice处理举例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerAdvice</span>(basePackages = &#123; <span class="string">"com.xxx.bussiness.xxx"</span> &#125;)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ModuleControllerAdvice</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(ModuleControllerAdvice.class);</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger SERVICE_LOGGER = LoggerFactory.getLogger(ServiceExp.class);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 业务受理失败</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@ResponseBody</span></span><br><span class="line">  <span class="meta">@ResponseStatus</span>(HttpStatus.INTERNAL_SERVER_ERROR)</span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(ServiceExp.class)</span><br><span class="line">  <span class="function"><span class="keyword">private</span> JSONResult <span class="title">handleServiceException</span><span class="params">(ServiceExp exception)</span> </span>&#123;</span><br><span class="line">    String message = <span class="string">"业务受理失败,原因:"</span> + exception.getLocalizedMessage();</span><br><span class="line">    SERVICE_LOGGER.info(message);</span><br><span class="line">    JSONResult json = <span class="keyword">new</span> JSONResult();</span><br><span class="line">    json.serCode(<span class="number">500001</span>);</span><br><span class="line">    json.setMessage(message); </span><br><span class="line">    <span class="keyword">return</span> json;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意一点，在这个类中，我们定义了2个log对象，分别指向ServiceExp.class 和 ControllerAdvice.class，处理ServiceExp的时候使用了info级别的日志输出。</p>
+<ul>
+<li>ServiceExp一定要和其他的代码错误分离，不应该混为一谈。</li>
+<li>ServiceExp并不一定要记录日志，我们应该提供独立的log对象，方便开关。</li>
+</ul>
+<hr>
+<h3 id="异常分类建议"><a href="#异常分类建议" class="headerlink" title="异常分类建议"></a>异常分类建议</h3><ul>
+<li>逻辑异常类：用于描述业务无法按照预期的情况处理下去，属于用户制造的意外。</li>
+<li>代码错误类：这类异常用于描述开发的代码错误，例如NPE、ILLARG等都属于程序员制造的BUG。</li>
+<li>专用异常类：多用于特定业务场景，用于描述指定作业出现意外情况无法预先处理。</li>
+</ul>
+<p>各类异常必须要有单独的日志记录，或者分级，便于日志管理。比如，有的时候仅仅想给三方运维看到逻辑异常。</p>
+<h4 id="Counter-Example"><a href="#Counter-Example" class="headerlink" title="Counter-Example"></a>Counter-Example</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 处理业务消息</span></span><br><span class="line"><span class="comment">* <span class="doctag">@param</span> message 要处理的消息</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">processMessage</span><span class="params">(Message&lt;String&gt; message)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span>&#123;</span><br><span class="line">        <span class="comment">// 处理消息验证</span></span><br><span class="line">        <span class="comment">// 处理消息解析</span></span><br><span class="line">        <span class="comment">// 处理消息入库</span></span><br><span class="line">    &#125;<span class="keyword">catch</span>(ValidateException e )&#123;</span><br><span class="line">        <span class="comment">// 验证失败</span></span><br><span class="line">    &#125;<span class="keyword">catch</span>(ParseException e )&#123;</span><br><span class="line">        <span class="comment">// 解析失败</span></span><br><span class="line">    &#125;<span class="keyword">catch</span>(PersistException e )&#123;</span><br><span class="line">        <span class="comment">// 入库失败</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>修改后的代码，如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 处理业务消息</span></span><br><span class="line"><span class="comment">* <span class="doctag">@param</span> message 要处理的消息</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">processMessage</span><span class="params">(Message&lt;String&gt; message)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 处理消息验证</span></span><br><span class="line">    <span class="keyword">if</span>(!message.isValud())&#123;</span><br><span class="line">        MessageLogService.log(<span class="string">"消息校验失败"</span> + message.errors())</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 处理消息解析</span></span><br><span class="line">    <span class="keyword">if</span>(!message.parse())&#123;</span><br><span class="line">        MessageLogService.log(<span class="string">"消息解析失败"</span> + message.errors())</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// TODO ....</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://mp.weixin.qq.com/s/GXSZ-3w3Px43fA3XEuyWxw" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/GXSZ-3w3Px43fA3XEuyWxw</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/13/DistributedSystem/Transaction/DTP-Solution/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/" itemprop="url">Distributed Transaction Solution</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-13T23:22:18+08:00">
+                2019-01-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
+                    <span itemprop="name">DistributedSystem</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/Transaction/" itemprop="url" rel="index">
+                    <span itemprop="name">Transaction</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/ms-app-structure-example.png">
+<p>在微服务架构中，有一个database per service的模式，这个模式就是每一个服务一个数据库。 这样可以保证微服务独立开发，独立演进，独立部署，独立团队。</p>
+<p>由于对外提供的服务是由一组相互协作的微服务所组成，在分布式环境下由于各个服务访问的数据是相互分离的，服务之间不能靠数据库来保证事务一致性。这就需要在应用层面提供一个协调机制，来保证一组事务执行要么成功，要么失败。</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/2pc-example.png">
+<p>由于隔离性互斥的要求，在事务执行过程中，所有的资源都是被锁定的，这种情况只适合执行时间确定的短事务。但是为了保证分布式事务的一致性，大都是采用串行化的隔离级别来保证事务一致性，这样会降低系统的吞吐。但因为2PC协议的成本比较高，又有全局锁的问题，性能会比较差。现在大家基本上不会采用这种强一致解决方案。</p>
+<p>微服务事务一致性建议：</p>
+<ul>
+<li>微服务内：聚合通过数据库事务保证强一致。</li>
+<li>微服务间：最终一致。</li>
+</ul>
+<hr>
+<h3 id="TCC"><a href="#TCC" class="headerlink" title="TCC"></a>TCC</h3><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/tcc-example.png">
+<p>TCC名字的由来是其中包含了try，confirm，cancel三个操作。</p>
+<p>与2PC相比，TCC位于业务服务层，没有单独的准备阶段，Try操作可以灵活选择业务资源锁的粒度。TCC是通过最终一致性来解决系统性能问题的这个设计，对我们设计抉择有很大的启发。<strong>有些时候系统的技术问题是可以通过业务建模的方式来解决的。</strong></p>
+<blockquote>
+<p>推荐阅读书籍：领域驱动设计和实现领域驱动设计</p>
+</blockquote>
+<h4 id="消息驱动方式"><a href="#消息驱动方式" class="headerlink" title="消息驱动方式"></a>消息驱动方式</h4>
+<p>消息一致性方案是通过消息中间件保证上下游应用数据操作的一致性。基本思路是将本地操作和发送消息放在一个事务中，下游应用向消息系统订阅该消息，收到消息后执行相应操作。本质上是依靠消息的重试机制，达到最终一致性。</p>
+<p>消息驱动的缺点是：耦合度高，需要在业务系统中引入MQ，导致系统复杂度增加。</p>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><p>A账户往B账户汇款100元，流程如下：</p>
+
+<p>汇款服务和收款服务分别需要实现，Try-Confirm-Cancel接口，并在业务初始化阶段将其注入到TCC事务管理器中。</p>
+<h4 id="汇款服务"><a href="#汇款服务" class="headerlink" title="汇款服务"></a>汇款服务</h4><p>Try：</p>
+<ul>
+<li>检查A账户有效性，即查看A账户的状态是否为“转帐中”或者“冻结”；</li>
+<li>检查A账户余额是否充足；</li>
+<li>从A账户中扣减100元，并将状态置为“转账中”；</li>
+<li>预留扣减资源，将从A往B账户转账100元这个事件存入消息或者日志中；</li>
+</ul>
+<p>Confirm：不做任何操作</p>
+<p>Cancel：</p>
+<ul>
+<li>A账户增加100元；</li>
+<li>从日志或者消息中，释放扣减资源。</li>
+</ul>
+<h4 id="收款服务"><a href="#收款服务" class="headerlink" title="收款服务"></a>收款服务</h4><p>Try：</p>
+<ul>
+<li>检查B账户账户是否有效；</li>
+</ul>
+<p>Confirm：</p>
+<ul>
+<li>读取日志或者消息，B账户增加100元；</li>
+<li>从日志或者消息中，释放扣减资源；</li>
+</ul>
+<p>Cancel：不做任何操作。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>由此可以看出，TCC模型对业务的侵入强，改造的难度大。</p>
+<hr>
+<h3 id="Sage"><a href="#Sage" class="headerlink" title="Sage"></a>Sage</h3><p>Saga其实是30年前的一篇数据库论文里提到的一个概念。在论文中一个Saga事务就是一个长期运行的事务，这个事务是由多个本地事务所组成，每个本地事务有相应的执行模块和补偿模块，当Saga事务中的任意一个本地事务出错了，可以通过调用相关事务对应的补偿方法恢复，达到事务的最终一致性。</p>
+<p>在分布式系统中由于网络请求可能的延时，在Caitie的论文中对被Saga调用的服务提出两点要求：</p>
+<ul>
+<li>超时重试的机制，需要Saga调用的服务支持幂等。在服务请求的过程中，可能会出现超时重试的情况，我们需要通过幂等来避免多次请求所带来的问题。</li>
+<li>重试取消的机制，补偿可交换原则是指Saga并行处理的过程中，如果发生了超时重试事件之后，并进行了补偿的操作，那么补偿操作是直接生效的。</li>
+</ul>
+<blockquote>
+<p>主要参考了Caitie McCaffrey在分布式Saga论文，以及Chris Richardson的研究</p>
+</blockquote>
+<h4 id="Theory"><a href="#Theory" class="headerlink" title="Theory"></a>Theory</h4><p>Saga模型把一个分布式事务拆分为多个本地事务，每个本地事务都有相应的执行模块和补偿模块（ TCC中的Confirm和Cancel）。当Saga事务中任意一个本地事务出错时，可以通过调用相关的补偿方法恢复之前的事务，达到事务最终的一致性。</p>
+<p>当每个Saga子事务 T1, T2, …, Tn 都有对应的补偿定义 C1, C2, …, Cn-1,那么Saga系统可以保证：</p>
+<ul>
+<li>子事务序列 T1, T2, …, Tn得以完成 (最佳情况)；</li>
+<li>或者序列 T1, T2, …, Tj, Cj, …, C2, C1, 0 &lt; j &lt; n, 得以完成。</li>
+</ul>
+<p>由于Saga模型中没有Prepare阶段，因此事务间不能保证隔离性，当多个Saga事务操作同一资源时，就会产生更新丢失、脏数据读取等问题，这时需要在业务层控制并发，例如：</p>
+<ul>
+<li>在应用层面加锁；</li>
+<li>应用层面预先冻结资源。</li>
+</ul>
+<p>Saga恢复方式：</p>
+<ul>
+<li>向后恢复：补偿所有已完成的事务，如果任一子事务失败；</li>
+<li>向前恢复：重试失败的事务，假设每个子事务最终都会成功。</li>
+</ul>
+<p>显然，向前恢复没有必要提供补偿事务，如果你的业务中，子事务(最终)总会成功，或补偿事务难以定义或不可能，向前恢复更符合你的需求。理论上补偿事务永不失败，然而，在分布式世界中，服务器可能会宕机、网络可能会失败，甚至数据中心也可能会停电，这时需要提供故障恢复后回退的机制，比如人工干预。</p>
+<hr>
+<h4 id="ACID与Sage"><a href="#ACID与Sage" class="headerlink" title="ACID与Sage"></a>ACID与Sage</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/acid-and-sage.png">
+<p>为了满足重试取消的机制，需要我们在设计系统的过程中保留所有的事务数据。但是从上图可知，Saga模型只支持ACD，不提供隔离性的保证。</p>
+<p><strong>如果Sage缺少了隔离性会带来什么问题？</strong></p>
+<ul>
+<li>两个Sage事务同时操作一个资源会出现数据语义不一致的情况。</li>
+<li>两个Sage事务同时操作一个订单，彼此操作会覆盖对比(更新丢失)。</li>
+<li>两个Sage事务同时访问扣款账号，无法看到退款(脏读取问题)。</li>
+<li>在一个Sage事务内，数据被其他事务修改前后的读取值不一致(模糊读取问题)。</li>
+</ul>
+<p><strong>如何应对隔离性问题？</strong></p>
+<p>隔离的本质是控制并发，防止并发事务操作相同资源而引起结果错乱。</p>
+<ul>
+<li>在应用层面加入逻辑锁的逻辑。</li>
+<li>Session层面，Session以及锁的机制保证串行化操作资源。</li>
+<li>业务层面采用预先冻结资金的方式隔离此部分资金。</li>
+<li>业务操作过程中通过及时读取当前状态的方式获取更新。</li>
+</ul>
+<hr>
+<h4 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h4><ul>
+<li><p>Orchestration-Base Coordination - 集中式：集中式协调器负责服务调用以及事务协调。</p>
+</li>
+<li><p>Choreography-Base Coordination - 分布式：通过事件驱动的方式来进行事务协调。</p>
+</li>
+</ul>
+<hr>
+<h3 id="FESCAR-Fast-amp-Easy-Commit-And-Rollback"><a href="#FESCAR-Fast-amp-Easy-Commit-And-Rollback" class="headerlink" title="FESCAR - Fast &amp; Easy Commit And Rollback"></a>FESCAR - Fast &amp; Easy Commit And Rollback</h3><p>假设某个业务共有 3 个模块，在传统的单体应用中，每个业务模块可以使用单个的本地数据源，这样本地事务自然就可以保证数据一致性。而在微服务架构中，业务模块会被设计成为3个不同数据源上的3个服务，每个服务对应一个数据库，本地事务当然也可以保证每个服务中的数据一致性，但是扩展到整个应用、整个业务逻辑范围来看，情况如何呢？</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-example.png">
+<p>FESCAR解决方案是：</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-solution.png">
+<p>分布式事务是一个全局事务，由一批Branch Transation组成，通常Branch Transation只是本地事务。</p>
+<img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-ms-global-transaction.png">
+<h4 id="三大基本组件"><a href="#三大基本组件" class="headerlink" title="三大基本组件"></a>三大基本组件</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-component.png">
+<ul>
+<li>Transaction Coordinator(TC)：维护全局和分支事务的状态，驱动全局事务提交与回滚。</li>
+<li>Transaction Manager™：定义全局事务的范围：开始、提交或回滚全局事务。</li>
+<li>Resource Manager(RM)：管理分支事务处理的资源，与TC通信以注册分支事务并报告分支事务的状态，并驱动分支事务提交或回滚。</li>
+</ul>
+<h4 id="管理分布式事务的典型生命周期"><a href="#管理分布式事务的典型生命周期" class="headerlink" title="管理分布式事务的典型生命周期"></a>管理分布式事务的典型生命周期</h4><img src="/2019/01/13/DistributedSystem/Transaction/DTP-Solution/fescar-transaction-lifecycle.png">
+<ol>
+<li>TM 要求 TC 开始新的全局事务，TC 生成表示全局事务的 XID。</li>
+<li>XID 通过微服务的调用链传播。</li>
+<li>RM 在 TC 中将本地事务注册为 XID 的相应全局事务的分支。</li>
+<li>TM 要求 TC 提交或回滚 XID 的相应全局事务。</li>
+<li>TC 驱动 XID 的相应全局事务下的所有分支事务，完成分支提交或回滚。</li>
+</ol>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/" target="_blank" rel="noopener">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation/</a><br><a href="https://www.infoq.cn/article/JYa9UEU*CrBu8WHIQywy" target="_blank" rel="noopener">https://www.infoq.cn/article/JYa9UEU*CrBu8WHIQywy</a><br><a href="https://dbaplus.cn/news-159-2152-1.html" target="_blank" rel="noopener">https://dbaplus.cn/news-159-2152-1.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/" itemprop="url">An Introduction to Distributed Transaction</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-11T13:22:18+08:00">
+                2019-01-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
+                    <span itemprop="name">DistributedSystem</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/Transaction/" itemprop="url" rel="index">
+                    <span itemprop="name">Transaction</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>传统单机应用一般都会使用一个关系型数据库，好处是应用可以使用ACID Transactions。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/local-transaction.png">
+<p>为保证一致性我们只需要：开始一个事务，改变（插入，删除，更新）很多行，然后提交事务（如果有异常时回滚事务）。更进一步，借助开发平台中的数据访问技术和框架（如Spring），我们需要做的事情更少，只需要关注数据本身的改变。</p>
+<p>随着组织规模不断扩大，业务量不断增长，单机应用和数据库已经不足以支持庞大的业务量和数据量，这个时候需要对应用和数据库进行拆分，就出现了一个应用需要同时访问两个或两个以上的数据库情况。开始我们用分布式事务来保证一致性。</p>
+<hr>
+<h3 id="分布式事务"><a href="#分布式事务" class="headerlink" title="分布式事务"></a>分布式事务</h3><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/dtp.png">
+<p><strong>分布式事务</strong>是指会涉及到操作多个数据库的事务。其实就是将对同一库事务的概念扩大到了对多个库的事务。目的是为了保证分布式系统中的数据一致性。<strong>分布式事务处理的关键是必须有一种方法可以知道事务在任何地方所做的所有动作，提交或回滚事务的决定必须产生统一的结果(全部提交或全部回滚)</strong>。</p>
+<p>在分布式系统中，各个节点之间在物理上相互独立，通过网络进行沟通和协调。由于存在事务机制，可以保证每个独立节点上的数据操作可以满足ACID。但是，相互独立的节点之间无法准确的知道其他节点中的事务执行情况。所以从理论上讲，两台机器理论上无法达到一致的状态。</p>
+<p>如果想让分布式部署的多台机器中的数据保持一致性，那么就要保证在所有节点的数据写操作，要不全部都执行，要么全部的都不执行。但是，一台机器在执行本地事务的时候无法知道其他机器中的本地事务的执行结果。所以他也就不知道本次事务到底应该commit还是roolback。所以，常规的解决办法就是引入一个“<strong>协调者</strong>”的组件来统一调度所有分布式节点的执行。</p>
+<hr>
+<h3 id="微服务的困境"><a href="#微服务的困境" class="headerlink" title="微服务的困境"></a>微服务的困境</h3><p>首先，对于微服务架构来说，数据访问变得更加复杂，这是因为数据都是微服务私有的，唯一可访问的方式就是通过API。这种打包数据访问方式使得微服务之间松耦合，并且彼此之间独立非常容易进行性能扩展。</p>
+<p>其次，不同的微服务经常使用不同的数据库。应用会产生各种不同类型的数据，关系型数据库并不一定是最佳选择。</p>
+<p>例如，某个产生和查询字符串的应用采用Elasticsearch的字符搜索引擎；某个产生社交图片数据的应用可以采用图数据库，例如Neo4j；基于微服务的应用一般都使用SQL和NoSQL结合的模式。但是这些非关系型数据大多数并不支持2PC。可见在微服务架构中已经不能选择分布式事务了。</p>
+<p>依据CAP理论，必须在可用性(availability)和一致性(consistency)之间做出选择。如果选择提供一致性需要付出在满足一致性之前阻塞其他并发访问的代价。这可能持续一个不确定的时间，尤其是在系统已经表现出高延迟时或者网络故障导致失去连接时。</p>
+<p>依据目前的成功经验，可用性一般是更好的选择，但是在服务和数据库之间维护数据一致性是非常根本的需求，微服务架构中应选择满足最终一致性。如果选择了最终一致性，就要保证到达最终一致性的这段时间要在用户可接受的范围之内。</p>
+<blockquote>
+<p>最终一致性：指系统中的所有数据副本经过一定时间后，最终能够达到一致的状态。</p>
+</blockquote>
+<hr>
+<h3 id="X-Open-DTP-Model"><a href="#X-Open-DTP-Model" class="headerlink" title="X/Open DTP Model"></a>X/Open DTP Model</h3><hr>
+<h4 id="What’s-DTP-Model"><a href="#What’s-DTP-Model" class="headerlink" title="What’s DTP Model"></a>What’s DTP Model</h4><p>X/Open DTP(Distributed Transaction Process)是一个分布式事务模型。这个模型主要使用了2PC(Two-Phase-Commit)来保证分布式事务的完整性。</p>
+<blockquote>
+<p>The X/Open Distributed Transaction Processing (DTP) model is a software architecture that <strong>allows multiple application programs to share resources provided by multiple resource managers, and allows their work to be coordinated into global transactions</strong>.</p>
+</blockquote>
+<p>DTP目前最新的版本是V3，DTP模型的组成：</p>
+<ul>
+<li>应用程序(Application Program ，简称AP)：即业务层。哪些操作属于一个事务，就是AP定义的。。</li>
+<li>资源管理器(Resource Manager，简称RM)：一般是数据库，也可以是其他的资源管理器，如消息队列(如JMS数据源)，文件系统等。</li>
+<li>事务管理器(Transaction Manager ，简称TM)：接收AP的事务请求，对全局事务进行管理，管理事务分支状态，协调RM的处理，通知RM哪些操作属于哪些全局事务以及事务分支等等。这个也是整个事务调度模型的核心部分，一般是作为交易中间件。</li>
+<li>通信资源管理器(Communication Resource Manager，简称CRM)：控制一个TM域(TM domain)内或者跨TM域的分布式应用之间的通信。</li>
+<li>通信协议(Communication Protocol，简称CP)：提供CRM提供的分布式应用节点之间的底层通信服务。</li>
+</ul>
+<blockquote>
+<p>an Application Program (<strong>AP</strong>), which defines transaction boundaries and specifies actions that constitute a transaction<br>Resource Managers (<strong>RMs</strong>) such as databases or file access systems, which provide access to resources<br>a Transaction Manager (<strong>TM</strong>), which assigns identifiers to transactions, monitors their progress, and takes responsibility for transaction completion and for coordinating failure recovery.<br>Communication Resource Managers (<strong>CRMs</strong>), which control communication between distributed applications within or across TM domains.<br>a communication protocol(<strong>CP</strong>), which provides the underlying communication services used by distributed applications and supported by CRMs.<br>Java中的javax.transaction.xa.XAResource定义了XA接口，它依赖数据库厂商对jdbc-driver的具体实现。</p>
+</blockquote>
+<hr>
+<h4 id="全局的DTP-Global-DTP"><a href="#全局的DTP-Global-DTP" class="headerlink" title="全局的DTP - Global DTP"></a>全局的DTP - Global DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/dtp-model.png">
+<ul>
+<li>全局事务：对于一次性操作多个资源管理器的事务。</li>
+<li>分支事务：在全局事务中，某一个资源管理器有自己独立的任务，这些任务的集合作为这个资源管理器的分支任务。</li>
+</ul>
+<p>AP可以和TM以及RM通信，TM和RM互相之间可以通信，DTP模型里面定义了XA接口，TM和RM通过XA接口进行双向通信，例如，TM通知RM提交事务或者回滚事务，RM把提交结果通知给TM。AP和RM之间则通过RM提供的Native API 进行资源控制，这个没有进行约API和规范，各个厂商自己实现自己的资源控制，比如Oracle的数据库驱动程序。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/ap-tm-rm-relationship.png" title="三者关系的关系">
+<hr>
+<h4 id="跨域的全局DTP"><a href="#跨域的全局DTP" class="headerlink" title="跨域的全局DTP"></a>跨域的全局DTP</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-dtp-model.png">
+<p>如果分布式事务需要跨多个应用，那么每个Model实例中，还需要额外的加入一个通信资源管理器CRM。CRM负责在多个事务域之间进行协调和沟通。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/crm-communication.png">
+<p>CRM作为多个Model实例之间通信的桥梁：</p>
+<ul>
+<li>基本的通信能力：从这个角度，可以将CRM类比为RPC框架，Model实例之间通过RPC调用实现彼此的通信。这一点体现在AP、CRM之间的连线。</li>
+<li>事务传播能力：与传统RPC框架不同的是，CRM底层采用OSI TP通信服务，因此CRM具备事务传播能力。这一点体现TM、CRM之间的连线。<blockquote>
+<p>OSI TP：Open Systems Interconnection — Distributed Transaction Processing</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h4 id="XA规范"><a href="#XA规范" class="headerlink" title="XA规范"></a>XA规范</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/basic-dtp-model.png">
+<p>一个DTP Model Instance，至少有3个组成部分：AP、RMs、TM。</p>
+<blockquote>
+<p>The subject of this X/Open specification is interface (3) in the diagram above, the XA interface by which TMs and RMs interact.<br>XA规范的最主要的作用是，就是定义了RM-TM的交互接口。</p>
+</blockquote>
+
+<blockquote>
+<ul>
+<li>2PC是在OSI TP标准中提出的。</li>
+<li>在DTP Model中，指定了全局事务的提交要使用2PC协议。</li>
+<li>XA规范只是定义了2PC协议中需要使用到的接口，即上面提到的RM-TM交互的接口(因为2PC过程中的参与方只有TM和RMs)。</li>
+</ul>
+</blockquote>
+<hr>
+<h4 id="TM-Domain"><a href="#TM-Domain" class="headerlink" title="TM Domain"></a>TM Domain</h4><p>一个TM Domain中由一个或者多个Model实例组成，这些Model实例使用的都是同一个TM，但是操作的RMs各不相同，由TM来统一协调这些Model实例共同参与形成的全局事务(global transaction)。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/tm-domain.png">
+<p>TM Domain只是列出了最终参与到一个全局事务中，有哪些Model实例，并不关心这些Model实例之间的关系。这就好比，有一个班级，我们只是想知道这个班级中每位同学的名字，但是并不是关心谁是班长、谁是学习委员等。</p>
+<p>不过显然的，当一个TM Domain中存在多个Model实例时，Model实例彼此之间存在一定的层级调用关系。这就是<strong>全局事务的树形结构</strong>。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/global-transaction-tree-structure.png">
+<p>发起分布式事务的Model实例称之为root节点，或者称之为事务的发起者，其他的Model实例可以统称为事务的参与者。事务发起者负责开启整个全局事务，事务参与者各自负责执行自己的事务分支。</p>
+<p>而从Model实例之间的相互调用关系来说，调用方称之为上游节点(Superior Node)，被调用方称之为下游节点(Subordinate Node)。</p>
+<hr>
+<h3 id="2PC-Two-Phase-Commitment-Protocol"><a href="#2PC-Two-Phase-Commitment-Protocol" class="headerlink" title="2PC - Two Phase Commitment Protocol"></a>2PC - Two Phase Commitment Protocol</h3><p>2PC协议经常被用来实现分布式事务。一般分为协调器和若干事务执行者两种角色，这里的事务执行者就是具体的数据库，抽象点可以说是控制数据库的程序。协调器可以独立运行在一台机器上，也可以和事务执行器在同一台机器上。</p>
+<p>2PC协议主要分为两个阶段：</p>
+<ul>
+<li>准备阶段(投票阶段)</li>
+<li>提交阶段(执行阶段)</li>
+</ul>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-scene.png">
+<h4 id="2PC、Paxos和Raft协议之间的区别"><a href="#2PC、Paxos和Raft协议之间的区别" class="headerlink" title="2PC、Paxos和Raft协议之间的区别"></a>2PC、Paxos和Raft协议之间的区别</h4><ul>
+<li>2PC协议用于<strong>保证多个数据分片上的操作的原子性</strong>。这些数据分片可能分布在不同的服务器上，2PC协议保证多台服务器上的操作要么全部成功，要么全部失败。</li>
+<li>Raft协议和Paxos协议都是用于保证<strong>同一个数据分片的多个副本之间的数据一致性</strong>。当这些副本分布到不同的数据中心时，这个需求尤其强烈。</li>
+<li>Raft协议比paxos的优点是容易理解，容易实现。它强化了leader的地位，把整个协议可以清楚的分割成两个部分，并利用日志的连续性做了一些简化：(1)Leader在时。由Leader向Follower同步日志；(2)Leader挂掉了，选一个新Leader的Leader选举算法。</li>
+</ul>
+<h4 id="Phase-阶段说明"><a href="#Phase-阶段说明" class="headerlink" title="Phase - 阶段说明"></a>Phase - 阶段说明</h4><img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-theory.png">
+<p><strong>Phase 1 提交事务请求(投票阶段)</strong></p>
+<ol>
+<li>事务询问：协调者向所有的参与者发送事务内容，询问是否可以执行事务提交操作，并开始等待各参与者的响应。</li>
+<li>执行事务：各参与者节点执行事务操作，并将Undo和Redo信息计入事务日志中。</li>
+<li>各参与者向协调者反馈事务询问的响应：如果参与者成功执行了事务操作，那么就反馈给协调者Yes响应，表示事务可以执行；如果参与者没有成功执行事务，那么就反馈给协调者No响应，表示事务不可以执行。</li>
+</ol>
+<hr>
+<p><strong>Phase 2 执行事务提交(执行阶段)</strong></p>
+<p>如果所有参与者的反馈都是Yes响应，那么：</p>
+<ol>
+<li>发送提交请求：协调者向所有参与者节点发出Commit请求。</li>
+<li>事务提交：参与者接收到Commit请求后，会正式执行事务提交操作，并在完成提交之后释放在整个事务执行期间占用的事务资源。</li>
+<li>反馈事务提交结果：参与者在完成事务提交之后，向协调者发送ACK信息。</li>
+<li>完成事务：协调者接收到所有参与者反馈的ACK消息后，完成事务。</li>
+</ol>
+<hr>
+<p><strong>Phase 2 中断事务</strong></p>
+<p>如果任何一个参与者反馈了No响应，或者在等待超时之后，协调者尚无法接收到所有参与者的反馈响应，那么就会中断事务。那么：</p>
+<ol>
+<li>发送回滚请求：协调者向所有参与者节点发出Rollback请求。</li>
+<li>事务回滚：参与者接收到rollback请求后，会利用其在阶段一中记录的Undo信息来执行事务回滚操作，并在完成回滚之后释放整个事务执行期间占用的资源。</li>
+<li>反馈事务提交结果：参与者在完成事务提交之后，向协调者发送ACK信息。</li>
+<li>中断事务：协调者接收到所有参与者反馈的ACK信息后，完成事务中断。</li>
+</ol>
+<h4 id="Advantage-and-Disadvantage"><a href="#Advantage-and-Disadvantage" class="headerlink" title="Advantage and Disadvantage"></a>Advantage and Disadvantage</h4><p>Advantage：原理简单、实现方便</p>
+<p>Disadvantage：同步阻塞、单点问题、数据不一致、容错机制</p>
+<ul>
+<li>同步阻塞：同步阻塞会极大地限制分布式系统的性能。在Phase 2提交的执行过程中，所有参与该事务操作的逻辑都处于阻塞状态，各个参与者在等待其他参与者响应的过程中，将无法进行其他任何操作。</li>
+<li>单点问题：一旦协调者出现问题，那么整个二阶段提交流程将无法运转，更为严重的是，如果是在阶段二中出现问题，那么其他参与者将会一直处于锁定事务资源的状态中，无法继续完成事务操作。</li>
+<li>数据不一致：在阶段二，当协调者向所有参与者发送commit请求之后，发生了局部网络异常或协调者在尚未发完commit请求之前自身发生了崩溃，导致最终只有部分参与者接收到了commit请求，于是部分参与者执行事务提交，而没收到commit请求的参与者则无法进行事务提交，于是整个分布式系统出现了数据不一致性现象。</li>
+<li>容错机制：如果参与者在与协调者通信期间出现故障，协调者只能靠超时机制来判断是否需要中断事务，这个策略比较保守，需要更为完善的容错机制，任意一个节点的失败都会导致整个事务的失败。</li>
+</ul>
+<p><strong>Phase 2无法解决的问题：协调者再发出commit消息之后宕机，而唯一接收到这条消息的参与者同时也宕机了。那么即使协调者通过选举协议产生了新的协调者，这条事务的状态也是不确定的，没人知道事务是否被已经提交。</strong></p>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><p>假设想从支付宝里转10000元到余额宝</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/2pc-alipay.jpg">
+<ol>
+<li>首先我们的应用程序发起一个请求到协调器, 然后由控制器来保证分布式事务。</li>
+<li>准备凭证阶段<ol>
+<li>协调器先将<prepare>消息写到本地日志。</prepare></li>
+<li>向所有的参与者发起<prepare>消息。以支付宝转账到余额宝为例，协调器给A的prepare消息是通知支付宝数据库相应账目扣款10000，协调器给B的prepare消息是通知余额宝数据库相应账目增加10000。</prepare></li>
+</ol>
+</li>
+<li>参与者收到<prepare>消息后，执行具体本机事务，但不会进行commit，如果成功返回<yes>，不成功返回<no>。同理，返回前都应把要返回的消息写到日志里，当作凭证。</no></yes></prepare></li>
+<li>协调器收集所有执行器返回的消息，如果所有执行器都返回yes，那么给所有执行器发生送commit消息，执行器收到commit后执行本地事务的commit操作；如果有任一个执行器返回no，那么给所有执行器发送abort消息，执行器收到abort消息后执行事务abort操作。</li>
+</ol>
+<blockquote>
+<p>协调器或参与者把发送或接收到的消息先写到日志里，主要是为了故障后恢复用。<br>举个例子，比如某个参与者从故障中恢复后，先检查本机的日志，如果已收到<commit>，则提交，如果<abort>则回滚。如果是<yes>，则再向控制器询问一下，确定下一步。如果什么都没有，则很可能在<prepare>阶段就崩溃了，因此需要回滚。</prepare></yes></abort></commit></p>
+</blockquote>
+<hr>
+<h3 id="3PC-Three-Phase-Commitment-Protocol"><a href="#3PC-Three-Phase-Commitment-Protocol" class="headerlink" title="3PC - Three Phase Commitment Protocol"></a>3PC - Three Phase Commitment Protocol</h3><p>对比2PC，3PC的变化：</p>
+<ol>
+<li>引入超时机制。同时在协调者和参与者中都引入超时机制。</li>
+<li>在第一阶段和第二阶段中插入一个准备阶段。保证了在最后提交阶段之前各参与节点的状态是一致的。</li>
+</ol>
+<p>3PC解决了2PC的阻塞问题，但仍然没有解决出现数据不一致的问题。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/3pc.png">
+<p>Three-Phase Commit：</p>
+<ul>
+<li>CanCommit</li>
+<li>PreCommit</li>
+<li>DoCommit</li>
+</ul>
+<p>为了避免在通知所有参与者提交事务时，其中一个参与者crash不一致时，就出现了三阶段提交的方式。三阶段提交在两阶段提交的基础上增加了一个preCommit的过程，当所有参与者收到preCommit后，并不执行动作，直到收到commit或超过一定时间后才完成操作。</p>
+<h4 id="Phase-阶段说明-1"><a href="#Phase-阶段说明-1" class="headerlink" title="Phase - 阶段说明"></a>Phase - 阶段说明</h4><p><strong>Phase 1 CanCommit</strong></p>
+<ol>
+<li>事务询问：协调者向各参与者发送CanCommit的请求，询问是否可以执行事务提交操作，并开始等待各参与者的响应。</li>
+<li>参与者向协调者反馈询问的响应：参与者收到CanCommit请求后，正常情况下，如果自身认为可以顺利执行事务，那么会反馈Yes响应，并进入预备状态，否则反馈No。</li>
+</ol>
+<hr>
+<p><strong>Phase 2 Pre Commit</strong></p>
+<p>如果协调者接收到各参与者反馈都是Yes，那么执行事务预提交：</p>
+<ol>
+<li>发送预提交请求：协调者向各参与者发送preCommit请求，并进入prepared阶段。</li>
+<li>事务预提交：参与者接收到preCommit请求后，会执行事务操作，并将Undo和Redo信息记录到事务日记中。</li>
+<li>各参与者向协调者反馈事务执行的响应：如果各参与者都成功执行了事务操作，那么反馈给协调者Ack响应，同时等待最终指令，提交commit或者终止abort。</li>
+</ol>
+<p>如果任何一个参与者向协调者反馈了No响应，或者在等待超时后，协调者无法接收到所有参与者的反馈，那么就会中断事务：</p>
+<ol>
+<li>发送中断请求：协调者向所有参与者发送abort请求。</li>
+<li>中断事务：无论是收到来自协调者的abort请求，还是等待超时，参与者都中断事务。</li>
+</ol>
+<hr>
+<p><strong>Phase 3 Do Commit</strong></p>
+<p>假设协调者正常工作，接收到了所有参与者的ack响应，那么它将从预提交阶段进入提交状态：</p>
+<ol>
+<li>发送提交请求：向所有参与者发送doCommit请求。</li>
+<li>事务提交：参与者收到doCommit请求后，正式提交事务，并在完成事务提交后释放占用的资源。</li>
+<li>反馈事务提交结果：参与者完成事务提交后，向协调者发送ACK信息。</li>
+<li>完成事务：协调者接收到所有参与者ack信息，完成事务。</li>
+</ol>
+<p>假设协调者正常工作，并且有任一参与者反馈No，或者在等待超时后无法接收所有参与者的反馈，都会中断事务：</p>
+<ol>
+<li>发送中断请求：协调者向所有参与者节点发送abort请求。</li>
+<li>事务回滚：参与者接收到abort请求后，利用undo日志执行事务回滚，并在完成事务回滚后释放占用的资源。</li>
+<li>反馈事务提交结果：参与者在完成事务回滚之后，向协调者发送ACK信息。</li>
+<li>中断事务：协调者接收到所有参与者反馈的ack信息后，中断事务。</li>
+</ol>
+<p>在DoCommit阶段，如果参与者无法及时接收到来自协调者的doCommit或者rebort请求时，会在等待超时之后，会继续进行事务的提交。</p>
+<p>其实这个应该是基于概率来决定的，当进入第三阶段时，说明参与者在第二阶段已经收到了PreCommit请求，那么协调者产生PreCommit请求的前提条件是他在第二阶段开始之前，收到所有参与者的CanCommit响应都是Yes(一旦参与者收到了PreCommit，意味他知道大家其实都同意修改了)。</p>
+<p>所以，一句话概括就是，当进入第三阶段时，由于网络超时等原因，虽然参与者没有收到commit或者abort响应，但是他有理由相信：成功提交的几率很大。</p>
+<h4 id="Advantage-and-Disadvantage-1"><a href="#Advantage-and-Disadvantage-1" class="headerlink" title="Advantage and Disadvantage"></a>Advantage and Disadvantage</h4><p>Advantage：降低参与者阻塞范围，并能够在出现单点故障后继续达成一致。</p>
+<p>Disadvantage：在DoCommit阶段如果出现网络分区，协调者无法与参与者正常通信，参与者依然会进行事务提交，造成数据不一致。</p>
+<h3 id="J2EE-分布式事务"><a href="#J2EE-分布式事务" class="headerlink" title="J2EE 分布式事务"></a>J2EE 分布式事务</h3><p>Java事务编程接口(JTA：Java Transaction API)和 Java事务服务(JTS；Java Transaction Service)为J2EE平台提供了分布式事务服务。</p>
+<p>JTA定义了一套接口，其中约定了几种主要的角色：TransactionManager、UserTransaction、Transaction、XAResource，并定义了这些角色之间需要遵守的规范，如Transaction的委托给TransactionManager等。</p>
+<p>JTS也是一组规范，上面提到JTA中需要角色之间的交互，那应该如何交互？JTS就是约定了交互细节的规范。</p>
+<p>总体上来说JTA更多的是从框架的角度来约定程序角色的接口，而JTS则是从具体实现的角度来约定程序角色之间的接口，两者各司其职。</p>
+<img src="/2019/01/11/DistributedSystem/Transaction/Introduction-Distributed-Transaction/j2ee-jta.png">
+<h4 id="JTA"><a href="#JTA" class="headerlink" title="JTA"></a>JTA</h4><p>Example</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">transferAccount</span><span class="params">()</span> </span>&#123; </span><br><span class="line">    UserTransaction userTx = <span class="keyword">null</span>; </span><br><span class="line">    Connection connA = <span class="keyword">null</span>; </span><br><span class="line">    Statement stmtA = <span class="keyword">null</span>; </span><br><span class="line">            </span><br><span class="line">    Connection connB = <span class="keyword">null</span>; </span><br><span class="line">    Statement stmtB = <span class="keyword">null</span>; </span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span>&#123; </span><br><span class="line">        <span class="comment">// 获得 Transaction 管理对象</span></span><br><span class="line">        userTx = (UserTransaction)getContext().lookup(<span class="string">"java:comp/UserTransaction"</span>); </span><br><span class="line">        <span class="comment">// 从数据库 A 中取得数据库连接</span></span><br><span class="line">        connA = getDataSourceA().getConnection(); </span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 从数据库 B 中取得数据库连接</span></span><br><span class="line">        connB = getDataSourceB().getConnection(); </span><br><span class="line">    </span><br><span class="line">        <span class="comment">// 启动事务</span></span><br><span class="line">        userTx.begin();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 将 A 账户中的金额减少 500 </span></span><br><span class="line">        stmtA = connA.createStatement(); </span><br><span class="line">        stmtA.execute(<span class="string">"update t_account set amount = amount - 500 where account_id = 'A'"</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 将 B 账户中的金额增加 500 </span></span><br><span class="line">        stmtB = connB.createStatement(); </span><br><span class="line">        stmtB.execute(<span class="string">"update t_account set amount = amount + 500 where account_id = 'B'"</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 提交事务</span></span><br><span class="line">        userTx.commit();</span><br><span class="line">        <span class="comment">// 事务提交：转账的两步操作同时成功（数据库 A 和数据库 B 中的数据被同时更新）</span></span><br><span class="line">    &#125; <span class="keyword">catch</span>(SQLException sqle)&#123; </span><br><span class="line">        <span class="keyword">try</span>&#123; </span><br><span class="line">            <span class="comment">// 发生异常，回滚在本事务中的操纵</span></span><br><span class="line">            userTx.rollback();</span><br><span class="line">            <span class="comment">// 事务回滚：转账的两步操作完全撤销 </span></span><br><span class="line">            <span class="comment">//( 数据库 A 和数据库 B 中的数据更新被同时撤销）</span></span><br><span class="line">            stmt.close(); </span><br><span class="line">            conn.close(); </span><br><span class="line">        &#125;<span class="keyword">catch</span>(Exception ignore)&#123; </span><br><span class="line">            </span><br><span class="line">        &#125; </span><br><span class="line">        sqle.printStackTrace(); </span><br><span class="line">        </span><br><span class="line">    &#125; <span class="keyword">catch</span>(Exception ne)&#123; </span><br><span class="line">        e.printStackTrace(); </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://yq.aliyun.com/articles/582282" target="_blank" rel="noopener">https://yq.aliyun.com/articles/582282</a><br><a href="http://xiaorui.cc/2016/02/25/%E7%90%86%E8%A7%A3%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A42pc/" target="_blank" rel="noopener">http://xiaorui.cc/2016/02/25/%E7%90%86%E8%A7%A3%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A42pc/</a><br><a href="https://my.oschina.net/fileoptions/blog/886967#comments" target="_blank" rel="noopener">https://my.oschina.net/fileoptions/blog/886967#comments</a><br><a href="https://segmentfault.com/a/1190000004474543" target="_blank" rel="noopener">https://segmentfault.com/a/1190000004474543</a><br>浅谈分布式事务控制在银行应用的实现: <a href="https://www.ctolib.com/topics-117188.html" target="_blank" rel="noopener">https://www.ctolib.com/topics-117188.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/11/DB/TechStack/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/11/DB/TechStack/" itemprop="url">Technology Stack On DB</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-11T12:19:22+08:00">
+                2019-01-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="MySQL"><a href="#MySQL" class="headerlink" title="MySQL"></a>MySQL</h3><h4 id="Operation"><a href="#Operation" class="headerlink" title="Operation"></a>Operation</h4><ul>
+<li>percona-toolkit：一组高级命令行工具的集合，可以查看当前服务的摘要信息，磁盘检测，分析慢查询日志，查找重复索引，实现表同步等等。</li>
+<li>Percona XtraBackup：简称PXB，是Percona公司开发的一个用于MySQL数据库物理热备的备份工具，支持 MySQl（Oracle）、Percona Server 和 MariaDB。</li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/07/Docker/Dockerfile-Synax/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/01/07/Docker/Dockerfile-Synax/" itemprop="url">Dockerfile Synax</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-07T13:15:19+08:00">
+                2019-01-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Env"><a href="#Env" class="headerlink" title="Env"></a>Env</h3><p>Format：$variable_name、${variable_name}</p>
+<ul>
+<li>${variable:-word} indicates that if variable is set then the result will be that value. If variable is not set then word will be the result.</li>
+<li>${variable:+word} indicates that if variable is set then word will be the result, otherwise the result is the empty string.</li>
+</ul>
+<h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">ENV</span> <span class="string">abc=hello</span></span><br><span class="line"><span class="string">ENV</span> <span class="string">abc=bye</span> <span class="string">def=$abc</span></span><br><span class="line"><span class="string">ENV</span> <span class="string">ghi=$abc</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">FROM</span> <span class="string">busybox</span></span><br><span class="line"><span class="string">ENV</span> <span class="string">foo</span> <span class="string">/bar</span></span><br><span class="line"><span class="string">WORKDIR</span> <span class="string">$&#123;foo&#125;</span>   <span class="comment"># WORKDIR /bar</span></span><br><span class="line"><span class="string">ADD</span> <span class="string">.</span> <span class="string">$foo</span>       <span class="comment"># ADD . /bar</span></span><br><span class="line"><span class="string">COPY</span> <span class="string">\$foo</span> <span class="string">/quux</span> <span class="comment"># COPY $foo /quux</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">CMD</span> <span class="string">["sh",</span> <span class="string">"-c"</span><span class="string">,</span> <span class="string">"django-admin startproject $PROJECTNAME"</span><span class="string">]</span></span><br></pre></td></tr></table></figure>
+<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><ol>
+<li>Java Use Environment Parameter</li>
+</ol>
+<p>需要注意点：</p>
+<ul>
+<li>CMD[“java”, “$environment”, “-jar”, “jar_path”]，其中的环境变量是无法解析的。</li>
+<li>CMD [“sh”, “-c”, “echo $environment”]，可以解析环境变量，是因为调用sh进行执行。</li>
+</ul>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 基础镜像</span></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">"/entrypoint.sh"</span>]</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">CMD [<span class="string">"/bin/sh"</span>, <span class="string">"/execute.sh"</span>]</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># entrypoint.sh</span></span><br><span class="line">FROM anapsix/alpine-java:8_jdk</span><br><span class="line"></span><br><span class="line">ADD ./entrypoint.sh /entrypoint.sh</span><br><span class="line">ADD ./execute.sh /execute.sh</span><br><span class="line"></span><br><span class="line">RUN chmod +x /entrypoint.sh</span><br><span class="line">RUN chmod +x /execute.sh</span><br><span class="line"></span><br><span class="line">ENTRYPOINT [<span class="string">"/entrypoint.sh"</span>]</span><br><span class="line"></span><br><span class="line">CMD [<span class="string">"/bin/sh"</span>, <span class="string">"/execute.sh"</span>]</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># execute.sh</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"Java JVM_OPS=<span class="variable">$JVM_OPS</span>, Jar Path=<span class="variable">$JAR_PATH</span>"</span></span><br><span class="line">java <span class="variable">$JVM_OPS</span> -jar <span class="variable">$JAR_PATH</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="ARG"><a href="#ARG" class="headerlink" title="ARG"></a>ARG</h3><p>The ARG instruction defines a variable that users can pass at build-time to the builder with the docker build command using the –build-arg <varname>=<value> flag. </value></varname></p>
+<p>If a user specifies a build argument that was not defined in the Dockerfile, the build outputs a warning.</p>
+<h4 id="Usage-1"><a href="#Usage-1" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker build --build-arg user=what_user .</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/01/05/Java/Advance/off-heap memory/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1268,1174 +2614,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/27/CS/DesignPattern/6 Principles/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/27/CS/DesignPattern/6 Principles/" itemprop="url">Design Pattern 6 Principles</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-27T00:28:18+08:00">
-                2018-12-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Design-Pattern/" itemprop="url" rel="index">
-                    <span itemprop="name">Design Pattern</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="开闭原则"><a href="#开闭原则" class="headerlink" title="开闭原则"></a>开闭原则</h3><p>对扩展开放，对修改关闭，多使用抽象类和接口</p>
-<h4 id="QA"><a href="#QA" class="headerlink" title="QA"></a>QA</h4><ol>
-<li>为什么要遵循开闭原则？<blockquote>
-<p>在软件的生命周期内，因为变化、升级和维护等原因需要对软件原有代码进行修改时，可能会给旧代码中引入错误，也可能会使我们不得不对整个功能进行重构，并且需要原有代码经过重新测试。</p>
-</blockquote>
-</li>
-</ol>
-<hr>
-<h3 id="里氏代换原则"><a href="#里氏代换原则" class="headerlink" title="里氏代换原则"></a>里氏代换原则</h3><p>基类可以被子类替换，使用抽象类继承，不使用具体类继承</p>
-<hr>
-<h3 id="依赖倒转原则"><a href="#依赖倒转原则" class="headerlink" title="依赖倒转原则"></a>依赖倒转原则</h3><p>要依赖于抽象，不要依赖于具体，针对接口编程，不针对实现编程</p>
-<hr>
-<h3 id="接口隔离原则"><a href="#接口隔离原则" class="headerlink" title="接口隔离原则"></a>接口隔离原则</h3><p>使用多个隔离的接口，比使用单个接口好，建立最小的接口</p>
-<hr>
-<h3 id="迪米特法则"><a href="#迪米特法则" class="headerlink" title="迪米特法则"></a>迪米特法则</h3><p>一个软件实体应当尽可能少地与其他实体发生相互作用，通过中间类建立联系</p>
-<hr>
-<h3 id="合成复用原则"><a href="#合成复用原则" class="headerlink" title="合成复用原则"></a>合成复用原则</h3><p>尽量使用合成/聚合，而不是使用继承</p>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://blog.csdn.net/q291611265/article/details/48465113" target="_blank" rel="noopener">https://blog.csdn.net/q291611265/article/details/48465113</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/26/读书笔记/标准差/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/26/读书笔记/标准差/" itemprop="url">StandardDeviation 标准差</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-26T16:22:22+08:00">
-                2018-12-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书/" itemprop="url" rel="index">
-                    <span itemprop="name">读书</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>标准差（StandardDeviation），在概率统计中最常使用作为统计分布程度（statisticaldispersion）上的测量。</p>
-<p>标准差定义是总体各单位标准值与其平均数离差平方的算术平均数的平方根。它反映组内个体间的离散程度。测量到分布程度的结果，原则上具有两种性质</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/26/Java/JVM/Basic/JVM-Parameter/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/26/Java/JVM/Basic/JVM-Parameter/" itemprop="url">JVM Parameters</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-26T15:31:22+08:00">
-                2018-12-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
-                    <span itemprop="name">JVM</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>HotSpot JVM提供了三类参数：</p>
-<ul>
-<li>第一类包括了标准参数。顾名思义，标准参数中包括功能和输出的参数都是很稳定的，很可能在将来的JVM版本中不会改变。你可以用java命令（或者是用<strong>java -help</strong>）检索出所有标准参数。例如，-server。</li>
-<li>第二类是X参数，非标准化的参数在将来的版本中可能会改变。所有的这类参数都以-X开始，并且可以用<strong>java -X</strong>来检索。注意，不能保证所有参数都可以被检索出来，其中就没有-Xcomp。</li>
-<li>第三类是包含XX参数（到目前为止最多的），它们同样不是标准的。然而，在实际情况中X参数和XX参数并没有什么不同。X参数的功能是十分稳定的，然而很多XX参数仍在实验当中（主要是JVM的开发者用于debugging和调优JVM自身的实现）。<blockquote>
-<p>对于布尔类型的参数，有”+”或”-“，然后才设置JVM选项的实际名称。例如，-XX:+<name>用于激活<name>选项，而-XX:-<name>用于注销选项。<br>对于需要非布尔值的参数，如String或者Integer，我们先写参数的名称，后面加上”=”，最后赋值。例如，-XX:<name>=<value>给<name>赋值<value>。<br>documentation: <a href="https://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html" target="_blank" rel="noopener">https://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html</a></value></name></value></name></name></name></name></p>
-</blockquote>
-</li>
-</ul>
-<hr>
-<h3 id="Log-File"><a href="#Log-File" class="headerlink" title="Log File"></a>Log File</h3><ul>
-<li>-XX:+PrintGC：</li>
-<li>-XX:+PrintGCDetails：</li>
-<li>-XX:+PrintGCTimeStamps：<blockquote>
-<p>注意：-XX:+PrintGCTimeStamps该选项打印的是JVM以启动时间为基准的相对时间，对于troubleshooting来说非常困难。使用PrintGCDateStamps代替PrintGCTimeStamps，打印出来的就是真实的日期了。</p>
-</blockquote>
-</li>
-<li>-XX:+PrintGCDateStamps：</li>
-<li>-XX:+PrintGCApplicationStoppedTime：</li>
-<li>-XX:+PrintHeapAtGC：</li>
-<li>-Xloggc:filename：</li>
-<li>-XX:+PrintAdaptiveSizePolicy：开启该标志后，一旦发生垃圾回收，GC 的日志中会包含垃圾回收时不同的代进行空间调整的细节信息。</li>
-</ul>
-<hr>
-<h3 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h3><ul>
-<li><p>-Xms：初始堆大小，默认值为物理内存的1/64。大小通常被视为堆内存大小的下界。</p>
-<blockquote>
-<p>-XX:InitialHeapSize</p>
-</blockquote>
-</li>
-<li><p>-Xmx：最大堆大小，默认值为物理内存的1/4</p>
-<blockquote>
-<p>-XX:MaxHeapSize</p>
-</blockquote>
-</li>
-<li><p>-Xmn：年轻代大小，例如2g。</p>
-</li>
-<li><p>-XX:MaxDirectMemorySize：堆外内存大小</p>
-</li>
-<li><p>-XX:+HeapDumpOnOutOfMemoryError：让JVM在发生内存溢出时自动的生成堆内存快照。</p>
-<blockquote>
-<p>默认情况下，堆内存快照会保存在JVM的启动目录下名为java_pid<pid>.hprof的文件里（<pid>是JVM进程的进程号）。可以通过设置-XX:HeapDumpPath=<path>来改变默认的堆内存快照生成路径，<path>可以是相对或者绝对路径。<br>堆内存快照文件有可能很庞大，特别是当内存溢出错误发生的时候。因此，推荐将堆内存快照生成路径指定到一个拥有足够磁盘空间的地方。</path></path></pid></pid></p>
-</blockquote>
-</li>
-<li><p>XX:OnOutOfMemoryError：当内存溢发生时，可以执行一些指令。</p>
-<blockquote>
-<p>当内存溢出错误发生的时候，我们会将堆内存快照写到/tmp/heapdump.hprof 文件并且在JVM的运行目录执行脚本cleanup.sh<br>java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof -XX:OnOutOfMemoryError =”sh ~/cleanup.sh” MyApp</p>
-</blockquote>
-</li>
-<li><p>-XX:NewSize：指定新生代大小，例如-XX:Newsize=1024m。</p>
-</li>
-<li>-XX:MaxNewSize：设置该参数时，应该考虑到新生代只是整个堆的一部分，新生代设置的越大，老年代区域就会减少。一般不允许新生代比老年代还大，因为要考虑GC时最坏情况，所有对象都晋升到老年代。最大可以设置为-Xmx/2。</li>
-<li>-XX:NewRatio：设置新生代和老年代的相对大小。这种方式的优点是新生代大小会随着整个堆大小动态扩展。<blockquote>
-<p>例如-XX:NewRatio=3指定老年代/新生代为3/1，老年代占堆大小的3/4，新生代占1/4。</p>
-</blockquote>
-</li>
-<li><p>-XX:SurvivorRatio：指定Eden与survivor大小比例。</p>
-<blockquote>
-<p>例如-XX:SurvivorRatio=10，表示伊Eden是To/From survivor大小的10倍。所以Eden占新生代大小的10/12，To survivor和From survivor各占新生代的1/12。</p>
-</blockquote>
-</li>
-<li><p>-XX:PermSize：</p>
-</li>
-<li><p>-XX:MaxPermSize</p>
-<blockquote>
-<p>请注意，PermSize和MaxPermSize设置的永久代大小并不会被包括在使用参数-XX:MaxHeapSize设置的堆内存大小中。<br>The JDK 8 HotSpot JVM is now using native memory for the representation of class metadata and is called Metaspace.<br><strong>The permanent generation has been removed. The PermSize and MaxPermSize are ignored and a warning is issued if they are present on the command line.</strong><br>Java HotSpot(TM) 64-Bit Server VM warning: ignoring option PermSize/MaxPermSize; support was removed in 8.0<br>Example: -Xmx512m -XX:MaxPermSize=128m -&gt; -Xmx512m</p>
-</blockquote>
-</li>
-<li><p>-XX:MetaspaceSize：</p>
-</li>
-<li><p>-XX:MaxMetaspaceSize：</p>
-</li>
-<li><p>-XX:InitialCodeCacheSize</p>
-</li>
-<li><p>-XX:ReservedCodeCacheSize</p>
-<blockquote>
-<p>JVM一个有趣的，但往往被忽视的内存区域是“代码缓存”，它是用来存储已编译方法生成的本地代码。代码缓存确实很少引起性能问题，但是一旦发生其影响可能是毁灭性的。如果代码缓存被占满，JVM会打印出一条警告消息，并切换到interpreted-only 模式：JIT编译器被停用，字节码将不再会被编译成机器码。因此，应用程序将继续运行，但运行速度会降低一个数量级，直到有人注意到这个问题。</p>
-</blockquote>
-</li>
-<li><p>-XX:+UseCodeCacheFlushing：当代码缓存被填满时让JVM放弃一些编译代码。</p>
-</li>
-<li><p>Xss：设置单个线程栈的大小</p>
-</li>
-<li><p>GuaranteedSafepointInterval：</p>
-</li>
-</ul>
-<hr>
-<h3 id="Collector"><a href="#Collector" class="headerlink" title="Collector"></a>Collector</h3><ul>
-<li>-XX:+UseParallelGC：</li>
-<li>-XX:ParallelGCThreads：</li>
-<li>-XX:MaxGCPauseMillis：</li>
-<li>-XX:+UseAdaptiveSizePolicy：</li>
-<li>-XX:GCTimeRatio：设置垃圾回收时间占程序运行时间的百分比，公式：1/(1+n)</li>
-<li>-XX:+ScavengeBeforeFullGC：Full GC前调用YGC，默认为true</li>
-<li>-XX:+MaxTenuringThreshold：Sets the maximum tenuring threshold for use in adaptive GC sizing.<blockquote>
-<p>Parallel Scavenge中默认值为15，CMS中默认值为6，G1中默认值为15。<br>为什么最大为15？因为对象头信息里面只分配了4bit来保存对象的age信息。<br>这个仅仅表示最大值，因为对象的晋升还与当时Survivor内存大小和存活对象有关，有可能有些对象不需要达到这个阈值就已经晋升到old。</p>
-</blockquote>
-</li>
-</ul>
-<hr>
-<h3 id="CMS"><a href="#CMS" class="headerlink" title="CMS"></a>CMS</h3><ul>
-<li>-XX:+UseConcMarkSweepGC：激活CMS收集器，默认HotSpot JVM使用的是并行收集器。</li>
-<li><p>-XX:+UseParNewGC：当使用CMS收集器时，该标志激活年轻代使用多线程并行执行垃圾回收。</p>
-<blockquote>
-<p>对于CMS收集器，年轻代GC算法和老年代GC算法是不同的，因此年轻代GC有两种不同的实现，并且是两个不同的标志。<br>注意最新的JVM版本，当使用-XX：+UseConcMarkSweepGC时，-XX：UseParNewGC会自动开启。因此，如果年轻代的并行GC不想开启，可以通过设置-XX:-UseParNewGC来关掉。</p>
-</blockquote>
-</li>
-<li><p>-XX:+CMSConcurrentMTEnabled：当该标志被启用时，并发的CMS阶段将以多线程执行(因此，多个GC线程会与所有的应用程序线程并行工作)。</p>
-</li>
-<li><p>-XX:+CMSIncrementalMode：该标志将开启CMS收集器的增量模式。</p>
-<blockquote>
-<p>增量模式经常暂停CMS过程，以便对应用程序线程作出完全的让步。因此，收集器将花更长的时间完成整个收集周期。因此，只有通过测试后发现正常CMS周期对应用程序线程干扰太大时，才应该使用增量模式。由于现代服务器有足够的处理器来适应并发的垃圾收集，所以这种情况发生得很少。</p>
-</blockquote>
-</li>
-<li><p>-XX:ConcGCThreads：定义并发CMS过程运行时的线程数。比如value=4意味着CMS周期的所有阶段都以4个线程来执行。</p>
-<blockquote>
-<p>尽管更多的线程会加快并发CMS过程，但其也会带来额外的同步开销。因此，对于特定的应用程序，应该通过测试来判断增加CMS线程数是否真的能够带来性能的提升。<br>如果没有设置该标记，JVM会根据并行收集器中的-XX:ParallelGCThreads参数的值来计算出默认的并行CMS线程数。该公式是ConcGCThreads = (ParallelGCThreads + 3)/4。<br>因此，对于CMS收集器，-XX:ParallelGCThreads标志不仅影响“stop-the-world”垃圾收集阶段，还影响并发阶段。</p>
-</blockquote>
-</li>
-<li><p>-XX:+ExplicitGCInvokesConcurrent：前提使用CMS收集器，命令JVM无论什么时候调用系统GC都执行CMS GC，而不是Full GC。</p>
-</li>
-<li>-XX:+DisableExplicitGC：禁止代码显式调用System.gc()。</li>
-<li>-XX:+CMSClassUnloadingEnabled：CMS收集器默认不会对永久代进行垃圾回收。如果希望对永久代进行垃圾回收，可设置该标志。</li>
-<li>-XX:CMSFullGCsBeforeCompaction：多少次后进行内存压缩</li>
-<li>-XX:+CMSParallelRemarkEnabled：降低标记停顿</li>
-<li>-XX+UseCMSCompactAtFullCollection：在FULL GC的时候，对年老代的压缩</li>
-<li>-XX:CMSInitiatingOccupancyFraction=70:使用CMS作为垃圾回收，当使用70％后开始CMS收集</li>
-<li>-XX:+PrintOptoAssembly：由编译器线程生成的本地代码被输出并写到“hotspot.log”文件中。使用这个参数要求运行的服务端VM是debug版本。我们可以研究-XX:+PrintOptoAssembly的输出，以至于了解JVM实际执行什么样的优化。</li>
-</ul>
-<hr>
-<h3 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h3><ul>
-<li>-XX:+UseStringDeduplication<blockquote>
-<p><a href="https://dzone.com/articles/easy-change-to-reduce-memory-by-20" target="_blank" rel="noopener">https://dzone.com/articles/easy-change-to-reduce-memory-by-20</a></p>
-</blockquote>
-</li>
-</ul>
-<hr>
-<h3 id="JIT"><a href="#JIT" class="headerlink" title="JIT"></a>JIT</h3><ul>
-<li>-XX:+PrintCompilation</li>
-<li>-XX:+CITime</li>
-<li>-XX:+LogCompilation</li>
-<li>-XX:+PrintOptoAssembly</li>
-</ul>
-<h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -server -XX:+PrintCompilation hello.jar</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">57    1       3       java.lang.String::hashCode (55 bytes)</span><br><span class="line">58    2       3       java.lang.String::length (6 bytes)</span><br><span class="line">58    3       3       java.lang.String::charAt (29 bytes)</span><br><span class="line">59    4       3       java.lang.String::equals (81 bytes)</span><br><span class="line">59    6       3       java.lang.String::indexOf (70 bytes)</span><br><span class="line">59    5       3       java.lang.Object::&lt;init&gt; (1 bytes)</span><br><span class="line">59    7     n 0       java.lang.System::arraycopy (native)   (static)</span><br><span class="line">.....</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p>Java HotSpot VM Options: <a href="https://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html" target="_blank" rel="noopener">https://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html</a><br>JVM实用参数（七）CMS收集器: <a href="http://ifeve.com/useful-jvm-flags-part-7-cms-collector/" target="_blank" rel="noopener">http://ifeve.com/useful-jvm-flags-part-7-cms-collector/</a><br>JVM实用参数（四）内存调优: <a href="http://ifeve.com/useful-jvm-flags-part-4-heap-tuning/" target="_blank" rel="noopener">http://ifeve.com/useful-jvm-flags-part-4-heap-tuning/</a><br><a href="http://www.10tiao.com/html/677/201708/2650887093/1.html" target="_blank" rel="noopener">http://www.10tiao.com/html/677/201708/2650887093/1.html</a><br><a href="http://www.cnblogs.com/redcreen/archive/2011/05/04/2037057.html" target="_blank" rel="noopener">http://www.cnblogs.com/redcreen/archive/2011/05/04/2037057.html</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/26/Testing/Web/TestingWebTools/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/26/Testing/Web/TestingWebTools/" itemprop="url">Testing Web Tools</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-26T10:00:18+08:00">
-                2018-12-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Testing/" itemprop="url" rel="index">
-                    <span itemprop="name">Testing</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Testing/Web/" itemprop="url" rel="index">
-                    <span itemprop="name">Web</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Siege"><a href="#Siege" class="headerlink" title="Siege"></a>Siege</h3><p>Siege是Linux下的一个web系统的压力测试工具，支持多链接，支持get和post请求，可以对web系统进行多并发下持续请求的压力测试。</p>
-<h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><blockquote>
-<p><a href="https://www.cnblogs.com/magicianyin/p/8528952.html" target="_blank" rel="noopener">https://www.cnblogs.com/magicianyin/p/8528952.html</a></p>
-</blockquote>
-<hr>
-<h3 id="wrk"><a href="#wrk" class="headerlink" title="wrk"></a>wrk</h3><p>wrk是一款采用异步并发模型的HTTP基准测试工具：采用异步并发模型，能够发送更大且可控的压力;内置LuaJIT，能够通过lua脚本模拟常见的业务行为，模拟更加真实的场景;相比常见的HTTP基准测试工具，占用更少CPU、更少内存;</p>
-<h4 id="Usage-1"><a href="#Usage-1" class="headerlink" title="Usage"></a>Usage</h4><p>对于POST请求，需要使用lua脚本，测试命令：<strong>wrk -c1 -t1 -d 1s -s ./post.lua url</strong></p>
-<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wrk.method = <span class="string">"POST"</span></span><br><span class="line">wrk.body   = <span class="string">"&#123;\"type\":\"Limit\",\"symbol\":\"btcusd\",\"clientOrderId\":\"\",\"side\":\"buy\",\"quantity\":\"1\",\"limitPrice\":\"100.0\",\"timeInForce\":\"GoodTillCancel\",\"selfTradePrevention\":\"DecreaseAndCancel\"&#125;"</span></span><br><span class="line">wrk.headers[<span class="string">"Content-Type"</span>] = <span class="string">"application/json"</span></span><br><span class="line">wrk.headers[<span class="string">"Authorization"</span>] = <span class="string">"Bearer "</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>latency: 延时</li>
-<li>req/sec: 每秒钟处理的请求量</li>
-<li>stdev: 标准差</li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/26/Mac/Solution/PerformanceTesting/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/26/Mac/Solution/PerformanceTesting/" itemprop="url">MacOS Performance Testing</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-26T09:45:18+08:00">
-                2018-12-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/MacOS/" itemprop="url" rel="index">
-                    <span itemprop="name">MacOS</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h3><h4 id="Solution-1"><a href="#Solution-1" class="headerlink" title="Solution 1"></a>Solution 1</h4><p>打开终端，输入“yes &gt; /dev/null &amp;”，即可创建一项名为“yes”的进程，这种进程会耗费一定量的CPU使用率，你可以再连续输入“yes &gt; /dev/null &amp;”命令，创建更多的“yes”进程，直到CPU使用率达到100%。</p>
-<p>完事后赶快清除“yes”进程哦，输入“killall yes”瞬间搞定！</p>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://www.waerfa.com/stress-test-a-mac-by-overload-cpu" target="_blank" rel="noopener">https://www.waerfa.com/stress-test-a-mac-by-overload-cpu</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/25/DistributedSystem/JWT与Session的作用/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/25/DistributedSystem/JWT与Session的作用/" itemprop="url">JWT与Session的作用</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-25T12:29:18+08:00">
-                2018-12-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Distributed/" itemprop="url" rel="index">
-                    <span itemprop="name">Distributed</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="What’s-Session"><a href="#What’s-Session" class="headerlink" title="What’s Session"></a>What’s Session</h4><p>In computer science, in particular networking, <strong>a session is a temporary and interactive information interchange(交换)</strong> between two or more communicating devices, or between a computer and user (see login session).</p>
-<p>sessions consist of three phases:</p>
-<ol>
-<li>The client establishes a TCP connection (or the appropriate connection if the transport layer is not TCP).</li>
-<li>The client sends its request, and waits for the answer.</li>
-<li>The server processes the request, sending back its answer, providing a status code and appropriate data.</li>
-</ol>
-<p>As of HTTP/1.1, <strong>the connection is no longer closed after completing the third phase</strong>, and the client is now granted a further request: this means the second and third phases can now be performed any number of times.</p>
-<p><strong>Theory</strong></p>
-<img src="/2018/12/25/DistributedSystem/JWT与Session的作用/session-theory.png">
-<p>当client通过用户名密码请求server并通过身份认证后，server就会生成身份认证相关的session数据，并且保存在内存或者内存数据库。并将对应的sesssion_id返回给client，client会把保存session_id（可以加密签名下防止篡改在cookie。</p>
-<p>此后client的所有请求都会附带该session_id（毕竟默认会把cookie传给server），以确定server是否存在对应的session数据以及检验登录状态以及拥有什么权限，如果通过校验就该干嘛干嘛，否则重新登录。</p>
-<p>对比JWT的优势：</p>
-<ul>
-<li>最大的优势就在于可以主动清除session了；</li>
-<li>session保存在服务器端，相对较为安全；</li>
-<li>结合cookie使用，较为灵活，兼容性较好；</li>
-</ul>
-<p>劣势：</p>
-<ul>
-<li>cookie + session 在跨域场景表现并不好；</li>
-<li>如果是分布式部署，需要做多机共享session机制，实现方法可将session存储到数据库中或者redis中；</li>
-<li>基于cookie的机制很容易被CSRF；</li>
-<li>查询session信息可能会有数据库查询操作；</li>
-<li>服务之间依赖访问不好处理。每个服务需要有单独的cookies。</li>
-</ul>
-<h4 id="What’s-JWT"><a href="#What’s-JWT" class="headerlink" title="What’s JWT"></a>What’s JWT</h4><p>JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact(契约) and self-contained way for securely transmitting information between parties as a JSON object. This information can be verified and trusted because it is digitally signed. JWTs can be signed using a secret (with the HMAC algorithm) or a public/private key pair using RSA or ECDSA.</p>
-<p>if the token is sent in the Authorization header, Cross-Origin Resource Sharing (CORS) won’t be an issue as it doesn’t use cookies.</p>
-<p>The following diagram shows how a JWT is obtained and used to access APIs or resources:</p>
-<img src="/2018/12/25/DistributedSystem/JWT与Session的作用/request-jwt-token.png">
-<ol>
-<li>The application or client requests authorization to the authorization server. This is performed through one of the different authorization flows. For example, a typical OpenID Connect compliant web application will go through the /oauth/authorize endpoint using the authorization code flow.</li>
-<li>When the authorization is granted, the authorization server returns an access token to the application.</li>
-<li>The application uses the access token to access a protected resource (like an API).</li>
-</ol>
-<blockquote>
-<p>using it on HTTP Headers, Authorization: Bearer <token></token></p>
-</blockquote>
-<p>对比Session的优势：</p>
-<ul>
-<li>可扩展性，方便服务进行扩展。</li>
-<li>安全性</li>
-<li>RESTful API 服务</li>
-</ul>
-<p>劣势：</p>
-<ul>
-<li>传输开销比 Session 大，特别是大量数据编码在JWT里面的时候。</li>
-<li>实效性，无状态JWT的实效性相比session太差，只有等到过期才可销毁，而session则可手动销毁。</li>
-</ul>
-<hr>
-<p>JSON Web Token structure:</p>
-<ul>
-<li><p>Header</p>
-<blockquote>
-<p>The header typically consists of two parts: the <strong>type</strong> of the token, which is JWT, and the <strong>signing algorithm</strong> being used, such as HMAC SHA256 or RSA</p>
-</blockquote>
-</li>
-<li><p>Payload</p>
-<blockquote>
-<p>The second part of the token is the payload, which contains the <strong>claims</strong>. Claims are statements about an entity (typically, the user) and additional data. There are three types of claims: registered, public, and private claims.</p>
-</blockquote>
-</li>
-<li><p>Signature</p>
-<blockquote>
-<p>To create the signature part you have to take the encoded header, the encoded payload, a secret, the algorithm specified in the header, and sign that.</p>
-</blockquote>
-</li>
-</ul>
-<hr>
-<h3 id="QA"><a href="#QA" class="headerlink" title="QA"></a>QA</h3><h4 id="当用户注销时，如何使该Token失效"><a href="#当用户注销时，如何使该Token失效" class="headerlink" title="当用户注销时，如何使该Token失效"></a>当用户注销时，如何使该Token失效</h4><p>因为JWT无状态，不保存用户设备信息，没法单纯使用它完成以上问题，因此需要利用数据库保存一些状态完成。</p>
-<ul>
-<li>session: 只需要把user_id对应的token清掉即可</li>
-<li>JWT: 使用Redis，维护一张黑名单，用户注销时加入黑名单(签名)，其中key的过期时间与JWT的过期时间保持一致，确保注销后的Token不能再被使用。</li>
-</ul>
-<hr>
-<h4 id="如何允许用户只能在一个设备登录，如微信"><a href="#如何允许用户只能在一个设备登录，如微信" class="headerlink" title="如何允许用户只能在一个设备登录，如微信"></a>如何允许用户只能在一个设备登录，如微信</h4><ul>
-<li>session: 假设使用MySQL，对用户数据库表添加token字段并加索引，每次登陆重置token字段。每次请求需要权限接口时，根据token查找user_id。</li>
-<li>JWT: 假设使用MySQL，对用户数据库表添加token字段(不需要添加索引)，每次登陆重置token字段。每次请求需要权限接口时，根据JWT获取user_id，根据user_id查用户表获取token判断token是否一致。另外也可以使用计数器的方法。</li>
-</ul>
-<hr>
-<h4 id="如何允许用户只能在最近五个设备登录"><a href="#如何允许用户只能在最近五个设备登录" class="headerlink" title="如何允许用户只能在最近五个设备登录"></a>如何允许用户只能在最近五个设备登录</h4><ul>
-<li>session: 假设使用MySQL，创建token数据库表，有id、token和user_id三个字段，user与token表为1:m关系。每次登录添加一行记录。根据token获取user_id，再根据user_id获取该用户有多少设备登录，超过5个，则删除最小id一行。</li>
-<li>JWT: 假设使用MySQL，使用计数器，在用户表中添加字段count，默认值为0，每次登录count字段自增1，每次登录创建的JWT的Payload中携带数据current_count为用户的count值。每次请求权限接口时，根据JWT获取count以及current_count，根据user_id查用户表获取count，判断与current_count差值是否小于5。</li>
-</ul>
-<hr>
-<h4 id="如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备"><a href="#如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备" class="headerlink" title="如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备"></a>如何允许用户只能在最近五个设备登录，而且使某一用户踢掉除现有设备外的其它所有设备</h4><ul>
-<li>session: 在上一个问题的基础上，删掉该设备以外其它所有的token记录。</li>
-<li>JWT: 在上一个问题的基础上，对count+5，并对该设备重新赋值为新的count。</li>
-</ul>
-<hr>
-<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>从以上问题得知，如果不需要控制登录设备数量以及设备信息，无状态的JWT是一个不错的选择。一旦涉及到了设备信息，就需要对JWT添加额外的状态支持，增加了认证的复杂度，此时选用session是一个不错的选择。JWT不是万能的，是否采用JWT，需要根据业务需求来确定。</p>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p>A typical HTTP session: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Session" target="_blank" rel="noopener">https://developer.mozilla.org/en-US/docs/Web/HTTP/Session</a><br>Session (computer science): <a href="https://en.wikipedia.org/wiki/Session_(computer_science)" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Session_(computer_science)</a><br>What is JSON Web Token: <a href="https://jwt.io/introduction/" target="_blank" rel="noopener">https://jwt.io/introduction/</a><br>jwt 实践以及与 session 对比: <a href="https://juejin.im/post/5b532492e51d455d6825c0cc" target="_blank" rel="noopener">https://juejin.im/post/5b532492e51d455d6825c0cc</a><br>聊一聊JWT与session: <a href="https://juejin.im/post/5a437441f265da43294e54c3" target="_blank" rel="noopener">https://juejin.im/post/5a437441f265da43294e54c3</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/5/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/page/7/">7</a><span class="space">&hellip;</span><a class="page-number" href="/page/54/">54</a><a class="extend next" rel="next" href="/page/7/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/5/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/page/7/">7</a><span class="space">&hellip;</span><a class="page-number" href="/page/55/">55</a><a class="extend next" rel="next" href="/page/7/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2482,7 +2665,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">538</span>
+                <span class="site-state-item-count">544</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2493,7 +2676,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">233</span>
+                <span class="site-state-item-count">235</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2504,7 +2687,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">594</span>
+                <span class="site-state-item-count">599</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

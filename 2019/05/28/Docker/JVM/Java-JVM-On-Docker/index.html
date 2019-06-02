@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Docker,JVM,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="Introduction你是否曾经经历过在Docker中运行基于JVM的应用程序时出现“随机”故障？或者一些奇怪的死机？两者都有可能是由于Java 8中的糟糕的Docker支持引起。 Docker使用控制组(cgroups)来限制对资源的使用。在容器中运行应用程序时限制其对内存和CPU的使用绝对是一个好主意，它可以防止应用程序占用全部可用的内存和/或CPU，因而导致在同一系统上运行的其他容器无法响">
+<meta name="keywords" content="Docker,JVM">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java JVM On Docker">
+<meta property="og:url" content="https://sulangsss.github.io/2019/05/28/Docker/JVM/Java-JVM-On-Docker/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="Introduction你是否曾经经历过在Docker中运行基于JVM的应用程序时出现“随机”故障？或者一些奇怪的死机？两者都有可能是由于Java 8中的糟糕的Docker支持引起。 Docker使用控制组(cgroups)来限制对资源的使用。在容器中运行应用程序时限制其对内存和CPU的使用绝对是一个好主意，它可以防止应用程序占用全部可用的内存和/或CPU，因而导致在同一系统上运行的其他容器无法响">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-05-28T12:30:45.110Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java JVM On Docker">
+<meta name="twitter:description" content="Introduction你是否曾经经历过在Docker中运行基于JVM的应用程序时出现“随机”故障？或者一些奇怪的死机？两者都有可能是由于Java 8中的糟糕的Docker支持引起。 Docker使用控制组(cgroups)来限制对资源的使用。在容器中运行应用程序时限制其对内存和CPU的使用绝对是一个好主意，它可以防止应用程序占用全部可用的内存和/或CPU，因而导致在同一系统上运行的其他容器无法响">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2019/05/28/Docker/JVM/Java-JVM-On-Docker/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>Java JVM On Docker | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/Docker/JVM/Java-JVM-On-Docker/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Java JVM On Docker</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-28T19:51:19+08:00">
+                2019-05-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>你是否曾经经历过在Docker中运行基于JVM的应用程序时出现“随机”故障？或者一些奇怪的死机？两者都有可能是由于Java 8中的糟糕的Docker支持引起。</p>
+<p>Docker使用控制组(cgroups)来限制对资源的使用。在容器中运行应用程序时限制其对内存和CPU的使用绝对是一个好主意，它可以防止应用程序占用全部可用的内存和/或CPU，因而导致在同一系统上运行的其他容器无法响应。限制资源的使用可以提高应用程序的可靠性和稳定性。它还为硬件容量的规划提供了依据。在像诸如Kubernetes或DC/OS这样的编排系统上运行容器时，这一点尤为重要。</p>
+<p>JVM 可以“看到”系统上所有可用的内存和 CPU 内核，并保持与这些资源的一致。在默认情况下，JVM 会将 max heap size 设置为系统内存的 1/4，并将一些线程池个数(比如GC)设置为与物理 CPU 内核的数量一致。</p>
+<blockquote>
+<p>本文中使用的是遵循GNU GPL v2 许可授权的OpenJDK官方Docker镜像。这里描述的对Docker的支持在Oracle Java SE 开发工具包(JDK)版本8的更新191中被引入。Oracle在2019年4月修改了Java 8更新的许可政策，自Java SE 8更新211后的商业使用不再免费。    </p>
+</blockquote>
+<hr>
+<h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><p>我们一起来看看下面的例子：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.Vector;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MemoryEater</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    Vector v = <span class="keyword">new</span> Vector();</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">byte</span> b[] = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1048576</span>];</span><br><span class="line">      v.add(b);</span><br><span class="line">      Runtime rt = Runtime.getRuntime();</span><br><span class="line">      System.out.println( <span class="string">"free memory: "</span> + rt.freeMemory() );</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>We run it on a system with 64GB of memory, so let’s check the default maximum heap size:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker run -ti openjdk:8u181-jdk</span><br><span class="line">java -XX:+PrintFlagsFinal -version | grep MaxHeap</span><br><span class="line">    uintx MaxHeapFreeRatio = 100</span><br><span class="line">    uintx MaxHeapSize := 16819159040 &#123;product&#125;</span><br><span class="line"></span><br><span class="line">openjdk version <span class="string">"1.8.0_181"</span></span><br><span class="line">OpenJDK Runtime Environment (build 1.8.0_181-8u181-b13-2~deb9u1-b13)</span><br><span class="line">OpenJDK 64-Bit Server VM (build 25.181-b13, mixed mode)</span><br></pre></td></tr></table></figure>
+<p>As said — it’s 1/4 of physical memory — 16GB. What will happen if we limit the memory using docker cgroups? Let’s check:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">docker run -ti -m 512M openjdk:8u181-jdk</span><br><span class="line">javac MemoryEater.java</span><br><span class="line"></span><br><span class="line">Note: MemoryEater.java uses unchecked or unsafe operations.</span><br><span class="line">Note: Recompile with -Xlint:unchecked <span class="keyword">for</span> details.</span><br><span class="line"></span><br><span class="line">java MemoryEater</span><br><span class="line"></span><br><span class="line">free memory: 1003980048</span><br><span class="line">free memory: 1003980048</span><br><span class="line">free memory: 1003980048</span><br><span class="line">[...]</span><br><span class="line">free memory: 803562640</span><br><span class="line">free memory: 802514048</span><br><span class="line">free memory: 801465456</span><br><span class="line">free memory: 800416864</span><br><span class="line">Killed</span><br></pre></td></tr></table></figure>
+<p>The JVM process was killed. Since it was a child process — the container itself survived, but normally when java is the only process inside a container (with PID 1) the container will crash.</p>
+<p>Let’s look into system logs:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">dcos-agent-1 kernel: java invoked oom-killer: gfp_mask=0xd0, order=0, oom_score_adj=0</span><br><span class="line">dcos-agent-1 kernel: java cpuset=eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712 mems_allowed=0</span><br><span class="line">dcos-agent-1 kernel: CPU: 6 PID: 4142 Comm: java Tainted: G               ------------ T 3.10.0-693.17.1.el7.x86_64 <span class="comment">#1</span></span><br><span class="line">dcos-agent-1 kernel: Hardware name: Supermicro Super Server/X10SRi-F, BIOS 2.0 12/17/2015</span><br><span class="line">dcos-agent-1 kernel: Call Trace:</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816a6071&gt;] dump_stack+0x19/0x1b</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816a1466&gt;] dump_header+0x90/0x229</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81187dc6&gt;] ? find_lock_task_mm+0x56/0xc0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f36a8&gt;] ? try_get_mem_cgroup_from_mm+0x28/0x60</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81188274&gt;] oom_kill_process+0x254/0x3d0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff812ba2fc&gt;] ? selinux_capable+0x1c/0x40</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f73c6&gt;] mem_cgroup_oom_synchronize+0x546/0x570</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f6840&gt;] ? mem_cgroup_charge_common+0xc0/0xc0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81188b04&gt;] pagefault_out_of_memory+0x14/0x90</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff8169f82e&gt;] mm_fault_error+0x68/0x12b</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816b3a21&gt;] __do_page_fault+0x391/0x450</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816b3b15&gt;] do_page_fault+0x35/0x90</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816af8f8&gt;] page_fault+0x28/0x30</span><br><span class="line">dcos-agent-1 kernel: Task <span class="keyword">in</span> /docker/eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712 killed as a result of <span class="built_in">limit</span> of /docker/eca214e0fc</span><br><span class="line">5e9d7f8688fc36979c510d2fb9afab2ce55712</span><br><span class="line">dcos-agent-1 kernel: memory: usage 524180kB, <span class="built_in">limit</span> 524288kB, failcnt 314788</span><br><span class="line">dcos-agent-1 kernel: memory+swap: usage 1048576kB, <span class="built_in">limit</span> 1048576kB, failcnt 6</span><br><span class="line">dcos-agent-1 kernel: kmem: usage 0kB, <span class="built_in">limit</span> 9007199254740988kB, failcnt 0</span><br><span class="line">dcos-agent-1 kernel: Memory cgroup stats <span class="keyword">for</span> /docker/eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712: cache:28KB rss:524152KB rss_huge</span><br><span class="line">:0KB swap:524396KB inactive_anon:262176KB active_anon:261976KB inactive_file:8KB active_file:4KB unevictable:0KB</span><br><span class="line">dcos-agent-1 kernel: [ pid ]   uid  tgid total_vm      rss nr_ptes swapents oom_score_adj name</span><br><span class="line">dcos-agent-1 kernel: [ 1400]     0  1400     4985      418      14      139             0 bash</span><br><span class="line">dcos-agent-1 kernel: [ 4141]     0  4141  4956003   126966     606   137837             0 java</span><br><span class="line">dcos-agent-1 kernel: Memory cgroup out of memory: Kill process 4162 (java) score 1012 or sacrifice child</span><br><span class="line">dcos-agent-1 kernel: Killed process 4141 (java) total-vm:19824012kB, anon-rss:495748kB, file-rss:12116kB, shmem-rss:0kB</span><br></pre></td></tr></table></figure>
+<p>Failures like these can be very difficult to debug — there is nothing in the application logs. It can be especially difficult on managed systems like AWS ECS.</p>
+<p>And how about CPUs? Let’s check it again running a small program which displays the number of available processors:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AvailableProcessors</span> </span>&#123;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// check the number of processors available</span></span><br><span class="line">      System.out.println(<span class="string">""</span>+Runtime.getRuntime().availableProcessors());</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Let’s run it in a docker container with cpu number set to 1:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ docker run -ti --cpus 1 openjdk:8u181-jdk</span><br><span class="line">javac AvailableProcessors.java</span><br><span class="line">java AvailableProcessors</span><br><span class="line">12</span><br></pre></td></tr></table></figure>
+<p>Not good — there are 12 CPUs on this system indeed. So even the number of available processors is limited to 1, the JVM will try to use 12.</p>
+<blockquote>
+<p>for example the GC threads number is set by this formula: On a machine with N hardware threads where N is greater than 8, the parallel collector uses a fixed fraction of N as the number of garbage collector threads. The fraction is approximately 5/8 for large values of N. At values of N below 8, the number used is N.</p>
+</blockquote>
+<p>In our case:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">java -XX:+PrintFlagsFinal -version | grep ParallelGCThreads</span><br><span class="line">uintx ParallelGCThreads = 10 &#123;product&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h3><p>The new Java version (10 and above) docker support is already built-in. But sometimes upgrading is not an option — for example if the application is incompatible with the new JVM.</p>
+<p>The good news: Docker support was also backported to Java 8. Let’s check the newest openjdk image tagged as <strong>8u212</strong>. </p>
+<p>We’ll limit the memory to 1G and use 1 CPU: <strong>docker run -ti –cpus 1 -m 1G openjdk:8u212-jdk</strong></p>
+<p>The memory:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">java -XX:+PrintFlagsFinal -version | grep MaxHeap</span><br><span class="line">    uintx MaxHeapFreeRatio                          = 70                                  &#123;manageable&#125;</span><br><span class="line">    uintx MaxHeapSize                              := 268435456                           &#123;product&#125;</span><br><span class="line">openjdk version <span class="string">"1.8.0_212"</span></span><br><span class="line">OpenJDK Runtime Environment (build 1.8.0_212-8u212-b01-1~deb9u1-b01)</span><br><span class="line">OpenJDK 64-Bit Server VM (build 25.212-b01, mixed mode)</span><br><span class="line"><span class="comment"># It’s 256M — exactly 1/4 of allocated memory.</span></span><br><span class="line"></span><br><span class="line">java AvailableProcessors</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+<p>Moreover, there are some new settings:</p>
+<ul>
+<li>-XX:InitialRAMPercentage</li>
+<li>-XX:MaxRAMPercentage</li>
+<li>-XX:MinRAMPercentage</li>
+</ul>
+<p>If for some reason the new JVM behaviour is not desired it can be switched off using <strong>-XX:-UseContainerSupport</strong>.</p>
+<blockquote>
+<p>On Kuberntes<br>imits.cpu  &lt;==&gt;  –cpu-quota  # docker inspect中的CpuQuota值<br>requests.cpu  &lt;==&gt;  –cpu-shares  # docker inspect中的CpuShares值</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://blog.softwaremill.com/docker-support-in-new-java-8-finally-fd595df0ca54" target="_blank" rel="noopener">https://blog.softwaremill.com/docker-support-in-new-java-8-finally-fd595df0ca54</a></li>
+<li><a href="https://www.chainnews.com/articles/631552101870.htm" target="_blank" rel="noopener">https://www.chainnews.com/articles/631552101870.htm</a></li>
+<li><a href="https://stackoverflow.com/questions/54292282/clarification-of-meaning-new-jvm-memory-parameters-initialrampercentage-and-minr/54297753#54297753" target="_blank" rel="noopener">https://stackoverflow.com/questions/54292282/clarification-of-meaning-new-jvm-memory-parameters-initialrampercentage-and-minr/54297753#54297753</a></li>
+<li><a href="https://www.cnblogs.com/yehaifeng/p/9596399.html" target="_blank" rel="noopener">https://www.cnblogs.com/yehaifeng/p/9596399.html</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Docker/" rel="tag"># Docker</a>
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/28/Futures/How-to-calculate-margin/" rel="next" title="How to calculate margin?">
+                <i class="fa fa-chevron-left"></i> How to calculate margin?
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/05/31/Kubenetes/GCP/ip-masq-agent/" rel="prev" title="ip-masq-agent">
+                ip-masq-agent <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">544</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">235</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">599</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Practice"><span class="nav-number">2.</span> <span class="nav-text">Practice</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Solution"><span class="nav-number">3.</span> <span class="nav-text">Solution</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
