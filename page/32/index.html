@@ -284,6 +284,349 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/04/19/MQ/RocketMQ/Broker-Config/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/04/19/MQ/RocketMQ/Broker-Config/" itemprop="url">RocketMQ Broker Config</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-19T20:48:18+08:00">
+                2018-04-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/RocketMQ/" itemprop="url" rel="index">
+                    <span itemprop="name">RocketMQ</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="properties"><a href="#properties" class="headerlink" title="properties"></a>properties</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 消费者的组名</span><br><span class="line">apache.rocketmq.consumer.PushConsumer=PushConsumer</span><br><span class="line"># 生产者的组名</span><br><span class="line">apache.rocketmq.producer.producerGroup=Producer</span><br><span class="line"># NameServer地址</span><br><span class="line">apache.rocketmq.namesrvAddr=localhost:9876</span><br></pre></td></tr></table></figure>
+<h3 id="配置参数说明"><a href="#配置参数说明" class="headerlink" title="配置参数说明"></a>配置参数说明</h3><p>listenPort：broker的服务端口号，作为对producer和consumer使用服务的端口号，默认为10911</p>
+<p>haListenPort：主要用于slave同master同步。haService中使用，默认值为listenPort + 1，这个值是在BrokerStartup.java中设置的。</p>
+<p>fastListenPort：主要是fastRemotingServer服务使用，默认为：listenPort - 2</p>
+<h4 id="cluster"><a href="#cluster" class="headerlink" title="cluster"></a>cluster</h4><ul>
+<li>Master</li>
+</ul>
+<p>brokerIP1：如果是k8s上，则是service地址（必须是IP地址信息，填服务名称无法解析）</p>
+<p>brokerName：Master和Slave要一样</p>
+<ul>
+<li>Slave</li>
+</ul>
+<p>brokerIP1：如果是k8s上，则是service地址（必须是IP地址信息，填服务名称无法解析）</p>
+<p>brokerName：Master和Slave要一样</p>
+<p>brokerIP2：Master的IP地址</p>
+<ul>
+<li>替换配置文件变量</li>
+</ul>
+<p>将conf目录下所有xml文件中的${user.home}替换成实际路径</p>
+<h3 id="消息发送结果"><a href="#消息发送结果" class="headerlink" title="消息发送结果"></a>消息发送结果</h3><ol>
+<li><p>SEND_OK：消息发送成功 </p>
+</li>
+<li><p>FLUSH_DISK_TIMEOUT：消息发送成功，但是服务器刷盘超时，消息已经进入服务器队列，只有此时服务器宕机，消息才会丢失 </p>
+</li>
+<li><p>FLUSH_SLAVE_TIMEOUT：消息发送成功，但是服务器同步到 Slave 时超时，消息已经进入服务器队列，只有此时服务器宕机，消息才会丢失 </p>
+</li>
+<li><p>SLAVE_NOT_AVAILABLE：消息发送成功，但是此时 slave 不可用，消息已经进入服务器队列，只有此时服务器宕机，消息才会丢失</p>
+</li>
+</ol>
+<h3 id="Momery-Config"><a href="#Momery-Config" class="headerlink" title="Momery Config"></a>Momery Config</h3><p>/bin/runbroker.sh</p>
+<p>Xms启动时内存，Xmx最大内存，Xmn最小内存</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD:source/_posts/Server/SpringBoot/RocketMQ/Broker-Config.md</span><br><span class="line">JAVA_OPT="$&#123;JAVA_OPT&#125; -server -Xms512m -Xmx2g -Xmn512m"</span><br><span class="line">=======</span><br><span class="line">JAVA_OPT="$&#123;JAVA_OPT&#125; -server -Xms512m -Xmx512m -Xmn256m"</span><br><span class="line">&gt;&gt;&gt;&gt;&gt;&gt;&gt; a19dd7ddf7c5d38cba8ad2cc462d3fd0a0c8a899:source/_posts/Server/MQ/RocketMQ/Broker-Config.md</span><br></pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-Xms1g -Xmx1g -Xmn512m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m</span><br></pre></td></tr></table></figure>
+<h3 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">FROM openjdk:8u171-jdk</span><br><span class="line">ADD rocketmq-all-4.2.0-bin-release /root/rocketmq</span><br><span class="line"></span><br><span class="line">ENV USER_HOME /root/rocketmq</span><br><span class="line">WORKDIR  $&#123;USER_HOME&#125;</span><br><span class="line">RUN chmod +x $&#123;USER_HOME&#125;/bin/mqbroker</span><br><span class="line">CMD cd $&#123;USER_HOME&#125;/bin &amp;&amp; export JAVA_OPT=" -Duser.home=/opt" &amp;&amp; sh mqbroker -c $&#123;USER_HOME&#125;/custom/master.properties</span><br><span class="line"></span><br><span class="line">EXPOSE 10909 10911</span><br><span class="line">VOLUME /opt/logs /opt/store</span><br></pre></td></tr></table></figure>
+<p>特别注意，如果缺少export JAVA_OPT=” -Duser.home=/opt”，在部署k8s的时候，如果删除Docker再重新部署，会重新初始化磁盘数据，造成Topic等信息丢失</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/04/19/SpringBoot/liquidata/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/04/19/SpringBoot/liquidata/" itemprop="url">Spring Boot liquidata</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-19T11:06:18+08:00">
+                2018-04-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="properties"><a href="#properties" class="headerlink" title="properties"></a>properties</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">spring.liquibase.user=root</span><br><span class="line">spring.liquibase.password=</span><br><span class="line">spring.liquibase.enabled=true</span><br><span class="line">spring.liquibase.url=jdbc:h2:file:./test;MODE=MYSQL;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1</span><br><span class="line">spring.liquibase.change-log=classpath:/liquibase/changelog-master.xml</span><br></pre></td></tr></table></figure>
+<p>文件目录结构<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">|resource</span><br><span class="line">|---changelog</span><br><span class="line">|| 2018-05-08-init-schema.xml</span><br><span class="line">|---liquibase</span><br><span class="line">|| changelog-master.xml</span><br></pre></td></tr></table></figure></p>
+<h3 id="master"><a href="#master" class="headerlink" title="master"></a>master</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">databaseChangeLog</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns</span>=<span class="string">"http://www.liquibase.org/xml/ns/dbchangelog"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">include</span> <span class="attr">file</span>=<span class="string">"classpath:/changelog/2018-05-08-init-schema.xml"</span> <span class="attr">relativeToChangelogFile</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">databaseChangeLog</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="scheme"><a href="#scheme" class="headerlink" title="scheme"></a>scheme</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">databaseChangeLog</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns</span>=<span class="string">"http://www.liquibase.org/xml/ns/dbchangelog"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"autoIncrement"</span> <span class="attr">value</span>=<span class="string">"now()"</span> <span class="attr">dbms</span>=<span class="string">"mysql"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">changeSet</span> <span class="attr">id</span>=<span class="string">"init-schema"</span> <span class="attr">author</span>=<span class="string">"Jason.Su"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">comment</span>&gt;</span>init schema<span class="tag">&lt;/<span class="name">comment</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- Position --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">createTable</span> <span class="attr">tableName</span>=<span class="string">"t_position"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"id"</span> <span class="attr">type</span>=<span class="string">"BIGINT"</span> <span class="attr">autoIncrement</span>=<span class="string">"true"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">primaryKey</span>=<span class="string">"true"</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"user_id"</span> <span class="attr">type</span>=<span class="string">"VARCHAR(255)"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"currency"</span> <span class="attr">type</span>=<span class="string">"INTEGER"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"size"</span> <span class="attr">type</span>=<span class="string">"DOUBLE"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"cost"</span> <span class="attr">type</span>=<span class="string">"DECIMAL(18,8)"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line">            </span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"is_closed"</span> <span class="attr">type</span>=<span class="string">"BOOLEAN"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"created_at"</span> <span class="attr">type</span>=<span class="string">"timestamp"</span> <span class="attr">defaultValueComputed</span>=<span class="string">"CURRENT_TIMESTAMP"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"updated_at"</span> <span class="attr">type</span>=<span class="string">"timestamp"</span> <span class="attr">defaultValueComputed</span>=<span class="string">"CURRENT_TIMESTAMP"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">createTable</span>&gt;</span></span><br><span class="line"></span><br><span class="line">        <span class="tag">&lt;<span class="name">modifySql</span> <span class="attr">dbms</span>=<span class="string">"mysql"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">append</span> <span class="attr">value</span>=<span class="string">"ENGINE=INNODB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">modifySql</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">changeSet</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">databaseChangeLog</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/04/19/SpringBoot/Logger/Logger-Basic/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -553,151 +896,6 @@
 <p>从设计模式的角度考虑，它是用来在log和代码层之间起到门面的作用。配置SLF4J是非常简单的一件事，只要将你打算使用的日志系统对应的jar包加入到项目中，SLF4J就会自动选择使用你加入的日志系统。</p>
 <hr>
 <h3 id="Logback与Log4j"><a href="#Logback与Log4j" class="headerlink" title="Logback与Log4j"></a>Logback与Log4j</h3><p>Logback是由log4j创始人设计的另一个开源日志组件，意在成为log4j的继承者，Logback比现有的所有日志系统更快，占用内存更小，提供独有且很有用的特性。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/04/19/SpringBoot/liquidata/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/04/19/SpringBoot/liquidata/" itemprop="url">Spring Boot liquidata</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-19T11:06:18+08:00">
-                2018-04-19
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Spring-Boot/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Boot</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="properties"><a href="#properties" class="headerlink" title="properties"></a>properties</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">spring.liquibase.user=root</span><br><span class="line">spring.liquibase.password=</span><br><span class="line">spring.liquibase.enabled=true</span><br><span class="line">spring.liquibase.url=jdbc:h2:file:./test;MODE=MYSQL;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1</span><br><span class="line">spring.liquibase.change-log=classpath:/liquibase/changelog-master.xml</span><br></pre></td></tr></table></figure>
-<p>文件目录结构<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">|resource</span><br><span class="line">|---changelog</span><br><span class="line">|| 2018-05-08-init-schema.xml</span><br><span class="line">|---liquibase</span><br><span class="line">|| changelog-master.xml</span><br></pre></td></tr></table></figure></p>
-<h3 id="master"><a href="#master" class="headerlink" title="master"></a>master</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">databaseChangeLog</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns</span>=<span class="string">"http://www.liquibase.org/xml/ns/dbchangelog"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">include</span> <span class="attr">file</span>=<span class="string">"classpath:/changelog/2018-05-08-init-schema.xml"</span> <span class="attr">relativeToChangelogFile</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">databaseChangeLog</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h3 id="scheme"><a href="#scheme" class="headerlink" title="scheme"></a>scheme</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">databaseChangeLog</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns</span>=<span class="string">"http://www.liquibase.org/xml/ns/dbchangelog"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"autoIncrement"</span> <span class="attr">value</span>=<span class="string">"now()"</span> <span class="attr">dbms</span>=<span class="string">"mysql"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">changeSet</span> <span class="attr">id</span>=<span class="string">"init-schema"</span> <span class="attr">author</span>=<span class="string">"Jason.Su"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">comment</span>&gt;</span>init schema<span class="tag">&lt;/<span class="name">comment</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- Position --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">createTable</span> <span class="attr">tableName</span>=<span class="string">"t_position"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"id"</span> <span class="attr">type</span>=<span class="string">"BIGINT"</span> <span class="attr">autoIncrement</span>=<span class="string">"true"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">primaryKey</span>=<span class="string">"true"</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"user_id"</span> <span class="attr">type</span>=<span class="string">"VARCHAR(255)"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"currency"</span> <span class="attr">type</span>=<span class="string">"INTEGER"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"size"</span> <span class="attr">type</span>=<span class="string">"DOUBLE"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"cost"</span> <span class="attr">type</span>=<span class="string">"DECIMAL(18,8)"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line">            </span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"is_closed"</span> <span class="attr">type</span>=<span class="string">"BOOLEAN"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"created_at"</span> <span class="attr">type</span>=<span class="string">"timestamp"</span> <span class="attr">defaultValueComputed</span>=<span class="string">"CURRENT_TIMESTAMP"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line"></span><br><span class="line">            <span class="tag">&lt;<span class="name">column</span> <span class="attr">name</span>=<span class="string">"updated_at"</span> <span class="attr">type</span>=<span class="string">"timestamp"</span> <span class="attr">defaultValueComputed</span>=<span class="string">"CURRENT_TIMESTAMP"</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">constraints</span> <span class="attr">nullable</span>=<span class="string">"false"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">column</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">createTable</span>&gt;</span></span><br><span class="line"></span><br><span class="line">        <span class="tag">&lt;<span class="name">modifySql</span> <span class="attr">dbms</span>=<span class="string">"mysql"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">append</span> <span class="attr">value</span>=<span class="string">"ENGINE=INNODB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">modifySql</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">changeSet</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">databaseChangeLog</span>&gt;</span></span><br></pre></td></tr></table></figure>
 
           
         
@@ -1698,180 +1896,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/04/15/Kubenetes/Affinity/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/04/15/Kubenetes/Affinity/" itemprop="url">Kubernetes Affinity</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-15T19:00:27+08:00">
-                2018-04-15
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kubernetes</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Node"><a href="#Node" class="headerlink" title="Node"></a>Node</h3><h4 id="add-label-to-Node"><a href="#add-label-to-Node" class="headerlink" title="add label to Node"></a>add label to Node</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl label nodes &lt;node-name&gt; &lt;label-key&gt;=&lt;label-value&gt;</span><br></pre></td></tr></table></figure>
-<h4 id="Affinity"><a href="#Affinity" class="headerlink" title="Affinity"></a>Affinity</h4><p>亲和性/反亲和性是在Node上设置如何被Scheduler选择的规则一种方式。</p>
-<ul>
-<li>必需的规则(Required)</li>
-</ul>
-<p>只有满足必需的规则的Pod才会被调度到特定的Node上。如果没有Node匹配条件(加上所有其他所有正常的条件，例如为Pod请求提供足够的可用资源），<br>否则Pod不会被调度。必需满足的规则在nodeAffinity的requiredDuringSchedulingIgnoredDuringExecution字段中指定。</p>
-<p>例如，要求在多可用区域(Multiple Zones)的us-central1-a(GCE)区域中的节点上进行调度</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">affinity:</span><br><span class="line">  nodeAffinity:</span><br><span class="line">    requiredDuringSchedulingIgnoredDuringExecution:</span><br><span class="line">      nodeSelectorTerms:</span><br><span class="line">        - matchExpressions:</span><br><span class="line">          - key: "failure-domain.beta.kubernetes.io/zone"</span><br><span class="line">            operator: In</span><br><span class="line">            values: ["us-central1-a"]</span><br></pre></td></tr></table></figure>
-<p>注意：如果修改为requiredDuringSchedulingRequiredDuringExecution，意味着一旦不满足节点亲和性规则，将从Node上驱逐不再匹配规则的Pod。</p>
-<ul>
-<li>首选的规则(Preferred)</li>
-</ul>
-<p>首选规则意味着如果节点与规则匹配，则将优先选择它们，并且仅当没有优选节点可用时才选择非优选节点。可以选择使用首选规则，而不是通过必需规则强制将<br>Pod部署到GCE的us-central1-a区域中的节点上。</p>
-<p>使用首选规则，则需指定preferredDuringSchedulingIgnoredDuringExecution：</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">affinity:</span><br><span class="line">  nodeAffinity:</span><br><span class="line">    preferredDuringSchedulingIgnoredDuringExecution:</span><br><span class="line">      nodeSelectorTerms:</span><br><span class="line">        - matchExpressions:</span><br><span class="line">          - key: "failure-domain.beta.kubernetes.io/zone"</span><br><span class="line">            operator: In</span><br><span class="line">            values: ["us-central1-a"]</span><br></pre></td></tr></table></figure>
-<h4 id="AntiAffinity"><a href="#AntiAffinity" class="headerlink" title="AntiAffinity"></a>AntiAffinity</h4><p>Node的反亲和性能够使用负操作符(NotIn, DoesNotExist等)来表示。</p>
-<p>例如，禁止Pod被调度到us-central1-a的区域中</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">affinity:</span><br><span class="line">  nodeAffinity:</span><br><span class="line">    requiredDuringSchedulingIgnoredDuringExecution:</span><br><span class="line">      nodeSelectorTerms:</span><br><span class="line">      - matchExpressions:</span><br><span class="line">        - key: "failur-domain.beta.kubernetes.io/zone"</span><br><span class="line">          operator: NotIn</span><br><span class="line">          values: ["us-central1-a"]</span><br></pre></td></tr></table></figure>
-<h4 id="Taints-and-Tolerations"><a href="#Taints-and-Tolerations" class="headerlink" title="Taints and Tolerations"></a>Taints and Tolerations</h4><p>此功能允许您标记一个Node(“受污染”，“有污点”），以便没有Pod可以被调度到此节点上，除非Pod明确地“容忍”污点。<br>标记的是Node而不是Pod（如节点的亲和性和反亲和性），对于集群中大多数Pod应该避免调度到特定的节点上的功能特别有用。</p>
-<p>例如，您可能希望主节点（Master）标记为仅可调度Kubernetes系统组件，或将一组节点专用于特定的用户组，或者让常规的<br>Pod远离具有特殊硬件的Node，以便为有特殊硬件需求的Pod留出空间。</p>
-<ul>
-<li>设置Node的Taints</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl taint nodes node1 key=value:NoSchedule</span><br></pre></td></tr></table></figure>
-<p>创建一个污点并标记到Node，那些没有设置容忍的Pod，不能调度到该Node上。其他污点的选项是PerferredNoSchedule，这是NoSchedule首选版本。</p>
-<p>NoExecute，这个选项意味着在当Node被标记有污点时，该Node上运行的任何没有设置容忍的Pod都将被驱逐。容忍将被添加到PodSpec中，看起来像这样：</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">tolerations: </span><br><span class="line">  - key: "key"</span><br><span class="line">    operator: "Equal"</span><br><span class="line">    value: "value"</span><br><span class="line">    effect: "NoSchedule"</span><br></pre></td></tr></table></figure>
-<p>除了将污点和容忍(Taints and Tolerations)特性在Kubernetes 1.6中移至Beta版外，我们还引入了一个使用污点和容忍的Alpha的特性：<br>允许用户自定义一个Pod被绑定到Node上后遇到了诸如网络分区的问题时的行为（可能Pod希望长时间允许在这个Node上，或者网络分区会很快恢复），<br>而不是现在默认的等待五分钟超时。</p>
-<h3 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h3><h4 id="Affinity-1"><a href="#Affinity-1" class="headerlink" title="Affinity"></a>Affinity</h4><ul>
-<li>部署到指定label的node</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx</span><br><span class="line">  labels:</span><br><span class="line">    env: test</span><br><span class="line">spec:</span><br><span class="line">  containers:</span><br><span class="line">  - name: nginx</span><br><span class="line">    image: nginx</span><br><span class="line">    imagePullPolicy: IfNotPresent</span><br><span class="line">  nodeSelector:</span><br><span class="line">    disktype: ssd</span><br></pre></td></tr></table></figure>
-<p>pod只会调度到具有disktype=ssd的node上面</p>
-<h4 id="AntiAffinity-1"><a href="#AntiAffinity-1" class="headerlink" title="AntiAffinity"></a>AntiAffinity</h4>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1923,7 +1947,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">552</span>
+                <span class="site-state-item-count">553</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1934,7 +1958,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">239</span>
+                <span class="site-state-item-count">240</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1945,7 +1969,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">609</span>
+                <span class="site-state-item-count">610</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
