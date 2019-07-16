@@ -284,6 +284,693 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/27/Java/JVM/Basic/YGC/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/27/Java/JVM/Basic/YGC/" itemprop="url">JVM YGC</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-27T19:31:22+08:00">
+                2019-04-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h4><p>otSpot JVM把年轻代分为了三部分：1个Eden区和2个Survivor区（分别叫from和to）。默认比例为8：1,为啥默认会是这个比例，接下来我们会聊到。一般情况下，新创建的对象都会被分配到Eden区(一些大对象特殊处理),这些对象经过第一次YGC后，如果仍然存活，将会被移到Survivor区。对象在Survivor区中每熬过一次YGC，年龄就会增加1岁，当它的年龄增加到一定程度时，就会被移动到年老代中。</p>
+<p>因为年轻代中的对象基本都是朝生夕死的(80%以上)，所以在年轻代的垃圾回收算法使用的是复制算法，复制算法的基本思想就是将内存分为两块，每次只用其中一块，当这一块内存用完，就将还活着的对象复制到另外一块上面。复制算法不会产生内存碎片。</p>
+<p>在GC开始的时候，对象只会存在于Eden区和名为“From”的Survivor区，Survivor区“To”是空的。紧接着进行GC，Eden区中所有存活的对象都会被复制到“To”，而在“From”区中，仍存活的对象会根据他们的年龄值来决定去向。年龄达到一定值(年龄阈值，可以通过-XX:MaxTenuringThreshold来设置)的对象会被移动到年老代中，没有达到阈值的对象会被复制到“To”区域。经过这次GC后，Eden区和From区已经被清空。这个时候，“From”和“To”会交换他们的角色，也就是新的“To”就是上次GC前的“From”，新的“From”就是上次GC前的“To”。不管怎样，都会保证名为To的Survivor区域是空的。YGC会一直重复这样的过程，直到“To”区被填满，“To”区被填满之后，会将所有对象移动到年老代中。</p>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/young_gc.png">
+<hr>
+<h4 id="YGC-Young-GC"><a href="#YGC-Young-GC" class="headerlink" title="YGC - Young GC"></a>YGC - Young GC</h4><p>YGC是JVM GC当前最为频繁的一种GC，一个高并发的服务在运行期间，会进行大量的YGC，发生YGC时，会进行STW，一般时间都很短，除非碰到YGC时，存在大量的存活对象需要进行拷贝。</p>
+<p>一次YGC过程主要分成两个步骤：</p>
+<ol>
+<li>查找GC Roots，拷贝所引用的对象到 to 区；</li>
+<li>递归遍历上一步中查找到的对象，并拷贝其所引用的对象到 to 区，当然可能会存在自然晋升，或者因为 to 区空间不足引起的提前晋升的情况；</li>
+</ol>
+<hr>
+<h3 id="Find-GC-Roots"><a href="#Find-GC-Roots" class="headerlink" title="Find GC Roots"></a>Find GC Roots</h3><p>YGC的第一步根据GC Roots找出第一批活跃的对象，Hotspot中通过 <strong>gch-&gt;gen_process_strong_roots</strong> 方法实现</p>
+<blockquote>
+<p>Serial GC源代码为例</p>
+</blockquote>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/find_gc_roots_code.png">
+<ul>
+<li>在黄色框的实现中，SharedHeap::process_strong_roots()扫描了所有一定是GC Roots的内存区域；</li>
+<li>红色框中的实现逻辑对于YGC来说是没有意义的，因为level=0，Hotspot中唯一用到这个地方的只有CMS GC实现，默认只收集old generation，所以需要扫描young generation作为它的Strong root；</li>
+<li>如果一个old generation的对象引用了young generation，那么这个old generation的对象肯定也属于Strong root的一部分，这部分逻辑并没有在process_strong_roots中实现，而是在绿色框中实现了，其中rem_set中保存了old generation中dirty card的对应区域，每次对象的拷贝移动都会检查一下是否产生了新的跨代引用，<strong>比如有对象晋升到了old generation，而该对象还引用了young generation的对象，这种情况下会把相应的card置为dirty，下次YGC的时候只会扫描dirty card所指内存的对象，避免扫描所有的old generation对象。</strong></li>
+</ul>
+<blockquote>
+<p>process_strong_roots的实现，主要包括了以下东西：</p>
+<ul>
+<li>Universe类中所引用的一些必须存活的对象 Universe::oops_do(roots)</li>
+<li>所有JNI Handles JNIHandles::oops_do(roots)</li>
+<li>所有线程的栈 Threads::oops_do(roots, code_roots)</li>
+<li>所有被Synchronize锁持有的对象  ObjectSynchronizer::oops_do(roots)</li>
+<li>VM内实现的MBean所持有的对象 Management::oops_do(roots)</li>
+<li>JVMTI所持有的对象 JvmtiExport::oops_do(roots)</li>
+<li>(可选)所有已加载的类 或 所有已加载的系统类 SystemDictionary::oops_do(roots)</li>
+<li>(可选)所有驻留字符串（StringTable） StringTable::oops_do(roots)</li>
+<li>(可选)代码缓存（CodeCache） CodeCache::scavenge_root_nmethods_do(code_roots)</li>
+<li>(可选)PermGen的remember set所记录的存在跨代引用的区域  rem_set()-&gt;younger_refs_iterate(perm_gen(), perm_blk)<br>注意：YGC在执行时只收集young generation，不收集old generation和perm generation，并不会做类的卸载行为，所以上述可选部分都作为Strong root，但是在FGC时就不会当作Strong root了。</li>
+</ul>
+</blockquote>
+<hr>
+<h3 id="Recurse-Roots"><a href="#Recurse-Roots" class="headerlink" title="Recurse Roots"></a>Recurse Roots</h3><p>在查找GC Roots的步骤中，已经找出了第一批存活的对象，这些存活对象可能在 to-space，也有可能直接晋升到了 old generation，这些区域都是需要进行遍历的，保证所有的活跃对象都能存活下来。<br>遍历过程的实现由FastEvacuateFollowersClosure类的do_void方法完成，这是一个*-Closure 方式命名的类，实现如下：</p>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/recurse_roots.png">
+<p>每个内存区域都有两个指针变量，分别是 _saved_mark_word 和 _top，其中_saved_mark_word 指向当前遍历对象的位置，_top指向当前内存区域可分配的位置，其中_saved_mark_word 到 _top之间的对象是已拷贝，但未扫描的对象。</p>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/saved_market_word.png">
+<p>GC Roots引用的对象拷贝完成后，to-space的_saved_mark_word和_top的状态如上图所示，假设期间没有对象晋升到old generation。每次扫描一个对象，_saved_mark_word会往前移动，期间也有新的对象会被拷贝到to-space，_top也会往前移动，直到_saved_mark_word追上_top，说明to-space的对象都已经遍历完成。</p>
+<p>其中while循环条件 while (!_gch-&gt;no_allocs_since_save_marks(_level)，就是在判断各个内存代中的_saved_mark_word是否已经追到_top，如果还没有追上，就执行_gch-&gt;oop_since_save_marks_iterate进行遍历，实现如下：</p>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/oop_since_save_marks_iterate.png">
+<p>to-space对象的遍历实现：</p>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/to-space.png">
+<p>这里的blk变量是传递过来的FastScanClosure回调函数，oop_iterate方法会遍历该对象的所有引用，并调用回调函数的do_oop_work方法处理这里引用所指向的对象。</p>
+<p>do_oop_work的实现：</p>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/do_oop_work.png">
+<p>在FastScanClosure回调函数的do_oop_work方法实现中，红框的是重要的部分，因为可能存在多个对象共同引用一个对象，所以在遍历过程中，可能会遇到已经处理过的对象，如果遇到这样的对象，就不会再次进行复制了，如果该对象没有被拷贝过，则调用 copy_to_survivor_space 方法拷贝对象到to-space或者晋升到old generation，这里提一下ParNew的实现，因为是并发执行的，所以可能存在多个线程拷贝了同一个对象到to-space，不过通过原子操作，保证了只有一个对象是有效的。</p>
+<p>copy_to_survivor_space 的实现：</p>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/copy_to_survivor_space.png">
+<p>拷贝对象的目标空间不一定是to-space，也有可能是old generation，如果一个对象经历了很多次YGC，会从young generation直接晋升到old generation，为了记录对象经历的YGC次数，在对象头的mark word 数据结构中有一个位置记录着对象的YGC次数，也叫对象的年龄，如果扫描到的对象，其年龄小于某个阈值（tenuring threshold），该对象会被拷贝到to-space，并增加该对象的年龄，同时to-space的_top指针也会往后移动，这个新对象等待着被扫描。</p>
+<img src="/2019/04/27/Java/JVM/Basic/YGC/saved_market_word_2.png">
+<hr>
+<h3 id="Full-GC-和-YGC-触发条件"><a href="#Full-GC-和-YGC-触发条件" class="headerlink" title="Full GC 和 YGC 触发条件"></a>Full GC 和 YGC 触发条件</h3><p><strong>YGC</strong>：对新生代堆进行GC。频率比较高，因为大部分对象的存活寿命较短，在新生代里被回收。性能耗费较小。</p>
+<p>YGC触发条件：</p>
+<ul>
+<li>edn空间不足</li>
+</ul>
+<p><strong>FGC</strong>：全堆范围的GC。默认堆空间使用到达80%(可调整)的时候会触发FGC。<br>FGC触发条件：</p>
+<ul>
+<li>old空间不足；</li>
+<li>perm空间不足；</li>
+<li>显示调用System.gc()，包括RMI等的定时触发；</li>
+<li>YGC时的悲观策略；</li>
+<li>dump live的内存信息时(jmap –dump:live)；</li>
+<li>heap dump。</li>
+</ul>
+<blockquote>
+<p>悲观策略：当准备要触发一次 young GC时，如果发现统计数据说之前 young GC的平均晋升大小比目前的 old gen剩余的空间大，则不会触发young GC而是转为触发 full GC。<br>因为HotSpot VM的GC里，除了垃圾回收器 CMS 的 concurrent collection 之外，其他能收集 old gen 的GC都会同时收集整个GC堆，包括young gen，所以不需要事先准备一次单独的young GC。</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="http://ifeve.com/jvm-yong-generation/" target="_blank" rel="noopener">http://ifeve.com/jvm-yong-generation/</a><br><a href="https://www.jianshu.com/p/9af1a63a33c3" target="_blank" rel="noopener">https://www.jianshu.com/p/9af1a63a33c3</a><br><a href="https://juejin.im/post/5b8d2a5551882542ba1ddcf8" target="_blank" rel="noopener">https://juejin.im/post/5b8d2a5551882542ba1ddcf8</a><br><a href="https://www.zhihu.com/question/41922036/answer/93079526" target="_blank" rel="noopener">https://www.zhihu.com/question/41922036/answer/93079526</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/24/Java/Advance/Queue/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/24/Java/Advance/Queue/" itemprop="url">Java Queue</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-24T12:01:06+08:00">
+                2019-04-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Interface"><a href="#Interface" class="headerlink" title="Interface"></a>Interface</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * A collection designed for holding elements prior to processing.</span></span><br><span class="line"><span class="comment"> * Besides basic &#123;<span class="doctag">@link</span> java.util.Collection Collection&#125; operations,</span></span><br><span class="line"><span class="comment"> * queues provide additional insertion, extraction, and inspection</span></span><br><span class="line"><span class="comment"> * operations.  Each of these methods exists in two forms: one throws</span></span><br><span class="line"><span class="comment"> * an exception if the operation fails, the other returns a special</span></span><br><span class="line"><span class="comment"> * value (either &#123;<span class="doctag">@code</span> null&#125; or &#123;<span class="doctag">@code</span> false&#125;, depending on the</span></span><br><span class="line"><span class="comment"> * operation).  The latter form of the insert operation is designed</span></span><br><span class="line"><span class="comment"> * specifically for use with capacity-restricted &#123;<span class="doctag">@code</span> Queue&#125;</span></span><br><span class="line"><span class="comment"> * implementations; in most implementations, insert operations cannot</span></span><br><span class="line"><span class="comment"> * fail.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Queue</span>&lt;<span class="title">E</span>&gt; <span class="keyword">extends</span> <span class="title">Collection</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">    <span class="comment">//插入（抛出异常）</span></span><br><span class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">add</span><span class="params">(E e)</span></span>;</span><br><span class="line">    <span class="comment">//插入（返回特殊值）</span></span><br><span class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">offer</span><span class="params">(E e)</span></span>;</span><br><span class="line">    <span class="comment">//移除（抛出异常）</span></span><br><span class="line">    <span class="function">E <span class="title">remove</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="comment">//移除（返回特殊值）</span></span><br><span class="line">    <span class="function">E <span class="title">poll</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="comment">//检查（抛出异常）</span></span><br><span class="line">    <span class="function">E <span class="title">element</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="comment">//检查（返回特殊值）</span></span><br><span class="line">    <span class="function">E <span class="title">peek</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Queue是个接口，它提供的add，offer方法初衷是希望子类能够禁止添加元素为<span class="keyword">null</span>，这样可以避免在查询时返回<span class="keyword">null</span>究竟是正确还是错误。实际上大多数Queue的实现类的确响应了Queue接口的规定，比如ArrayBlockingQueue，PriorityBlockingQueue等等。</span><br><span class="line"></span><br><span class="line">但还是有一些实现类没有这样要求，比如LinkedList。虽然 LinkedList 没有禁止添加 <span class="keyword">null</span>，但是一般情况下 Queue 的实现类都不允许添加 <span class="keyword">null</span> 元素，为啥呢？因为poll(),peek()方法在异常的时候会返回 <span class="keyword">null</span>，你添加了<span class="keyword">null</span> 以后，当获取时不好分辨究竟是否正确返回。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">``` java</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Deque</span>&lt;<span class="title">E</span>&gt; <span class="keyword">extends</span> <span class="title">Queue</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Inserts the specified element at the front of this deque if it is</span></span><br><span class="line"><span class="comment">     * possible to do so immediately without violating capacity restrictions,</span></span><br><span class="line"><span class="comment">     * throwing an &#123;<span class="doctag">@code</span> IllegalStateException&#125; if no space is currently</span></span><br><span class="line"><span class="comment">     * available.  When using a capacity-restricted deque, it is generally</span></span><br><span class="line"><span class="comment">     * preferable to use method &#123;<span class="doctag">@link</span> #offerFirst&#125;.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> e the element to add</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> IllegalStateException if the element cannot be added at this</span></span><br><span class="line"><span class="comment">     *         time due to capacity restrictions</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> ClassCastException if the class of the specified element</span></span><br><span class="line"><span class="comment">     *         prevents it from being added to this deque</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> NullPointerException if the specified element is null and this</span></span><br><span class="line"><span class="comment">     *         deque does not permit null elements</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> IllegalArgumentException if some property of the specified</span></span><br><span class="line"><span class="comment">     *         element prevents it from being added to this deque</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">addFirst</span><span class="params">(E e)</span></span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">addLast</span><span class="params">(E e)</span></span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function">E <span class="title">removeFirst</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function">E <span class="title">removeLast</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="Classification"><a href="#Classification" class="headerlink" title="Classification"></a>Classification</h4><ul>
+<li>PriorityQueue</li>
+<li>PriorityBlockingQueue</li>
+<li>Deque</li>
+<li>ArrayDeque：ArrayDeque是一个循环队列，它使用数组实现的Deque，底层是数组。</li>
+<li>BlockingQueue</li>
+<li>ArrayBlockingQueue</li>
+<li>LinkedBlockingQueue</li>
+<li>SynchronousQueue</li>
+</ul>
+<p><strong>Summary</strong></p>
+<ul>
+<li>当 Deque 当做 Queue 队列使用时（FIFO），添加元素是添加到队尾，删除时删除的是头部元素。</li>
+<li>当 Deque 当做 Stack 栈用（LIFO）。这时入栈、出栈元素都是在双端队列的头部进行。</li>
+<li>ArrayDeque不是线程安全的。 当作为栈使用时，性能比Stack好；当作为队列使用时，性能比LinkedList好。</li>
+<li>ArrayBlockingQueue 底层是数组，有界队列，如果我们要使用生产者-消费者模式，这是非常好的选择。</li>
+<li>LinkedBlockingQueue 底层是链表，可以当做无界和有界队列来使用，所以大家不要以为它就是无界队列。</li>
+<li>SynchronousQueue 本身不带有空间来存储任何元素，使用上可以选择公平模式和非公平模式。</li>
+<li>PriorityBlockingQueue 是无界队列，基于数组，数据结构为二叉堆，数组第一个也是树的根节点总是最小值。</li>
+</ul>
+<hr>
+<h3 id="BlockingQueue"><a href="#BlockingQueue" class="headerlink" title="BlockingQueue"></a>BlockingQueue</h3><h4 id="ArrayBlockingQueue"><a href="#ArrayBlockingQueue" class="headerlink" title="ArrayBlockingQueue"></a>ArrayBlockingQueue</h4><p>ArrayBlockingQueue 是 BlockingQueue 接口的有界队列实现类，底层采用数组来实现。其并发控制采用可重入锁来控制，不管是插入操作还是读取操作，都需要获取到锁才能进行操作。</p>
+<p><strong>核心属性</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 用于存放元素的数组</span></span><br><span class="line"><span class="keyword">final</span> Object[] items;</span><br><span class="line"><span class="comment">// 下一次读取操作的位置</span></span><br><span class="line"><span class="keyword">int</span> takeIndex;</span><br><span class="line"><span class="comment">// 下一次写入操作的位置</span></span><br><span class="line"><span class="keyword">int</span> putIndex;</span><br><span class="line"><span class="comment">// 队列中的元素数量</span></span><br><span class="line"><span class="keyword">int</span> count;</span><br><span class="line"><span class="comment">// 以下几个就是控制并发用的同步器</span></span><br><span class="line"><span class="keyword">final</span> ReentrantLock lock;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Condition notEmpty;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Condition notFull;</span><br></pre></td></tr></table></figure>
+<p><strong>核心原理</strong></p>
+<p>ArrayBlockingQueue 实现并发同步的原理就是，读操作和写操作都需要获取到 AQS 独占锁才能进行操作。</p>
+<p>如果队列为空，这个时候读操作的线程进入到读线程队列排队，等待写线程写入新的元素，然后写线程唤醒读线程队列的第一个等待线程。如果队列已满，这个时候写操作的线程进入到写线程队列排队，等待读线程将队列元素移除腾出空间，然后唤醒写线程队列的第一个等待线程。</p>
+<img src="/2019/04/24/Java/Advance/Queue/array-blocking-queue.png">
+<p>构造函数可选参数：</p>
+<ul>
+<li>队列容量，其限制了队列中最多允许的元素个数；</li>
+<li>指定独占锁是公平锁还是非公平锁。非公平锁的吞吐量比较高，公平锁可以保证每次都是等待最久的线程获取到锁；</li>
+<li>可以指定用一个集合来初始化，将此集合中的元素在构造方法期间就先添加到队列中。</li>
+</ul>
+<hr>
+<h4 id="LinkedBlockingQueue"><a href="#LinkedBlockingQueue" class="headerlink" title="LinkedBlockingQueue"></a>LinkedBlockingQueue</h4><p>底层基于单向链表实现的阻塞队列，可以当做无界队列也可以当做有界队列来使用。</p>
+<p><strong>核心属性</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 队列容量</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> capacity;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 队列中的元素数量</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> AtomicInteger count = <span class="keyword">new</span> AtomicInteger(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 队头</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> Node&lt;E&gt; head;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 队尾</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> Node&lt;E&gt; last;</span><br><span class="line"></span><br><span class="line"><span class="comment">// take, poll, peek 等读操作的方法需要获取到这个锁</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ReentrantLock takeLock = <span class="keyword">new</span> ReentrantLock();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果读操作的时候队列是空的，那么等待 notEmpty 条件</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Condition notEmpty = takeLock.newCondition();</span><br><span class="line"></span><br><span class="line"><span class="comment">// put, offer 等写操作的方法需要获取到这个锁</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ReentrantLock putLock = <span class="keyword">new</span> ReentrantLock();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果写操作的时候队列是满的，那么等待 notFull 条件</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Condition notFull = putLock.newCondition();</span><br></pre></td></tr></table></figure>
+<p>ReentrantLock与Condition使用说明：</p>
+<ul>
+<li><p>takeLock 和 notEmpty 搭配：如果要获取（take）一个元素，需要获取 takeLock 锁，但是获取了锁还不够，如果队列此时为空，还需要队列不为空（notEmpty）这个条件（Condition）。</p>
+</li>
+<li><p>putLock 和 notFull 搭配：如果要插入（put）一个元素，需要获取 putLock 锁，但是获取了锁还不够，如果队列此时已满，还需要队列不是满的（notFull）这个条件（Condition）。</p>
+</li>
+</ul>
+<img src="/2019/04/24/Java/Advance/Queue/linked-blocking-queue.png">
+<hr>
+<h4 id="SynchronousQueue"><a href="#SynchronousQueue" class="headerlink" title="SynchronousQueue"></a>SynchronousQueue</h4><p>不像ArrayBlockingQueue或LinkedListBlockingQueue，SynchronousQueue内部并没有数据缓存空间，你不能调用peek()方法来看队列中是否有数据元素，因为数据元素只有当你试着取走的时候才可能存在，不取走而只想偷窥一下是不行的，当然遍历这个队列的操作也是不允许的。队列头元素是第一个排队要插入数据的线程，而不是要交换的数据。数据是在配对的生产者和消费者线程之间直接传递的，并不会将数据缓冲数据到队列中。可以这样来理解：生产者和消费者互相等待对方，握手，然后一起离开。</p>
+<p>虽然说是队列，但是 SynchronousQueue 的队列其实是虚的，其不提供任何空间（一个都没有）来存储元素。数据必须从某个写线程交给某个读线程，而不是写到某个队列中等待被消费。</p>
+<p>在开发中比较少使用到 SynchronousQueue 这个类，不过它在线程池的实现类 ScheduledThreadPoolExecutor 中得到了应用。Executors.newCachedThreadPool()就使用了SynchronousQueue，这个线程池根据需要（新任务到来时）创建新的线程，如果有空闲线程则会重复使用，线程空闲了60秒后会被回收。</p>
+<p><strong>核心原理</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 写入值</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">put</span><span class="params">(E o)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (o == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">    <span class="keyword">if</span> (transferer.transfer(o, <span class="keyword">false</span>, <span class="number">0</span>) == <span class="keyword">null</span>) &#123; <span class="comment">// 1</span></span><br><span class="line">        Thread.interrupted();</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> InterruptedException();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 读取值并移除</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> E <span class="title">take</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    Object e = transferer.transfer(<span class="keyword">null</span>, <span class="keyword">false</span>, <span class="number">0</span>); <span class="comment">// 2</span></span><br><span class="line">    <span class="keyword">if</span> (e != <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">return</span> (E)e;</span><br><span class="line">    Thread.interrupted();</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> InterruptedException();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>写操作 put(E o) 和读操作 take() 都是调用 Transferer.transfer(…) 方法，区别在于第一个参数是否为 null 值。</p>
+<p>transfer 的设计思路，其基本算法如下：</p>
+<ul>
+<li><p>当调用这个方法时，如果队列是空的，或者队列中的节点和当前的线程操作类型一致（如当前操作是 put 操作，而队列中的元素也都是写线程）。这种情况下，将当前线程加入到等待队列即可。</p>
+</li>
+<li><p>如果队列中有等待节点，而且与当前操作可以匹配（如队列中都是读操作线程，当前线程是写操作线程，反之亦然）。这种情况下，匹配等待队列的队头，出队，返回相应数据。</p>
+</li>
+</ul>
+<p><strong>示例图说明</strong></p>
+<ol>
+<li>前提条件：公平模式，初始化情况下，TransferQueue的状态</li>
+</ol>
+<img src="/2019/04/24/Java/Advance/Queue/TransferQueue1.png">
+<ol start="2">
+<li>put线程1执行操作put(1)，由于当前没有配对的消费线程，所以线程1入队列，自旋一小会后睡眠等待。</li>
+</ol>
+<img src="/2019/04/24/Java/Advance/Queue/TransferQueue2.png">
+<ol start="3">
+<li>put线程2执行操作put(2)，由于当前没有配对的消费线程，所以线程2入队列，自旋一小会后睡眠等待。</li>
+</ol>
+<img src="/2019/04/24/Java/Advance/Queue/TransferQueue3.png">
+<ol start="4">
+<li>这时候taker线程执行操作taker(1)，由于tail指向put2线程，put线程2跟take线程1配对了(put一take)，这时take1线程不需要入队，但是请注意了，这时候，要唤醒的线程并不是put线程2，而是put线程1。put线程1被唤醒，take线程1的take()方法返回了put线程1的数据，这样就实现了线程间的一对一通信，这时候内部状态如下：</li>
+</ol>
+<blockquote>
+<p>公平策略总结下来就是：队尾匹配队头出队。</p>
+</blockquote>
+<img src="/2019/04/24/Java/Advance/Queue/TransferQueue4.png">
+<p>SynchronousQueue的实现模型。总结下来就是：队尾匹配队头出队，先进先出，体现公平原则。</p>
+<hr>
+<h4 id="PriorityBlockingQueue"><a href="#PriorityBlockingQueue" class="headerlink" title="PriorityBlockingQueue"></a>PriorityBlockingQueue</h4><p>带排序的 BlockingQueue 实现，其并发控制采用的是 ReentrantLock，队列为无界队列（ArrayBlockingQueue 是有界队列，LinkedBlockingQueue 也可以通过在构造函数中传入 capacity 指定队列最大的容量，但是 PriorityBlockingQueue 只能指定初始的队列大小，后面插入元素的时候，如果空间不够的话会自动扩容）。</p>
+<p>简单地说，它就是 PriorityQueue 的线程安全版本。不可以插入 null 值，同时，插入队列的对象必须是可比较大小的（comparable），否则报 ClassCastException 异常。它的插入操作 put 方法不会 block，因为它是无界队列（take 方法在队列为空的时候会阻塞）。</p>
+<p><strong>核心属性</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 构造方法中，如果不指定大小的话，默认大小为 11</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DEFAULT_INITIAL_CAPACITY = <span class="number">11</span>;</span><br><span class="line"><span class="comment">// 数组的最大容量</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX_ARRAY_SIZE = Integer.MAX_VALUE - <span class="number">8</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这个就是存放数据的数组</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> Object[] queue;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 队列当前大小</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">int</span> size;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 大小比较器，如果按照自然序排序，那么此属性可设置为 null</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> Comparator&lt;? <span class="keyword">super</span> E&gt; comparator;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 并发控制所用的锁，所有的 public 且涉及到线程安全的方法，都必须先获取到这个锁</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ReentrantLock lock;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这个很好理解，其实例由上面的 lock 属性创建</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Condition notEmpty;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这个也是用于锁，用于数组扩容的时候，需要先获取到这个锁，才能进行扩容操作</span></span><br><span class="line"><span class="comment">// 其使用 CAS 操作</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> <span class="keyword">int</span> allocationSpinLock;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 用于序列化和反序列化的时候用，对于 PriorityBlockingQueue 我们应该比较少使用到序列化</span></span><br><span class="line"><span class="keyword">private</span> PriorityQueue q;</span><br></pre></td></tr></table></figure>
+<p>此类实现了 Collection 和 Iterator 接口中的所有接口方法，对其对象进行迭代并遍历时，不能保证有序性。</p>
+<p>如果你想要实现有序遍历，建议采用 Arrays.sort(queue.toArray()) 进行处理。PriorityBlockingQueue 提供了 drainTo 方法用于将部分或全部元素有序地填充（准确说是转移，会删除原队列中的元素）到另一个集合中。</p>
+<p>还有一个需要说明的是，如果两个对象的优先级相同（compare 方法返回 0），此队列并不保证它们之间的顺序。</p>
+<p>PriorityBlockingQueue 使用了基于数组的二叉堆来存放元素，所有的 public 方法采用同一个 lock 进行并发控制。</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://juejin.im/post/5a3763ed51882506a463b740" target="_blank" rel="noopener">https://juejin.im/post/5a3763ed51882506a463b740</a></li>
+<li><a href="https://javadoop.com/post/java-concurrent-queue" target="_blank" rel="noopener">https://javadoop.com/post/java-concurrent-queue</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/29227508" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/29227508</a></li>
+<li><a href="http://www.cnblogs.com/CarpenterLee/p/5488070.html" target="_blank" rel="noopener">http://www.cnblogs.com/CarpenterLee/p/5488070.html</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/23/Git/GitFlow/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/23/Git/GitFlow/" itemprop="url">Git Flow QuickStart</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-23T21:36:12+08:00">
+                2019-04-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Git/" itemprop="url" rel="index">
+                    <span itemprop="name">Git</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Git Flow重点解决的是由于源代码在开发过程中的各种冲突导致开发活动混乱的问题。因此，Git flow可以很好的于各种现有开发模型相结合使用。</p>
+<p>Git Flow模型中定义了主分支和辅助分支两类分支。其中主分支用于组织与软件开发、部署相关的活动；辅助分支组织为了解决特定的问题而进行的各种开发活动。</p>
+<p>分支类型说明：</p>
+<ul>
+<li><p>feature： 用于日常的功能开发，一般一个功能分支代表一个功能，一般一个功能分支代表一个功能。</p>
+<blockquote>
+<p>继承分支：develop，合并分支：develop，命名规则：任何名字除了master, develop, release-<em>, hotfix-</em></p>
+</blockquote>
+</li>
+<li><p>release：当需要发布新版本时使用，主要用于测试。可在此分支上直接开发功能，修复bug，但务必同时合并到develop和master。</p>
+<blockquote>
+<p>继承分支：develop，合并分支：develop master，命名规则：release-*</p>
+</blockquote>
+</li>
+<li><p>hotfix：用于修复线上的bug，务必同时合并到develop和master。</p>
+<blockquote>
+<p>继承分支：master，合并分支：develop master，命名规则：hotfix-*</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h3 id="Git-Flow-Tools"><a href="#Git-Flow-Tools" class="headerlink" title="Git Flow Tools"></a>Git Flow Tools</h3><h4 id="Feature-Branch"><a href="#Feature-Branch" class="headerlink" title="Feature Branch"></a>Feature Branch</h4><ol>
+<li><p>创建 feature 分支</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">git flow feature start login</span><br><span class="line"></span><br><span class="line"><span class="comment">#### output #####</span></span><br><span class="line">Switched to a new branch <span class="string">'feature/login'</span></span><br><span class="line"></span><br><span class="line">Summary of actions:</span><br><span class="line">- A new branch <span class="string">'feature/login'</span> was created, based on <span class="string">'develop'</span></span><br><span class="line">- You are now on branch <span class="string">'feature/login'</span></span><br><span class="line"></span><br><span class="line">Now, start committing on your feature. When <span class="keyword">done</span>, use:</span><br><span class="line"></span><br><span class="line">     git flow feature finish login</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>完成 feature 分支</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">git flow feature finish login</span><br><span class="line"></span><br><span class="line"><span class="comment">#### output #####</span></span><br><span class="line">Switched to branch <span class="string">'develop'</span></span><br><span class="line">Updating d2df03b..85d1933</span><br><span class="line">Fast-forward</span><br><span class="line"> login.java | 0</span><br><span class="line"> 1 file changed, 0 insertions(+), 0 deletions(-)</span><br><span class="line"> create mode 100644 login.java</span><br><span class="line">Deleted branch feature/login (was 85d1933).</span><br><span class="line"></span><br><span class="line">Summary of actions:</span><br><span class="line">- The feature branch <span class="string">'feature/login'</span> was merged into <span class="string">'develop'</span></span><br><span class="line">- Feature branch <span class="string">'feature/login'</span> has been removed</span><br><span class="line">- You are now on branch <span class="string">'develop'</span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>此时，本地feature/login已经被删除，同时代码合并到了本地的develop分支。</p>
+<blockquote>
+<p>如果想在github上保留feature/login，则需要手动push该分支。</p>
+</blockquote>
+<h4 id="Release-Branch"><a href="#Release-Branch" class="headerlink" title="Release Branch"></a>Release Branch</h4><ol>
+<li><p>创建 release 分支</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">git flow release start 1.13.1</span><br><span class="line"></span><br><span class="line"><span class="comment">#### output #####</span></span><br><span class="line">Switched to a new branch <span class="string">'release/1.13.1'</span></span><br><span class="line"></span><br><span class="line">Summary of actions:</span><br><span class="line">- A new branch <span class="string">'release/1.13.1'</span> was created, based on <span class="string">'develop'</span></span><br><span class="line">- You are now on branch <span class="string">'release/1.13.1'</span></span><br><span class="line"></span><br><span class="line">Follow-up actions:</span><br><span class="line">- Bump the version number now!</span><br><span class="line">- Start committing last-minute fixes <span class="keyword">in</span> preparing your release</span><br><span class="line">- When <span class="keyword">done</span>, run:</span><br><span class="line"></span><br><span class="line">     git flow release finish <span class="string">'1.13.1'</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>完成 release 分支</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">git flow release finish <span class="string">'1.13.1'</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#### output #####</span></span><br><span class="line">Deleted branch release/1.13.1 (was 85d1933).</span><br><span class="line"></span><br><span class="line">Summary of actions:</span><br><span class="line">- Latest objects have been fetched from <span class="string">'origin'</span></span><br><span class="line">- Release branch has been merged into <span class="string">'master'</span></span><br><span class="line">- The release was tagged <span class="string">'1.13.1'</span></span><br><span class="line">- Release branch has been back-merged into <span class="string">'develop'</span></span><br><span class="line">- Release branch <span class="string">'release/1.13.1'</span> has been deleted</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>完成release 1.13.1后，本地release 1.13.1会被删除 ，release代码会自动合并到本地 master 分支。</p>
+<blockquote>
+<p>如果想在github上保留release 1.13.1，则需要手动push该分支。</p>
+</blockquote>
+<ol start="3">
+<li>Push Tag</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git push origin 1.13.1</span><br><span class="line"><span class="comment">## or</span></span><br><span class="line">git push --tags</span><br></pre></td></tr></table></figure>
+<h4 id="Hotfix-Branch"><a href="#Hotfix-Branch" class="headerlink" title="Hotfix Branch"></a>Hotfix Branch</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建hotfix分支</span></span><br><span class="line">git flow hotfix start &lt;name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 提交hotfix分支</span></span><br><span class="line">git flow hotfix finish &lt;name&gt;</span><br></pre></td></tr></table></figure>
+<p>和release分支一样，提交时也会自动打上tag。</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="http://www.ruanyifeng.com/blog/2015/12/git-workflow.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2015/12/git-workflow.html</a><br><a href="https://juejin.im/post/5c3e9b6df265da616c65d685" target="_blank" rel="noopener">https://juejin.im/post/5c3e9b6df265da616c65d685</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/12/Network/MTU/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1514,493 +2201,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/04/SpringBoot/SpringBoot-Configuration/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/04/04/SpringBoot/SpringBoot-Configuration/" itemprop="url">Spring Boot Configration</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-04T17:21:22+08:00">
-                2019-04-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Spring-Boot/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Boot</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Jetty-On-Web"><a href="#Jetty-On-Web" class="headerlink" title="Jetty On Web"></a>Jetty On Web</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">exclusions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">exclusion</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-tomcat<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">exclusion</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">exclusions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-jetty<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h3 id="Self4J-Conflict"><a href="#Self4J-Conflict" class="headerlink" title="Self4J Conflict"></a>Self4J Conflict</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-webflux<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">exclusions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">exclusion</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-logging<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">exclusion</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">exclusions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h3 id="Unite-Test"><a href="#Unite-Test" class="headerlink" title="Unite Test"></a>Unite Test</h3><h4 id="Configration-Application-Class"><a href="#Configration-Application-Class" class="headerlink" title="Configration Application Class"></a>Configration Application Class</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RunWith</span>(SpringRunner::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">@SpringBootTest(classes = [NoProducerApplication::class])</span><br><span class="line"><span class="comment">// or use @ContextConfiguration(classes = [MockApplication::class])</span></span><br><span class="line"></span><br><span class="line">spring.main.allow-bean-definition-overriding=<span class="keyword">true</span></span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/04/03/Java/Advance/AffinityThread/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/04/03/Java/Advance/AffinityThread/" itemprop="url">Java AffinityThread</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-03T15:55:06+08:00">
-                2019-04-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
-                    <span itemprop="name">Advance</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="AffinityStrategies"><a href="#AffinityStrategies" class="headerlink" title="AffinityStrategies"></a>AffinityStrategies</h4><ul>
-<li>ANY: Any free cpu.</li>
-<li>SAME_CORE: Must be a cpu on the same core.</li>
-<li>SAME_SOCKET: Must be a cpu on the same socket/chip but different core.</li>
-<li>DIFFERENT_CORE: Must be a cpu on any other core (or socket)</li>
-<li>DIFFERENT_SOCKET: Must be a cpu on any other socket.</li>
-</ul>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="http://ifeve.com/thread-affinity/" target="_blank" rel="noopener">http://ifeve.com/thread-affinity/</a><br><a href="http://codingtutortips.blogspot.com/2012/01/java-thread-affinity-support-for-hyper.html" target="_blank" rel="noopener">http://codingtutortips.blogspot.com/2012/01/java-thread-affinity-support-for-hyper.html</a><br><a href="http://ifeve.com/java-context-switch/" target="_blank" rel="noopener">http://ifeve.com/java-context-switch/</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/" itemprop="url">Kubernetes Pod on /dev/shm</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-29T20:35:06+08:00">
-                2019-03-29
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
-                    <span itemprop="name">Kubernetes</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kubernetes/Solution/" itemprop="url" rel="index">
-                    <span itemprop="name">Solution</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Linux共享内存机制"><a href="#Linux共享内存机制" class="headerlink" title="Linux共享内存机制"></a>Linux共享内存机制</h4><p>理想很美好，现实很残酷。首先要解决的问题是，有些组件Agent与业务Pod之间是通过共享内存通信的，这跟Kubernetes&amp;微服务的最佳实践背道而驰。</p>
-<p>大家都知道，Kubernetes单个Pod内是共享IPC的，并且可以通过挂载Medium为Memory的EmptyDir Volume共享同一块内存Volume。</p>
-<p>Linux共享内存的两种机制：</p>
-<ul>
-<li>POSIX共享内存（shm_open()、shm_unlink()）</li>
-<li>System V共享内存（shmget()、shmat()、shmdt()）</li>
-</ul>
-<p>System V共享内存历史悠久，一般的UNIX系统上都有这套机制；而POSIX共享内存机制接口更加方便易用，一般是结合内存映射mmap使用。</p>
-<p>mmap和System V共享内存的主要区别在于：</p>
-<ul>
-<li>sysv shm是持久化的，除非被一个进程明确的删除，否则它始终存在于内存里，直到系统关机；</li>
-<li>mmap映射的内存在不是持久化的，如果进程关闭，映射随即失效，除非事先已经映射到了一个文件上。</li>
-<li>/dev/shm 是Linux下sysv共享内存的默认挂载点。</li>
-</ul>
-<p>POSIX共享内存是基于tmpfs来实现的。实际上，不仅PSM(POSIX shared memory)，而且SSM(System V shared memory)在内核也是基于tmpfs实现的。</p>
-<p>虽然System V与POSIX共享内存都是通过tmpfs实现，但是受的限制却不相同。也就是说 /proc/sys/kernel/shmmax只会影响SYS V共享内存，/dev/shm只会影响Posix共享内存 。实际上，System V与Posix共享内存本来就是使用的两个不同的tmpfs实例(instance)。</p>
-<p>小结：</p>
-<ul>
-<li>POSIX共享内存与SYS V共享内存在内核都是通过tmpfs实现，但对应两个不同的tmpfs实例，相互独立。</li>
-<li>通过/proc/sys/kernel/shmmax可以限制SYS V共享内存的最大值，通过/dev/shm可以限制POSIX共享内存的最大值(所有之和)。</li>
-</ul>
-<hr>
-<h3 id="Pod-share-memory-on-same-node"><a href="#Pod-share-memory-on-same-node" class="headerlink" title="Pod share memory on same node"></a>Pod share memory on same node</h3><p>基础组件Agents DaemonSet部署后，Agents和业务Pod分别在同一个Node上不同的Pod，那么Kubernetes该如何支持这两种类型的共享内存机制呢？</p>
-<img src="/2019/03/29/Kubenetes/Solution/PodShareMemoryOnNode/k8s-overview.png">
-<p>当然，安全性上做出了牺牲，但在非容器化之前IPC的隔离也是没有的，所以这一点是可以接受的。</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">DaemonSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  selector:</span></span><br><span class="line"><span class="attr">    matchLabels:</span></span><br><span class="line"><span class="attr">      name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      annotations:</span></span><br><span class="line">        <span class="string">scheduler.alpha.kubernetes.io/critical-pod:</span> <span class="string">""</span></span><br><span class="line"><span class="attr">      labels:</span></span><br><span class="line"><span class="attr">        name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      tolerations:</span></span><br><span class="line"><span class="attr">      - key:</span> <span class="string">"AgentsDaemonSet"</span></span><br><span class="line"><span class="attr">        operator:</span> <span class="string">"Equal"</span></span><br><span class="line"><span class="attr">        value:</span> <span class="string">"YES"</span></span><br><span class="line"><span class="attr">        effect:</span> <span class="string">"NoSchedule"</span></span><br><span class="line"><span class="attr">      hostNetwork:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">      hostIPC:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">      nodeSelector:</span></span><br><span class="line"><span class="attr">        AgentsDaemonSet:</span> <span class="string">"YES"</span></span><br><span class="line"><span class="attr">      containers:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">demo-agent</span></span><br><span class="line"><span class="attr">        image:</span> <span class="attr">demo_agent:1.0</span></span><br><span class="line"><span class="attr">        volumeMounts:</span></span><br><span class="line"><span class="attr">        - mountPath:</span> <span class="string">/dev/shm</span></span><br><span class="line"><span class="attr">          name:</span> <span class="string">shm</span></span><br><span class="line"><span class="attr">        resources:</span></span><br><span class="line"><span class="attr">          limits:</span></span><br><span class="line"><span class="attr">            cpu:</span> <span class="number">200</span><span class="string">m</span></span><br><span class="line"><span class="attr">            memory:</span> <span class="number">200</span><span class="string">Mi</span></span><br><span class="line"><span class="attr">          requests:</span></span><br><span class="line"><span class="attr">            cpu:</span> <span class="number">100</span><span class="string">m</span></span><br><span class="line"><span class="attr">            memory:</span> <span class="number">100</span><span class="string">Mi</span></span><br><span class="line"><span class="attr">      volumes:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">shm</span></span><br><span class="line"><span class="attr">        hostPath:</span></span><br><span class="line"><span class="attr">          path:</span> <span class="string">/dev/shm</span></span><br><span class="line"><span class="attr">          type:</span> <span class="string">Directory</span></span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://my.oschina.net/jxcdwangtao/blog/3006365" target="_blank" rel="noopener">https://my.oschina.net/jxcdwangtao/blog/3006365</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2052,7 +2252,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">553</span>
+                <span class="site-state-item-count">556</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2063,7 +2263,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">240</span>
+                <span class="site-state-item-count">241</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2074,7 +2274,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">610</span>
+                <span class="site-state-item-count">613</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
