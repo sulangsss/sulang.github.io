@@ -284,6 +284,590 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/DistributedSystem/RegisterAndDiscover/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/24/DistributedSystem/RegisterAndDiscover/" itemprop="url">Register And Discover Centra</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-24T22:22:18+08:00">
+                2018-12-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
+                    <span itemprop="name">DistributedSystem</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>在聊注册与发现中心之前，请先看以下几个问题：</p>
+<ul>
+<li>注册的IP和端口怎么确定？</li>
+<li>实现服务治理还需要注册哪些信息？</li>
+<li>如何进行优雅的服务注册与服务下线？</li>
+<li>注册服务的健康检查是如何做的？</li>
+<li>当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知？</li>
+<li>是否方便地查看某个应用发布和订阅了哪些服务，以及所订阅的服务有哪些节点吗？</li>
+</ul>
+<p>看完这些问题后，你也许会发现，对于服务注册与发现，首先应该关注的是服务注册发现本身的功能，然后才是性能和高可用。<strong>一个好的服务注册发现中间件，应该是能完整地满足服务开发和治理的基础功能，然后才是性能和高可用。</strong>如果没有想清楚前面的功能，再高的可用性和性能都是浮云。最后，安全也同样重要。</p>
+<p>在其他方面，我们应该关注什么？</p>
+<ul>
+<li>服务端的性能如何？</li>
+<li>服务发现的容灾策略是怎样的？</li>
+<li>当我的应用和服务发现中心的网络连接出现问题时，会对我的调用产生什么影响？</li>
+<li>服务注册中心某台机器宕机或者全部宕机时，会对我的调用产生什么影响？</li>
+<li>服务注册和发现的链路安全吗，有没有做好权限控制？</li>
+</ul>
+<hr>
+<h3 id="Register-Service"><a href="#Register-Service" class="headerlink" title="Register Service"></a>Register Service</h3><h4 id="如何确定注册的IP和端口"><a href="#如何确定注册的IP和端口" class="headerlink" title="如何确定注册的IP和端口"></a>如何确定注册的IP和端口</h4><ol>
+<li>如何确定IP</li>
+</ol>
+<ul>
+<li>最简单粗暴的方式，手动配置需要注册的IP。当然这种方式基本无法在生产环境使用，因为微服务基本都是支持水平扩容多机部署的，在配置中写死 IP 地址的方式无法支持一份代码水平扩容，会给运维带来极大的成本。</li>
+<li>通过遍历网卡的方式去获取，找到第一个不为本地环回地址的 IP 地址。绝大多数情况下，这个方式比较好用，dubbo等框架采用的就是这种方法。</li>
+<li>在一些网络规划比较好的标准化机房中，我们还可以通过手动指定网卡名，即interfaceName的方式来指定使用哪一块网卡所对应的IP地址进行注册。</li>
+<li>当上述三种方式都不能有效解决问题的时候，有一个方法就是直接与服务注册中心建立socket连接，然后通过socket.getLocalAddress()这种方式来获取本机的IP。</li>
+</ul>
+<hr>
+<ol start="2">
+<li>如何确定端口</li>
+</ol>
+<ul>
+<li>如果是RPC应用，启动的时候都有一个配置来指定服务监听的端口，注册的时候直接使用配置项的端口值。</li>
+<li>传统的WEB容器所提供的HTTP的应用，同样也存在一个配置文件来配置容器的监听端口，注册时候直接使用配置项的端口值。</li>
+<li>特别的，在Java应用的Spring Boot框架中，可以通过EmbeddedServletContainerInitializedEvent.getEmbeddedServletContainer().getPort()来获取(Spring Boot版本为1.x)。</li>
+</ul>
+<hr>
+<h4 id="实现服务治理还需要注册哪些信息"><a href="#实现服务治理还需要注册哪些信息" class="headerlink" title="实现服务治理还需要注册哪些信息"></a>实现服务治理还需要注册哪些信息</h4><ul>
+<li>最基本的注册信息是IP和Port，可以满足基本的服务调用的需求</li>
+<li>想知道某个HTTP服务是否开启了TLS</li>
+<li>对相同服务下的不同节点设置不同的权重，进行流量调度</li>
+<li>将服务分成预发环境和生产环境，方便进行ABTest功能</li>
+<li>不同机房的服务注册时加上机房的标签，以实现同机房优先的路由规则</li>
+</ul>
+<p>这些高级功能的实现，本质上是依赖于客户端调用时候的负载均衡策略和调用策略，但是如果服务元数据没有注册上来，也只能是巧妇难为无米之炊。一个良好的服务注册中心在设计最初就应该支持这些扩展字段。</p>
+<hr>
+<h4 id="如何进行优雅的服务注册与服务下线"><a href="#如何进行优雅的服务注册与服务下线" class="headerlink" title="如何进行优雅的服务注册与服务下线"></a>如何进行优雅的服务注册与服务下线</h4><ol>
+<li>优雅发布</li>
+</ol>
+<p>虽然服务注册一般发生在服务的启动阶段，但是细分的话，服务注册应该在服务已经完全启动成功，并准备对外提供服务之后才能进行注册。</p>
+<ul>
+<li>有些RPC框架自身提供了方法来判断服务是否已经启动完成，如Thrift，我们可以通过Server.isServing()来判断</li>
+<li>有一些RPC框架本身没有提供服务是否启动完成的方式，这时我们可以通过检测端口是否已经处于监听状态来判断</li>
+<li>对于HTTP服务，服务是否启动完毕也可以通过端口是否处于监听状态来判断<blockquote>
+<p>特别的，在Java应用的Spring Boot框架中，可以通过事件通知的形式来通知容器已经启动完毕，EmbeddedServletContainerInitializedEvent事件来通知容器已经启动完成 (Spring Boot版本为1.x)</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<ol>
+<li>优雅下线</li>
+</ol>
+<p>绝大多数的服务注册中心都提供了健康检查功能，在应用停止后会自动摘除服务所对应的节点。但是我们也不能完全依赖此功能，应用应该在停止时主动调用服务注册中心的服务下线接口。</p>
+<ul>
+<li>在Java 应用中，通用的服务下线接口调用一般使用JVM Shutdown Hook的方式来实现。</li>
+<li>特别的，在Java应用中的Spring框架中，可以通过Spring Bean LifeCycle来实现应用停止时主动调用服务下线接口。<blockquote>
+<p>当然上述两种方式还不够优雅，因为不能确保不出现kill -9这种粗暴的停止方式，而且应用调用服务下线接口也是尝试去调用，对于网络不通等异常场景并没有做异常处理。因此，调用客户端仍应该做好负载均衡与failover的处理。</p>
+</blockquote>
+</li>
+<li>更优雅的方式，先将即将停止的应用所对应的权重调成0，此时上游将不再调用此应用。这时候的停止应用的操作对服务订阅者完全没有影响，当然这种场景需要订阅者实现按权重的负载均衡和运维部署工具深度结合。</li>
+</ul>
+<hr>
+<h4 id="服务的健康检查是如何做的"><a href="#服务的健康检查是如何做的" class="headerlink" title="服务的健康检查是如何做的"></a>服务的健康检查是如何做的</h4><p>健康检查分为客户端心跳和服务端主动探测两种方式.</p>
+<ol>
+<li>客户端心跳</li>
+</ol>
+<ul>
+<li>客户端每隔一定时间主动发送“心跳”的方式来向服务端表明自己的服务状态正常，心跳可以是TCP的形式，也可以是HTTP的形式。</li>
+<li>也可以通过维持客户端和服务端的一个socket长连接自己实现一个客户端心跳的方式。</li>
+<li>ZooKeeper并没有主动的发送心跳，而是依赖了组件本身提供的临时节点的特性，通过ZooKeeper连接的session来维持临时节点。</li>
+</ul>
+<p>但是客户端心跳中，长连接的维持和客户端的主动心跳都只是表明链路上的正常，不一定是服务状态正常。</p>
+<hr>
+<ol start="2">
+<li>服务端主动探测</li>
+</ol>
+<ul>
+<li>服务端调用服务发布者某个HTTP接口来完成健康检查。</li>
+<li>对于没有提供HTTP服务的RPC应用，服务端调用服务发布者的接口来完成健康检查。</li>
+<li>可以通过执行某个脚本的形式来进行综合检查。</li>
+</ul>
+<p>服务端主动调用服务进行健康检查是一个较为准确的方式，返回结果成功表明服务状态确实正常。</p>
+<p>但是这种方式也存在一些问题：服务注册中心主动调用RPC服务的某个接口无法做到通用性；在很多场景下服务注册中心到服务发布者的网络是不通的，服务端无法主动发起健康检查。</p>
+<p>所以如何取舍，还是需要根据实际情况来决定，根据不同的场景，选择不同的策略。</p>
+<hr>
+<h3 id="Discover-Service"><a href="#Discover-Service" class="headerlink" title="Discover Service"></a>Discover Service</h3><h4 id="怎么找到服务发现服务端的地址"><a href="#怎么找到服务发现服务端的地址" class="headerlink" title="怎么找到服务发现服务端的地址"></a>怎么找到服务发现服务端的地址</h4><ul>
+<li>在应用的配置文件中指定服务注册中心的地址，类似于zookeeper和eureka。</li>
+<li>指定一个地址服务器的地址，然后通过这个地址服务器来获取服务注册中心的地址，地址服务器返回的结果会随着服务注册中心的扩缩容及时更新。</li>
+</ul>
+<hr>
+<h4 id="当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知"><a href="#当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知" class="headerlink" title="当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知"></a>当服务有节点退出或新的节点加入时，订阅者能不能及时收到通知</h4><p>很经典的Push和Pull问题。Push的经典实现有两种，基于socket长连接的notify，典型的实现如zookeeper；另一种为HTTP连接所使用Long Polling。</p>
+<p>但是基于socket长连接的notify和基于HTTP协议的Long Polling都会存在notify消息丢失的问题。</p>
+<p>所以通过Pull的方式定时轮询也必不可少，时间间隔的选择也很关键，频率越高服务注册中心所承受的压力也越大。需要结合服务端的性能和业务的规模进行权衡。</p>
+<p>还有一种方式，真实的Push，客户端开启一个UDPserver，服务注册中心通过UDP的方式进行数据推送，当然这个也受限于网络的连通性。</p>
+<hr>
+<h4 id="我能方便地查看我发布和订阅了哪些服务，订阅的服务有哪些节点吗"><a href="#我能方便地查看我发布和订阅了哪些服务，订阅的服务有哪些节点吗" class="headerlink" title="我能方便地查看我发布和订阅了哪些服务，订阅的服务有哪些节点吗"></a>我能方便地查看我发布和订阅了哪些服务，订阅的服务有哪些节点吗</h4><p>一个好的产品，用户使用体验和运维体验必须是优雅的，如果查看本机发布和订阅的服务，只能通过查看日志，甚至是jmap的方式来获取，显然体验非常糟糕。</p>
+<p>服务注册中心应该提供了丰富的接口，支持根据应用名、IP、订阅服务名、发布服务名，来进行多层次的组合查询。同时，客户端的内存里，同样也应该保留服务发布与订阅的各种信息，并提供方式供人方便地查询。</p>
+<p>比如在Java中的Spring Boot的应用，可以结合actuator endpoint，通过HTTP的方式来提供本机服务查询功能，查询此应用发布的服务，以及订阅的服务及各服务的对应节点。</p>
+<hr>
+<h3 id="容灾和高可用"><a href="#容灾和高可用" class="headerlink" title="容灾和高可用"></a>容灾和高可用</h3><h4 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h4><p>当服务节点数越来越多时，服务注册中心的性能会成为瓶颈，这时候就需要通过水平扩容来提升服务注册中心集群的性能。</p>
+<p>对于那些采用了类Paxos协议的强一致性的组件，如ZooKeeper，由于每次写操作需要过半的节点确认。水平扩容不能提升整个集群的写性能，只能提升整个集群的读性能。而对于采用最终一致性的组件来说，水平扩容可以同时提升整个集群的写性能和读性能。</p>
+<hr>
+<h4 id="客户端容灾策略"><a href="#客户端容灾策略" class="headerlink" title="客户端容灾策略"></a>客户端容灾策略</h4><ul>
+<li>首先，本地内存缓存，当运行时与服务注册中心的连接丢失或服务注册中心完全宕机，仍能正常地调用服务。</li>
+<li>然后，本地缓存文件，当应用与服务注册中心发生网络分区或服务注册中心完全宕机后，应用进行了重启操作，内存里没有数据，此时应用可以通过读取本地缓存文件的数据来获取到最后一次订阅到的内容。</li>
+<li>最后，本地容灾文件夹。正常的情况下，容灾文件夹内是没有内容的。当服务端完全宕机且长时间不能恢复，同时服务提供者又发生了很大的变更时，可以通过在容灾文件夹内添加文件的方式来开启本地容灾。此时客户端会忽略原有的本地缓存文件，只从本地容灾文件中读取配置。</li>
+</ul>
+<hr>
+<h4 id="服务端容灾与高可用"><a href="#服务端容灾与高可用" class="headerlink" title="服务端容灾与高可用"></a>服务端容灾与高可用</h4><ul>
+<li>当有新节点加入集群时，节点启动后能自动添加到地址服务器中，并通过地址服务器找到其他节点，自动从其他节点同步数据，以达到数据的最终一致性。</li>
+<li>当某个节点宕机时，此服务注册中心节点的信息会自动地址服务器中摘除，客户端能及时感知到此节点已下线。</li>
+</ul>
+<p>服务端的无状态性保证了服务的容灾和高可用可以做的很薄。</p>
+<hr>
+<h3 id="服务器安全"><a href="#服务器安全" class="headerlink" title="服务器安全"></a>服务器安全</h3><p>链路安全，对于使用HTTP连接的服务注册中心，保护链路安全的最好方式是使用HTTPS。而使用TCP连接的服务注册中心来说，由于应用层协议一般使用的是私有协议，不一定存在现成的TLS支持方案。</p>
+<p>在业务安全方面，应该在每一次的发布、订阅、心跳，都带上鉴权的信息就行验签和鉴权，确保业务信息的安全性。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="http://jm.taobao.org/2018/06/26/%E8%81%8A%E8%81%8A%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8F%91%E7%8E%B0/" target="_blank" rel="noopener">http://jm.taobao.org/2018/06/26/%E8%81%8A%E8%81%8A%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8F%91%E7%8E%B0/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/Java/SpringBoot/Session/Controller-Session/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/24/Java/SpringBoot/Session/Controller-Session/" itemprop="url">Spring Boot Controller Session</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-24T19:00:22+08:00">
+                2018-12-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/SpringBoot/Session/" itemprop="url" rel="index">
+                    <span itemprop="name">Session</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@GetMapping</span>(value = <span class="string">"/hello"</span>)  </span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">home</span><span class="params">(HttpSession session)</span> </span>&#123;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Custom-Session"><a href="#Custom-Session" class="headerlink" title="Custom Session"></a>Custom Session</h3><blockquote>
+<p><a href="https://stackoverflow.com/questions/48353967/how-to-modify-or-custom-sessionid-in-spring-session-project" target="_blank" rel="noopener">https://stackoverflow.com/questions/48353967/how-to-modify-or-custom-sessionid-in-spring-session-project</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/Network/Nonce/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/24/Network/Nonce/" itemprop="url">HTTP Nonce</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-24T18:28:19+08:00">
+                2018-12-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Why-need-it"><a href="#Why-need-it" class="headerlink" title="Why need it?"></a>Why need it?</h4><p>All requests must contain a <strong>nonce</strong>, a number that will never be repeated and must increase between requests. </p>
+<p>This is to <strong>prevent an attacker who has captured a previous request from simply replaying that request</strong>. We recommend using a timestamp at millisecond or higher precision. The nonce need only be increasing with respect to the session that the message is on.</p>
+<blockquote>
+<p>A single account may have multiple API keys provisioned. In this document, we’ll refer to these as “sessions”. All orders will be recorded with the session that created them. The nonce associated with a request needs to be increasing with respect to the session that the nonce is used on.This allows multithreaded or distributed trading systems to place orders independently of each other, without needing to synchronize clocks to avoid race conditions.<br>In addition, some operations (such as Cancel All Session Orders) act on the orders associated with a specific session.<br>简单来说，每个session关联一个nonce，nonce必须递增。在应用程序里面，一个Thread对应一个Session，多Thread对应多个Session，进而确保nonce是递增不重复的。</p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/24/Java/Maven/Module/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1995,539 +2579,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/21/Java/RegEx/BasicSyntax/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/21/Java/RegEx/BasicSyntax/" itemprop="url">Java RegEx Syntax</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-21T11:31:22+08:00">
-                2018-12-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/RegEx/" itemprop="url" rel="index">
-                    <span itemprop="name">RegEx</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="if-else"><a href="#if-else" class="headerlink" title="if-else"></a>if-else</h4><p>Synatx: (?(?=regex)then|else)</p>
-<h4 id="Example：Split-Decimal-String"><a href="#Example：Split-Decimal-String" class="headerlink" title="Example：Split Decimal String"></a>Example：Split Decimal String</h4><p>Target</p>
-<ul>
-<li>1000.00 -&gt; (1000),(00)</li>
-<li>1000 -&gt; (1000),()</li>
-</ul>
-<p>Note:</p>
-<ul>
-<li>合法值</li>
-<li>非法值，比如00100，a100，100x100，100.a100等等</li>
-</ul>
-<p>对于非法值可以预先检查，如果包含非法值，直接忽略，比如用”[^\d\.]”来检测是否有非法字符</p>
-<p>Exp: (^[1-9]{1}\d+)(?=.<em>(\d+|\d</em>))</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/20/CS/DesignPattern/Decorator Pattern/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/20/CS/DesignPattern/Decorator Pattern/" itemprop="url">每天一个模式 - Decorator Pattern</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-20T13:48:18+08:00">
-                2018-12-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Design-Pattern/" itemprop="url" rel="index">
-                    <span itemprop="name">Design Pattern</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Waht"><a href="#Waht" class="headerlink" title="Waht?"></a>Waht?</h3><p><strong>Definition</strong></p>
-<p>在不改变原类文件以及不使用继承的情况下，动态地将责任附加到对象上，从而实现动态拓展一个对象的功能。它是通过创建一个包装对象，也就是装饰来包裹真实的对象。</p>
-<blockquote>
-<p>Attach additional responsibilities to an object dynamically. Decorators provide a flexible alternative to subclassing for extending functionality.</p>
-</blockquote>
-<p><strong>满足设计原则</strong></p>
-<ul>
-<li>多用组合，少用继承</li>
-<li>开放-关闭原则，类应该对拓展开放，对修改关闭</li>
-</ul>
-<hr>
-<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><img src="/2018/12/20/CS/DesignPattern/Decorator%20Pattern/pc-1.png">
-<ul>
-<li><p>Component是基类。通常是一个抽象类或者一个接口，定义了属性或者方法，方法的实现可以由子类实现或者自己实现。通常不会直接使用该类，而是通过继承该类来实现特定的功能，它约束了整个继承树的行为。比如说，如果Component代表人，即使通过装饰也不会使人变成别的动物。 </p>
-</li>
-<li><p>ConcreteComponent是Component的子类，实现了相应的方法，它充当了“被装饰者”的角色。 </p>
-</li>
-<li><p>Decorator也是Component的子类，它是装饰者共同实现的抽象类（也可以是接口）。比如说，Decorator代表衣服这一类装饰者，那么它的子类应该是T恤、裙子这样的具体的装饰者。 </p>
-</li>
-<li><p>ConcreteDecorator是Decorator的子类，是具体的装饰者，由于它同时也是Component的子类，因此它能方便地拓展Component的状态（比如添加新的方法）。每个装饰者都应该有一个实例变量用以保存某个Component的引用，这也是利用了组合的特性。在持有Component的引用后，由于其自身也是Component的子类，那么，相当于ConcreteDecorator包裹了Component，不但有Component的特性，同时自身也可以有别的特性，也就是所谓的装饰。</p>
-</li>
-</ul>
-<hr>
-<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>人类吃肉方式变化过程：直接吃生肉 -&gt; 煮熟以后再吃 -&gt; 煮熟添加各种配菜和调料再吃 -&gt; …….</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 定义作为人类应有的一些规范</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">IHuman</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">eating</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 人类具体吃的行为</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Man</span> <span class="keyword">implements</span> <span class="title">IHuman</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">eating</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"吃刚刚捕获的美味佳肴"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 抽象装饰者</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * 在Decorator中并未真正实现eat()方法，而只是调用原有Human对象的eating()方法，</span></span><br><span class="line"><span class="comment"> * 它没有真正实施装饰，而是提供一个统一的接口，将具体装饰过程交给子类完成。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Decorator</span> <span class="keyword">implements</span> <span class="title">IHuman</span> </span>&#123;</span><br><span class="line">    <span class="comment">//维持对抽象构件的引用</span></span><br><span class="line">    <span class="keyword">private</span> IHuman human;</span><br><span class="line">    <span class="comment">//注入构件实例</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Decorator</span><span class="params">(IHuman human)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.human = human;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">eating</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        human.eating();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ConcreteDecorator</span> <span class="keyword">extends</span> <span class="title">Decorator</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ConcreteDecorator</span><span class="params">(IHuman human)</span></span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(human);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">eating</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"用火烤熟肉"</span>);</span><br><span class="line">        <span class="keyword">super</span>.eating();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//需要增加的其他方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="JDK"><a href="#JDK" class="headerlink" title="JDK"></a>JDK</h3><img src="/2018/12/20/CS/DesignPattern/Decorator%20Pattern/java-io-decorator.jpeg">
-<ul>
-<li>Component：InputStream就是装饰者模式中的超类</li>
-<li>ConcreteComponent：ByteArrayInputStream，FileInputStream相当于被装饰者</li>
-<li>Decorator：FilterInputStream</li>
-<li>ConcreteDecorator(继承FilterInputStream)：BufferedInputStream，DataInputStream，PushbackInputStream</li>
-</ul>
-<p>Code Example<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">File file = <span class="keyword">new</span> File(<span class="string">"hello.txt"</span>);</span><br><span class="line">FileInputStream in = <span class="keyword">new</span> FileInputStream(file);</span><br><span class="line">BufferedInputStream inBuffered = <span class="keyword">new</span> BufferedInputStream(in);</span><br></pre></td></tr></table></figure></p>
-<hr>
-<h3 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h3><h4 id="Advantage"><a href="#Advantage" class="headerlink" title="Advantage"></a>Advantage</h4><ul>
-<li><p>使用装饰者模式比使用继承更加灵活，因为它选择通过一种动态的方式来扩展一个对象的功能，在运行时可以选择不同的装饰器，从而实现不同的行为。</p>
-</li>
-<li><p>通过使用不同的具体装饰类以及这些装饰类的排列组合，可以创造出很多不同行为的组合。可以使用多个具体装饰类来装饰同一对象，得到功能更为强大的对象。</p>
-</li>
-<li><p>具体构件类与具体装饰类可以独立变化，他能是低耦合的。用户可以根据需要来增加新的具体构件类和具体装饰类，在使用时再对其进行各种组合，原有代码无须改变，符合“开闭原则”。</p>
-</li>
-</ul>
-<h4 id="Disadvantage"><a href="#Disadvantage" class="headerlink" title="Disadvantage"></a>Disadvantage</h4><ul>
-<li><p>会产生很多的小对象，增加了系统的复杂性</p>
-</li>
-<li><p>由于使用装饰模式，可以比使用继承关系需要较少数目的类。使用较少的类，当然使设计比较易于进行。但是在另一方面，使用装饰模式会产生比使用继承关系更多的对象。更多的对象会使得查错变得困难，特别是这些对象看上去都很相像。</p>
-</li>
-</ul>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://blog.csdn.net/a553181867/article/details/52108423" target="_blank" rel="noopener">https://blog.csdn.net/a553181867/article/details/52108423</a><br><a href="https://zhuanlan.zhihu.com/p/44003220" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/44003220</a><br>设计模式–装饰者模式（在IO体系中的应用）：<a href="https://blog.csdn.net/u013679744/article/details/77686646" target="_blank" rel="noopener">https://blog.csdn.net/u013679744/article/details/77686646</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/20/Java/SpringBoot/Validator/CustomValidator/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/20/Java/SpringBoot/Validator/CustomValidator/" itemprop="url">Spring Boot Custom Validator</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-20T13:46:22+08:00">
-                2018-12-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/SpringBoot/" itemprop="url" rel="index">
-                    <span itemprop="name">SpringBoot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/SpringBoot/Validator/" itemprop="url" rel="index">
-                    <span itemprop="name">Validator</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h3 id="Kotlin"><a href="#Kotlin" class="headerlink" title="Kotlin"></a>Kotlin</h3><h4 id="方案一：ConstraintValidator"><a href="#方案一：ConstraintValidator" class="headerlink" title="方案一：ConstraintValidator"></a>方案一：ConstraintValidator</h4><p>注意：Controller必须加上@Validated</p>
-<ul>
-<li><p>Define Validator Class</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">class OrderConstraintValidator : ConstraintValidator&lt;OrderValidatorAnnotation, Order&gt; &#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">override fun <span class="title">isValid</span><span class="params">(order: Order?, context: ConstraintValidatorContext?)</span>: Boolean </span>&#123;</span><br><span class="line">        context?.disableDefaultConstraintViolation()</span><br><span class="line">        context?.buildConstraintViolationWithTemplate(<span class="string">"order is null"</span>)</span><br><span class="line">                    ?.addConstraintViolation()</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Define Validator Annotation</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target</span>(AnnotationTarget.VALUE_PARAMETER)</span><br><span class="line"><span class="meta">@Retention</span>(AnnotationRetention.RUNTIME)</span><br><span class="line">@Constraint(validatedBy = [OrderConstraintValidator::class])</span><br><span class="line"><span class="function">annotation class <span class="title">OrderValidatorAnnotation</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">        val message: String = <span class="string">""</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">        val groups: Array&lt;KClass&lt;*&gt;&gt; = [],</span></span></span><br><span class="line"><span class="function"><span class="params">        val payload: Array&lt;KClass&lt;out Payload&gt;&gt; = []</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Handle ConstraintViolationException</p>
-</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  消息的处理可以放在@ControllerAdvice里面</span></span><br><span class="line"><span class="comment">//  获取自定义错误消息 -&gt; "order is null"</span></span><br><span class="line">val message = ex.constraintViolations.iterator().next().message</span><br></pre></td></tr></table></figure>
-<h4 id="CustomValidatorBean"><a href="#CustomValidatorBean" class="headerlink" title="CustomValidatorBean"></a>CustomValidatorBean</h4><p>对应注解@Valid，等于覆盖框架的校验逻辑</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">class OrderValidatorBean : CustomValidatorBean() &#123;</span><br><span class="line">    <span class="function">override fun <span class="title">supports</span><span class="params">(clazz: Class&lt;*&gt;)</span>: Boolean </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Order::<span class="class"><span class="keyword">class</span>.<span class="title">isInstance</span>(<span class="title">clazz</span>)</span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line"><span class="class"></span></span><br><span class="line">    override fun validate(target: Any?, errors: Errors) &#123;</span><br><span class="line">        <span class="keyword">super</span>.validate(target, errors)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2579,7 +2630,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">556</span>
+                <span class="site-state-item-count">559</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2590,7 +2641,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">241</span>
+                <span class="site-state-item-count">243</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2601,7 +2652,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">613</span>
+                <span class="site-state-item-count">614</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
