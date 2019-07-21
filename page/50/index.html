@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log-config/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log-config/" itemprop="url">Django Log 配置信息</a></h2>
+                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log/" itemprop="url">Django Log</a></h2>
         
 
         <div class="post-meta">
@@ -388,9 +388,33 @@
       
         
           
-            <p>生产环境配置(包含了Sentry配置)，日志分割管理建议使用logrotate</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">LOGGING = &#123;</span><br><span class="line">    'version': 1,</span><br><span class="line">    'disable_existing_loggers': True,</span><br><span class="line">    'root': &#123;</span><br><span class="line">        'level': 'WARNING',</span><br><span class="line">        'handlers': ['sentry']</span><br><span class="line">    &#125;,</span><br><span class="line">    'formatters': &#123;</span><br><span class="line">        'verbose': &#123;</span><br><span class="line">            'format': '[%(levelname)s]%(asctime)s--[module:%(module)s, process:%(process)d, thread:%(thread)d]--'</span><br><span class="line">                      '[filename:%(filename)s][funcName:%(funcName)s]: %(message)s'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'handlers': &#123;</span><br><span class="line">        'sentry': &#123;</span><br><span class="line">            'level': 'ERROR',  # To capture more than ERROR, change to WARNING, INFO, etc.</span><br><span class="line">            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'console': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.StreamHandler',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;,</span><br><span class="line">        'file': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'class': 'logging.FileHandler',</span><br><span class="line">            'filename': './log/prod.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    'loggers': &#123;</span><br><span class="line">        'root': &#123;</span><br><span class="line">            'level': 'ERROR',</span><br><span class="line">            'handlers': ['sentry']</span><br><span class="line">        &#125;,</span><br><span class="line">        'django': &#123;</span><br><span class="line">            'level': 'INFO',</span><br><span class="line">            'handlers': ['file', 'console', 'sentry'],</span><br><span class="line">            'propagate': True</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果日志文件需要自动分割，则file使用下面的配置<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">'file': &#123;</span><br><span class="line">            'level': 'DEBUG',</span><br><span class="line">            'class': 'logging.handlers.RotatingFileHandler',</span><br><span class="line">            'maxBytes': 1024 * 1024 * 10,  # 文件大小</span><br><span class="line">            'backupCount': 5,  # 备份份数</span><br><span class="line">            'filename': './log/debug.log',</span><br><span class="line">            'formatter': 'verbose'</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+            <h2 id="Logging"><a href="#Logging" class="headerlink" title="Logging"></a>Logging</h2><p>Python logging 主要有以下四部分组成:</p>
+<ol>
+<li>Loggers</li>
+<li>Handlers</li>
+<li>Filters</li>
+<li>Formatters</li>
+</ol>
+<h3 id="Loggers"><a href="#Loggers" class="headerlink" title="Loggers"></a>Loggers</h3><p>A logger is the entry point into the logging system. Each logger is a named bucket to which messages can be written for processing.</p>
+<p>log leve: DEBUG -&gt; INFO -&gt; WARNING -&gt; ERROR -&gt; CRITICAL</p>
+<ul>
+<li>DEBUG: Low level system information for debugging purposes</li>
+<li>INFO: General system information</li>
+<li>WARNING: Information describing a minor problem that has occurred.</li>
+<li>ERROR: Information describing a major problem that has occurred.</li>
+<li>CRITICAL: Information describing a critical problem that has occurred.</li>
+</ul>
+<p>message log’level &lt;= logger’level 消息才会被logger接收，logger会把消息传递给Handler进行处理</p>
+<hr>
+<h3 id="Handlers"><a href="#Handlers" class="headerlink" title="Handlers"></a>Handlers</h3><p>The handler is the engine that determines what happens to each message in a logger. It describes a particular logging behavior, such as writing a message to the screen, to a file, or to a network socket.</p>
+<p>同Logger一样，Handler也会检查message log’level，Logger可以有多个Handler，例如，</p>
+<hr>
+<h3 id="Filters"><a href="#Filters" class="headerlink" title="Filters"></a>Filters</h3><p>A filter is used to provide additional control over which log records are passed from logger to handler.</p>
+<p>Filters can be installed on loggers or on handlers; multiple filters can be used in a chain to perform multiple filtering actions.</p>
+<hr>
+<h3 id="Formatters"><a href="#Formatters" class="headerlink" title="Formatters"></a>Formatters</h3><p>Formatters describe the exact format of that text.</p>
+<p>logrecord-attributes：<a href="https://docs.python.org/3/library/logging.html#logrecord-attributes" target="_blank" rel="noopener">https://docs.python.org/3/library/logging.html#logrecord-attributes</a></p>
+<h3 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h3><h4 id="disable-existing-loggers"><a href="#disable-existing-loggers" class="headerlink" title="disable_existing_loggers"></a>disable_existing_loggers</h4><p>If the disable_existing_loggers key in the LOGGING dictConfig is set to True (which is the default) then all loggers from the default configuration will be disabled. Disabled loggers are not the same as removed; the logger will still exist, but will silently discard anything logged to it, not even propagating entries to a parent logger. Thus you should be very careful using ‘disable_existing_loggers’: True; it’s probably not what you want. Instead, you can set disable_existing_loggers to False and redefine some or all of the default loggers; or you can set LOGGING_CONFIG to None and handle logging config yourself.</p>
 
           
         

@@ -1814,7 +1814,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Fluentd/Conf/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Fluentd/RegularExp/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1833,7 +1833,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/10/07/ELK/Fluentd/Conf/" itemprop="url">Fluentd Conf</a></h2>
+                <a class="post-title-link" href="/2018/10/07/ELK/Fluentd/RegularExp/" itemprop="url">Fluentd Regular Expression</a></h2>
         
 
         <div class="post-meta">
@@ -1918,96 +1918,11 @@
       
         
           
-            <h3 id="Tag"><a href="#Tag" class="headerlink" title="Tag"></a>Tag</h3><ul>
-<li>source：确定输入源</li>
-<li>match： 确定输出目的地</li>
-<li>filter：确定 event 处理流</li>
-<li>system：设置系统范围的配置</li>
-<li>label：将内部路由的输出和过滤器分组</li>
-<li>@include：包括其它文件</li>
-</ul>
-<h3 id="Syntax"><a href="#Syntax" class="headerlink" title="Syntax"></a>Syntax</h3><h4 id="Event-structure"><a href="#Event-structure" class="headerlink" title="Event structure"></a>Event structure</h4><ul>
-<li>tag: 事件来自何处</li>
-<li>time: 事件发生事件(原子时间)</li>
-<li>record: log内容(json)</li>
-</ul>
-<h4 id="Processing-Events"><a href="#Processing-Events" class="headerlink" title="Processing Events"></a>Processing Events</h4><ul>
-<li>Filters</li>
-<li>Labels</li>
-<li>Buffers</li>
-</ul>
-<hr>
-<h3 id="Source"><a href="#Source" class="headerlink" title="Source"></a>Source</h3><p>Fluentd支持多输入。每一个输入配置必须包含类型／type，比如tcp数据输入，或者http类型输入。type将指定使用的input plugin。</p>
-<p>以下的示例中就定义了两个输入源，一个是从24224端口进入的tcp数据流，另一个是从9880端口进入的http数据。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Receive events from 24224/tcp</span></span><br><span class="line"><span class="comment"># This is used by log forwarding and the fluent-cat command</span></span><br><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> forward</span><br><span class="line">  port 24224</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># http://this.host:9880/myapp.access?json=&#123;"event":"data"&#125;</span></span><br><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> http</span><br><span class="line">  port 9880</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br></pre></td></tr></table></figure>
-<h4 id="举例说明"><a href="#举例说明" class="headerlink" title="举例说明"></a>举例说明</h4><ul>
-<li>tail</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> tail</span><br><span class="line">  path /var/<span class="built_in">log</span>/httpd-access.log</span><br><span class="line">  pos_file /var/<span class="built_in">log</span>/td-agent/httpd-access.log.pos</span><br><span class="line">  tag apache.access</span><br><span class="line">  format apache2</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br></pre></td></tr></table></figure>
-<ol>
-<li>配置tail，表示从日志文件的尾部开始读取；如果是新文件，则从头开始读。</li>
-<li>重启后，从pos文件读取上次读取位置。</li>
-</ol>
-<ul>
-<li><p>path：路径读取。可以指定多个路径“、“分离。（可以同时收集多个log日志，而不用在重新起一个source）</p>
-</li>
-<li><p>tag：The tag of the event</p>
-</li>
-<li><p>format：日志的格式</p>
-</li>
-</ul>
-<p>支持：regexp 和 正则表达式</p>
-<p>Example：Apache</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 读取日志文件apache的为以下字段:主机、用户、时间、方法、路径、代码、大小、推荐人和代理</span></span><br><span class="line">format /^(?&lt;host&gt;[^ ]*) [^ ]* (?&lt;user&gt;[^ ]*) \[(?&lt;time&gt;[^\]]*)\] <span class="string">"(?&lt;method&gt;\S+)(?: +(?&lt;path&gt;[^ ]*) +\S*)?"</span> (?&lt;code&gt;[^ ]*) (?&lt;size&gt;[^ ]*)(?: <span class="string">"(?&lt;referer&gt;[^\"]*)"</span> <span class="string">"(?&lt;agent&gt;[^\"]*)"</span>)?$/</span><br><span class="line">time_format %d/%b/%Y:%H:%M:%S %z</span><br></pre></td></tr></table></figure>
-<p>Example：syslog</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 读取syslog的输出文件(例如,/var/log/syslog)对下列字段:时间、主机，识别,和消息</span></span><br><span class="line">format /^(?&lt;time&gt;[^ ]* [^ ]* [^ ]*) (?&lt;host&gt;[^ ]*) (?&lt;ident&gt;[a-zA-Z0-9_\/\.\-]*)(?:\[(?&lt;pid&gt;[0-9]+)\])?[^\:]*\: *(?&lt;message&gt;.*)$/</span><br><span class="line">time_format %b %d %H:%M:%S</span><br></pre></td></tr></table></figure>
-<ul>
-<li><p>time_key：用来确定记录的时间戳。时间戳是当Fluentd读取记录是默认情况下使用的。</p>
-</li>
-<li><p>pos_file（必不可少）：Fluentd将记录它上次读到这个文件的位置。</p>
-</li>
-</ul>
-<p>Example</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pos_file /var/<span class="built_in">log</span>/td-agent/tmp/access.log.pos</span><br></pre></td></tr></table></figure>
-<ul>
-<li>time_format：时间格式</li>
-</ul>
-<hr>
-<h3 id="Match"><a href="#Match" class="headerlink" title="Match"></a>Match</h3><p>Match配置了数据流的匹配规则和匹配成功后所需执行的动作，和路由表项类似。</p>
-<p>比如以下的配置中就对匹配myapp.access标签成功的数据包执行file类型动作，将数据写入到路径为/var/log/fluent/access的文件中。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Match events tagged with "myapp.access" and</span></span><br><span class="line"><span class="comment"># store them to /var/log/fluent/access.%Y-%m-%d</span></span><br><span class="line"><span class="comment"># Of course, you can control how you partition your data</span></span><br><span class="line"><span class="comment"># with the time_slice_format option.</span></span><br><span class="line">&lt;match myapp.access&gt;</span><br><span class="line">  @<span class="built_in">type</span> file</span><br><span class="line">  path /var/<span class="built_in">log</span>/fluent/access</span><br><span class="line">&lt;/match&gt;</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h3><hr>
-<h3 id="System"><a href="#System" class="headerlink" title="System"></a>System</h3><hr>
-<h3 id="Label"><a href="#Label" class="headerlink" title="Label"></a>Label</h3><hr>
-<h3 id="include"><a href="#include" class="headerlink" title="@include"></a>@include</h3><hr>
-<h3 id="Plugin"><a href="#Plugin" class="headerlink" title="Plugin"></a>Plugin</h3><p>Fluentd有5种类型的插件，分别是：</p>
-<ul>
-<li>Input：完成输入数据的读取，由source部分配置</li>
-<li>Parser：解析插件</li>
-<li>Output：完成输出数据的操作，由match部分配置</li>
-<li>Formatter：消息格式化的插件，属于filter类型</li>
-<li>Buffer：缓存插件，用于缓存数据</li>
-</ul>
-<hr>
-<h3 id="Route"><a href="#Route" class="headerlink" title="Route"></a>Route</h3><p>Route指的是数据在Fluentd中的处理流水线，一般的流程为</p>
-<ul>
-<li>input -&gt; filter -&gt; output</li>
-<li>input -&gt; filter -&gt; output with label</li>
-</ul>
-<p>即由输入插件获取数据，然后交给filter做处理，然后交给output插件去转发。同时，也支持数据包／事件的重新提交，比如修改tag之后重新路由等等。</p>
-<ul>
-<li>reroute event by tags</li>
-<li>reroute event by record content</li>
-<li>reroute event to other label</li>
-</ul>
-<p><a href="https://docs.fluentd.org/v0.12/articles/routing-examples" target="_blank" rel="noopener">https://docs.fluentd.org/v0.12/articles/routing-examples</a></p>
-<h3 id="Fluentd-to-Fluentd"><a href="#Fluentd-to-Fluentd" class="headerlink" title="Fluentd to Fluentd"></a>Fluentd to Fluentd</h3><h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"># Takes the messages sent over TCP</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  port 24224</span><br><span class="line">  bind 0.0.0.0</span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @id fluentd-server</span><br><span class="line">  @type elasticsearch</span><br><span class="line">  @log_level info</span><br><span class="line">  include_tag_key true</span><br><span class="line">  host elasticsearch</span><br><span class="line">  port 9200</span><br><span class="line">  logstash_format true</span><br><span class="line">  index_name fluentd</span><br><span class="line">  type_name fluentd</span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">buffer</span>&gt;</span></span><br><span class="line">    @type file</span><br><span class="line">    path /var/log/fluentd/kubernetes.system.buffer</span><br><span class="line">    flush_mode interval</span><br><span class="line">    retry_type exponential_backoff</span><br><span class="line">    flush_thread_count 2</span><br><span class="line">    flush_interval 5s</span><br><span class="line">    retry_forever</span><br><span class="line">    retry_max_interval 30</span><br><span class="line">    chunk_limit_size 2M</span><br><span class="line">    queue_limit_length 4</span><br><span class="line">    overflow_action block</span><br><span class="line">  <span class="tag">&lt;/<span class="name">buffer</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">containers.input.conf: |-</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @id fluentd-containers.log</span><br><span class="line">  @type tail</span><br><span class="line">  path /var/log/containers/*.log</span><br><span class="line">  pos_file /var/log/es-containers.log.pos</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">  tag raw.kubernetes.*</span><br><span class="line">  read_from_head true</span><br><span class="line">  <span class="tag">&lt;<span class="name">parse</span>&gt;</span></span><br><span class="line">    @type multi_format</span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format json          time_key time</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format /^(?<span class="tag">&lt;<span class="name">time</span>&gt;</span>.+) (?<span class="tag">&lt;<span class="name">stream</span>&gt;</span>stdout|stderr) [^ ]* (?<span class="tag">&lt;<span class="name">log</span>&gt;</span>.*)$/</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">parse</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"># Detect exceptions in the log output and forward them as one log entry.</span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> <span class="attr">raw.kubernetes.</span>**&gt;</span></span><br><span class="line">  @id raw.kubernetes</span><br><span class="line">  @type detect_exceptions</span><br><span class="line">  remove_tag_prefix raw</span><br><span class="line">  message log</span><br><span class="line">  stream stream</span><br><span class="line">  multiline_flush_interval 5</span><br><span class="line">  max_bytes 500000</span><br><span class="line">  max_lines 1000</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br><span class="line"></span><br><span class="line">output.conf: |-</span><br><span class="line"># Enriches records with Kubernetes metadata</span><br><span class="line"><span class="tag">&lt;<span class="name">filter</span> <span class="attr">kubernetes.</span>**&gt;</span></span><br><span class="line">  @type kubernetes_metadata</span><br><span class="line"><span class="tag">&lt;/<span class="name">filter</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;<span class="name">server</span>&gt;</span></span><br><span class="line">      host fluentd-service</span><br><span class="line">      port 24224</span><br><span class="line">    <span class="tag">&lt;/<span class="name">server</span>&gt;</span></span><br><span class="line">  flush_interval 1s</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://blog.csdn.net/hxpjava1/article/details/79447630" target="_blank" rel="noopener">https://blog.csdn.net/hxpjava1/article/details/79447630</a></p>
-<p><a href="http://www.muzixing.com/pages/2017/02/05/fluentdru-men-jiao-cheng.html" target="_blank" rel="noopener">http://www.muzixing.com/pages/2017/02/05/fluentdru-men-jiao-cheng.html</a></p>
-
+            <h3 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h3><h4 id="Example-1"><a href="#Example-1" class="headerlink" title="Example-1"></a>Example-1</h4><p>数据源</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[2013-03-29 07:21:55.483292] router - pid=14615 tid=7a93 fid=5354  DEBUG -- Request body: &#123;"host":"api.vcap.me","stats":[&#123;"response_latency":0,"request_tags":"BAh7BjoOY29tcG9uZW50SSIUQ2xvdWRDb250cm9sbGVyBjoGRVQ=","response_codes":&#123;"responses_2xx":2&#125;,"response_samples":2&#125;]&#125;</span><br></pre></td></tr></table></figure>
+<p>表达式：/(?<time>.∗) (?<name>[^ ]<em>) - (?<pid>[^ ]</pid></em>) (?<tid>[^ ]<em>) (?<fid>[^ ]</fid></em>)  (?<level>[^ ]<em>) – (?<info>[^ ].</info></em>)$/</level></tid></name></time></p>
+<p>存储到mongo结果</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">"_id"</span> : ObjectId(<span class="string">"516d31c415bb53374d000004"</span>), <span class="attr">"name"</span> : <span class="string">"router"</span>, <span class="attr">"pid"</span> : <span class="string">"pid=14615"</span>, <span class="attr">"tid"</span> : <span class="string">"tid=7a93"</span>, <span class="attr">"fid"</span> : <span class="string">"fid=5354"</span>, <span class="attr">"level"</span> : <span class="string">"DEBUG"</span>, <span class="attr">"info"</span> : <span class="string">"Request body: &#123;\"host\":\"api.vcap.me\",\"stats\":[&#123;\"response_latency\":0,\"request_tags\":\"BAh7BjoOY29tcG9uZW50SSIUQ2xvdWRDb250cm9sbGVyBjoGRVQ=\",\"response_codes\":&#123;\"responses_2xx\":2&#125;,\"response_samples\":2&#125;]&#125;"</span>,</span><br><span class="line"> <span class="attr">"time"</span> : ISODate(<span class="string">"2013-04-23T11:21:55Z"</span>) &#125;</span><br></pre></td></tr></table></figure>
           
         
       
