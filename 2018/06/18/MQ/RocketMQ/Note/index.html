@@ -109,7 +109,7 @@
 <meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
 <meta property="og:description" content="Consumer consumer数量 &amp;lt; Queue队列数，否则多出的consumer无法消费消息  负载均衡策略   AllocateMessageQueueAveragely（默认） AllocateMessageQueueByMachineRoom AllocateMessageQueueAveragelyByCircle AllocateMessageQueueConsistent">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-11-13T02:58:28.143Z">
+<meta property="og:updated_time" content="2019-07-23T11:04:05.075Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="RocketMQ Note">
 <meta name="twitter:description" content="Consumer consumer数量 &amp;lt; Queue队列数，否则多出的consumer无法消费消息  负载均衡策略   AllocateMessageQueueAveragely（默认） AllocateMessageQueueByMachineRoom AllocateMessageQueueAveragelyByCircle AllocateMessageQueueConsistent">
@@ -450,6 +450,12 @@
 <blockquote>
 <p>默认情况下，所有的broker都会建立索引（messageIndexEnable=true）。这个索引功能可以支持按照消息的uniqId，消息的key来查询消息体。索引文件实现的时候，本质上也就是基于磁盘的个一个hashmap。如果broker上消息数量比较多，查询的频率比较高，这也会造成一定的IO负载。所以我们的推荐方案是在Master上关掉了index功能，只在slave上打开。然后所有的index查询全部在slave上进行。当然这个需要简单修改一下MQAdminImpl里的实现。因为默认情况下，它会向Master发出请求。</p>
 </blockquote>
+<ol start="13">
+<li>RabbitMQ 延迟消息的延迟极限是多少？</li>
+</ol>
+<blockquote>
+<p>延迟 5000 毫秒。消息发送到 MQ 之后确实延迟了 5 秒之后才得到了消费，没有任何问题。<br>延迟 1 年（ 31536000000 毫秒）。消息发送到 MQ 之后马上就被消费者消费了，完全没有延迟效果。<br>在 RabbitMQ 中，消息的过期时间必须是非负 32 位整数，即：0 &lt;= n &lt;= 2^32-1，以毫秒为单位。 其中，2^32-1 = 4294967295。可以尝试下面两个请求，分别设置延迟时间为 4294967295 何 4294967296：<br>curl localhost:8080/sendMessage?message=hello&amp;delay=4294967295 和 curl localhost:8080/sendMessage?message=hello&amp;delay=4294967296<br>可以发现，当延迟时间为 4294967295 毫秒的时候，延迟消息工作正常；当延迟时间为 4294967296 毫秒的时候，消息被直接消费，没有延迟效果。</p>
+</blockquote>
 <h3 id="Producer"><a href="#Producer" class="headerlink" title="Producer"></a>Producer</h3><ol>
 <li><p>每个Producer默认采用Roundbin方式轮训发送给每个Queue</p>
 </li>
@@ -545,8 +551,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/06/12/CS/DesignPattern/brief/" rel="next" title="Brief Of Design Pattern">
-                <i class="fa fa-chevron-left"></i> Brief Of Design Pattern
+              <a href="/2018/06/12/CS/DesignPattern/advice/" rel="next" title="Advice Of Design Pattern">
+                <i class="fa fa-chevron-left"></i> Advice Of Design Pattern
               </a>
             
           </div>
@@ -635,7 +641,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">559</span>
+                <span class="site-state-item-count">562</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -646,7 +652,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">243</span>
+                <span class="site-state-item-count">244</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -657,7 +663,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">614</span>
+                <span class="site-state-item-count">618</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
