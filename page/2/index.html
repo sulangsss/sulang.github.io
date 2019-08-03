@@ -284,6 +284,554 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/07/06/Java/Rx/Rx-Quick-Start/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/07/06/Java/Rx/Rx-Quick-Start/" itemprop="url">RxJava Quick Start</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-06T14:22:22+08:00">
+                2019-07-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/RxJava/" itemprop="url" rel="index">
+                    <span itemprop="name">RxJava</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Basic-Theory"><a href="#Basic-Theory" class="headerlink" title="Basic Theory"></a>Basic Theory</h3><img src="/2019/07/06/Java/Rx/Rx-Quick-Start/components-of-the-rxjava.png">
+<ul>
+<li>Flowable: 多个流，响应式流和背压</li>
+<li>Observable: 多个流，无背压</li>
+<li>Single: 只有一个元素或者错误的流</li>
+</ul>
+<h3 id="Testing-Model"><a href="#Testing-Model" class="headerlink" title="Testing Model"></a>Testing Model</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">class DataManager(size: Int = 16) &#123;</span><br><span class="line">    <span class="keyword">private</span> val data = mutableListOf&lt;Student&gt;()</span><br><span class="line"></span><br><span class="line">    init &#123;</span><br><span class="line">        <span class="keyword">for</span> (index in <span class="number">0</span> until size) &#123;</span><br><span class="line">            val student = Student(<span class="string">"Jack-$index"</span>, mutableListOf(Course(<span class="string">"English-$index"</span>)))</span><br><span class="line">            data.add(student)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">queryOrigin</span><span class="params">()</span>: MutableList&lt;Student&gt; </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.data</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">data class <span class="title">Student</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    var name: String,</span></span></span><br><span class="line"><span class="function"><span class="params">    var courses: MutableList&lt;Course&gt; = mutableListOf()</span></span></span><br><span class="line"><span class="function">)</span></span><br><span class="line"><span class="function">data class <span class="title">Course</span><span class="params">(var name: String)</span></span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Transforming-Observables"><a href="#Transforming-Observables" class="headerlink" title="Transforming Observables"></a>Transforming Observables</h3><h4 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h4><p>transform the items emitted by an Observable by applying a function to each item</p>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/map-execution.png">
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>)</span><br><span class="line">        .map &#123; it.toDouble() &#125;</span><br><span class="line">        .subscribe &#123;</span><br><span class="line">            println(it)</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="flatMap-vs-concatMap"><a href="#flatMap-vs-concatMap" class="headerlink" title="flatMap vs concatMap"></a>flatMap vs concatMap</h4><p>transform the items emitted by an Observable into Observables, then <strong>flatten the emissions from those into a single Observable</strong></p>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/rx-flatmap.png">
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">val dataManager = DataManager()</span><br><span class="line">val flatCourse = mutableListOf&lt;Course&gt;()</span><br><span class="line">val queryOrigin = dataManager.queryOrigin()</span><br><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .flatMap &#123; stu -&gt;</span><br><span class="line">            Observable.fromIterable(stu.courses)</span><br><span class="line">        &#125;.subscribeOn(Schedulers.newThread())</span><br><span class="line">        .blockingSubscribe &#123; course -&gt;</span><br><span class="line">            flatCourse.add(course)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">val concatCourse = mutableListOf&lt;Course&gt;()</span><br><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .concatMap &#123; stu -&gt;</span><br><span class="line">            Observable.fromIterable(stu.courses)</span><br><span class="line">        &#125;.subscribeOn(Schedulers.newThread())</span><br><span class="line">        .blockingSubscribe &#123; course -&gt;</span><br><span class="line">            concatCourse.add(course)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">println(<span class="string">"origin = $&#123;dataManager.queryOrigin()&#125;"</span>)</span><br><span class="line">println(<span class="string">"flatMap = $flatCourse"</span>)</span><br><span class="line">println(<span class="string">"concatMap = $concatCourse"</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">origin = [Student(name=Jack-<span class="number">0</span>, courses=[Course(name=English-<span class="number">0</span>)]), Student(name=Jack-<span class="number">1</span>, courses=[Course(name=English-<span class="number">1</span>)]), Student(name=Jack-<span class="number">2</span>, courses=[Course(name=English-<span class="number">2</span>)])]</span><br><span class="line">flatMap = [Course(name=English-<span class="number">0</span>), Course(name=English-<span class="number">1</span>), Course(name=English-<span class="number">2</span>)]</span><br><span class="line">concatMap = [Course(name=English-<span class="number">0</span>), Course(name=English-<span class="number">1</span>), Course(name=English-<span class="number">2</span>)]</span><br></pre></td></tr></table></figure>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/concat_vs_flatmap_1.png">
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/concat_vs_flatmap_2.png">
+<p>flatMap将一个发送事件的上游Observable变换为多个发送事件的Observables，然后将它们发射的事件合并后放进一个单独的Observable里。需要注意的是, flatMap并不保证事件的顺序，也就是说转换之后的Observables的顺序不必与转换之前的序列的顺序一致。</p>
+<p>与flatMap对应的方法是contactMap，后者能够保证最终输出的顺序与上游发送的顺序一致。</p>
+<blockquote>
+<p>Both methods look pretty much the same, but there is a difference: operator usage when merging the final results.</p>
+</blockquote>
+<blockquote>
+<p>The <strong>flatMap()</strong> method creates a new Observable by applying a function that you supply to each item emitted by the original Observable, where that function is itself an Observable that emits items, and then merges the results of that function applied to every item emitted by the original Observable, emitting these merged results.</p>
+</blockquote>
+<blockquote>
+<p>Note that <strong>flatMap()</strong> may interleave the items emitted by the Observables that result from transforming the items emitted by the source Observable.</p>
+</blockquote>
+<blockquote>
+<p>If it is important that these items not be <strong>interleaved</strong>, you can instead use the similar <strong>concatMap()</strong> method.</p>
+</blockquote>
+<blockquote>
+<p>FlatMap对这些Observables发射的数据做的是合并(merge)操作，因此它们可能是交错的。也就说，传入的顺序可能跟出来的顺序不一样。如果要保证顺的的话，可以使用concatMap。</p>
+</blockquote>
+<h4 id="flatMapIterable"><a href="#flatMapIterable" class="headerlink" title="flatMapIterable"></a>flatMapIterable</h4><h4 id="switchMap"><a href="#switchMap" class="headerlink" title="switchMap"></a>switchMap</h4><p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">val dataManager = DataManager()</span><br><span class="line"></span><br><span class="line">val switchMapCourse = mutableListOf&lt;String&gt;()</span><br><span class="line">val queryOrigin = dataManager.queryOrigin()</span><br><span class="line"></span><br><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .switchMap &#123; stu -&gt;</span><br><span class="line">            Observable.timer(<span class="number">1</span>, TimeUnit.SECONDS)</span><br><span class="line">                    .map &#123; stu.name &#125;</span><br><span class="line">        &#125;.subscribeOn(Schedulers.newThread())</span><br><span class="line">        .blockingSubscribe &#123; course -&gt;</span><br><span class="line">            switchMapCourse.add(course)</span><br><span class="line">        &#125;</span><br><span class="line">println(<span class="string">"origin = $&#123;dataManager.queryOrigin()&#125;"</span>)</span><br><span class="line">println(<span class="string">"switchMap = $switchMapCourse"</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">origin = [Student(name=Jack-<span class="number">0</span>, courses=[Course(name=English-<span class="number">0</span>)]), Student(name=Jack-<span class="number">1</span>, courses=[Course(name=English-<span class="number">1</span>)]), Student(name=Jack-<span class="number">2</span>, courses=[Course(name=English-<span class="number">2</span>)])]</span><br><span class="line">switchMap = [Jack-<span class="number">2</span>]</span><br></pre></td></tr></table></figure>
+<p>If just return a normal observable on switchMap(), example:</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .switchMap &#123; stu -&gt;</span><br><span class="line">            Observable.just(stu.name)</span><br><span class="line">        &#125;.subscribeOn(Schedulers.newThread())</span><br><span class="line">        .blockingSubscribe &#123; course -&gt;</span><br><span class="line">            switchMapCourse.add(course)</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">origin = [Student(name=Jack-<span class="number">0</span>, courses=[Course(name=English-<span class="number">0</span>)]), Student(name=Jack-<span class="number">1</span>, courses=[Course(name=English-<span class="number">1</span>)]), Student(name=Jack-<span class="number">2</span>, courses=[Course(name=English-<span class="number">2</span>)])]</span><br><span class="line">switchMap = [Jack-<span class="number">0</span>, Jack-<span class="number">1</span>, Jack-<span class="number">2</span>]</span><br></pre></td></tr></table></figure>
+<h4 id="cast"><a href="#cast" class="headerlink" title="cast"></a>cast</h4><p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>)</span><br><span class="line">        .cast(Number.class)</span><br><span class="line">        .subscribe(num -&gt; println(num)));</span><br></pre></td></tr></table></figure>
+<h4 id="scan"><a href="#scan" class="headerlink" title="scan"></a>scan</h4><p>apply a function to each item emitted by an Observable, sequentially, and emit each successive value</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">val dataManager = DataManager()</span><br><span class="line"></span><br><span class="line">val scanStudent = mutableListOf&lt;Student&gt;()</span><br><span class="line">val queryOrigin = dataManager.queryOrigin()</span><br><span class="line"></span><br><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .scan &#123; lastStu: Student, student: Student -&gt;</span><br><span class="line">            println(<span class="string">"---------------------"</span>)</span><br><span class="line">            println(<span class="string">"lastStu $&#123;lastStu.name&#125;"</span>)</span><br><span class="line">            println(<span class="string">"current Stu $&#123;student.name&#125;"</span>)</span><br><span class="line">            println(<span class="string">"next Stu $&#123;lastStu.name&#125; + $&#123;student.name&#125;"</span>)</span><br><span class="line">            Student(name = <span class="string">"$&#123;lastStu.name&#125; + $&#123;student.name&#125;"</span>)</span><br><span class="line">        &#125;.subscribe &#123;</span><br><span class="line">            scanStudent.add(it)</span><br><span class="line">        &#125;</span><br><span class="line">println(<span class="string">"===================================================================================="</span>)</span><br><span class="line">println(<span class="string">"origin = $&#123;dataManager.queryOrigin()&#125;"</span>)</span><br><span class="line">println(<span class="string">"===================================================================================="</span>)</span><br><span class="line"><span class="keyword">for</span> (student in scanStudent) &#123;</span><br><span class="line">    println(<span class="string">"student $&#123;student.name&#125;"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">---------------------</span><br><span class="line">lastStu Jack-<span class="number">0</span></span><br><span class="line">current Stu Jack-<span class="number">1</span></span><br><span class="line">next Stu Jack-<span class="number">0</span> + Jack-<span class="number">1</span></span><br><span class="line">---------------------</span><br><span class="line">lastStu Jack-<span class="number">0</span> + Jack-<span class="number">1</span></span><br><span class="line">current Stu Jack-<span class="number">2</span></span><br><span class="line">next Stu Jack-<span class="number">0</span> + Jack-<span class="number">1</span> + Jack-<span class="number">2</span></span><br><span class="line">====================================================================================</span><br><span class="line">origin = [Student(name=Jack-<span class="number">0</span>, courses=[Course(name=English-<span class="number">0</span>)]), Student(name=Jack-<span class="number">1</span>, courses=[Course(name=English-<span class="number">1</span>)]), Student(name=Jack-<span class="number">2</span>, courses=[Course(name=English-<span class="number">2</span>)])]</span><br><span class="line">====================================================================================</span><br><span class="line">student Jack-<span class="number">0</span></span><br><span class="line">student Jack-<span class="number">0</span> + Jack-<span class="number">1</span></span><br><span class="line">student Jack-<span class="number">0</span> + Jack-<span class="number">1</span> + Jack-<span class="number">2</span></span><br></pre></td></tr></table></figure>
+<h4 id="buffer"><a href="#buffer" class="headerlink" title="buffer"></a>buffer</h4><p>periodically gather items from an Observable into bundles and emit these bundles rather than emitting the items one at a time</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>)</span><br><span class="line">        .buffer(<span class="number">2</span>)</span><br><span class="line">        .subscribe &#123;</span><br><span class="line">            println(it)</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="windows"><a href="#windows" class="headerlink" title="windows"></a>windows</h4><p>periodically subdivide items from an Observable into Observable windows and emit these windows rather than emitting the items one at a time</p>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/rx-window-theory.png">
+<p>Window is similar to Buffer, but rather than emitting packets of items from the source Observable, it emits Observables, each one of which emits a subset of items from the source Observable and then terminates with an onCompleted notification. </p>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/rx-buffer-vs-windwos-1.png">
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/rx-buffer-vs-windwos-2.png">
+<p>Window和Buffer类似，但不是发射来自原始Observable的数据包，它发射的是Observable，这些Observables中的每一个都发射原始Observable数据的一个子集，最后发射一个onCompleted通知。<br>以下面的程序为例，这里我们首先生成了一个由10个数字组成的整数序列，然后使用window函数将它们每3个作为一组，每组会返回一个对应的Observable对象。<br>这里我们对该返回的结果进行订阅并进行消费，因为10个数字，所以会被分成4个组，每个对应一个Observable：</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Observable.range(<span class="number">1</span>, <span class="number">10</span>).window(<span class="number">3</span>)</span><br><span class="line">            .subscribe &#123; observable -&gt;</span><br><span class="line">                observable.subscribe &#123; integer -&gt;</span><br><span class="line">                    println(observable.hashCode().toString() + <span class="string">" : "</span> + integer)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">901506536</span> : <span class="number">1</span></span><br><span class="line"><span class="number">901506536</span> : <span class="number">2</span></span><br><span class="line"><span class="number">901506536</span> : <span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="number">747464370</span> : <span class="number">4</span></span><br><span class="line"><span class="number">747464370</span> : <span class="number">5</span></span><br><span class="line"><span class="number">747464370</span> : <span class="number">6</span></span><br><span class="line"></span><br><span class="line"><span class="number">1513712028</span> : <span class="number">7</span></span><br><span class="line"><span class="number">1513712028</span> : <span class="number">8</span></span><br><span class="line"><span class="number">1513712028</span> : <span class="number">9</span></span><br><span class="line"></span><br><span class="line"><span class="number">1018547642</span> : <span class="number">10</span></span><br></pre></td></tr></table></figure>
+<h4 id="groupBy"><a href="#groupBy" class="headerlink" title="groupBy"></a>groupBy</h4><p>divide an Observable into a set of Observables that each emit a different group of items from the original Observable, organized by key</p>
+<p>groupBy用于分组元素，它可以被用来根据指定的条件将元素分成若干组。</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Observable.concat(</span><br><span class="line">            Observable.range(<span class="number">1</span>, <span class="number">4</span>),</span><br><span class="line">            Observable.range(<span class="number">1</span>, <span class="number">6</span>)</span><br><span class="line">    ).groupBy &#123; integer -&gt;</span><br><span class="line">        integer</span><br><span class="line">    &#125;.subscribe &#123; groupedObservable: GroupedObservable&lt;Int, Int&gt; -&gt;</span><br><span class="line">        groupedObservable.subscribe &#123; println(<span class="string">"key $&#123;groupedObservable.key&#125; -&gt; value $it"</span>) &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">key <span class="number">1</span> -&gt; value <span class="number">1</span></span><br><span class="line">key <span class="number">2</span> -&gt; value <span class="number">2</span></span><br><span class="line">key <span class="number">3</span> -&gt; value <span class="number">3</span></span><br><span class="line">key <span class="number">4</span> -&gt; value <span class="number">4</span></span><br><span class="line">key <span class="number">1</span> -&gt; value <span class="number">1</span></span><br><span class="line">key <span class="number">2</span> -&gt; value <span class="number">2</span></span><br><span class="line">key <span class="number">3</span> -&gt; value <span class="number">3</span></span><br><span class="line">key <span class="number">4</span> -&gt; value <span class="number">4</span></span><br><span class="line">key <span class="number">5</span> -&gt; value <span class="number">5</span></span><br><span class="line">key <span class="number">6</span> -&gt; value <span class="number">6</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Math"><a href="#Math" class="headerlink" title="Math"></a>Math</h3><h4 id="average"><a href="#average" class="headerlink" title="average"></a>average</h4><h4 id="count"><a href="#count" class="headerlink" title="count"></a>count</h4><h4 id="max"><a href="#max" class="headerlink" title="max"></a>max</h4><h4 id="min"><a href="#min" class="headerlink" title="min"></a>min</h4><h4 id="reduce"><a href="#reduce" class="headerlink" title="reduce"></a>reduce</h4><p>apply a function to each item emitted by an Observable, sequentially, and emit the final value</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="http://reactivex.io/documentation/operators.html" target="_blank" rel="noopener">http://reactivex.io/documentation/operators.html</a></li>
+<li><a href="https://maxwell-nc.github.io/android/rxjava2-6.html" target="_blank" rel="noopener">https://maxwell-nc.github.io/android/rxjava2-6.html</a></li>
+<li><a href="https://medium.com/mindorks/rxjava-operator-map-vs-flatmap-427c09678784" target="_blank" rel="noopener">https://medium.com/mindorks/rxjava-operator-map-vs-flatmap-427c09678784</a></li>
+<li><a href="https://fernandocejas.com/2015/01/11/rxjava-observable-tranformation-concatmap-vs-flatmap/" target="_blank" rel="noopener">https://fernandocejas.com/2015/01/11/rxjava-observable-tranformation-concatmap-vs-flatmap/</a></li>
+<li><a href="https://my.oschina.net/u/2277632/blog/2986715" target="_blank" rel="noopener">https://my.oschina.net/u/2277632/blog/2986715</a></li>
+<li><a href="https://juejin.im/post/5b72f76551882561354462dd" target="_blank" rel="noopener">https://juejin.im/post/5b72f76551882561354462dd</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/07/06/Java/Kotlin/sort/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/07/06/Java/Kotlin/sort/" itemprop="url">Kotlin sort</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-06T00:08:22+08:00">
+                2019-07-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Kotlin/" itemprop="url" rel="index">
+                    <span itemprop="name">Kotlin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Define-Class"><a href="#Define-Class" class="headerlink" title="Define Class"></a>Define Class</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">data class <span class="title">Person</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    var name: String = <span class="string">""</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    var age: Int = <span class="number">0</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    var money: Double = <span class="number">0.0</span></span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="sortBy"><a href="#sortBy" class="headerlink" title="sortBy"></a>sortBy</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">val persons = mutableListOf&lt;Person&gt;()</span><br><span class="line"></span><br><span class="line">persons.add(Person(<span class="string">"Hello-1"</span>, <span class="number">1</span>, <span class="number">10.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-5"</span>, <span class="number">5</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-3"</span>, <span class="number">3</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-2"</span>, <span class="number">2</span>, <span class="number">100.0</span>))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br><span class="line">println(<span class="string">"========================="</span>)</span><br><span class="line">persons.sortBy &#123; it.age &#125;</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Person(name=Hello-<span class="number">1</span>, age=<span class="number">1</span>, money=<span class="number">10.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">5</span>, age=<span class="number">5</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">3</span>, age=<span class="number">3</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">2</span>, age=<span class="number">2</span>, money=<span class="number">100.0</span>)</span><br><span class="line">=========================</span><br><span class="line">Person(name=Hello-<span class="number">1</span>, age=<span class="number">1</span>, money=<span class="number">10.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">2</span>, age=<span class="number">2</span>, money=<span class="number">100.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">3</span>, age=<span class="number">3</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">5</span>, age=<span class="number">5</span>, money=<span class="number">20.0</span>)</span><br></pre></td></tr></table></figure>
+<p>sortBy 为正序排列，跟其对应的降序方法为 sortByDescending。</p>
+<hr>
+<h3 id="sortWith"><a href="#sortWith" class="headerlink" title="sortWith"></a>sortWith</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">val persons = mutableListOf&lt;Person&gt;()</span><br><span class="line"></span><br><span class="line">persons.add(Person(<span class="string">"Hello-1"</span>, <span class="number">1</span>, <span class="number">10.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-5"</span>, <span class="number">5</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-3"</span>, <span class="number">3</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-2"</span>, <span class="number">2</span>, <span class="number">100.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-6"</span>, <span class="number">2</span>, <span class="number">50.0</span>))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br><span class="line">println(<span class="string">"========================="</span>)</span><br><span class="line">persons.sortWith(compareBy(&#123; it.age &#125;, &#123; it.money &#125;))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Person(name=Hello-<span class="number">1</span>, age=<span class="number">1</span>, money=<span class="number">10.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">5</span>, age=<span class="number">5</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">3</span>, age=<span class="number">3</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">2</span>, age=<span class="number">2</span>, money=<span class="number">100.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">6</span>, age=<span class="number">2</span>, money=<span class="number">50.0</span>)</span><br><span class="line">=========================</span><br><span class="line">Person(name=Hello-<span class="number">1</span>, age=<span class="number">1</span>, money=<span class="number">10.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">6</span>, age=<span class="number">2</span>, money=<span class="number">50.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">2</span>, age=<span class="number">2</span>, money=<span class="number">100.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">3</span>, age=<span class="number">3</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">5</span>, age=<span class="number">5</span>, money=<span class="number">20.0</span>)</span><br></pre></td></tr></table></figure>
+<p>sortWith 方法中，传入的 compareBy({属性1},{属性2},…)参数，参数个数是可变的。但是都是默认的升序排列。</p>
+<p>可以给sortWith传入一个Comparator对象，来达到一个更高级更复杂的逻辑。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">val persons = mutableListOf&lt;Person&gt;()</span><br><span class="line"></span><br><span class="line">persons.add(Person(<span class="string">"Hello-1"</span>, <span class="number">1</span>, <span class="number">10.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-5"</span>, <span class="number">5</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-3"</span>, <span class="number">3</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-2"</span>, <span class="number">2</span>, <span class="number">100.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-6"</span>, <span class="number">2</span>, <span class="number">50.0</span>))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br><span class="line">println(<span class="string">"========================="</span>)</span><br><span class="line">val comparator: Comparator&lt;Person&gt; = Comparator &#123; o1, o2 -&gt;</span><br><span class="line">    <span class="keyword">if</span> (o2.age == o1.age) &#123;</span><br><span class="line">        o1.money.compareTo(o2.money)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        o1.age - o2.age</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">persons.sortWith(comparator)</span><br><span class="line"><span class="comment">//  persons.sortWith(compareBy(&#123; it.age &#125;, &#123; it.money &#125;))</span></span><br><span class="line">persons.forEach(::println)</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Comparable"><a href="#Comparable" class="headerlink" title="Comparable"></a>Comparable</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">data class <span class="title">Person</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    var name: String = <span class="string">""</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    var age: Int = <span class="number">0</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    var money: Double = <span class="number">0.0</span></span></span></span><br><span class="line"><span class="function"><span class="params">)</span> : Comparable&lt;Person&gt; </span>&#123;</span><br><span class="line">    <span class="function">override fun <span class="title">compareTo</span><span class="params">(other: Person)</span>: Int </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">if</span> (other.age == <span class="keyword">this</span>.age) &#123;</span><br><span class="line">            <span class="keyword">this</span>.money.compareTo(other.money)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">this</span>.age - other.age</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">val persons = mutableListOf&lt;Person&gt;()</span><br><span class="line"></span><br><span class="line">persons.add(Person(<span class="string">"Hello-1"</span>, <span class="number">1</span>, <span class="number">10.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-5"</span>, <span class="number">5</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-3"</span>, <span class="number">3</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-2"</span>, <span class="number">2</span>, <span class="number">100.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-6"</span>, <span class="number">2</span>, <span class="number">50.0</span>))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br><span class="line">println(<span class="string">"========================="</span>)</span><br><span class="line">persons.sort()</span><br><span class="line">persons.forEach(::println)</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/06/28/Linux/Basic/total-vm-and-rss/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/06/28/Linux/Basic/total-vm-and-rss/" itemprop="url">Linux total-vm and rss</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-06-28T17:00:06+08:00">
+                2019-06-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Issue: GCP kill some pod at node</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Memory cgroup out of memory: Kill process 2177348 (java) score 1465 or sacrifice child Killed process 2177348 (java) total-vm:19172696kB, anon-rss:12547720kB, file-rss:17176kB, shmem-rss:57592kB</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/06/04/DB/MySQL/How-Batch-Insert-Large-Data/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -918,7 +1466,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/Docker/JVM/Java-JVM-On-Docker/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/TDD/Mockito/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -937,7 +1485,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/05/28/Docker/JVM/Java-JVM-On-Docker/" itemprop="url">Java JVM On Docker</a></h2>
+                <a class="post-title-link" href="/2019/05/28/TDD/Mockito/" itemprop="url">Mockito</a></h2>
         
 
         <div class="post-meta">
@@ -972,19 +1520,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Docker/" itemprop="url" rel="index">
-                    <span itemprop="name">Docker</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Docker/JVM/" itemprop="url" rel="index">
-                    <span itemprop="name">JVM</span>
+                  <a href="/categories/TDD/" itemprop="url" rel="index">
+                    <span itemprop="name">TDD</span>
                   </a>
                 </span>
 
@@ -1022,55 +1559,8 @@
       
         
           
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>你是否曾经经历过在Docker中运行基于JVM的应用程序时出现“随机”故障？或者一些奇怪的死机？两者都有可能是由于Java 8中的糟糕的Docker支持引起。</p>
-<p>Docker使用控制组(cgroups)来限制对资源的使用。在容器中运行应用程序时限制其对内存和CPU的使用绝对是一个好主意，它可以防止应用程序占用全部可用的内存和/或CPU，因而导致在同一系统上运行的其他容器无法响应。限制资源的使用可以提高应用程序的可靠性和稳定性。它还为硬件容量的规划提供了依据。在像诸如Kubernetes或DC/OS这样的编排系统上运行容器时，这一点尤为重要。</p>
-<p>JVM 可以“看到”系统上所有可用的内存和 CPU 内核，并保持与这些资源的一致。在默认情况下，JVM 会将 max heap size 设置为系统内存的 1/4，并将一些线程池个数(比如GC)设置为与物理 CPU 内核的数量一致。</p>
-<blockquote>
-<p>本文中使用的是遵循GNU GPL v2 许可授权的OpenJDK官方Docker镜像。这里描述的对Docker的支持在Oracle Java SE 开发工具包(JDK)版本8的更新191中被引入。Oracle在2019年4月修改了Java 8更新的许可政策，自Java SE 8更新211后的商业使用不再免费。    </p>
-</blockquote>
-<hr>
-<h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><p>我们一起来看看下面的例子：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.Vector;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MemoryEater</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    Vector v = <span class="keyword">new</span> Vector();</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">byte</span> b[] = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1048576</span>];</span><br><span class="line">      v.add(b);</span><br><span class="line">      Runtime rt = Runtime.getRuntime();</span><br><span class="line">      System.out.println( <span class="string">"free memory: "</span> + rt.freeMemory() );</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>We run it on a system with 64GB of memory, so let’s check the default maximum heap size:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker run -ti openjdk:8u181-jdk</span><br><span class="line">java -XX:+PrintFlagsFinal -version | grep MaxHeap</span><br><span class="line">    uintx MaxHeapFreeRatio = 100</span><br><span class="line">    uintx MaxHeapSize := 16819159040 &#123;product&#125;</span><br><span class="line"></span><br><span class="line">openjdk version <span class="string">"1.8.0_181"</span></span><br><span class="line">OpenJDK Runtime Environment (build 1.8.0_181-8u181-b13-2~deb9u1-b13)</span><br><span class="line">OpenJDK 64-Bit Server VM (build 25.181-b13, mixed mode)</span><br></pre></td></tr></table></figure>
-<p>As said — it’s 1/4 of physical memory — 16GB. What will happen if we limit the memory using docker cgroups? Let’s check:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">docker run -ti -m 512M openjdk:8u181-jdk</span><br><span class="line">javac MemoryEater.java</span><br><span class="line"></span><br><span class="line">Note: MemoryEater.java uses unchecked or unsafe operations.</span><br><span class="line">Note: Recompile with -Xlint:unchecked <span class="keyword">for</span> details.</span><br><span class="line"></span><br><span class="line">java MemoryEater</span><br><span class="line"></span><br><span class="line">free memory: 1003980048</span><br><span class="line">free memory: 1003980048</span><br><span class="line">free memory: 1003980048</span><br><span class="line">[...]</span><br><span class="line">free memory: 803562640</span><br><span class="line">free memory: 802514048</span><br><span class="line">free memory: 801465456</span><br><span class="line">free memory: 800416864</span><br><span class="line">Killed</span><br></pre></td></tr></table></figure>
-<p>The JVM process was killed. Since it was a child process — the container itself survived, but normally when java is the only process inside a container (with PID 1) the container will crash.</p>
-<p>Let’s look into system logs:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">dcos-agent-1 kernel: java invoked oom-killer: gfp_mask=0xd0, order=0, oom_score_adj=0</span><br><span class="line">dcos-agent-1 kernel: java cpuset=eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712 mems_allowed=0</span><br><span class="line">dcos-agent-1 kernel: CPU: 6 PID: 4142 Comm: java Tainted: G               ------------ T 3.10.0-693.17.1.el7.x86_64 <span class="comment">#1</span></span><br><span class="line">dcos-agent-1 kernel: Hardware name: Supermicro Super Server/X10SRi-F, BIOS 2.0 12/17/2015</span><br><span class="line">dcos-agent-1 kernel: Call Trace:</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816a6071&gt;] dump_stack+0x19/0x1b</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816a1466&gt;] dump_header+0x90/0x229</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81187dc6&gt;] ? find_lock_task_mm+0x56/0xc0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f36a8&gt;] ? try_get_mem_cgroup_from_mm+0x28/0x60</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81188274&gt;] oom_kill_process+0x254/0x3d0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff812ba2fc&gt;] ? selinux_capable+0x1c/0x40</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f73c6&gt;] mem_cgroup_oom_synchronize+0x546/0x570</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f6840&gt;] ? mem_cgroup_charge_common+0xc0/0xc0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81188b04&gt;] pagefault_out_of_memory+0x14/0x90</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff8169f82e&gt;] mm_fault_error+0x68/0x12b</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816b3a21&gt;] __do_page_fault+0x391/0x450</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816b3b15&gt;] do_page_fault+0x35/0x90</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816af8f8&gt;] page_fault+0x28/0x30</span><br><span class="line">dcos-agent-1 kernel: Task <span class="keyword">in</span> /docker/eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712 killed as a result of <span class="built_in">limit</span> of /docker/eca214e0fc</span><br><span class="line">5e9d7f8688fc36979c510d2fb9afab2ce55712</span><br><span class="line">dcos-agent-1 kernel: memory: usage 524180kB, <span class="built_in">limit</span> 524288kB, failcnt 314788</span><br><span class="line">dcos-agent-1 kernel: memory+swap: usage 1048576kB, <span class="built_in">limit</span> 1048576kB, failcnt 6</span><br><span class="line">dcos-agent-1 kernel: kmem: usage 0kB, <span class="built_in">limit</span> 9007199254740988kB, failcnt 0</span><br><span class="line">dcos-agent-1 kernel: Memory cgroup stats <span class="keyword">for</span> /docker/eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712: cache:28KB rss:524152KB rss_huge</span><br><span class="line">:0KB swap:524396KB inactive_anon:262176KB active_anon:261976KB inactive_file:8KB active_file:4KB unevictable:0KB</span><br><span class="line">dcos-agent-1 kernel: [ pid ]   uid  tgid total_vm      rss nr_ptes swapents oom_score_adj name</span><br><span class="line">dcos-agent-1 kernel: [ 1400]     0  1400     4985      418      14      139             0 bash</span><br><span class="line">dcos-agent-1 kernel: [ 4141]     0  4141  4956003   126966     606   137837             0 java</span><br><span class="line">dcos-agent-1 kernel: Memory cgroup out of memory: Kill process 4162 (java) score 1012 or sacrifice child</span><br><span class="line">dcos-agent-1 kernel: Killed process 4141 (java) total-vm:19824012kB, anon-rss:495748kB, file-rss:12116kB, shmem-rss:0kB</span><br></pre></td></tr></table></figure>
-<p>Failures like these can be very difficult to debug — there is nothing in the application logs. It can be especially difficult on managed systems like AWS ECS.</p>
-<p>And how about CPUs? Let’s check it again running a small program which displays the number of available processors:</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AvailableProcessors</span> </span>&#123;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// check the number of processors available</span></span><br><span class="line">      System.out.println(<span class="string">""</span>+Runtime.getRuntime().availableProcessors());</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>Let’s run it in a docker container with cpu number set to 1:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ docker run -ti --cpus 1 openjdk:8u181-jdk</span><br><span class="line">javac AvailableProcessors.java</span><br><span class="line">java AvailableProcessors</span><br><span class="line">12</span><br></pre></td></tr></table></figure>
-<p>Not good — there are 12 CPUs on this system indeed. So even the number of available processors is limited to 1, the JVM will try to use 12.</p>
-<blockquote>
-<p>for example the GC threads number is set by this formula: On a machine with N hardware threads where N is greater than 8, the parallel collector uses a fixed fraction of N as the number of garbage collector threads. The fraction is approximately 5/8 for large values of N. At values of N below 8, the number used is N.</p>
-</blockquote>
-<p>In our case:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">java -XX:+PrintFlagsFinal -version | grep ParallelGCThreads</span><br><span class="line">uintx ParallelGCThreads = 10 &#123;product&#125;</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h3><p>The new Java version (10 and above) docker support is already built-in. But sometimes upgrading is not an option — for example if the application is incompatible with the new JVM.</p>
-<p>The good news: Docker support was also backported to Java 8. Let’s check the newest openjdk image tagged as <strong>8u212</strong>. </p>
-<p>We’ll limit the memory to 1G and use 1 CPU: <strong>docker run -ti –cpus 1 -m 1G openjdk:8u212-jdk</strong></p>
-<p>The memory:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">java -XX:+PrintFlagsFinal -version | grep MaxHeap</span><br><span class="line">    uintx MaxHeapFreeRatio                          = 70                                  &#123;manageable&#125;</span><br><span class="line">    uintx MaxHeapSize                              := 268435456                           &#123;product&#125;</span><br><span class="line">openjdk version <span class="string">"1.8.0_212"</span></span><br><span class="line">OpenJDK Runtime Environment (build 1.8.0_212-8u212-b01-1~deb9u1-b01)</span><br><span class="line">OpenJDK 64-Bit Server VM (build 25.212-b01, mixed mode)</span><br><span class="line"><span class="comment"># It’s 256M — exactly 1/4 of allocated memory.</span></span><br><span class="line"></span><br><span class="line">java AvailableProcessors</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
-<p>Moreover, there are some new settings:</p>
-<ul>
-<li>-XX:InitialRAMPercentage</li>
-<li>-XX:MaxRAMPercentage</li>
-<li>-XX:MinRAMPercentage</li>
-</ul>
-<p>If for some reason the new JVM behaviour is not desired it can be switched off using <strong>-XX:-UseContainerSupport</strong>.</p>
-<blockquote>
-<p>On Kuberntes<br>imits.cpu  &lt;==&gt;  –cpu-quota  # docker inspect中的CpuQuota值<br>requests.cpu  &lt;==&gt;  –cpu-shares  # docker inspect中的CpuShares值</p>
-</blockquote>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://blog.softwaremill.com/docker-support-in-new-java-8-finally-fd595df0ca54" target="_blank" rel="noopener">https://blog.softwaremill.com/docker-support-in-new-java-8-finally-fd595df0ca54</a></li>
-<li><a href="https://www.chainnews.com/articles/631552101870.htm" target="_blank" rel="noopener">https://www.chainnews.com/articles/631552101870.htm</a></li>
-<li><a href="https://stackoverflow.com/questions/54292282/clarification-of-meaning-new-jvm-memory-parameters-initialrampercentage-and-minr/54297753#54297753" target="_blank" rel="noopener">https://stackoverflow.com/questions/54292282/clarification-of-meaning-new-jvm-memory-parameters-initialrampercentage-and-minr/54297753#54297753</a></li>
-<li><a href="https://www.cnblogs.com/yehaifeng/p/9596399.html" target="_blank" rel="noopener">https://www.cnblogs.com/yehaifeng/p/9596399.html</a></li>
+            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://medium.com/joe-tsai/mockk-%E4%B8%80%E6%AC%BE%E5%BC%B7%E5%A4%A7%E7%9A%84-kotlin-mocking-library-part-1-4-39a85e42b8" target="_blank" rel="noopener">https://medium.com/joe-tsai/mockk-%E4%B8%80%E6%AC%BE%E5%BC%B7%E5%A4%A7%E7%9A%84-kotlin-mocking-library-part-1-4-39a85e42b8</a></li>
 </ul>
 
           
@@ -1275,7 +1765,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/TDD/Mockito/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/Docker/JVM/Java-JVM-On-Docker/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1294,7 +1784,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/05/28/TDD/Mockito/" itemprop="url">Mockito</a></h2>
+                <a class="post-title-link" href="/2019/05/28/Docker/JVM/Java-JVM-On-Docker/" itemprop="url">Java JVM On Docker</a></h2>
         
 
         <div class="post-meta">
@@ -1329,152 +1819,19 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/TDD/" itemprop="url" rel="index">
-                    <span itemprop="name">TDD</span>
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
                   </a>
                 </span>
 
                 
                 
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://medium.com/joe-tsai/mockk-%E4%B8%80%E6%AC%BE%E5%BC%B7%E5%A4%A7%E7%9A%84-kotlin-mocking-library-part-1-4-39a85e42b8" target="_blank" rel="noopener">https://medium.com/joe-tsai/mockk-%E4%B8%80%E6%AC%BE%E5%BC%B7%E5%A4%A7%E7%9A%84-kotlin-mocking-library-part-1-4-39a85e42b8</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/Futures/How-to-calculate-margin/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
+                  ， 
                 
-                <a class="post-title-link" href="/2019/05/28/Futures/How-to-calculate-margin/" itemprop="url">How to calculate margin?</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-28T10:25:22+08:00">
-                2019-05-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Futures/" itemprop="url" rel="index">
-                    <span itemprop="name">Futures</span>
+                  <a href="/categories/Docker/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
                   </a>
                 </span>
 
@@ -1512,454 +1869,55 @@
       
         
           
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Margin = Collateral + uGnL + eGnL</p>
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>你是否曾经经历过在Docker中运行基于JVM的应用程序时出现“随机”故障？或者一些奇怪的死机？两者都有可能是由于Java 8中的糟糕的Docker支持引起。</p>
+<p>Docker使用控制组(cgroups)来限制对资源的使用。在容器中运行应用程序时限制其对内存和CPU的使用绝对是一个好主意，它可以防止应用程序占用全部可用的内存和/或CPU，因而导致在同一系统上运行的其他容器无法响应。限制资源的使用可以提高应用程序的可靠性和稳定性。它还为硬件容量的规划提供了依据。在像诸如Kubernetes或DC/OS这样的编排系统上运行容器时，这一点尤为重要。</p>
+<p>JVM 可以“看到”系统上所有可用的内存和 CPU 内核，并保持与这些资源的一致。在默认情况下，JVM 会将 max heap size 设置为系统内存的 1/4，并将一些线程池个数(比如GC)设置为与物理 CPU 内核的数量一致。</p>
 <blockquote>
-<p>uGnL ：Unrealized Gains and Losses; eGnL ：Estimated Gains and Losses.</p>
+<p>本文中使用的是遵循GNU GPL v2 许可授权的OpenJDK官方Docker镜像。这里描述的对Docker的支持在Oracle Java SE 开发工具包(JDK)版本8的更新191中被引入。Oracle在2019年4月修改了Java 8更新的许可政策，自Java SE 8更新211后的商业使用不再免费。    </p>
 </blockquote>
-<ul>
-<li>Margin Requirements are requirements on margins for the user to perform certain actions. </li>
-<li>Initial Margin is required to increase a position.</li>
-<li>Maintenance Margin to keep a position. </li>
-</ul>
 <hr>
-<h3 id="Margin-Impacts"><a href="#Margin-Impacts" class="headerlink" title="Margin Impacts"></a>Margin Impacts</h3><img src="/2019/05/28/Futures/How-to-calculate-margin/margin_impact.png">
-<p>Positions and orders all require a certain amount of margin and, at the same time(同时), impact(影响) available margin. In the table above, we categorize positions and orders and show how their requirements and impacts are determined when considered separately.</p>
-<p>Under margin impact, we further classify different impacts into 3 sub-categories: <strong>settled</strong>, <strong>unsettled</strong>, and <strong>probable</strong>.</p>
-<ul>
-<li><p>Settled margin impacts have already been settled. So to calculate available margin, settled margin impacts should be left out(忽略，不考虑), as they have already been incorporated(合并的) into collateral balance. </p>
-</li>
-<li><p>Unsettled margin impacts are <strong>unrealized PnL</strong>, <strong>accrued interests</strong>, and <strong>fee</strong>, <strong>unsettled</strong>, but payable if a settlement occurs right away. </p>
-</li>
-<li><p>Probable margin impact consider a probable scenario or a possible scenario where most negative impact happens.</p>
-</li>
-</ul>
+<h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><p>我们一起来看看下面的例子：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.Vector;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MemoryEater</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    Vector v = <span class="keyword">new</span> Vector();</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">byte</span> b[] = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1048576</span>];</span><br><span class="line">      v.add(b);</span><br><span class="line">      Runtime rt = Runtime.getRuntime();</span><br><span class="line">      System.out.println( <span class="string">"free memory: "</span> + rt.freeMemory() );</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>We run it on a system with 64GB of memory, so let’s check the default maximum heap size:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker run -ti openjdk:8u181-jdk</span><br><span class="line">java -XX:+PrintFlagsFinal -version | grep MaxHeap</span><br><span class="line">    uintx MaxHeapFreeRatio = 100</span><br><span class="line">    uintx MaxHeapSize := 16819159040 &#123;product&#125;</span><br><span class="line"></span><br><span class="line">openjdk version <span class="string">"1.8.0_181"</span></span><br><span class="line">OpenJDK Runtime Environment (build 1.8.0_181-8u181-b13-2~deb9u1-b13)</span><br><span class="line">OpenJDK 64-Bit Server VM (build 25.181-b13, mixed mode)</span><br></pre></td></tr></table></figure>
+<p>As said — it’s 1/4 of physical memory — 16GB. What will happen if we limit the memory using docker cgroups? Let’s check:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">docker run -ti -m 512M openjdk:8u181-jdk</span><br><span class="line">javac MemoryEater.java</span><br><span class="line"></span><br><span class="line">Note: MemoryEater.java uses unchecked or unsafe operations.</span><br><span class="line">Note: Recompile with -Xlint:unchecked <span class="keyword">for</span> details.</span><br><span class="line"></span><br><span class="line">java MemoryEater</span><br><span class="line"></span><br><span class="line">free memory: 1003980048</span><br><span class="line">free memory: 1003980048</span><br><span class="line">free memory: 1003980048</span><br><span class="line">[...]</span><br><span class="line">free memory: 803562640</span><br><span class="line">free memory: 802514048</span><br><span class="line">free memory: 801465456</span><br><span class="line">free memory: 800416864</span><br><span class="line">Killed</span><br></pre></td></tr></table></figure>
+<p>The JVM process was killed. Since it was a child process — the container itself survived, but normally when java is the only process inside a container (with PID 1) the container will crash.</p>
+<p>Let’s look into system logs:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">dcos-agent-1 kernel: java invoked oom-killer: gfp_mask=0xd0, order=0, oom_score_adj=0</span><br><span class="line">dcos-agent-1 kernel: java cpuset=eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712 mems_allowed=0</span><br><span class="line">dcos-agent-1 kernel: CPU: 6 PID: 4142 Comm: java Tainted: G               ------------ T 3.10.0-693.17.1.el7.x86_64 <span class="comment">#1</span></span><br><span class="line">dcos-agent-1 kernel: Hardware name: Supermicro Super Server/X10SRi-F, BIOS 2.0 12/17/2015</span><br><span class="line">dcos-agent-1 kernel: Call Trace:</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816a6071&gt;] dump_stack+0x19/0x1b</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816a1466&gt;] dump_header+0x90/0x229</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81187dc6&gt;] ? find_lock_task_mm+0x56/0xc0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f36a8&gt;] ? try_get_mem_cgroup_from_mm+0x28/0x60</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81188274&gt;] oom_kill_process+0x254/0x3d0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff812ba2fc&gt;] ? selinux_capable+0x1c/0x40</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f73c6&gt;] mem_cgroup_oom_synchronize+0x546/0x570</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff811f6840&gt;] ? mem_cgroup_charge_common+0xc0/0xc0</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff81188b04&gt;] pagefault_out_of_memory+0x14/0x90</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff8169f82e&gt;] mm_fault_error+0x68/0x12b</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816b3a21&gt;] __do_page_fault+0x391/0x450</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816b3b15&gt;] do_page_fault+0x35/0x90</span><br><span class="line">dcos-agent-1 kernel: [&lt;ffffffff816af8f8&gt;] page_fault+0x28/0x30</span><br><span class="line">dcos-agent-1 kernel: Task <span class="keyword">in</span> /docker/eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712 killed as a result of <span class="built_in">limit</span> of /docker/eca214e0fc</span><br><span class="line">5e9d7f8688fc36979c510d2fb9afab2ce55712</span><br><span class="line">dcos-agent-1 kernel: memory: usage 524180kB, <span class="built_in">limit</span> 524288kB, failcnt 314788</span><br><span class="line">dcos-agent-1 kernel: memory+swap: usage 1048576kB, <span class="built_in">limit</span> 1048576kB, failcnt 6</span><br><span class="line">dcos-agent-1 kernel: kmem: usage 0kB, <span class="built_in">limit</span> 9007199254740988kB, failcnt 0</span><br><span class="line">dcos-agent-1 kernel: Memory cgroup stats <span class="keyword">for</span> /docker/eca214e0fcd4b245eecb2a80c05e9d7f8688fc36979c510d2fb9afab2ce55712: cache:28KB rss:524152KB rss_huge</span><br><span class="line">:0KB swap:524396KB inactive_anon:262176KB active_anon:261976KB inactive_file:8KB active_file:4KB unevictable:0KB</span><br><span class="line">dcos-agent-1 kernel: [ pid ]   uid  tgid total_vm      rss nr_ptes swapents oom_score_adj name</span><br><span class="line">dcos-agent-1 kernel: [ 1400]     0  1400     4985      418      14      139             0 bash</span><br><span class="line">dcos-agent-1 kernel: [ 4141]     0  4141  4956003   126966     606   137837             0 java</span><br><span class="line">dcos-agent-1 kernel: Memory cgroup out of memory: Kill process 4162 (java) score 1012 or sacrifice child</span><br><span class="line">dcos-agent-1 kernel: Killed process 4141 (java) total-vm:19824012kB, anon-rss:495748kB, file-rss:12116kB, shmem-rss:0kB</span><br></pre></td></tr></table></figure>
+<p>Failures like these can be very difficult to debug — there is nothing in the application logs. It can be especially difficult on managed systems like AWS ECS.</p>
+<p>And how about CPUs? Let’s check it again running a small program which displays the number of available processors:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AvailableProcessors</span> </span>&#123;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// check the number of processors available</span></span><br><span class="line">      System.out.println(<span class="string">""</span>+Runtime.getRuntime().availableProcessors());</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Let’s run it in a docker container with cpu number set to 1:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ docker run -ti --cpus 1 openjdk:8u181-jdk</span><br><span class="line">javac AvailableProcessors.java</span><br><span class="line">java AvailableProcessors</span><br><span class="line">12</span><br></pre></td></tr></table></figure>
+<p>Not good — there are 12 CPUs on this system indeed. So even the number of available processors is limited to 1, the JVM will try to use 12.</p>
+<blockquote>
+<p>for example the GC threads number is set by this formula: On a machine with N hardware threads where N is greater than 8, the parallel collector uses a fixed fraction of N as the number of garbage collector threads. The fraction is approximately 5/8 for large values of N. At values of N below 8, the number used is N.</p>
+</blockquote>
+<p>In our case:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">java -XX:+PrintFlagsFinal -version | grep ParallelGCThreads</span><br><span class="line">uintx ParallelGCThreads = 10 &#123;product&#125;</span><br></pre></td></tr></table></figure>
 <hr>
-<h3 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h3><p>A container is a collection of positions and open orders under the same Portfolio, sharing the same margin pool in their common settlement currency.</p>
-<p>Under a portfolio, positions settled in the same currency will be collected into the same container with a communal margin shared among them. A winning position’s unrealized profit adds to collateral, bolsters(支持,支撑) the shared margin, and helps avoid liquidation of other losing positions in the container.</p>
-<p>To segregate  positions settled in a common currency, consider allocate them to different portfolios.</p>
-<h4 id="Aggregate-总体的-合计的-Requirements-amp-Impacts"><a href="#Aggregate-总体的-合计的-Requirements-amp-Impacts" class="headerlink" title="Aggregate(总体的,合计的) Requirements &amp; Impacts"></a>Aggregate(总体的,合计的) Requirements &amp; Impacts</h4><p>Aggregating margin requirements and impacts at the portfolio level isn’t simply adding them up. Instead, it is another exercise of finding out the worst scenario(情形,情况) that demands the most collateral. The aggregation is done at 2 layers.</p>
-<p><strong>Contract Level</strong></p>
-<p>At the contract level, we collect all orders and position for the contract and then:</p>
-<ol>
-<li>Convert incoming market orders into incoming limit orders;</li>
-<li>Categorize open orders and incoming limit orders buy orders and sell orders;</li>
-<li>With everything else (market price, model price, etc.) held equal, consider 2 scenarios<ol>
-<li>All buy orders filled at their limit prices;</li>
-<li>All sell orders filled at their limit prices;</li>
-</ol>
-</li>
-</ol>
-<p>Given current position holdings, either of the scenarios where a bigger collateral is demanded shall be considered in checking margin sufficiency and determining free collateral.</p>
-
-<p>In the expression above, <strong>subscript o denotes orders on either buy or sell side</strong>. The scenario under which the expression evaluates to be bigger, In the following calculation.</p>
-<p>At contract level, the required margin and margin impact are the following formula evaluated in the worse scenario.</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/worst_required_margin_and_impact_margin_formula.png">
-<p><strong>Portfolio Level</strong></p>
-<p>At the portfolio level, contracts are grouped by their settlement currency into containers. So the Required Margin and Margin Impact for a portfolio and specific settlement currency, is the summations of contract level RM and MI.</p>
-<p><strong>Margin Sufficiency</strong></p>
-<p>When checking for margin sufficiency at portfolio level (i.e. container level), we simply evaluate the inequality below across contracts under the container in question.</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/margin_suffiency.png">
-<p>The left hand side is simply collateral adjusted by <strong>margin impacts</strong> from positions and their related orders in the container.</p>
-<p>The right hand side of the inequality computes the required margin for the container by summing up the <strong>required margin for each contract</strong>.</p>
-<p><strong>Free Collateral</strong></p>
-<p>Free collateral is the amount of collateral that can be removed from a container. Removing such amount must not:</p>
+<h3 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h3><p>The new Java version (10 and above) docker support is already built-in. But sometimes upgrading is not an option — for example if the application is incompatible with the new JVM.</p>
+<p>The good news: Docker support was also backported to Java 8. Let’s check the newest openjdk image tagged as <strong>8u212</strong>. </p>
+<p>We’ll limit the memory to 1G and use 1 CPU: <strong>docker run -ti –cpus 1 -m 1G openjdk:8u212-jdk</strong></p>
+<p>The memory:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">java -XX:+PrintFlagsFinal -version | grep MaxHeap</span><br><span class="line">    uintx MaxHeapFreeRatio                          = 70                                  &#123;manageable&#125;</span><br><span class="line">    uintx MaxHeapSize                              := 268435456                           &#123;product&#125;</span><br><span class="line">openjdk version <span class="string">"1.8.0_212"</span></span><br><span class="line">OpenJDK Runtime Environment (build 1.8.0_212-8u212-b01-1~deb9u1-b01)</span><br><span class="line">OpenJDK 64-Bit Server VM (build 25.212-b01, mixed mode)</span><br><span class="line"><span class="comment"># It’s 256M — exactly 1/4 of allocated memory.</span></span><br><span class="line"></span><br><span class="line">java AvailableProcessors</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+<p>Moreover, there are some new settings:</p>
 <ul>
-<li>Immediately cause <strong>liquidation</strong> or auto deleveraging of positions in the container;</li>
-<li>Cause the container to be <strong>insufficient</strong> for the initial margin requirement;</li>
-<li>Exceed the total collateral in the container.</li>
+<li>-XX:InitialRAMPercentage</li>
+<li>-XX:MaxRAMPercentage</li>
+<li>-XX:MinRAMPercentage</li>
 </ul>
-<p>So the free collateral value for a container is the smaller of the 2 values below:</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/free_collateral_formula.png">
-<p><strong>Margin Coverage</strong></p>
-<p>Margin coverage ratios show how much margin one has to cover the margin requirements imposed on a container. They are defined as <strong>IMC</strong> and <strong>MMC</strong>.</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/IMC_MMC_formula.png">
-<p>When a container’s <strong>IMC falls below 1</strong>, a trader will not be able to increase the size of positions in it. And so on our trading terminal, when <strong>IMC falls lower than 1</strong>, its indicator will lit up in red.</p>
-<p>When a container’s MMC falls towards 1, a liquidation looms imminent. Unlike IMC, which can stay below 1 for a period, once MMC touches 1, liquidation kicks in and almost instantly brings MMC above 1. To warning users about the approaching liquidation, <strong>we lit the MMC indicator in red when the following ratio falls below 1</strong>.</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/MMC_formula.png">
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/26/Java/Log/正确输出Log的姿势/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/26/Java/Log/正确输出Log的姿势/" itemprop="url">正确输出Log的姿势</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-26T18:54:22+08:00">
-                2019-05-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Log/" itemprop="url" rel="index">
-                    <span itemprop="name">Log</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Slf4j"><a href="#Slf4j" class="headerlink" title="Slf4j"></a>Slf4j</h3><p>全称：Simple Logging Facade for Java，即简单日志门面接口，和 Apache 的 commons-logging 是一样的概念，它们都不是具体的日志框架，你可以指定其他主流的日志实现框架。</p>
-<hr>
-<h3 id="Log级别及使用说明"><a href="#Log级别及使用说明" class="headerlink" title="Log级别及使用说明"></a>Log级别及使用说明</h3><img src="/2019/05/26/Java/Log/正确输出Log的姿势/log-level.png">
-<table>
-<thead>
-<tr>
-<th>日志级别</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>OFF</td>
-<td>关闭：最高级别，不输出日志。</td>
-</tr>
-<tr>
-<td>FATAL</td>
-<td>致命：输出非常严重的可能会导致应用程序终止的错误。</td>
-</tr>
-<tr>
-<td>ERROR</td>
-<td>错误：输出错误，但应用还能继续运行。</td>
-</tr>
-<tr>
-<td>WARN</td>
-<td>警告：输出可能潜在的危险状况。</td>
-</tr>
-<tr>
-<td>INFO</td>
-<td>信息：输出应用运行过程的详细信息。</td>
-</tr>
-<tr>
-<td>DEBUG</td>
-<td>调试：输出更细致的对调试应用有用的信息。</td>
-</tr>
-<tr>
-<td>TRACE</td>
-<td>跟踪：输出更细致的程序运行轨迹。</td>
-</tr>
-<tr>
-<td>ALL</td>
-<td>所有：输出所有级别信息。</td>
-</tr>
-</tbody>
-</table>
-<p>日志输出关系，如下图所示：</p>
-<img src="/2019/05/26/Java/Log/正确输出Log的姿势/output-level.png">
-<h4 id="日志场景说明"><a href="#日志场景说明" class="headerlink" title="日志场景说明"></a>日志场景说明</h4><ul>
-<li>DEBUG：记录对调试程序有帮助的信息。</li>
-<li>INFO：用来记录程序运行现场，虽然此处并未发生错误，但是对排查其他错误具有指导意义。</li>
-<li>WARN：可以用来记录程序运行现场，但是更偏向于表明此处有出现潜在错误的可能。</li>
-<li>ERROR：表明当前程序运行发生了错误，需要被关注。但是当前发生的错误，没有影响系统的继续运行。</li>
-<li>FATAL：表明当前程序运行出现了严重的错误事件，并且将会导致应用程序中断。</li>
-</ul>
-<p>需要注意点：</p>
-<ul>
-<li>避免无效日志打印：日志配置设置 additivity=”false”。</li>
-<li>区别对待错误日志：WARN 与 ERROR 都是与错误有关的日志级别，但不要一发生错误就笼统地输出 ERROR 级别日志。一些业务异常是可以通过引导重试就能恢复正常的，例如用户输入参数错误。在这种情况下，记录日志是为了在用户咨询时可以还原现场，如果输出为 ERROR 级别就不适合了。ERROR 级别只记录系统逻辑错误、异常或者违反重要的业务规则，其他错误都可以归为 WARN 级别。</li>
-<li>保证记录内容完整：日志记录的内容包括现场上下文信息与异常堆栈信息。记录异常时，一定要输出异常堆栈，例如，logger.error(“xxxx: ${e.message}”, e)；日志中如果输出对象实例，要确保实例类重写了 toString() 方法，否则只输出对象的 hash code 值，没有意义。</li>
-</ul>
+<p>If for some reason the new JVM behaviour is not desired it can be switched off using <strong>-XX:-UseContainerSupport</strong>.</p>
+<blockquote>
+<p>On Kuberntes<br>imits.cpu  &lt;==&gt;  –cpu-quota  # docker inspect中的CpuQuota值<br>requests.cpu  &lt;==&gt;  –cpu-shares  # docker inspect中的CpuShares值</p>
+</blockquote>
 <hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://juejin.im/post/5b9871895188255c57212459" target="_blank" rel="noopener">https://juejin.im/post/5b9871895188255c57212459</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/26/读书笔记/认知/修昔底德陷阱/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/26/读书笔记/认知/修昔底德陷阱/" itemprop="url">修昔底德陷阱</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-26T14:24:07+08:00">
-                2019-05-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
-                    <span itemprop="name">读书笔记</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/认知/" itemprop="url" rel="index">
-                    <span itemprop="name">认知</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>“修昔底德陷阱”，是指<strong>一个新崛起的大国必然要挑战现存大国，而现存大国也必然会回应这种威胁，这样战争变得不可避免。</strong>此说法源自古希腊著名历史学家修昔底德，他认为，当一个崛起的大国与既有的统治霸主竞争时，双方面临的危险多数以战争告终。</p>
-<p>这样的事例曾经发生在公元前5世纪，修昔底德自己的时代，新崛起的雅典震动了陆地霸主斯巴达，结果双方爆发了长达30年的战争，两国均遭毁灭。类似的事例也发生在16世纪的新崛起的新教英国与天主教的西班牙之间，以及19世纪末与20世纪初的老牌帝国英国与新兴强国日耳曼的德国之间。</p>
-<hr>
-<h3 id="修昔底德陷阱的由来"><a href="#修昔底德陷阱的由来" class="headerlink" title="修昔底德陷阱的由来"></a>修昔底德陷阱的由来</h3><p>修昔底德陷阱是古希腊大历史学家修昔底德在其不朽的名著—-《伯罗奔尼撒战争史》中阐述的一个核心思想，<strong>指新兴大国随着其力量的增强，一定会向老牌的霸权国家发起挑战，而老牌的霸权国家也一定会为了维护其霸权而全力打压新兴大国的崛起势头，甚至发动战争。</strong></p>
-<p>《伯罗奔尼撒战争史》还指出：“使战争不可避免的真正原因是雅典势力的增长和因而引起斯巴达的恐惧。”但修昔底德并没有明确概括出修昔底德陷阱这个概念，而美国学者艾利森根据这一论断则提出“修昔底德陷阱”的概念，认为一个新崛起的大国必然要挑战现存大国，而现存大国也必然来回应这种威胁，这样战争变得不可避免。</p>
-<p>2017年5月，这位美国著名国际问题专家、哈佛大学肯尼迪学院首任院长的格雷厄姆·艾利森（Graham Allison）出版了他的新书——《注定开战：美国和中国能否逃脱修昔底德陷阱？》（Destined for War: Can America and China Escape Thucydides’s Trap）。该书的出版，标志着这一概念的正式提出。</p>
-<p>艾利森还说，我们不必成为中国的奴隶，但我们必须学会接受其强大，尽管有时它展示自己强大的方式令我们反感。而为了避免一场战争，这一点可能还不是我们必须要吞下最苦的药片。战争的风险是切实存在的，而其后果难以形容得可怕。</p>
-<p>他特别强调第一次世界大战的典型性，说这次战争的根源就是新崛起的大国德国挑战了当时的现存大国英国，从而引发了世界灾难，正如同雅典挑战斯巴达，斯巴达便发动战争，导致整个希腊世界受到重创。</p>
-<hr>
-<h3 id="历史的回顾与思考"><a href="#历史的回顾与思考" class="headerlink" title="历史的回顾与思考"></a>历史的回顾与思考</h3><p>古希腊罗马的斯巴达和雅典的伯罗奔尼撒战争是修昔底德立论的现实基础，在艾利森看来，自是有着无可辩驳的逻辑和说服力，其他人类历史上的著名霸权兴衰交替的历史似乎也在佐证着他的论断。比如罗马和迦太基；西班牙和大英帝国；荷兰和大英帝国；法兰西帝国和大英帝国；德意志帝国和大英帝国；美利坚合众国和大日本帝国，和大英帝国，这些世界历史上著名的帝国之间的竞争和争斗，似乎也无不是如此的。再看中华帝国漫长的历史上，也是写满了霸权兴衰的斑斑血迹的，春秋五霸，战国七雄，秦汉相替，汉匈奴战争等等，都看不出有异曲不同工的妙处。</p>
-<p>那么，在人类历史上究竟有没有不经过激烈的斗争甚至战争而实现的霸权的和平过渡呢？</p>
-<p>应该说有的，最明显的例证就是大英帝国以和平的方式将霸权禅让给了美利坚合众国，但这一例证并不是在完全的意义上是如此的，因为大英帝国的霸权随着第二次世界大战的开始，已经处于分崩离析，土崩瓦解的局面下了，在欧洲，希特勒的德意志第三帝国横扫西欧大陆，一举打败了宿敌，号称世界第一陆上强国的法国，然后又兵锋直抵大英帝国的本土，上演了伦敦上空的大空战，之后又发动了巴巴罗莎计划，与苏维埃巨人苏联战成一团。</p>
-<p>在远东，大日本帝国则早已占领中国的东北，建立了满洲国，七七事变后，又发动了全面的侵华战争，之后，又发动了太平洋战争，横扫了大英帝国在远东和东南亚的传统势力，大英帝国只剩下半条命，美利坚合众国则乘势崛起，不仅打败了所谓的大日本帝国，而且通过大西洋宪章，逼迫大英帝国的掌门人丘吉尔承诺殖民地独立，实质上也就是签下大英帝国解体的卖身契，所以说与其说是禅让，还不如说美国假途灭虢，或者说大英帝国只是将其残山剩水拿出来禅让于美国，不是将完整的霸权禅让于美国的，美利坚是以战争的手段夺得世界霸权的。这显然不同于经典的修昔底德陷阱，修昔底德陷阱过于简单地聚焦于两个大国之间的争霸，在概括第二次世界大战这样多个世界强国争霸的复杂局面时，就显得不够全面，不够贴切。</p>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://baike.baidu.com/item/%E4%BF%AE%E6%98%94%E5%BA%95%E5%BE%B7%E9%99%B7%E9%98%B1" target="_blank" rel="noopener">https://baike.baidu.com/item/%E4%BF%AE%E6%98%94%E5%BA%95%E5%BE%B7%E9%99%B7%E9%98%B1</a></li>
-<li><a href="https://zhuanlan.zhihu.com/p/45687804" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/45687804</a></li>
+<li><a href="https://blog.softwaremill.com/docker-support-in-new-java-8-finally-fd595df0ca54" target="_blank" rel="noopener">https://blog.softwaremill.com/docker-support-in-new-java-8-finally-fd595df0ca54</a></li>
+<li><a href="https://www.chainnews.com/articles/631552101870.htm" target="_blank" rel="noopener">https://www.chainnews.com/articles/631552101870.htm</a></li>
+<li><a href="https://stackoverflow.com/questions/54292282/clarification-of-meaning-new-jvm-memory-parameters-initialrampercentage-and-minr/54297753#54297753" target="_blank" rel="noopener">https://stackoverflow.com/questions/54292282/clarification-of-meaning-new-jvm-memory-parameters-initialrampercentage-and-minr/54297753#54297753</a></li>
+<li><a href="https://www.cnblogs.com/yehaifeng/p/9596399.html" target="_blank" rel="noopener">https://www.cnblogs.com/yehaifeng/p/9596399.html</a></li>
 </ul>
 
           
@@ -2047,7 +2005,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">562</span>
+                <span class="site-state-item-count">566</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2069,7 +2027,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">618</span>
+                <span class="site-state-item-count">624</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
