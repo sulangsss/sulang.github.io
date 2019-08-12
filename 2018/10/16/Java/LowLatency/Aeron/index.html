@@ -101,18 +101,18 @@
 
 
 
-<meta name="description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
+<meta name="description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  TCP or UDPTCPFor real-time video conference application, how do you choose between TCP and UDP? 本题的关键在于比较TCP和UDP的特点，并且根据real-ti">
 <meta name="keywords" content="Java,Low Latency,Aeron">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Java Aeron">
 <meta property="og:url" content="https://sulangsss.github.io/2018/10/16/Java/LowLatency/Aeron/index.html">
 <meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
-<meta property="og:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
+<meta property="og:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  TCP or UDPTCPFor real-time video conference application, how do you choose between TCP and UDP? 本题的关键在于比较TCP和UDP的特点，并且根据real-ti">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-07-27T08:01:59.642Z">
+<meta property="og:updated_time" content="2019-08-09T00:43:00.980Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java Aeron">
-<meta name="twitter:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  OS Related ConsiderationsOperating system socket buffers have an impact on some of the settings within Aeron.  SO_RCVBUF can im">
+<meta name="twitter:description" content="Design Overviewhttps://github.com/real-logic/aeron/wiki/Design-Overview  TCP or UDPTCPFor real-time video conference application, how do you choose between TCP and UDP? 本题的关键在于比较TCP和UDP的特点，并且根据real-ti">
 
 
 
@@ -390,6 +390,21 @@
       
         <h3 id="Design-Overview"><a href="#Design-Overview" class="headerlink" title="Design Overview"></a>Design Overview</h3><p><a href="https://github.com/real-logic/aeron/wiki/Design-Overview" target="_blank" rel="noopener">https://github.com/real-logic/aeron/wiki/Design-Overview</a></p>
 <hr>
+<h3 id="TCP-or-UDP"><a href="#TCP-or-UDP" class="headerlink" title="TCP or UDP"></a>TCP or UDP</h3><h4 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h4><p>For real-time video conference application, how do you choose between TCP and UDP?</p>
+<p>本题的关键在于比较TCP和UDP的特点，并且根据real-time video conference这个特定的应用场景进行选择。前面提到过，TCP的重传机制会增加延迟，所以不适用于当前场景。</p>
+<p>其次，视频音频编码本身可以容忍数据出错甚至数据丢失。因此，并不需要采用TCP进行可靠的数据传输。当某一视频帧出现丢包时，可以直接跳过这一帧或者继续播放上一帧。</p>
+<p>再次，一旦出现网络堵塞的状况，发送端应该主动丢弃一部分数据。原因是，即使这些视频帧发送到了接收端，也可能已经“过期”了，不会被解码显示。</p>
+<p>采用自己设计的UDP更便于实现对数据包的控制。然而，即使使用UDP，也需要实现TCP的某些模块：比如需要flow control和congestion control来判断接收端的播放情况和网络情况，并且也需要反馈机制判断接收端的接收状况。尽管对于当前场景我们不需要ACK每个数据包，但是接收端可以反馈当前收到的最新完整视频帧的序号。这样，如果一旦发生丢包，发送端可以以接收端收到的最新视频帧为基础，压缩后继的视频。 </p>
+<h4 id="UDP"><a href="#UDP" class="headerlink" title="UDP"></a>UDP</h4><p>If you are designing a reliable UDP, what should you do?</p>
+<p>通常，所谓的reliable都是指接收端能够将收到的数据情况反馈给发送端。由于我们已经知道一种可靠的传输协议，TCP，故reliable UDP的设计完全可以参考TCP的设计方式，引入ACK，flow control，congestion control等模块。模块的实现可以直接模仿TCP。Reliable UDP的核心在于反馈机制，这里给出几个可能的实现方式。</p>
+<p>由于reliable要求在接收端能够恢复数据包的顺序，故发送端每个数据包都需要有sequence number。现在着重讨论反馈机制：</p>
+<ol>
+<li>最朴素的ACK方式：发送端每发送一个数据包，都需要接收端返回ACK，一旦超时，发送端重新发送数据包，直到该数据包被接收端ACK。该方法效率不高，因为之后的所有数据包都被当前数据包block，并且每次返回ACK增加了overhead。</li>
+<li>Block/bit map ACK：发送端发送一批数据包，例如32个，编号0～31。接收端发回的ACK中用32bits(4bytes)的bit map表示收到了哪些数据包，发送端再一次性重发所有未被收到的数据包。该方法能够更加充分地利用带宽，在发送端一次性传输更多的数据。但缺点是在发送端接收端都需要更深的buffer，暂存正在传输的所有数据。</li>
+<li>ACK last packet：发送端可以在发送最后一个数据包时要求接收端反馈ACK，并重发丢失的数据包。这样做的好处可以减少由ACK造成的data overhead，但需要通过buffer暂存数据。</li>
+</ol>
+<p>事实上，可以结合方法2和方法3，在每一批数据包的最后一个置位request ACK flag，要求接收端返回bit map ACK。更进一步地，可以根据丢包率及延迟，估计网络状况，动态地调整bit map的大小：在网络状况好的情况下，用更大的bit map，即同时发送更多数据。否则，减小发送数据量。事实上，这种对于网络状况的自适应也相当于实现了congestion control。</p>
+<hr>
 <h3 id="OS-Related-Considerations"><a href="#OS-Related-Considerations" class="headerlink" title="OS Related Considerations"></a>OS Related Considerations</h3><p>Operating system socket buffers have an impact on some of the settings within Aeron.</p>
 <ul>
 <li><p>SO_RCVBUF can impact loss rates when too small for the given processing. If too large, this buffer can increase latency. Values that tend to work well with Aeron are 2MB to 4MB. This setting must be large enough for the MTU of the sender. If not, persistent loss can result. In addition, the receiver window length should be less than or equal to this value to allow plenty of space for burst traffic from a sender.</p>
@@ -515,8 +530,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/10/14/Architecture/What's Architechture Design/" rel="next" title="What's Architecture Design">
-                <i class="fa fa-chevron-left"></i> What's Architecture Design
+              <a href="/2018/10/14/Mac/Command/brew/" rel="next" title="Mac brew">
+                <i class="fa fa-chevron-left"></i> Mac brew
               </a>
             
           </div>
@@ -605,7 +620,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">566</span>
+                <span class="site-state-item-count">571</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -616,7 +631,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">244</span>
+                <span class="site-state-item-count">245</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -627,7 +642,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">624</span>
+                <span class="site-state-item-count">628</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -669,7 +684,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-Overview"><span class="nav-number">1.</span> <span class="nav-text">Design Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OS-Related-Considerations"><span class="nav-number">2.</span> <span class="nav-text">OS Related Considerations</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux"><span class="nav-number">2.1.</span> <span class="nav-text">Linux</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Windows"><span class="nav-number">2.2.</span> <span class="nav-text">Windows</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mac-Darwin"><span class="nav-number">2.3.</span> <span class="nav-text">Mac/Darwin</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Media-Driver"><span class="nav-number">3.</span> <span class="nav-text">Media Driver</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-to-Run-Aeron-Media-Driver"><span class="nav-number">3.1.</span> <span class="nav-text">How to Run Aeron Media Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shm-on-Linux-System"><span class="nav-number">3.2.</span> <span class="nav-text">shm on Linux System</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Media-Driver-on-Docker"><span class="nav-number">3.3.</span> <span class="nav-text">Media Driver on Docker</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unit-Testing-Attention"><span class="nav-number">4.</span> <span class="nav-text">Unit Testing Attention</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MediaServer-Code"><span class="nav-number">5.</span> <span class="nav-text">MediaServer Code</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Shm-Memory"><span class="nav-number">5.1.</span> <span class="nav-text">Shm Memory</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LowLatency"><span class="nav-number">5.2.</span> <span class="nav-text">LowLatency</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Aeron"><span class="nav-number">5.3.</span> <span class="nav-text">Aeron</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Kuberntes"><span class="nav-number">5.4.</span> <span class="nav-text">Kuberntes</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Configration"><span class="nav-number">6.</span> <span class="nav-text">Configration</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-increase-FragmentHandler’directBuffer-size"><span class="nav-number">6.1.</span> <span class="nav-text">How increase FragmentHandler’directBuffer size</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Multiple-Destinations"><span class="nav-number">6.2.</span> <span class="nav-text">Multiple Destinations</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ExclusivePublication-and-Publications"><span class="nav-number">6.3.</span> <span class="nav-text">ExclusivePublication and Publications</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refer"><span class="nav-number">7.</span> <span class="nav-text">Refer</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-Overview"><span class="nav-number">1.</span> <span class="nav-text">Design Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP-or-UDP"><span class="nav-number">2.</span> <span class="nav-text">TCP or UDP</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TCP"><span class="nav-number">2.1.</span> <span class="nav-text">TCP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#UDP"><span class="nav-number">2.2.</span> <span class="nav-text">UDP</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OS-Related-Considerations"><span class="nav-number">3.</span> <span class="nav-text">OS Related Considerations</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux"><span class="nav-number">3.1.</span> <span class="nav-text">Linux</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Windows"><span class="nav-number">3.2.</span> <span class="nav-text">Windows</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mac-Darwin"><span class="nav-number">3.3.</span> <span class="nav-text">Mac/Darwin</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Media-Driver"><span class="nav-number">4.</span> <span class="nav-text">Media Driver</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-to-Run-Aeron-Media-Driver"><span class="nav-number">4.1.</span> <span class="nav-text">How to Run Aeron Media Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shm-on-Linux-System"><span class="nav-number">4.2.</span> <span class="nav-text">shm on Linux System</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Media-Driver-on-Docker"><span class="nav-number">4.3.</span> <span class="nav-text">Media Driver on Docker</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unit-Testing-Attention"><span class="nav-number">5.</span> <span class="nav-text">Unit Testing Attention</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MediaServer-Code"><span class="nav-number">6.</span> <span class="nav-text">MediaServer Code</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Shm-Memory"><span class="nav-number">6.1.</span> <span class="nav-text">Shm Memory</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LowLatency"><span class="nav-number">6.2.</span> <span class="nav-text">LowLatency</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Aeron"><span class="nav-number">6.3.</span> <span class="nav-text">Aeron</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Kuberntes"><span class="nav-number">6.4.</span> <span class="nav-text">Kuberntes</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Configration"><span class="nav-number">7.</span> <span class="nav-text">Configration</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#How-increase-FragmentHandler’directBuffer-size"><span class="nav-number">7.1.</span> <span class="nav-text">How increase FragmentHandler’directBuffer size</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Multiple-Destinations"><span class="nav-number">7.2.</span> <span class="nav-text">Multiple Destinations</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ExclusivePublication-and-Publications"><span class="nav-number">7.3.</span> <span class="nav-text">ExclusivePublication and Publications</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refer"><span class="nav-number">8.</span> <span class="nav-text">Refer</span></a></li></ol></div>
             
 
           </div>
