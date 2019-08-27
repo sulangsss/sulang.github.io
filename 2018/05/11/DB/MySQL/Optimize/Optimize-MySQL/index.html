@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="DB,MySQL,Optimize,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="InnoDB 缓存相关优化innodb_buffer_pool_sizeInnoDB存储引擎的缓存机制和MyISAM的最大区别就在于：InnoDB不仅仅缓存索引，同时还会缓存实际的数据。所以InnoDB 存储引擎可以使用更多的内存来缓存数据库的相关信息。 innodb_buffer_pool_size 参数用来设置InnoDB最主要的Buffer（InnoDB Buffer Pool）的大小，缓存">
+<meta name="keywords" content="DB,MySQL,Optimize">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL Optimize">
+<meta property="og:url" content="https://sulangsss.github.io/2018/05/11/DB/MySQL/Optimize/Optimize-MySQL/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="InnoDB 缓存相关优化innodb_buffer_pool_sizeInnoDB存储引擎的缓存机制和MyISAM的最大区别就在于：InnoDB不仅仅缓存索引，同时还会缓存实际的数据。所以InnoDB 存储引擎可以使用更多的内存来缓存数据库的相关信息。 innodb_buffer_pool_size 参数用来设置InnoDB最主要的Buffer（InnoDB Buffer Pool）的大小，缓存">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-08-22T04:03:34.606Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL Optimize">
+<meta name="twitter:description" content="InnoDB 缓存相关优化innodb_buffer_pool_sizeInnoDB存储引擎的缓存机制和MyISAM的最大区别就在于：InnoDB不仅仅缓存索引，同时还会缓存实际的数据。所以InnoDB 存储引擎可以使用更多的内存来缓存数据库的相关信息。 innodb_buffer_pool_size 参数用来设置InnoDB最主要的Buffer（InnoDB Buffer Pool）的大小，缓存">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2018/05/11/DB/MySQL/Optimize/Optimize-MySQL/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>MySQL Optimize | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/11/DB/MySQL/Optimize/Optimize-MySQL/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">MySQL Optimize</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-11T12:08:13+08:00">
+                2018-05-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
+                    <span itemprop="name">Optimize</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="InnoDB-缓存相关优化"><a href="#InnoDB-缓存相关优化" class="headerlink" title="InnoDB 缓存相关优化"></a>InnoDB 缓存相关优化</h3><h4 id="innodb-buffer-pool-size"><a href="#innodb-buffer-pool-size" class="headerlink" title="innodb_buffer_pool_size"></a>innodb_buffer_pool_size</h4><p>InnoDB存储引擎的缓存机制和MyISAM的最大区别就在于：InnoDB不仅仅缓存索引，同时还会缓存实际的数据。所以InnoDB 存储引擎可以使用更多的内存来缓存数据库的相关信息。</p>
+<p>innodb_buffer_pool_size 参数用来设置InnoDB最主要的Buffer（InnoDB Buffer Pool）的大小，缓存用户表及索引数据的最主要缓存空间，对InnoDB 整体性能影响也最大。</p>
+<p>InnoDB 的 Buffer Pool 简单设置为整个系统物理内存的 50%~80%之间，具体设置多大要根据实际环境技术。</p>
+<p>比如，例如一台单独 MySQL 主机，物理内存 8G，MySQL最大连接数为 500，同时还是用了MyISAM存储引擎。内存整体分析：</p>
+<ul>
+<li><p>系统使用，假设预留800MB</p>
+</li>
+<li><p>线程独享：最大约为2GB = 500 * （1MB + 1MB + 1MB + 512KB + 512KB），其中sort_buffer_size：1MB；join_buffer_size:1MB；read_buffer_size：1MB；read_rnd_buffer_size：512KB；thread_statck：512KB</p>
+</li>
+<li><p>MyISAM Key Cache：假设大概 1.5GB</p>
+</li>
+<li><p>InnoDB Buffer Pool：最大可用是8GB - 800MB - 2GB - 1.5GB = 3.7 GB</p>
+</li>
+</ul>
+<p>查看MySQL实际使用情况</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'innodb_buffer_pool_%'</span>;</span><br></pre></td></tr></table></figure>
+<p>输出结果</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Innodb_buffer_pool_dump_status	Dumping of buffer pool not started</span><br><span class="line">Innodb_buffer_pool_load_status	Buffer pool(s) load completed at 180515 12:12:29</span><br><span class="line">Innodb_buffer_pool_resize_status	</span><br><span class="line">Innodb_buffer_pool_pages_data	1226754</span><br><span class="line">Innodb_buffer_pool_bytes_data	20099137536</span><br><span class="line">Innodb_buffer_pool_pages_dirty	34470</span><br><span class="line">Innodb_buffer_pool_bytes_dirty	564756480</span><br><span class="line">Innodb_buffer_pool_pages_flushed	86235350</span><br><span class="line">Innodb_buffer_pool_pages_free	16383</span><br><span class="line">Innodb_buffer_pool_pages_misc	2046</span><br><span class="line">Innodb_buffer_pool_pages_total	1245183</span><br><span class="line">Innodb_buffer_pool_read_ahead_rnd	0</span><br><span class="line">Innodb_buffer_pool_read_ahead	1428253</span><br><span class="line">Innodb_buffer_pool_read_ahead_evicted	0</span><br><span class="line">Innodb_buffer_pool_read_requests	8912846406</span><br><span class="line">Innodb_buffer_pool_reads	98002</span><br><span class="line">Innodb_buffer_pool_wait_free	0</span><br><span class="line">Innodb_buffer_pool_write_requests	1368490569</span><br></pre></td></tr></table></figure>
+<p>pages有1245183，其中free是16383，pages_data是1226754</p>
+<p>read_requests是8912846406，物理磁盘请求pool_reads是98002，命中率=(8912846406-98002)/8912846406=0.99998900441054</p>
+<hr>
+<h4 id="innodb-log-buffer-size"><a href="#innodb-log-buffer-size" class="headerlink" title="innodb_log_buffer_size"></a>innodb_log_buffer_size</h4><p>系统默认 1MB。 Log Buffer 的主要作用就是 缓冲 Log 数据，提高写 Log 的 IO 性能。一般来说，如果系统不是写负载非常高而且以大事务居多的话，8MB 以内大小足够。</p>
+<p>查看MySQL实际使用情况：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'innodb_log_%'</span>;</span><br></pre></td></tr></table></figure>
+<p>输出结果</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Innodb_log_waits	0</span><br><span class="line">Innodb_log_write_requests	238931308</span><br><span class="line">Innodb_log_writes	64915618</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="事务与-IO-的关系及优化"><a href="#事务与-IO-的关系及优化" class="headerlink" title="事务与 IO 的关系及优化"></a>事务与 IO 的关系及优化</h4><p>InnoDB 修改数据操作，实际上修改的是Buffer Pool中的数据，并不是一个事务提交后就将Buffer Pool中被修改的数据同步到磁盘上，而是通过记录到事务日志中，在连续写入磁盘。</p>
+<p>控制 InnoDB 事务日志刷新方式参数：innodb_flush_log_at_trx_commit</p>
+<ul>
+<li><p>innodb_flush_log_at_trx_commit = 0，InnoDB 中的 Log Thread 每隔1秒将log buffer中的数据写入文件，同时还会通知文件系统进行与文件同步的 flush操作，保证数据确实已经写入磁盘。</p>
+</li>
+<li><p>innodb_flush_log_at_trx_commit = 1，InnoDB 默认设置。每次事务的结束都会出发 Log Thread将Log Buffer中的数据写入文件、并通知文件系统同步文件。这个设置最安全，能够保证不论是 MySQL 崩溃、OS崩溃还是主机断电都不会丢失任何已经提交的数据。</p>
+</li>
+<li><p>innodb_flush_log_at_trx_commit = 2，每次事务结束的时候将数据写入事务日志，仅仅是调用了文件系统的文件写入操作。而文件系统都是有缓存机制的，所以 Log Thread 的写入并不能保证内容已经写入到物理磁盘完成持久化的动作。文件系统什么时候会将缓存中的数据同步到物理磁盘、文件，Log Thread 就完全不知道，所以，当设置2的时候，MySQL崩溃并不会造成数据的丢失，但是OS崩溃或主机断电后可能丢失的数据量就完全控制在文件上了。</p>
+</li>
+</ul>
+<h5 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h5><p><a href="https://yq.aliyun.com/articles/225749" target="_blank" rel="noopener">https://yq.aliyun.com/articles/225749</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/DB/" rel="tag"># DB</a>
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+            <a href="/tags/Optimize/" rel="tag"># Optimize</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/11/DB/MySQL/Optimize/Optimize/" rel="next" title="MySQL Optimize">
+                <i class="fa fa-chevron-left"></i> MySQL Optimize
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/05/11/DB/MySQL/Lock/" rel="prev" title="MySQL Lock">
+                MySQL Lock <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">581</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">246</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">637</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#InnoDB-缓存相关优化"><span class="nav-number">1.</span> <span class="nav-text">InnoDB 缓存相关优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#innodb-buffer-pool-size"><span class="nav-number">1.1.</span> <span class="nav-text">innodb_buffer_pool_size</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#innodb-log-buffer-size"><span class="nav-number">1.2.</span> <span class="nav-text">innodb_log_buffer_size</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#事务与-IO-的关系及优化"><span class="nav-number">1.3.</span> <span class="nav-text">事务与 IO 的关系及优化</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#参考链接"><span class="nav-number">1.3.1.</span> <span class="nav-text">参考链接</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

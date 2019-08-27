@@ -284,6 +284,648 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/16/Rust/Basic/Trait/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/16/Rust/Basic/Trait/" itemprop="url">Rust Trait</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-16T15:20:03+08:00">
+                2018-12-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Rust/" itemprop="url" rel="index">
+                    <span itemprop="name">Rust</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Rust/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>A trait is a collection of methods defined for an unknown type: Self. They can access other methods declared in the same trait.Traits can be implemented for any data type.</p>
+<p>Rust’Trait is like Java’Interface.</p>
+<ul>
+<li>Derive</li>
+<li>Operator Overloading</li>
+<li>Drop</li>
+<li>Iterators</li>
+<li>Clone</li>
+</ul>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="Case-Hello"><a href="#Case-Hello" class="headerlink" title="Case: Hello"></a>Case: Hello</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Sheep</span></span> &#123; naked: <span class="built_in">bool</span>, name: &amp;<span class="symbol">'static</span> <span class="built_in">str</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Animal</span></span> &#123;</span><br><span class="line">    <span class="comment">// Static method signature; `Self` refers to the implementor type.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">new</span></span>(name: &amp;<span class="symbol">'static</span> <span class="built_in">str</span>) -&gt; <span class="keyword">Self</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Instance method signatures; these will return a string.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">name</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="symbol">'static</span> <span class="built_in">str</span>;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">noise</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="symbol">'static</span> <span class="built_in">str</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Traits can provide default method definitions.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">talk</span></span>(&amp;<span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"&#123;&#125; says &#123;&#125;"</span>, <span class="keyword">self</span>.name(), <span class="keyword">self</span>.noise());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> Sheep &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">is_naked</span></span>(&amp;<span class="keyword">self</span>) -&gt; <span class="built_in">bool</span> &#123;</span><br><span class="line">        <span class="keyword">self</span>.naked</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">shear</span></span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">self</span>.is_naked() &#123;</span><br><span class="line">            <span class="comment">// Implementor methods can use the implementor's trait methods.</span></span><br><span class="line">            <span class="built_in">println!</span>(<span class="string">"&#123;&#125; is already naked..."</span>, <span class="keyword">self</span>.name());</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">println!</span>(<span class="string">"&#123;&#125; gets a haircut!"</span>, <span class="keyword">self</span>.name);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">self</span>.naked = <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Implement the `Animal` trait for `Sheep`.</span></span><br><span class="line"><span class="keyword">impl</span> Animal <span class="keyword">for</span> Sheep &#123;</span><br><span class="line">    <span class="comment">// `Self` is the implementor type: `Sheep`.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">new</span></span>(name: &amp;<span class="symbol">'static</span> <span class="built_in">str</span>) -&gt; Sheep &#123;</span><br><span class="line">        Sheep &#123; name: name, naked: <span class="literal">false</span> &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">name</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="symbol">'static</span> <span class="built_in">str</span> &#123;</span><br><span class="line">        <span class="keyword">self</span>.name</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">noise</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="symbol">'static</span> <span class="built_in">str</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">self</span>.is_naked() &#123;</span><br><span class="line">            <span class="string">"baaaaah?"</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="string">"baaaaah!"</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Default trait methods can be overridden.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">talk</span></span>(&amp;<span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="comment">// For example, we can add some quiet contemplation.</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"&#123;&#125; pauses briefly... &#123;&#125;"</span>, <span class="keyword">self</span>.name, <span class="keyword">self</span>.noise());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Type annotation is necessary in this case.</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> dolly: Sheep = Animal::new(<span class="string">"Dolly"</span>);</span><br><span class="line">    <span class="comment">// TODO ^ Try removing the type annotations.</span></span><br><span class="line"></span><br><span class="line">    dolly.talk();</span><br><span class="line">    dolly.shear();</span><br><span class="line">    dolly.talk();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Dolly pauses briefly... baaaaah!</span><br><span class="line">Dolly gets a haircut!</span><br><span class="line">Dolly pauses briefly... baaaaah?</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/16/BlockChain/UTXO/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/16/BlockChain/UTXO/" itemprop="url">BlockChain UTXO</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-16T11:30:18+08:00">
+                2018-12-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/BlockChain/" itemprop="url" rel="index">
+                    <span itemprop="name">BlockChain</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>UTXO是Unspent Transaction Output的缩写，是比特币发明人”中本聪“的天才设计。</p>
+<p>本质上，UTXO就是流水账。了解过一点点会计学，见过企业记账的同学都知道，我们现在的会计系统绝大部分采用的是一种叫做”借贷记账法“的方法，账目分成借方和贷方，每发生一笔业务都要登记两个以上的科目。</p>
+<p>简单来说，Alice转账给Bob 1美元，使用借贷记账法至少要产生两条账目，Alice账户减少1美元，Bob账户增加1美元。这种记账法在企业经营、企业审计中有无数的好处，这里就不详述了。但是这种记账法也有一个最大的缺点，就是容易产生记账错误和记账误差。一笔交易需要登记两条以上的账目，本质上记录的是“交易的结果”，而不是“交易本身”。</p>
+<p>如果让一个程序员来设计基于“借贷记账法”的账本，数据库中记录的就是每一个账户的变动情况和余额。在数据库系统中，需要一系列额外的规则，来确保交易成功地进行。在Alice给Bob转账1美元的操作中，系统首先需要检查Alice账户余额是否大于等于1美元，然后检查Bob的账户地址是否合法，最后才是Alice账户减1，Bob账户加1。</p>
+<p>上述过程是不是非常复杂？其实会计的工作之所以那么忙，就是因为他们每天都要把交易拆分成不同的科目去记录。不同的会计对交易理解不同，可能记录的科目就不一样（当然在简单的转账系统中，不存在这个问题），于是产生了记账差异。</p>
+<p>“中本聪”没有采用这种复杂的记账方案，而是采用了一种追踪比特币的流水账记录法——UTXO。<strong>本质上，就是只记录交易本身，而不记录交易的结果。</strong>从金融系统设计角度来说，这种方式有点“交易清算分离”的意思。区块链系统只处理所有的交易，而需要清算、查看余额等信息，由区块链节点自行处理。</p>
+<p>UTXO系统遵守两个规则：</p>
+<ul>
+<li>除了CoinBase(挖矿交易)之外，所有的资金来源都必须来自前面某一个或者几个交易的UTXO；</li>
+<li>任何一笔交易的输入总量必须等于输出总量，等式两边必须配平。</li>
+</ul>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>我们假设一个这样的场景：张三挖到12.5枚比特币。过了几天，他把其中2.5枚支付给李四。又过了几天，他和李四各出资2.5比特币凑成5比特币付给王五。</p>
+<p>如果是基于账户的设计，张、李、王三人在数据库中各有一个账户，则他们三人的账户变化如下图所示：</p>
+<img src="/2018/12/16/BlockChain/UTXO/utxo-account.jpg">
+<hr>
+<p>如果基于UTXO的设计，如下图所示：</p>
+<img src="/2018/12/16/BlockChain/UTXO/utxo-transaction.jpg">
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/15/CS/Kernel/Kernel Architecture/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/15/CS/Kernel/Kernel Architecture/" itemprop="url">Kernel Architechture</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-15T14:55:03+08:00">
+                2018-12-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kernel/" itemprop="url" rel="index">
+                    <span itemprop="name">Kernel</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="http://gaocegege.com/Blog/csp/unikernel" target="_blank" rel="noopener">http://gaocegege.com/Blog/csp/unikernel</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/15/Docker/Unikernel/Unikernel-Introduction/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/15/Docker/Unikernel/Unikernel-Introduction/" itemprop="url">Unikernel</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-15T11:55:03+08:00">
+                2018-12-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Docker/" itemprop="url" rel="index">
+                    <span itemprop="name">Docker</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="What-Are-Unikernels"><a href="#What-Are-Unikernels" class="headerlink" title="What Are Unikernels?"></a>What Are Unikernels?</h3><p>Unikernels are specialised, single-address-space machine images constructed by using library operating systems.</p>
+<p>In other words, unikernels are <strong>small, fast, secure virtual machines that lack operating systems</strong>.</p>
+<p>其最大的卖点就是在，没有用户空间与内核空间之分，只有一个连续的地址空间。这样使得 Unikernel 中只能运行一个应用，而且对于运行的应用而言，没有硬件抽象可言，所有的逻辑，包括应用逻辑和操作硬件的逻辑，都在一个地址空间中。</p>
+<p>Unikernel就是一个单一内存空间的内核镜像，其中只能有一个应用在运行，那这样有啥好呢，为啥值得我放弃Linux而用你这么一个看上去像是阉割版的内核呢？好处就在，小，快，安全。</p>
+<p>Unikernel镜像都很小，由MirageOS实现的一个 DNS server 才 184KB，实现的一个 web server 674 KB，小到恐怖的程度。然后就是快，启动很快。因为镜像都很小，所以起停都在毫秒级别，比传统的kernel要快多了。最后是安全，一般来讲，小的东西相对而言比较安全。Unikernel中没有Shell可用，没有密码文件，没有多余的设备驱动，这使得Unikernel更加安全。</p>
+<hr>
+<h4 id="Unikernel架构"><a href="#Unikernel架构" class="headerlink" title="Unikernel架构"></a>Unikernel架构</h4><img src="/2018/12/15/Docker/Unikernel/Unikernel-Introduction/unikernel-architechture.png">
+<p>Unikernel在整个服务器的架构中取消了操作系统，应用直接运行在hypervisor或者硬件上。试图抹去现代操作系统带来的一些复杂性。因为“通用”的操作系统（就像任何Linux和Windows的发行版），通常会伴随着带来一些对你的应用来说并不需要的驱动、依赖包、服务、等等。</p>
+<hr>
+<h4 id="Unikernel的开发和测试"><a href="#Unikernel的开发和测试" class="headerlink" title="Unikernel的开发和测试"></a>Unikernel的开发和测试</h4><p>Unikernel 在真正实践中，如何开发与测试是一个值得关注的问题。在开发过程中，开发者可以假定自己在传统的操作系统上进行开发，而所有内核相关的功能，暂且由开发机的操作系统提供。</p>
+<p>而在测试环境中，大部分Unikernel的实现会将应用代码与需要的内核模块构建成Unikernel后，再将其跑在一个传统的操作系统上，利用传统操作系统上的工具来测试Unikernel。以Rumprun为例，它可以通过KVM/QEMU来运行一个 Rumprun Unikernel VM，随后用Host OS上的GDB来对其进行调试，</p>
+<blockquote>
+<p>更多关于调试的信息，可以查看<a href="https://news.ycombinator.com/item?id=10954132" target="_blank" rel="noopener">https://news.ycombinator.com/item?id=10954132</a></p>
+</blockquote>
+<p>在发布阶段，这是 Unikernel最简单的事情了。Unikernel最后的产物就是一个kernel image，可以在Hypervisor，Bare Metal等等各种环境上运行。</p>
+<p>所以可以看到，其中Unikernel在软件过程中与传统方式最大的不同就在于调试与测试。而在发布的阶段，传统的方式可能发布的是一个应用，或者一个容器镜像，而Unikernel则是一个高度定制化的kernel。</p>
+<p>目前的Unikernel项目：MirageOS、HaLVM、ClickOS和Rumprun等等。</p>
+<blockquote>
+<p>更多项目: <a href="http://unikernel.org/projects/" target="_blank" rel="noopener">http://unikernel.org/projects/</a></p>
+</blockquote>
+<hr>
+<h3 id="The-Problem-Our-Fat-Insecure-Clouds"><a href="#The-Problem-Our-Fat-Insecure-Clouds" class="headerlink" title="The Problem: Our Fat, Insecure Clouds"></a>The Problem: Our Fat, Insecure Clouds</h3><p>When cloud computing burst on(突然出现) the scene(场景), there were all sorts of(各种各样的) promises made of a grand future. It was said that our compute farms would magically allocate resources to meet the needs of applications.</p>
+<p>Resources would be automatically optimized to do the maximum work possible with the assets available. And compute clouds would leverage assets both in the datacenter and on the Internet, transparently to the end user.</p>
+<p>Emphasis was placed on developing excellent cloud orchestration(编排,调度) engines that could move applications with agility(灵活,敏捷) throughout the cloud. </p>
+<p>That(cloud orchestration engine) was an entirely appropriate(适合的) focus, as the datacenter in the time before the cloud was both immobile and slow to change. Many system administrators could walk blindfolded(vt.蒙住眼睛) through the aisles(通道) of their equipment racks(货架) and point out what each machine did for what department, stating(vt.说明) exactly what software was installed on each server. The placement of workloads on hardware was frequently laborious(费劲地) and static; changing those workloads was a slow, difficult, and arduous(费力的) task, requiring much verification and testing before even the smallest changes were made on production systems.</p>
+<p>The advent(到来) of cloud orchestration software (OpenStack, CloudStack, openNebula, etc.) altered all that—and many of us were very grateful. The ability of these orchestration systems to adapt and change with business needs turned the IT world on its head. A new world ensued(vi.跟着发生), and the promise of the cloud seemed to be fulfilled.</p>
+<hr>
+<h3 id="Security-Is-a-Growing-Problem"><a href="#Security-Is-a-Growing-Problem" class="headerlink" title="Security Is a Growing Problem"></a>Security Is a Growing Problem</h3><p>However, as the cloud era(时代) dawned(vi.出现), it became evident that a good orchestration engine alone is simply not enough to make a truly effective cloud. </p>
+<p>A quick review of industry headlines(新闻提要) over the past few years yields report after report of security breaches(breach vt.破坏, n.违反,缺口) in some of the most impressive organizations. </p>
+<p>Major retailers(零售商), credit card companies, even federal governments(联邦政府) have reported successful attacks on their infrastructure, including possible loss of sensitive data. For example, in May 2016, the Wall Street Journal ran a story about banks in three different countries that had been recently hacked to the tune of $90 million in losses. A quick review of the graphic representation of major attacks in the past decade will take your breath away. Even the US Pentagon(五角大楼) was reportedly hacked in the summer of (夏天的时候)2011. It is no longer unusual to receive a letter in the mail stating that your credit card is being reissued(vt.重新发行) because credit card data was compromised(vt.危害) by malicious(恶意的) hackers.</p>
+<blockquote>
+<p>to the tune of: 达…之多<br>take your breath away: 令人屏息</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p>official site: <a href="http://unikernel.org/" target="_blank" rel="noopener">http://unikernel.org/</a><br><a href="https://www.oreilly.com/library/view/unikernels/9781492042815/" target="_blank" rel="noopener">https://www.oreilly.com/library/view/unikernels/9781492042815/</a><br><a href="https://www.oreilly.com/library/view/unikernels/9781492042815/ch01.html" target="_blank" rel="noopener">https://www.oreilly.com/library/view/unikernels/9781492042815/ch01.html</a><br><a href="http://dockone.io/article/1379" target="_blank" rel="noopener">http://dockone.io/article/1379</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/14/Rust/Basic/UnitTesting/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1218,770 +1860,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/读书笔记/认知/如何快速掌握新技术/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/13/读书笔记/认知/如何快速掌握新技术/" itemprop="url">How can you learn and build skills QUICKLY</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-13T23:24:07+08:00">
-                2018-12-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
-                    <span itemprop="name">读书笔记</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/认知/" itemprop="url" rel="index">
-                    <span itemprop="name">认知</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="认知资源"><a href="#认知资源" class="headerlink" title="认知资源"></a>认知资源</h3><p>你是否有想认真掌握一门新技能，但一拿起各类技术书籍、文档，很快就放弃的经历？你又是否在做一些让别人“选择蛋糕”的事情？比如让别人阅读你自己编写的项目文档。</p>
-<p>当你想要快速掌握一项技能的时候，你需要学会管理自己的认知资源。</p>
-<img src="/2018/12/13/读书笔记/认知/如何快速掌握新技术/cognitive-resource-1.jpg">
-<hr>
-<h3 id="学习方法"><a href="#学习方法" class="headerlink" title="学习方法"></a>学习方法</h3><img src="/2018/12/13/读书笔记/认知/如何快速掌握新技术/skills-category-1.jpg">
-<p>将你现在的技能分为三类：</p>
-<ul>
-<li>A - 还没有掌握，但需要掌握的</li>
-<li>B - 经过一定努力可以掌握的</li>
-<li>C - 已经掌握的</li>
-</ul>
-<p>我们的目标其实是如何将AB的技能快速移动到C。在这个过程中我们会遇到两类典型问题：</p>
-<ul>
-<li>没有进步</li>
-<li>耗时太久</li>
-</ul>
-<hr>
-<h4 id="解决”没有进步”"><a href="#解决”没有进步”" class="headerlink" title="解决”没有进步”"></a>解决”没有进步”</h4><p>第一类问题的根本原因在于你的认知资源不足以支撑技能的学习需求。我们不能要求自己有无限的认知资源，在资源极度有限的情况下，仍有两种解决策略：</p>
-<p><strong>第一种，将更多的需要掌握的技能放在A，将精力集中于少量的B类技能。但在日常工作中，需要掌握哪些技能，解决哪些问题，都不是自己可以安排的。对此，我们还有第二种策略。</strong></p>
-<img src="/2018/12/13/读书笔记/认知/如何快速掌握新技术/solution-1.jpg">
-<hr>
-<p><strong>第二种策略，就是将B中的技能分解为更小的粒度。这种策略，在有限的认知资源的情况下效果等同于一个需要处理多任务并发的CPU，上面运行的程序都采用了更加细粒度的锁机制，带来了程序性能的提升。</strong></p>
-<img src="/2018/12/13/读书笔记/认知/如何快速掌握新技术/solution-2.jpg">
-<p>那么如何界定分解之后的技能足够“细”？Kathy给出了一个她的评判标准：从完全不会到十分熟练，最多经过3次练习，每次45-90分钟。</p>
-<p>能满足上面的标准就可以认为分解到了合理的粒度。</p>
-<hr>
-<h4 id="解决”耗时太久”"><a href="#解决”耗时太久”" class="headerlink" title="解决”耗时太久”"></a>解决”耗时太久”</h4><p>程序员不但要学习很多技能，还需要快速学习。所以从A开始，我们最好能够绕过B直接到C。</p>
-<img src="/2018/12/13/读书笔记/认知/如何快速掌握新技术/solution-3.jpg">
-<p>关键点：<strong>高质量的例子</strong></p>
-<p>通过高质量的例子进行学习和模仿，有点类似机器学习一样，不断的进化。</p>
-<p>当要学习某样特殊技术的时候，你是找官方的、正式的、长而无味的文档，还是去找一个精悍的例子？</p>
-<p>当你能找到一个精确的示例来演示如何使用这样技术的时候，你几乎可以“瞬间”掌握这项技术。</p>
-<p>你需要这些示例来让大脑自动地，潜意识地识别其中的模式。但现在的问题是，所有技术里又臭又长的文档很多，但短小精悍的示例很少。</p>
-<p>所以是否可以利用社区的力量，将这些文档转换成一系列高质量的示例库呢？</p>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://www.youtube.com/watch?v=FKTxC9pl-WM" target="_blank" rel="noopener">https://www.youtube.com/watch?v=FKTxC9pl-WM</a><br><a href="https://decodezp.github.io/2018/12/12/eng-talk1-fast-learn/#%E5%85%B3%E9%94%AE%E7%9A%84%E7%BC%BA%E5%A4%B1%E2%80%94%E2%80%94%E9%AB%98%E8%B4%A8%E9%87%8F%E7%9A%84%E4%BE%8B%E5%AD%90" target="_blank" rel="noopener">https://decodezp.github.io/2018/12/12/eng-talk1-fast-learn/#%E5%85%B3%E9%94%AE%E7%9A%84%E7%BC%BA%E5%A4%B1%E2%80%94%E2%80%94%E9%AB%98%E8%B4%A8%E9%87%8F%E7%9A%84%E4%BE%8B%E5%AD%90</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/Java/SpringBoot/Contract/ContractPractice/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/13/Java/SpringBoot/Contract/ContractPractice/" itemprop="url">Spring Cloud Contract Practice</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-13T19:00:22+08:00">
-                2018-12-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Spring-Boot/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Boot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Spring-Boot/Spring-Contracts/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Contracts</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="CDC-Consumer-Driven-Contract"><a href="#CDC-Consumer-Driven-Contract" class="headerlink" title="CDC(Consumer Driven Contract)"></a>CDC(Consumer Driven Contract)</h3><h3 id="Application-Scenarios"><a href="#Application-Scenarios" class="headerlink" title="Application Scenarios"></a>Application Scenarios</h3><h3 id="Contract-DSL-Domain-Specific-Language"><a href="#Contract-DSL-Domain-Specific-Language" class="headerlink" title="Contract DSL(Domain-Specific Language)"></a>Contract DSL(Domain-Specific Language)</h3><ul>
-<li>Groovy</li>
-<li>YAML</li>
-<li>Json</li>
-</ul>
-<blockquote>
-<p>参考示例:<br><a href="https://github.com/pact-foundation/pact-specification/tree/version-3" target="_blank" rel="noopener">https://github.com/pact-foundation/pact-specification/tree/version-3</a></p>
-</blockquote>
-<h3 id="Producer"><a href="#Producer" class="headerlink" title="Producer"></a>Producer</h3><p> 吧</p>
-<h4 id="定义测试Controller"><a href="#定义测试Controller" class="headerlink" title="定义测试Controller"></a>定义测试Controller</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OrderController</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> val logger = LogManager.getLogger(OrderController::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>)</span></span><br><span class="line"><span class="class"></span></span><br><span class="line">    @GetMapping("/hello")</span><br><span class="line">    <span class="function">fun <span class="title">hello</span><span class="params">()</span>: ResponseEntity&lt;Any&gt; </span>&#123;</span><br><span class="line">        logger.info(<span class="string">"hello()"</span>)</span><br><span class="line">        val user = User()</span><br><span class="line">        user.name = <span class="string">"hello"</span></span><br><span class="line">        <span class="keyword">return</span> ResponseEntity(user, HttpStatus.OK)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="定义测试Controller的Contracts"><a href="#定义测试Controller的Contracts" class="headerlink" title="定义测试Controller的Contracts"></a>定义测试Controller的Contracts</h4><p>在test的Resources下，新建contracts目录，定义一个contract文件，以json格式</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"provider"</span>: &#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"Provider"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"consumer"</span>: &#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"Consumer"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"interactions"</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"description"</span>: <span class="string">""</span>,</span><br><span class="line">      <span class="attr">"request"</span>: &#123;</span><br><span class="line">        <span class="attr">"method"</span>: <span class="string">"GET"</span>,</span><br><span class="line">        <span class="attr">"path"</span>: <span class="string">"/hello"</span>,</span><br><span class="line">        <span class="attr">"body"</span>: &#123;</span><br><span class="line">          <span class="attr">"name"</span>: <span class="string">"hello"</span></span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">"response"</span>: &#123;</span><br><span class="line">        <span class="attr">"status"</span>: <span class="number">200</span>,</span><br><span class="line">        <span class="attr">"body"</span>: &#123;</span><br><span class="line">          <span class="attr">"name"</span>: <span class="string">"hello"</span></span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">"metadata"</span>: &#123;</span><br><span class="line">    <span class="attr">"pact-specification"</span>: &#123;</span><br><span class="line">      <span class="attr">"version"</span>: <span class="string">"3.0.0"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"pact-jvm"</span>: &#123;</span><br><span class="line">      <span class="attr">"version"</span>: <span class="string">"3.5.13"</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="定义测试基类ContractVerifierBase"><a href="#定义测试基类ContractVerifierBase" class="headerlink" title="定义测试基类ContractVerifierBase"></a>定义测试基类ContractVerifierBase</h4><p>通过配置build的插件spring-cloud-contract-maven-plugin使测试用例继承该类进行初始化操作</p>
-<p>在test的com.example.base下，新建ContractVerifierBase.java</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> io.restassured.<span class="keyword">module</span>.mockmvc.RestAssuredMockMvc;</span><br><span class="line"><span class="keyword">import</span> org.junit.Before;</span><br><span class="line"><span class="keyword">import</span> org.junit.runner.RunWith;</span><br><span class="line"><span class="keyword">import</span> org.springframework.boot.test.context.SpringBootTest;</span><br><span class="line"><span class="keyword">import</span> org.springframework.test.context.junit4.SpringRunner;</span><br><span class="line"><span class="keyword">import</span> org.springframework.test.web.servlet.setup.MockMvcBuilders;</span><br><span class="line"><span class="keyword">import</span> org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;</span><br><span class="line"></span><br><span class="line"><span class="meta">@RunWith</span>(SpringRunner.class)</span><br><span class="line"><span class="meta">@SpringBootTest</span>(webEnvironment = SpringBootTest.WebEnvironment.MOCK)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ContractVerifierBase</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Before</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setup</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        StandaloneMockMvcBuilder standaloneMockMvcBuilder = MockMvcBuilders.standaloneSetup(</span><br><span class="line">            <span class="keyword">new</span> TestController(),</span><br><span class="line">            <span class="keyword">new</span> TestHelloController()</span><br><span class="line">        );</span><br><span class="line">        RestAssuredMockMvc.standaloneSetup(standaloneMockMvcBuilder);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>需要特别注意的是，这个ContractVerifierBase只能是.java文件，目前不支持Kotlin</p>
-<h4 id="pom-xml"><a href="#pom-xml" class="headerlink" title="pom.xml"></a>pom.xml</h4><p>Attention: SpringBoot version must be &lt;= 2.0.7.RELEASE</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.cloud<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-cloud-starter-contract-stub-runner<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.cloud<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-cloud-starter-contract-verifier<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">build</span>&gt;</span></span><br><span class="line">     <span class="tag">&lt;<span class="name">plugins</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.cloud<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-cloud-contract-maven-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring-cloud-contract.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">extensions</span>&gt;</span>true<span class="tag">&lt;/<span class="name">extensions</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">                 <span class="comment">&lt;!--   配置用例的基类   --&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">baseClassForTests</span>&gt;</span>com.example.base<span class="tag">&lt;/<span class="name">baseClassForTests</span>&gt;</span></span><br><span class="line">                <span class="comment">&lt;!--&lt;packageWithBaseClasses&gt;com.example.contracts&lt;/packageWithBaseClasses&gt;--&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.cloud<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-cloud-contract-pact<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring-cloud-contract.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br><span class="line">     <span class="tag">&lt;/<span class="name">plugins</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">build</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">dependencyManagement</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.cloud<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-cloud-dependencies<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring-cloud.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">type</span>&gt;</span>pom<span class="tag">&lt;/<span class="name">type</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">scope</span>&gt;</span>import<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencyManagement</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h4 id="Maven-spring-cloud-contract-pact-Plugin"><a href="#Maven-spring-cloud-contract-pact-Plugin" class="headerlink" title="Maven spring-cloud-contract-pact Plugin"></a>Maven spring-cloud-contract-pact Plugin</h4><ul>
-<li>packageWithBaseClasses: <strong>Defines a package where all the base classes reside.</strong> This setting takes precedence over baseClassForTests. The convention is such that, if you have a contract under (for example) src/test/resources/contract/foo/bar/baz/ and set the value of the packageWithBaseClasses property to com.example.base, then Spring Cloud Contract Verifier assumes that there is a BarBazBase class under the com.example.base package. In other words, the system takes the last two parts of the package, if they exist, and forms a class with a Base suffix.</li>
-</ul>
-<p><strong>Example</strong></p>
-<p>测试基类目录：/test/com/example/contacts，此时<packagewithbaseclasses>com.example.contracts</packagewithbaseclasses></p>
-<p>Contract路径：/test/resouces/controller/controller_craete_order.json</p>
-<p>生成的Contract测试类 -&gt; ControllerTest</p>
-<p>默认继承的基类 -&gt; ControllerBase</p>
-<h3 id="Contracs-Example"><a href="#Contracs-Example" class="headerlink" title="Contracs Example"></a>Contracs Example</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"provider"</span>: &#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"Provider"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"consumer"</span>: &#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"Consumer"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"interactions"</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"description"</span>: <span class="string">""</span>,</span><br><span class="line">      <span class="attr">"request"</span>: &#123;</span><br><span class="line">        <span class="attr">"method"</span>: <span class="string">"PUT"</span>,</span><br><span class="line">        <span class="attr">"path"</span>: <span class="string">"/fraudcheck"</span>,</span><br><span class="line">        <span class="attr">"queryParameters"</span>: <span class="string">"nonce=1"</span>,</span><br><span class="line">        <span class="attr">"headers"</span>: &#123;</span><br><span class="line">          <span class="attr">"Content-Type"</span>: <span class="string">"application/vnd.fraud.v1+json"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="attr">"body"</span>: &#123;</span><br><span class="line">          <span class="attr">"clientId"</span>: <span class="string">"1234567890"</span>,</span><br><span class="line">          <span class="attr">"loanAmount"</span>: <span class="number">99999</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="attr">"generators"</span>: &#123;</span><br><span class="line">          <span class="attr">"body"</span>: &#123;</span><br><span class="line">            <span class="attr">"$.clientId"</span>: &#123;</span><br><span class="line">              <span class="attr">"type"</span>: <span class="string">"Regex"</span>,</span><br><span class="line">              <span class="attr">"regex"</span>: <span class="string">"[0-9]&#123;10&#125;"</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="attr">"matchingRules"</span>: &#123;</span><br><span class="line">          <span class="attr">"header"</span>: &#123;</span><br><span class="line">            <span class="attr">"Content-Type"</span>: &#123;</span><br><span class="line">              <span class="attr">"matchers"</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                  <span class="attr">"match"</span>: <span class="string">"regex"</span>,</span><br><span class="line">                  <span class="attr">"regex"</span>: <span class="string">"application/vnd\\.fraud\\.v1\\+json.*"</span></span><br><span class="line">                &#125;</span><br><span class="line">              ],</span><br><span class="line">              <span class="attr">"combine"</span>: <span class="string">"AND"</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;,</span><br><span class="line">          <span class="attr">"body"</span>: &#123;</span><br><span class="line">            <span class="attr">"$.clientId"</span>: &#123;</span><br><span class="line">              <span class="attr">"matchers"</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                  <span class="attr">"match"</span>: <span class="string">"regex"</span>,</span><br><span class="line">                  <span class="attr">"regex"</span>: <span class="string">"[0-9]&#123;10&#125;"</span></span><br><span class="line">                &#125;</span><br><span class="line">              ],</span><br><span class="line">              <span class="attr">"combine"</span>: <span class="string">"AND"</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">"response"</span>: &#123;</span><br><span class="line">        <span class="attr">"status"</span>: <span class="number">200</span>,</span><br><span class="line">        <span class="attr">"headers"</span>: &#123;</span><br><span class="line">          <span class="attr">"Content-Type"</span>: <span class="string">"application/vnd.fraud.v1+json;charset=UTF-8"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="attr">"body"</span>: &#123;</span><br><span class="line">          <span class="attr">"fraudCheckStatus"</span>: <span class="string">"FRAUD"</span>,</span><br><span class="line">          <span class="attr">"rejectionReason"</span>: <span class="string">"Amount too high"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="attr">"matchingRules"</span>: &#123;</span><br><span class="line">          <span class="attr">"header"</span>: &#123;</span><br><span class="line">            <span class="attr">"Content-Type"</span>: &#123;</span><br><span class="line">              <span class="attr">"matchers"</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                  <span class="attr">"match"</span>: <span class="string">"regex"</span>,</span><br><span class="line">                  <span class="attr">"regex"</span>: <span class="string">"application/vnd\\.fraud\\.v1\\+json.*"</span></span><br><span class="line">                &#125;</span><br><span class="line">              ],</span><br><span class="line">              <span class="attr">"combine"</span>: <span class="string">"AND"</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;,</span><br><span class="line">          <span class="attr">"body"</span>: &#123;</span><br><span class="line">            <span class="attr">"$.fraudCheckStatus"</span>: &#123;</span><br><span class="line">              <span class="attr">"matchers"</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                  <span class="attr">"match"</span>: <span class="string">"regex"</span>,</span><br><span class="line">                  <span class="attr">"regex"</span>: <span class="string">"FRAUD"</span></span><br><span class="line">                &#125;</span><br><span class="line">              ],</span><br><span class="line">              <span class="attr">"combine"</span>: <span class="string">"AND"</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">"metadata"</span>: &#123;</span><br><span class="line">    <span class="attr">"pact-specification"</span>: &#123;</span><br><span class="line">      <span class="attr">"version"</span>: <span class="string">"3.0.0"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"pact-jvm"</span>: &#123;</span><br><span class="line">      <span class="attr">"version"</span>: <span class="string">"3.5.13"</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://springframework.guru/using-spring-cloud-contract-for-consumer-driven-contracts/" target="_blank" rel="noopener">https://springframework.guru/using-spring-cloud-contract-for-consumer-driven-contracts/</a><br><a href="https://martinfowler.com/articles/consumerDrivenContracts.html" target="_blank" rel="noopener">https://martinfowler.com/articles/consumerDrivenContracts.html</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/Java/SpringBoot/Controller/AdviceController/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/13/Java/SpringBoot/Controller/AdviceController/" itemprop="url">Spring Bood @ControllerAdvice</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-13T19:00:22+08:00">
-                2018-12-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Spring-Boot/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Boot</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Spring-Boot/Controller/" itemprop="url" rel="index">
-                    <span itemprop="name">Controller</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="Case-Hello"><a href="#Case-Hello" class="headerlink" title="Case: Hello"></a>Case: Hello</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerAdvice</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SystemErrorController</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> val logger = LogManager.getLogger(SystemErrorController::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line"><span class="class"></span></span><br><span class="line">    @ExceptionHandler(Exception::class)</span><br><span class="line">    <span class="function">fun <span class="title">handleError</span><span class="params">(ex: Exception)</span>: ResponseEntity&lt;Any&gt; </span>&#123;</span><br><span class="line">        logger.error(<span class="string">"handleError(): $ex"</span>)</span><br><span class="line">        val error = Error(<span class="number">500</span>, HttpStatus.INTERNAL_SERVER_ERROR.name)</span><br><span class="line">        <span class="keyword">return</span> ResponseEntity(error, HttpStatus.INTERNAL_SERVER_ERROR)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @ExceptionHandler(MethodArgumentNotValidException::class, MissingServletRequestParameterException::class)</span><br><span class="line">    <span class="function">fun <span class="title">handleArgumentError</span><span class="params">(ex: Exception)</span>: ResponseEntity&lt;Any&gt; </span>&#123;</span><br><span class="line">        logger.error(<span class="string">"handleArgumentError(): $ex"</span>)</span><br><span class="line">        val error = Error(ErrorCode.BODY_ARGUMENT_IS_INVALID.value, ex.message ?: <span class="string">""</span>)</span><br><span class="line">        <span class="keyword">return</span> ResponseEntity(error, HttpStatus.BAD_REQUEST)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//  Unit Testing</span></span><br><span class="line">StandaloneMockMvcBuilder mockMvc = MockMvcBuilders.standaloneSetup(<span class="keyword">new</span> OrderController()).setControllerAdvice(adviceController);</span><br><span class="line">RestAssuredMockMvc.standaloneSetup(mockMvc);</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/13/Network/HTTP/CORS/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/13/Network/HTTP/CORS/" itemprop="url">认识一下CORS(Cross-Origin Resource Sharing)</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-13T18:15:18+08:00">
-                2018-12-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/HTTP/" itemprop="url" rel="index">
-                    <span itemprop="name">HTTP</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="What’-CORS-Cross-Origin-Resource-Sharing"><a href="#What’-CORS-Cross-Origin-Resource-Sharing" class="headerlink" title="What’ CORS - Cross-Origin Resource Sharing"></a>What’ CORS - Cross-Origin Resource Sharing</h3><p>Cross-Origin Resource Sharing (CORS) is a mechanism that uses additional HTTP headers to tell a browser to let a web application running at one origin (domain) have permission to access selected resources from a server at a different origin. A web application makes a cross-origin HTTP request when it requests a resource that has a different <strong>origin (domain, protocol, and port)</strong> than its own origin.</p>
-<p>支持CORS请求的浏览器一旦发现ajax请求跨域，会对请求做一些特殊处理，对于已经实现CORS接口的服务端，接受请求，并做出回应。</p>
-<p>有一种情况比较特殊，如果我们发送的跨域请求为“非简单请求”，浏览器会在发出此请求之前首先发送一个请求类型为OPTIONS的“预检请求”，验证请求源是否为服务端允许源，这些对于开发这来说是感觉不到的，由浏览器代理。</p>
-<p>总而言之，客户端不需要对跨域请求做任何特殊处理。</p>
-<h3 id="CORS存在的意义"><a href="#CORS存在的意义" class="headerlink" title="CORS存在的意义"></a>CORS存在的意义</h3><p>为了保证用户信息的安全，所有的浏览器都遵循同源策略。</p>
-<p>凡是发送请求url的协议、域名、端口三者之间任意一与当前页面地址不同，即为跨域(不同源)</p>
-<ul>
-<li>域名(domain)</li>
-<li>协议(protocol)</li>
-<li>端口(porot)</li>
-</ul>
-<hr>
-<p>同源策略的限制：</p>
-<ul>
-<li>无法获取非同源的Cookie、LocalStorage、SessionStorage等</li>
-<li>无法获取非同源的dom</li>
-<li>无法向非同源的服务器发送ajax请求</li>
-</ul>
-<hr>
-<p>CORS的请求Header</p>
-<ul>
-<li>origin：表明预检请求或实际请求的源站URL，总是会带上</li>
-<li>Access-Control-Request-Method：实际请求所使用的HTTP方法告诉服务器</li>
-<li>Access-Control-Request-Headers：将实际请求所携带的首部字段告诉服务器</li>
-</ul>
-<hr>
-<p>CORS的响应Header</p>
-<ul>
-<li>Access-Control-Allow-Origin：这个请求头一般会被服务器端返回，它的值代表了哪些域名你有权可以访问(注：对于携带身份凭证的请求不可使用通配符*)</li>
-<li>Access-Control-Expose-Headers：指定XMLRequest的getResourceHeader可以访问的响应头</li>
-<li>Access-Control-Max-Age：指定preflight请求的结果能够被缓存多久</li>
-<li>Access-Control-Allow-Credentials：是否允许浏览器读取response的内容；</li>
-<li>Access-Control-Allow-Methods：指明实际请求允许所使用的HTTP方法</li>
-<li>Access-Control-Allow-Headers：指明实际请求中允许携带的首部字段</li>
-</ul>
-<hr>
-<h3 id="什么是简单请求？"><a href="#什么是简单请求？" class="headerlink" title="什么是简单请求？"></a>什么是简单请求？</h3><p>请求方法属于以下类型：</p>
-<ul>
-<li>HEAD</li>
-<li>GET</li>
-<li>POST</li>
-</ul>
-<p>Headers不超出以下字段：</p>
-<ul>
-<li>Accept</li>
-<li>Accept-Language</li>
-<li>Content-Language</li>
-<li>Content-Type: application/x-www-form-urlencoded、 multipart/form-data、text/plain</li>
-<li>DPR</li>
-<li>Downlink</li>
-<li>Save-Data</li>
-<li>Viewport-Width</li>
-<li>Width</li>
-</ul>
-<p>不满足上述要求的在发送正式请求前都要先发送一个预检请求，预检请求以OPTIONS方法发送，浏览器通过请求方法和请求头能够判断是否发送预检请求。</p>
-<blockquote>
-<p>服务器端在处理OPTIONS请求的时候需要注意：需要预检请求时，浏览器会发出两次请求，一次OPTIONS，一次POST。两次都返回了数据。如果服务端逻辑复杂一些，比如去数据库查找数据，从web层、service到数据库这段逻辑就会走两遍，浏览器会两次拿到相同的数据。如果是OPTIONS请求，在设置完跨域请求响应头后就不走后面的逻辑直接返回。</p>
-</blockquote>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p>重点阅读：<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank" rel="noopener">https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS</a><br><a href="https://zhuanlan.zhihu.com/p/29980092" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/29980092</a><br><a href="https://juejin.im/post/5a7359876fb9a0634a38e389" target="_blank" rel="noopener">https://juejin.im/post/5a7359876fb9a0634a38e389</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/12/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><span class="page-number current">13</span><a class="page-number" href="/page/14/">14</a><span class="space">&hellip;</span><a class="page-number" href="/page/58/">58</a><a class="extend next" rel="next" href="/page/14/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/12/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><span class="page-number current">13</span><a class="page-number" href="/page/14/">14</a><span class="space">&hellip;</span><a class="page-number" href="/page/59/">59</a><a class="extend next" rel="next" href="/page/14/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2028,7 +1911,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">577</span>
+                <span class="site-state-item-count">581</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2050,7 +1933,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">633</span>
+                <span class="site-state-item-count">637</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

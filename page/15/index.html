@@ -284,6 +284,684 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/09/Network/HTTP/HTTP,HTTPS代理原理/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/09/Network/HTTP/HTTP,HTTPS代理原理/" itemprop="url">HTTP,HTTPS代理原理</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-09T10:52:18+08:00">
+                2018-12-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/HTTP/" itemprop="url" rel="index">
+                    <span itemprop="name">HTTP</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="HTTP代理"><a href="#HTTP代理" class="headerlink" title="HTTP代理"></a>HTTP代理</h2><h3 id="代理原理"><a href="#代理原理" class="headerlink" title="代理原理"></a>代理原理</h3><p>HTTP代理服务器会自动提取请求数据包的HTTP Request数据，并且把HTTP Response的数据转发给发送请求的客户端；HTTP代理服务器使用的端口通常是8080。</p>
+<img src="/2018/12/09/Network/HTTP/HTTP,HTTPS代理原理/http-proxy-1.jpg">
+<ul>
+<li>对于Web客户端来说，代理扮演的服务器角色，接收请求（Request），返回响应（Response）</li>
+<li>对于Web服务器来说，代理扮演的客户端角色，发送请求（Request），接收响应（Response）</li>
+</ul>
+<h3 id="代理步骤"><a href="#代理步骤" class="headerlink" title="代理步骤"></a>代理步骤</h3><ol>
+<li>用户向代理发起TCP连接；</li>
+<li>代理接收用户的连接，双方建立连接；</li>
+<li>用户向代理发送HTTP请求，请求内容和没有HTTP代理的内容完全相同；</li>
+<li>代理解析HTTP请求；</li>
+<li>代理向服务器发起TCP连接；</li>
+<li>服务器接收代理的连接；</li>
+<li>代理向服务器发送HTTP请求（这个HTTP请求是基于用户的HTTP请求，可能会有修改）</li>
+<li>服务器发送响应给代理；</li>
+<li>代理再转发响应给客户端；</li>
+</ol>
+<h3 id="报文对比"><a href="#报文对比" class="headerlink" title="报文对比"></a>报文对比</h3><p>HTTP请求协议（不使用代理协议）报文</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET / HTTP/1.1</span><br><span class="line">Accept: application/x-ms-application, image/jpeg, application/xaml+xml, image/gif, image/pjpeg, application/x-ms-xbap, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*</span><br><span class="line">Accept-Language: zh-CN</span><br><span class="line">User-Agent: Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; InfoPath.2; .NET4.0C; .NET4.0E)</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Host: www.xxxx.com</span><br><span class="line">Connection: Keep-Alive</span><br><span class="line">Cookie:</span><br></pre></td></tr></table></figure>
+<p>HTTP请求协议（使用代理协议）报文</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET http://www.xxxx.com/ HTTP/1.1</span><br><span class="line">Accept: application/x-ms-application, image/jpeg, application/xaml+xml, image/gif, image/pjpeg, application/x-ms-xbap, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*</span><br><span class="line">Accept-Language: zh-CN</span><br><span class="line">User-Agent: Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; InfoPath.2; .NET4.0C; .NET4.0E)</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Proxy-Connection: Keep-Alive</span><br><span class="line">Host: www.xxxx.com</span><br><span class="line">Cookie:</span><br></pre></td></tr></table></figure>
+<p>差异点：</p>
+<ul>
+<li>GET</li>
+<li>Proxy-Connection</li>
+</ul>
+<h3 id="HTTP-Actions"><a href="#HTTP-Actions" class="headerlink" title="HTTP Actions"></a>HTTP Actions</h3><ul>
+<li><p>OPTIONS方法：这个方法可使服务器传回该资源所支持的所有HTTP请求方法。用’*‘来代替资源名称，向Web服务器发送OPTIONS请求，可以测试服务器功能是否正常运作。</p>
+</li>
+<li><p>HEAD方法：与GET方法一样，都是向服务器发出指定资源的请求。只不过服务器将不传回资源的本文部份。它的好处在于，使用这个方法可以在不必传输全部内容的情况下，就可以获取其中“关于该资源的信息”(元信息或称元数据)。</p>
+</li>
+<li><p>GET方法：向指定的资源发出“显示”请求。使用GET方法应该只用在读取数据，而不应当被用于产生“副作用”的操作中，例如在Web Application中。其中一个原因是GET可能会被网络蜘蛛等随意访问。参见安全方法</p>
+</li>
+<li><p>POST方法：向指定资源提交数据，请求服务器进行处理(例如提交表单或者上传文件)。数据被包含在请求本文中。这个请求可能会创建新的资源或修改现有资源，或二者皆有。</p>
+</li>
+<li><p>PUT方法：向指定资源位置上传其最新内容。</p>
+</li>
+<li><p>DELETE方法：请求服务器删除Request-URI所标识的资源。</p>
+</li>
+<li><p>TRACE方法：回显服务器收到的请求，主要用于测试或诊断。</p>
+</li>
+<li><p>CONNECT方法：HTTP/1.1协议中预留给能够将连接改为管道方式的代理服务器。通常用于SSL加密服务器的链接(经由非加密的HTTP代理服务器)。</p>
+</li>
+</ul>
+<h4 id="CONNECT"><a href="#CONNECT" class="headerlink" title="CONNECT"></a>CONNECT</h4><p>connect方法的通常就是把服务器作为跳板机，让服务器直接代理客户端访问，然后把数据原原本本的返回给客户端，connect方法的原理就是TCP直连。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CONNECT http://www.xxxx.com:80/ HTTP/1.1</span><br><span class="line">Accept: application/x-ms-application, image/jpeg, application/xaml+xml, image/gif, image/pjpeg, application/x-ms-xbap, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*</span><br><span class="line">Accept-Language: zh-CN</span><br><span class="line">User-Agent: Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; InfoPath.2; .NET4.0C; .NET4.0E)</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Proxy-Connection: Keep-Alive</span><br><span class="line">Host: www.xxxx.com</span><br></pre></td></tr></table></figure>
+<h3 id="HTTP代理类型"><a href="#HTTP代理类型" class="headerlink" title="HTTP代理类型"></a>HTTP代理类型</h3><ul>
+<li>全匿名代理，不改变客户端的request fields（请求信息），使服务器端看来就像有个真正的客户浏览器在访问。客户端的真实IP是隐藏起来的。</li>
+<li>普通匿名代理，能隐藏客户端的真实IP，但会更改客户端的request fields（请求信息），服务器端有可能会被认为使用了代理。</li>
+<li>透明代理（简单代理），改变客户端的request fields（请求信息），并会传送真实IP地址。</li>
+</ul>
+<hr>
+<h2 id="HTTPS代理"><a href="#HTTPS代理" class="headerlink" title="HTTPS代理"></a>HTTPS代理</h2><h3 id="代理原理-1"><a href="#代理原理-1" class="headerlink" title="代理原理"></a>代理原理</h3><p>HTTPS代理有多种做法，通常使用CONNECT method，通过proxy建立一条隧道(隧道代理)，这样proxy无法解密数据；此外，还有一种类似于中间人攻击的代理手法。</p>
+<h3 id="代理步骤-1"><a href="#代理步骤-1" class="headerlink" title="代理步骤"></a>代理步骤</h3><img src="/2018/12/09/Network/HTTP/HTTP,HTTPS代理原理/https-proxy-1.jpg">
+<ul>
+<li>用户向代理发起CONNECT请求；</li>
+<li>代理向Targe发起TCP连接请求；</li>
+<li>代理向用户返回”HTTP/1.0 OK”，隧道建立完成；</li>
+<li>代理转发用户的数据给Target，转发Target的数据给用户，直到任何一方连接结束；</li>
+</ul>
+<h3 id="TLS-MIM-man-in-the-middle-中间人攻击"><a href="#TLS-MIM-man-in-the-middle-中间人攻击" class="headerlink" title="TLS MIM(man in the middle 中间人攻击)"></a>TLS MIM(man in the middle 中间人攻击)</h3><p>正常情况下浏览器与服务器在TLS链接下内容是加密的，第三方即使可以嗅探到所有的数据，也不能解密。</p>
+<p>中间人可以与你建立链接，然后中间人再与服务器建立链接，转发你们之间的内容。这时候中间人就获得了明文的信息。</p>
+<h4 id="如何防范？如果确定是否被攻击？"><a href="#如何防范？如果确定是否被攻击？" class="headerlink" title="如何防范？如果确定是否被攻击？"></a>如何防范？如果确定是否被攻击？</h4><p>在访问https链接的时候，查看一下服务器提供的证书是不是正确的。除非入侵并取得服务器的证书私钥，否则中间人是不能完全伪装成服务器的样子的。</p>
+<h4 id="为什么这么多人呼吁删除CNNIC-ROOT-CA？"><a href="#为什么这么多人呼吁删除CNNIC-ROOT-CA？" class="headerlink" title="为什么这么多人呼吁删除CNNIC ROOT CA？"></a>为什么这么多人呼吁删除CNNIC ROOT CA？</h4><h4 id="HTTP-Public-Key-Pinning（HPKP）"><a href="#HTTP-Public-Key-Pinning（HPKP）" class="headerlink" title="HTTP Public Key Pinning（HPKP）"></a>HTTP Public Key Pinning（HPKP）</h4><p>用来防范由「伪造或不正当手段获得网站证书」造成的中间人攻击</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><blockquote>
+<p><a href="https://lilywei739.github.io/2017/01/25/principle_for_http_https.html" target="_blank" rel="noopener">https://lilywei739.github.io/2017/01/25/principle_for_http_https.html</a><br>HTTP Public Key Pinning 介绍: <a href="https://imququ.com/post/http-public-key-pinning.html" target="_blank" rel="noopener">https://imququ.com/post/http-public-key-pinning.html</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/09/Books/Git/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/09/Books/Git/" itemprop="url">Git Books</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-09T10:52:18+08:00">
+                2018-12-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Book/" itemprop="url" rel="index">
+                    <span itemprop="name">Book</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>pro-git:<a href="https://progit.bootcss.com/" target="_blank" rel="noopener">https://progit.bootcss.com/</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/09/Books/HTTP/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/09/Books/HTTP/" itemprop="url">HTTP Books</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-09T10:52:18+08:00">
+                2018-12-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Book/" itemprop="url" rel="index">
+                    <span itemprop="name">Book</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP" target="_blank" rel="noopener">https://developer.mozilla.org/zh-CN/docs/Web/HTTP</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/08/Java/Advance/ByteBuffer/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/08/Java/Advance/ByteBuffer/" itemprop="url">Java ByteBuffer 与 HeapByteBuffer 的区别</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-08T12:39:18+08:00">
+                2018-12-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
+                    <span itemprop="name">Advance</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <hr>
+<h3 id="HeapByteBuffer"><a href="#HeapByteBuffer" class="headerlink" title="HeapByteBuffer"></a>HeapByteBuffer</h3><p>HeapByteBuffer分配在Java Heap内。</p>
+<p>当向NIO Channel写入HeapByteBuffer数据时，需要先把HeapByteBuffer数据拷贝到DirectMemory后，才能把数据发送出去。</p>
+<h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  capacity为字节的数量</span></span><br><span class="line">ByteBuffer.allocate(<span class="keyword">int</span> capacity);</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="DirectByteBuffer"><a href="#DirectByteBuffer" class="headerlink" title="DirectByteBuffer"></a>DirectByteBuffer</h3><p>DirectByteBuffer分配在Java Heap外。</p>
+<p>当向NIO Channel写入DirectByteBuffer数据时，不需要拷贝，直接把数据发送出去。这样的话，无疑DirectByteBuffer的IO性能肯定强于使用HeapByteBuffer，因为它省去了临时buffer的拷贝开销，这也是为什么各个NIO框架大多使用DirectByteBuffer的原因。</p>
+<h4 id="Usage-1"><a href="#Usage-1" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  可以看到分配内存是通过unsafe.allocateMemory()来实现的，这个unsafe默认情况下java代码是没有能力可以调用到的，</span></span><br><span class="line"><span class="comment">//  不过你可以通过反射的手段得到实例进而做操作，当然你需要保证的是程序的稳定性，既然叫unsafe的，就是告诉你这不是安全的，</span></span><br><span class="line"><span class="comment">//  其实并不是不安全，而是交给程序员来操作，它可能会因为程序员的能力而导致不安全，而并非它本身不安全。</span></span><br><span class="line">ByteBuffer.allocateDirect(<span class="keyword">int</span> capacity);</span><br><span class="line"></span><br><span class="line"><span class="comment">//  free</span></span><br><span class="line"><span class="keyword">if</span> (byteBuffer.isDirect()) &#123;</span><br><span class="line">    ((DirectBuffer)byteBuffer).cleaner().clean();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="QA"><a href="#QA" class="headerlink" title="QA"></a>QA</h3><h4 id="Direct-buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？"><a href="#Direct-buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？" class="headerlink" title="Direct buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？"></a>Direct buffer是相当于固定的内核buffer还是JVM进程内的堆外内存？</h4><p>JVM进程的Java堆外申请的内存，是用户空间的，DirectByteBuffer的创建就是使用了malloc申请的内存。</p>
+<h4 id="为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？"><a href="#为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？" class="headerlink" title="为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？"></a>为什么在执行网络IO或者文件IO时，一定要通过堆外内存呢？</h4><blockquote>
+<p>Given a direct byte buffer, the Java virtual machine will make a best effort to perform native I/O operations directly upon it. That is, it will attempt to avoid copying the buffer’s content to (or from) an intermediate buffer before (or after) each invocation of one of the underlying operating system’s native I/O operations.</p>
+</blockquote>
+<p>如果是使用DirectBuffer就会少一次内存拷贝。如果是非DirectBuffer，JDK会先创建一个DirectBuffer，再去执行真正的写操作。</p>
+<p>这是因为当我们把一个地址通过JNI传递给底层的C库的时候，<strong>有一个基本的要求：就是这个地址上的内容不能失效。</strong>然而，在GC管理下的对象是会在Java堆中移动的。也就是说，有可能我把一个地址传给底层的write，但是这段内存却因为GC整理内存而失效了。所以我必须要把待发送的数据放到一个GC管不着的地方。这就是调用native方法之前，数据一定要在堆外内存的原因。</p>
+<p>此外，使用DirectBuffer好处还有，GC压力更小。虽然GC仍然管理着DirectBuffer的回收，但它是使用PhantomReference(虚引用)来达到的，在平常的Young GC或者mark and compact的时候却不会在内存里搬动。如果IO的数量比较大，比如在网络发送很大的文件，那么GC的压力下降就会很明显。</p>
+<blockquote>
+<p><strong>需要特别注意的是，DirectBuffer直接分配在JVM之外的物理内存，而不是JVM中的逻辑内存，需要往Socket或其他接口写的时候，不需要将数据从JVM复制到物理内存，直接输出即可。缺点是当你需要对这些数据进行额外处理的时候，如编码，过滤等，数据还是会复制到 JVM，所以请确保你不需要对数据进行这些额外操作，只是从一个文件复制数据到另一个文件，一个Socket到另一个的时候才使用。</strong></p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://blog.csdn.net/xieyuooo/article/details/7547435" target="_blank" rel="noopener">https://blog.csdn.net/xieyuooo/article/details/7547435</a><br><a href="https://www.zhihu.com/question/60892134" target="_blank" rel="noopener">https://www.zhihu.com/question/60892134</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/07/Network/Socket/What's socket/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1085,7 +1763,18 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/Optimize/" itemprop="url" rel="index">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
                     <span itemprop="name">Optimize</span>
                   </a>
                 </span>
@@ -1336,859 +2025,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/03/DB/KV-System/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/03/DB/KV-System/" itemprop="url">Key-Value Database System</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-03T00:30:18+08:00">
-                2018-12-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Leveldb"><a href="#Leveldb" class="headerlink" title="Leveldb"></a>Leveldb</h3><hr>
-<h3 id="Rocksdb"><a href="#Rocksdb" class="headerlink" title="Rocksdb"></a>Rocksdb</h3><hr>
-<h3 id="BadgerDB"><a href="#BadgerDB" class="headerlink" title="BadgerDB"></a>BadgerDB</h3><p>BadgerDB is an embeddable, persistent, simple and fast key-value (KV) database written in pure Go. It’s meant to be a performant alternative to non-Go-based key-value stores like RocksDB.</p>
-<hr>
-<h3 id="Berkerlydb"><a href="#Berkerlydb" class="headerlink" title="Berkerlydb"></a>Berkerlydb</h3><hr>
-<h3 id="Accumulo"><a href="#Accumulo" class="headerlink" title="Accumulo"></a>Accumulo</h3>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/02/DistributedSystem/CAP/从ACID聊到CAP/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/02/DistributedSystem/CAP/从ACID聊到CAP/" itemprop="url">从ACID聊到CAP，再到BASE</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-02T19:50:18+08:00">
-                2018-12-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DistributedSystem/" itemprop="url" rel="index">
-                    <span itemprop="name">DistributedSystem</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DistributedSystem/CAP/" itemprop="url" rel="index">
-                    <span itemprop="name">CAP</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>在使用数据库的时候，心里会假定这里面的数据都是 100% 准确的。回想一下，你在工作中有没有这样做过：</p>
-<ul>
-<li>有人给你反映了一个问题，说数据错了，你的自然反应是去检查代码有没有问题，而不会想到去确认数据库有没有问题？</li>
-<li>为了更快更方便地执行单元测试，你认为通过 Mock 数据加上断言（assertion）来代替数据库中实际存储的数据是完全没问题的。</li>
-</ul>
-<p>如果你这样做过，或者有过这样的看法，那你一定是在假定：<strong>数据都是100%准确的</strong>。</p>
-<p>现在不妨来思考下，数据库为什么会使你有这样的认知？是因为数据库的开发团队对其测试到位吗？其实，真正起到决定性作用的是数据库背后的设计理念<strong>ACID</strong>。</p>
-<h3 id="What’s-ACID"><a href="#What’s-ACID" class="headerlink" title="What’s ACID"></a>What’s ACID</h3><p>ACID: Atomicity, Consistency, Isolation, Durability。</p>
-<p>Andreas Reuter 和 TheoHärder 这两位前辈在 1983 年提出它，指出一个数据库“事务”只要满足这4个特性，在任何情况下数据都能保证准确。</p>
-<p><strong>“事务”是数据库的执行单元</strong>，除了我们平时用显式声明的 <strong>transaction</strong> 之类关键字包裹的代码外，每一条单独的SQL，也是以事务的形式执行的。比如，当你在一条SQL中同时 insert 多笔数据的时候，一旦发生异常，所有的这几笔数据最终都不会被插入到目标表中，会一并撤销。</p>
-<p>在保证达到这个效果的过程中，ACID的四个特性分别起到了什么作用呢？</p>
-<hr>
-<h4 id="Atomicity"><a href="#Atomicity" class="headerlink" title="Atomicity"></a>Atomicity</h4><p>一句话来概括原子性，用于保证每个事务被视为单个完整的个体，不可分割。满足原子性的事务，要么完全成功，要么完全失败，不允许存在其他中间状态。</p>
-<p>通常这点指的是我们同时执行多条SQL语句的时候，可以将这些SQL语句的生效与否捆绑到一起，以保证最终要么全部数据被更新到数据库，要么全部都不更新到数据库。</p>
-<p><strong>Example: 小明让小王代购了一些东西回来，需要在微信上支付给他1000元</strong></p>
-<p>当小明输入完金额点击“确认转账”之后，执行的 SQL 至少是这样的：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">update</span> balance = balance - <span class="number">1000</span> <span class="keyword">from</span> <span class="keyword">account</span> <span class="keyword">where</span> <span class="keyword">id</span> = <span class="string">'小明的 id'</span><span class="string">``</span></span><br><span class="line"><span class="keyword">update</span> balance = balance + <span class="number">1000</span> <span class="keyword">from</span> <span class="keyword">account</span> <span class="keyword">where</span> <span class="keyword">id</span> = <span class="string">'小王的 id'</span></span><br></pre></td></tr></table></figure>
-<p>注意，这两条语句中只要任意一条执行失败，而另外一条执行成功，那么从原子性的要求来说，所有执行成功的修改都需要一并撤销，恢复到最初的状态，这个撤销操作我们称为“回滚”。否则，微信体系中的总余额会无故多出或少了 1000 元。</p>
-<p>数据库中原子性的主流实现方案是通过日志来做的，每一次操作数据前都会先将当前数据记录到日志中，这样在需要回滚时，我们只要把 Undo Log 中的数据拿出来还原，就可以撤销已经执行成功的操作。</p>
-<p>原子性是四个特性中最核心的一个，仅关注当前的这一次操作，不考虑是否存在其它的什么操作。</p>
-<hr>
-<h4 id="Isolation"><a href="#Isolation" class="headerlink" title="Isolation"></a>Isolation</h4><p>在上面小明和小王的故事中，如果再出现一个人小张，他也让小王代购了东西要付钱，会出现新的情况，例如</p>
-<img src="/2018/12/02/DistributedSystem/CAP/从ACID聊到CAP/pc-1.png">
-<p>注意一下红字部分。我们发现，这个时候哪怕两次转账的事务分别保证了原子性，并且执行成功，最终的结果还是有可能出错。</p>
-<p>上图中的现象，我们称为“丢失更新”（Lost Update）。当然，还有其他可能产生的现象，比如脏读、不可重复读、幻读，等等。</p>
-<p>不过，我们暂时不需要过多纠结于这些现象，只要记得：<strong>当仅满足原子性的前提下，如果遇到并发执行，依旧会出现数据错误</strong>。</p>
-<p>所以，这时候我们需要通过隔离性的指导来避免这些问题。<strong>隔离性本质上指导解决的是一个资源竞争问题，通俗点说，就是多个事务并发执行后的状态，应该和它们串行执行后的状态是一致的</strong>。</p>
-<p>在数据库中解决资源竞争问题与其它软件系统无异，就用锁。在数据库中对锁的运用不同，因此产生了不同的隔离级别，不同的隔离级别对应解决的是前面提到的这些异常现象。</p>
-<ul>
-<li>读未提交（Read Uncommitted）解决了丢失更新</li>
-<li>读已提交（Read committed）多解决了脏读</li>
-<li>可重复读（Repeatable Read）又多解决了不可重复读问题</li>
-<li>最高级别的可序列化（Serializable）解决了全部这 4 个问题，即丢失更新、脏读、不可重复度、幻读。</li>
-</ul>
-<img src="/2018/12/02/DistributedSystem/CAP/从ACID聊到CAP/pc-2.png">
-<blockquote>
-<p>脏读：一个事务中读到(SELECT)了另一个事务还没有提交更新的数据。<br>不重复读：在同一个事务里，前后两次相同的SELECT语句会读到不同的结果。侧重点在于更新修改数据。<br>幻读：表示在同一事务中，使用相同的查询语句，第二次查询时，莫名的多出了一些之前不存在数据，或者莫名的不见了一些数据。幻读与不可重复读的区别：幻读的侧重点在于新增和删除。</p>
-</blockquote>
-<p>其实在实际的运用中，遇到的场景会更复杂，所以詹姆士·格雷（Jim Gray）等人在 1995 发表了论文“对 ANSI SQL 隔离级别的批评（A Critique of ANSI SQL Isolation Levels）”将上表做了扩充，增加了<strong>游标稳定（Cursor Stability）</strong>和<strong>快照隔离（Snapshot Isolation）</strong>隔离级别，指导我们在做隔离时，可以为获得更好的性能进行一些新的尝试。</p>
-<hr>
-<h4 id="Durability"><a href="#Durability" class="headerlink" title="Durability"></a>Durability</h4><p>当你使用一些云产品写文章的时候，洋洋洒洒写了几千字，安心睡觉去了，第二天起来发现内容停留在刚起笔的那几个字。任何的数据变更完成之后，就相当于成为了“历史”，需要保存下来才能为未来所用。因此数据库需要具备持久性，才能为我们所依赖用于存储数据。</p>
-<p>如今，我们几乎都是利用硬盘作为数据库的存储介质，来保证持久性。那么理论上，除非硬盘本身故障，否则都不应该出现这样一种情况：一条SQL变更成功后，发生数据丢失或者数据回到更早的状态。</p>
-<hr>
-<h4 id="Consistency"><a href="#Consistency" class="headerlink" title="Consistency"></a>Consistency</h4><p><strong>一致性的含义其实很简单，就是最终结果的对与错，是否是你所希望的结果。</strong>任何系统如果无法确保产生的数据结果与预期一致，那么整个系统其实是没有价值的。</p>
-<p>回到前面小明和小王的例子。只要小明账户少了1000元，小王账户必须要多出1000元，这才是我们所希望的结果，否则都是错的，也就是“不一致”的。</p>
-<p>这么一说，一致性和原子性意思好像差不多啊？关于这点可以这样来理解：</p>
-<ul>
-<li>原子性关注的是关系和过程，确保指定的SQL之间是一个命运共同体。比如鸡蛋孵小鸡这个过程，必然是鸡蛋破了后小鸡再出来，而不是鸡蛋破了，小鸡不见了或者鸡蛋没破，不知道从哪哪冒出来个小鸡。</li>
-<li>而一致性关注的是结果，这个结果的预期是你来定的，如何达到这个结果的过程并不是它所包含的概念。还是鸡蛋孵小鸡这个事，比如你预期一个鸡蛋里只能孵出一个小鸡，那么如果最终9个鸡蛋里出现了10个小鸡，这时就是不一致的。</li>
-</ul>
-<p>由于一致性只表示一个结果，它只是指引出一个正确的工作方向。而要达到这个正确的结果并不完全是由数据库保证的，它只是一个按规则办事的“监督者”。</p>
-<p>但是，它提供了主键、外键、约束、字段类型等，让你可以在不同层面上定义什么是“一致”。一旦不符合你的定义，数据库就会抛出异常来提醒你，这里不符合你的预期了。</p>
-<hr>
-<h3 id="ACID-间的联系"><a href="#ACID-间的联系" class="headerlink" title="ACID 间的联系"></a>ACID 间的联系</h3><p>原子性（A）、隔离性（I）、持久性（D）是为达到一致性（C）而存在的。</p>
-<img src="/2018/12/02/DistributedSystem/CAP/从ACID聊到CAP/pc-3.png">
-<p>可以理解为，只要满足了原子性（A）、隔离性（I）、持久性（D）那么数据存储层面的一致性（C）自然也就满足了。</p>
-<p>不过，站在一个完整的系统角度来说，要达到真正的一致性，还需要我们在Coding的时候有意识的去定义达到“正确结果”的代码逻辑。</p>
-<hr>
-<h3 id="What’s-CAP"><a href="#What’s-CAP" class="headerlink" title="What’s CAP"></a>What’s CAP</h3><p>聊ACID的原因是为了引出分布式系统中的一个经典定理——CAP。</p>
-<p><strong>CAP是指导我们进行多进程之间交互的设计理论</strong>，告诉我们该如何去权衡一致性（C）、可用性（A）、分区容错性（P），这也是它这三个字母所表达的含义。</p>
-<blockquote>
-<p><strong>Robert Greiner CAP</strong><br>第一版：<br>Any distributed system can’t guaranty C, A, and P simultaneously.<br>第二版：<br>In a distributed system (a collection of interconnected nodes that share data), you can only have two out of(从..) the following three guarantees across a write/read pari:<br>Consistency, Availability, and Partition Tolerance - one of them must be sacrified.</p>
-</blockquote>
-<p>两个版本的差异点：</p>
-<ul>
-<li>第二版定义了什么才是CAP理论探讨的分布式系统（强调interconnected and share data）。为什么要强调这两点？因为分布式系统并不一定会互联和共享数据。比如Memcache，相互之间就没有连接和共享数据，因此Memcache集群并不符合CAP理论探讨的对象。而MySQL集群就是互联和进行数据复制的，因此是CAP理论探讨的对象。</li>
-<li>第二版强调了 write/read pair，CAP关注的是对数据的读写操作，而不是分布式系统的所有功能。例如，ZooKeeper的选举机制就不是CAP探讨的对象。</li>
-</ul>
-<p>如果你知道分布式系统理论中的CAP定理，肯定会好奇ACID和CAP两者定义的“一致性”表示的是不是同一个意思。其实不是：</p>
-<ul>
-<li>描述的主体不同，ACID中的C指的是数据库事务的一致性，而CAP中的C指的是程序之间请求的一致性。</li>
-<li>对结果的定义也有些差异，CAP中的C除了一致性之外还带着一些原子性的意思，一次操作中产生的多个请求要被视为一个完整的个体，不可分割，这个特点和数据库中的原子性是一致的。</li>
-</ul>
-<p>所以你会发现，CAP定理中所表述的“一个请求”类似于数据库ACID中的“一条SQL”，并且还保留了原子性和一致性的含义。然后基于分布式的场景，衍生了分区容错性以及可用性的概念。CAP定理作为后来者，为分布式系统而生，是分布式系统设计的指导方针。理解了 ACID，更有利于你去理解 CAP。</p>
-<hr>
-<h4 id="Consistency-1"><a href="#Consistency-1" class="headerlink" title="Consistency"></a>Consistency</h4><blockquote>
-<p>第一版：<br>All nodes see the same data at the same time.<br>第二版：<br>A read is guraranteed to return the most recent write for a given client</p>
-</blockquote>
-<p>两个版本差异点：</p>
-<ul>
-<li>第一版从Node角度描述，第二版从Client的角度描述。第二版更符合我们观察和评估系统的方式，即站在客户端的角度来观察系统的特征和行为。</li>
-<li>第一版关键词<strong>see</strong>，第二版<strong>read</strong>。第二版从Client的读写角度来描述一致性，定义更加精确。</li>
-<li>第一版强调同一时刻所有Node拥有相同的数据，第二版强调Client读取到总是最新的数据（这对于集群中的多个节点来说，可能在同一时刻拥有不同的数据。对于系统执行事务来说，在事务过程中，系统其实处于一个不一致的状态，不同节点的数据并不完全一致，此时Client是无法读取到没有提交的数据。但是当事务提交以后，Client是可以读取到事务写入的数据，如果事务失败则会进行回滚，Client也不会读取到事务中间写入的数据）。</li>
-</ul>
-<hr>
-<h4 id="Available"><a href="#Available" class="headerlink" title="Available"></a>Available</h4><blockquote>
-<p>第一版：<br>Every request gets a response on success / failure.<br>第二版：<br>A non-failing node will return a reasonable response within a reasonable amount of time(no error or timeout).</p>
-</blockquote>
-<p>两个版本的差异：</p>
-<ul>
-<li>第一版强调 every request，第二版强调 a non-failing node。第一版并不严谨，因为只有非故障节点才能满足可用性要求，如果节点本身就故障了，发给节点的请求不一定就能得到一个响应。</li>
-<li>第一版的 success / failure 太宽泛，在实际中没有指导意义，第二版明确了不能超时和不能出错，但要提出合理的结果，需要注意的是没有说”正确”的结果，例如，应该返回200但实际是301，肯定是不正确的结果，但是一个合理的结果。</li>
-</ul>
-<hr>
-<h4 id="Partition-Tolerance"><a href="#Partition-Tolerance" class="headerlink" title="Partition Tolerance"></a>Partition Tolerance</h4><blockquote>
-<p>第一版：<br>System continues to work despite message loss or partial failure.<br>第二版：<br>The system will continue to funtion when network partitions occur.</p>
-</blockquote>
-<p>两个版本的差异：</p>
-<ul>
-<li>第一版用workd，第二版用function。work强调运行，只要系统不宕机，都可以说系统在work，即使返回错误，或拒绝服务都是在work。function强调履行其职能（正确地发挥其功能作用），即返回reasonable response。</li>
-<li>第一版描述分区用的是message loss or partial failure，第二版直接用network partitions。第一版只是说明了message loss造成了分区，但没有详细解释message loss指的是什么，如果说的是丢包，那就太狭隘了，因为它只是网路故障中的一种。而第二版直接说现象，即发生了分区现象。造成这个现象的原因可能是丢包，连接中断或拥塞等等，只要导致了网络分区，就通通算在一起。</li>
-</ul>
-<hr>
-<h3 id="CAP应用"><a href="#CAP应用" class="headerlink" title="CAP应用"></a>CAP应用</h3><p>CAP理论定义是三个要素中只能取两个，但是在实际的分布式环境中，P是一个必要的要素，因为网络本身无法做到100%可靠，所以分区是一个必然的现象。</p>
-<p>假如我们选择CA（放弃P），那么当发生分区现象时，为了保证C，系统需要禁止写入操作，因为当有写入请求时，系统返回error。这又和A冲突了，因为A要去返回no error和no timeout。因此分布式系统理论上不可能选择CA架构，只能选CP或AP架构。</p>
-<hr>
-<h4 id="CP架构"><a href="#CP架构" class="headerlink" title="CP架构"></a>CP架构</h4><img src="/2018/12/02/DistributedSystem/CAP/从ACID聊到CAP/pc-4.png">
-<p>假设，此时所有Node上面的index=0。</p>
-<p>为了保证一致性，当分区现象发生后，Node1节点上的index已经更新为1，但由于Node1与Node2之间的网络出了问题，造成数据同步失败，Node2上的index仍然为0。</p>
-<p>此时客户端访问Node2，Node2因为C的要求，Node2需要返回Error信息，提示客户端“系统发生了错误”，这种方式违背了A的要求，因此CAP三者只能满足CP。</p>
-<hr>
-<h4 id="AP架构"><a href="#AP架构" class="headerlink" title="AP架构"></a>AP架构</h4><img src="/2018/12/02/DistributedSystem/CAP/从ACID聊到CAP/pc-4.png">
-<p>假设，此时所有Node上面的index=0。</p>
-<p>为了保证可用性，当分区现象发生后，Node1节点上的index已经更新为1，但由于Node1与Node2之间的网络出了问题，造成数据同步失败，Node2上的index仍然为0。</p>
-<p>此时客户端访问Node2，Node2因为A的要求，Node2将当前index=0的数据返回给客户端，而实际上当前最新的数据是index=1，这就不满足C的要求了，因此CAP三者只能满足CP。</p>
-<hr>
-<h4 id="CPA关注的粒度是数据，而不是整个系统"><a href="#CPA关注的粒度是数据，而不是整个系统" class="headerlink" title="CPA关注的粒度是数据，而不是整个系统"></a>CPA关注的粒度是数据，而不是整个系统</h4><p>每个系统不可能只处理一种数据，而是包含多种类型的数据，有的数据必须选择CP，有的数据必须选择AP。</p>
-<p>如果我们在做设计时，从整个系统的角度去选择CP还是AP，就会发现顾此失彼，无论怎么做都是有问题的。</p>
-<p>例如，SSO系统包含用户账号信息（用户ID和密码）、用户其他信息（昵称、性别、手机号等等）。</p>
-<p>通常情况下，用户账号数据会选择CP，而用户其他信息会选择AP。如果限定了整个系统为CP，则不符合用户其他信息的应用场景，同理可知，限定系统为AP也是不行的。</p>
-<p>例如，账户资金系统，用户可用余额信息选择CA（例如，避免双花问题），用户账户流水信息选择AP或CP。</p>
-<p>所以在CAP理论落地实践时，需要将系统内的数据按照不同的应用场景和要求进行分类，每类数据选择不同的策略（AP或CP），而不是直接限定系统所有数据都是同一个策略。</p>
-<hr>
-<h4 id="CAP是忽略网络延迟的"><a href="#CAP是忽略网络延迟的" class="headerlink" title="CAP是忽略网络延迟的"></a>CAP是忽略网络延迟的</h4><p>Eric Brewer在定义一致性时，并没有把延迟考虑进去。即当事务提交时，数据能够瞬间复制到所有节点。</p>
-<p>但实际情况下，从节点A复制到节点B，总是要花费一定时间的。如果是同机房，耗费时间可能是几毫秒；如果是跨地区的机房，耗费的时间可能是几十毫秒。这就意味着节点A和节点B的数据并不一致。</p>
-<p>对于某些严苛的业务场景，例如和金钱相关的用户余额和抢购相关的商品库存，技术上是无法做到分布式场景下完美的一致性。而业务上必须要求一致性，因此单个用户的余额、单个商品的库存，理论上要求选择CP而实际上CP都做不到，只能选择CA。也就是说，只能单点写入，其他节点做备份，无法做到分布式情况下多点写入。</p>
-<p>在这种情况下，并不意味着这类系统无法应用分布式架构，只是说“单个用户余额、单个商品库存”无法做到分布式，但系统整体还是可以应用分布式架构的。</p>
-<p>例如，将用户分区的分布式架构图</p>
-<img src="/2018/12/02/DistributedSystem/CAP/从ACID聊到CAP/pc-5.png">
-<p>把用户分散在不同的Node上，即使某个Node出现了故障，也仅仅是部分用户不能操作，但是大部分用户还是可以进行正常操作的。</p>
-<hr>
-<h4 id="正常运行情况下，不存在CP和AP的选择，可以同时满足CA"><a href="#正常运行情况下，不存在CP和AP的选择，可以同时满足CA" class="headerlink" title="正常运行情况下，不存在CP和AP的选择，可以同时满足CA"></a>正常运行情况下，不存在CP和AP的选择，可以同时满足CA</h4><p>CAP理论告诉我们，分布式系统只能选择CP或AP，前提条件是“系统发生了分区现象”。如果没有发生分区现象，即P不存在的时候（节点间的网络一切正常），此时没有必要放弃C或A，CA都可以保证。</p>
-<p>这就要求架构设计的时候既要考虑分区发生时选择CP还是CA，也要考虑分区没有发生时如何保证CA。</p>
-<p>例如，SSO系统中，用户账户数据可以通过消息队列实现CA；用户信息可以采用“数据库同步”的方式实现CA。</p>
-<hr>
-<h4 id="放弃不等于什么都不做，需要为分区恢复做准备"><a href="#放弃不等于什么都不做，需要为分区恢复做准备" class="headerlink" title="放弃不等于什么都不做，需要为分区恢复做准备"></a>放弃不等于什么都不做，需要为分区恢复做准备</h4><p>CAP理论的“牺牲”只是说在分区过程中我们无法保证C或A，但并不意味着我们什么都不做。因为在系统整个运行周期中，大部分时间都是正常的，发生分区现象的时间并不长。</p>
-<p>例如，99.99%可用性的系统，一年运行下来，不可用的时间只有50分钟、99.999%可用性的系统，不可用的时间只有5分钟。</p>
-<p>分区期间放弃C或A，并不意味着永远放弃C和A，我们在分区期间进行一些操作，从而让分区故障解决后，系统能够重新达到CA的状态。</p>
-<p>比较常见的解决方案是，在分区期间记录一些日志，当分区故障解决后，系统根据日志进行数据恢复，使得重新达到CA状态。</p>
-<hr>
-<h3 id="BASE"><a href="#BASE" class="headerlink" title="BASE"></a>BASE</h3><p>BASE: Basically Available, Soft State, Eventually Consistency</p>
-<hr>
-<h4 id="Basically-Available"><a href="#Basically-Available" class="headerlink" title="Basically Available"></a>Basically Available</h4><p>分布式系统在出现故障时，允许损失部分可用性，即保证核心可用。</p>
-<p>例如，SSO系统，核心是登录功能，部分是注册功能。</p>
-<hr>
-<h4 id="Soft-State"><a href="#Soft-State" class="headerlink" title="Soft State"></a>Soft State</h4><p>允许系统存在中间状态，而中间状态不会影响系统整体可用性。这里的中间状态就是CAP理论中的数据不一致性。</p>
-<hr>
-<h4 id="Eventually-Consistency"><a href="#Eventually-Consistency" class="headerlink" title="Eventually Consistency"></a>Eventually Consistency</h4><p>系统中所有数据副本经过<strong>一定时间</strong>后，<strong>最终</strong>能够达到一致的状态。</p>
-<p>这里的“最终”和“一定时间”，与数据的特性是强关联的，不同的数据能够容忍的不一致时间是不同的。</p>
-<p>例如，用户账号数据最好能在一分钟就达到一致状态，因为用户在节点A注册或登录后，1分钟内不太可能立刻切换到另一个节点，但10分钟后可能就重新登录到另一个节点。</p>
-<p>用户发布的最新微博，可以容忍30分钟内达到一致状态。因为对于用户来说，看不到某个明星发布的最新微博，用户是无感知的，会认为明星没有发布微博。</p>
-<p>“最终”的含义就是不管多长时间，最终还是要达到一致性的状态。</p>
-<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>BASE理论本质上是对CAP的延伸和补充，更具体地说，是对CAP中AP方案的一个补充。</p>
-<ul>
-<li><p>CAP理论是忽略延时的，而实际应用中延时是无法避免的。</p>
-<blockquote>
-<p>这一点就意味着完美的CP场景是不存在的，即使是几毫秒的数据复制延迟，在这几毫秒时间间隔内，系统是不符合CP要求的。因此CAP中的CP方案，实际上也是实现了最终一致性，只是“一定时间”是指几毫秒。</p>
-</blockquote>
-</li>
-<li><p>AP方案中牺牲一致性只是指分区期间，而不是永远放弃一致性。</p>
-<blockquote>
-<p>这一点其实就是BASE理论延伸的地方，分期区间牺牲一致性，但分区故障恢复后，系统应该达到最终一致性。</p>
-</blockquote>
-</li>
-</ul>
-<p>对于ACID，CAP和BASE对比分析总结：</p>
-<ul>
-<li>ACID是数据库事务完整性的理论</li>
-<li>CAP是分布式系统的设计理论</li>
-<li>BASE是CAP理论中AP方案的延伸</li>
-</ul>
-<hr>
-<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
-<p><a href="https://www.infoq.cn/article/Q1Dlq-tcyjEX6GVmRuoy" target="_blank" rel="noopener">https://www.infoq.cn/article/Q1Dlq-tcyjEX6GVmRuoy</a><br><a href="http://www.zsythink.net/archives/1233" target="_blank" rel="noopener">http://www.zsythink.net/archives/1233</a><br>Robert Greiner CAP 1.0: <a href="http://robertgreiner.com/2014/06/cap-theorem-explained/" target="_blank" rel="noopener">http://robertgreiner.com/2014/06/cap-theorem-explained/</a><br>Robert Greiner CAP 2.0: <a href="http://robertgreiner.com/2014/08/cap-theorem-revisited/" target="_blank" rel="noopener">http://robertgreiner.com/2014/08/cap-theorem-revisited/</a><br>Zookeeper的Leader选举: <a href="http://www.cnblogs.com/leesf456/p/6107600.html" target="_blank" rel="noopener">http://www.cnblogs.com/leesf456/p/6107600.html</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/01/Rust/Basic/Scopes/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/01/Rust/Basic/Scopes/" itemprop="url">Rust Scopes and Ownership</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-01T13:24:03+08:00">
-                2018-12-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/" itemprop="url" rel="index">
-                    <span itemprop="name">Rust</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Scopes play an important part in ownership, borrowing, and lifetimes. </p>
-<p>That is, they indicate to the compiler when borrows are valid, when resources can be freed, and when variables are created or destroyed.</p>
-<h3 id="What’s-RAII"><a href="#What’s-RAII" class="headerlink" title="What’s RAII"></a>What’s RAII</h3><p> Rust enforces RAII, so whenever an object goes out of scope, its destructor is called and its owned resources are freed.</p>
-<blockquote>
-<p> RAII: Resource Acquisition Is Initialization</p>
-</blockquote>
-<p> This behavior shields against resource leak bugs, so you’ll never have to manually free memory or worry about memory leaks again! </p>
-<p> Here’s a quick showcase:</p>
- <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function"><span class="keyword">fn</span> <span class="title">create_box</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Allocate an integer on the heap</span></span><br><span class="line">    <span class="keyword">let</span> _box1 = <span class="built_in">Box</span>::new(<span class="number">3i32</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `_box1` is destroyed here, and memory gets freed</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Allocate an integer on the heap</span></span><br><span class="line">    <span class="keyword">let</span> _box2 = <span class="built_in">Box</span>::new(<span class="number">5i32</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A nested scope:</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Allocate an integer on the heap</span></span><br><span class="line">        <span class="keyword">let</span> _box3 = <span class="built_in">Box</span>::new(<span class="number">4i32</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// `_box3` is destroyed here, and memory gets freed</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Creating lots of boxes just for fun</span></span><br><span class="line">    <span class="comment">// There's no need to manually free memory!</span></span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="number">0u32</span>..<span class="number">1_000</span> &#123;</span><br><span class="line">        create_box();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `_box2` is destroyed here, and memory gets freed</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>memory analyzer：rustc main.rs &amp;&amp; valgrind ./main</p>
-<h3 id="Destructor"><a href="#Destructor" class="headerlink" title="Destructor"></a>Destructor</h3><p>The notion of a destructor in Rust is provided through the <strong>Drop</strong> trait. The destructor is called when the resource goes out of scope. </p>
-<p>This trait is not required to be implemented for every type, only implement it for your type if you require its own destructor logic.</p>
-<p>showcase:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ToDrop</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="built_in">Drop</span> <span class="keyword">for</span> ToDrop &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">drop</span></span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"ToDrop is being dropped"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> x = ToDrop;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Made a ToDrop!"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Made a ToDrop!</span><br><span class="line">ToDrop is being dropped</span><br></pre></td></tr></table></figure>
-<h3 id="Ownership"><a href="#Ownership" class="headerlink" title="Ownership"></a>Ownership</h3><p>Because variables are in charge of freeing their own resources, <strong>resources can only have one owner</strong>.</p>
-<p>This also prevents resources from being freed more than once. Note that not all variables own resources (e.g. references).</p>
-<p>When doing assignments (let x = y) or passing function arguments by value (foo(x)), the ownership of the resources is transferred. <strong>In Rust-speak, this is known as a move.</strong></p>
-<p><strong>After moving resources, the previous owner can no longer be used. This avoids creating dangling pointers.</strong></p>
-<p>Example:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// This function takes ownership of the heap allocated memory</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">destroy_box</span></span>(c: <span class="built_in">Box</span>&lt;<span class="built_in">i32</span>&gt;) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Destroying a box that contains &#123;&#125;"</span>, c);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `c` is destroyed and the memory freed</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// _Stack_ allocated integer</span></span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">5u32</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// *Copy* `x` into `y` - no resources are moved</span></span><br><span class="line">    <span class="keyword">let</span> y = x;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Both values can be independently used</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"x is &#123;&#125;, and y is &#123;&#125;"</span>, x, y);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `a` is a pointer to a _heap_ allocated integer</span></span><br><span class="line">    <span class="keyword">let</span> a = <span class="built_in">Box</span>::new(<span class="number">5i32</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"a contains: &#123;&#125;"</span>, a);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// *Move* `a` into `b`</span></span><br><span class="line">    <span class="keyword">let</span> b = a;</span><br><span class="line">    <span class="comment">// The pointer address of `a` is copied (not the data) into `b`.</span></span><br><span class="line">    <span class="comment">// Both are now pointers to the same heap allocated data, but</span></span><br><span class="line">    <span class="comment">// `b` now owns it.</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Error! `a` can no longer access the data, because it no longer owns the</span></span><br><span class="line">    <span class="comment">// heap memory</span></span><br><span class="line">    <span class="comment">//println!("a contains: &#123;&#125;", a);</span></span><br><span class="line">    <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// This function takes ownership of the heap allocated memory from `b`</span></span><br><span class="line">    destroy_box(b);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Since the heap memory has been freed at this point, this action would</span></span><br><span class="line">    <span class="comment">// result in dereferencing freed memory, but it's forbidden by the compiler</span></span><br><span class="line">    <span class="comment">// Error! Same reason as the previous Error</span></span><br><span class="line">    <span class="comment">//println!("b contains: &#123;&#125;", b);</span></span><br><span class="line">    <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line">    <span class="comment">// error[E0382]: use of moved value: `a`</span></span><br><span class="line">    <span class="comment">// println!("a contains: &#123;&#125;", a)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到，不论是b，还是a，在调用destroy_box()后，都失去了ownership。</p>
-<h3 id="Borrowing"><a href="#Borrowing" class="headerlink" title="Borrowing"></a>Borrowing</h3><p>Most of the time, we’d like to access data without taking ownership over it. To accomplish this, Rust uses a <strong>borrowing</strong> mechanism. Instead of passing objects by value (T), objects can be passed by reference (&amp;T).</p>
-<p>Example:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// This function takes ownership of a box and destroys it</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">eat_box_i32</span></span>(boxed_i32: <span class="built_in">Box</span>&lt;<span class="built_in">i32</span>&gt;) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Destroying box that contains &#123;&#125; on eat_box_i32 function"</span>, boxed_i32);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function borrows an i32</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">borrow_i32</span></span>(borrowed_i32: &amp;<span class="built_in">i32</span>) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"This int is: &#123;&#125; on borrow_i32 function"</span>, borrowed_i32);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Create a boxed i32, and a stacked i32</span></span><br><span class="line">    <span class="keyword">let</span> boxed_i32 = <span class="built_in">Box</span>::new(<span class="number">5_i32</span>);</span><br><span class="line">    <span class="keyword">let</span> stacked_i32 = <span class="number">6_i32</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Borrow the contents of the box. Ownership is not taken,</span></span><br><span class="line">    <span class="comment">// so the contents can be borrowed again.</span></span><br><span class="line">    borrow_i32(&amp;boxed_i32);</span><br><span class="line">    borrow_i32(&amp;stacked_i32);</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Take a reference to the data contained inside the box</span></span><br><span class="line">        <span class="keyword">let</span> _ref_to_i32: &amp;<span class="built_in">i32</span> = &amp;boxed_i32;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error!</span></span><br><span class="line">        <span class="comment">// Can't destroy `boxed_i32` while the inner value is borrowed.</span></span><br><span class="line">        <span class="comment">// eat_box_i32(boxed_i32);</span></span><br><span class="line">        <span class="comment">// FIXME ^ Comment out this line</span></span><br><span class="line">        borrow_i32(&amp;_ref_to_i32);</span><br><span class="line">        <span class="comment">// `_ref_to_i32` goes out of scope and is no longer borrowed.</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `boxed_i32` can now give up ownership to `eat_box` and be destroyed</span></span><br><span class="line">     eat_box_i32(boxed_i32);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在block里面，调用eat_box_i32()尝试destroy boxed_i32前，boxed_i32已经被_ref_to_i32借用了，而且eat_box_i32()被包含在_ref_to_i32的scope里面，此时，eat_box_i32()试图destroy boxed_i32是不可能的事情。</p>
-<h4 id="Mutability"><a href="#Mutability" class="headerlink" title="Mutability"></a>Mutability</h4><p>Mutable data can be mutably borrowed using &amp;mut T. This is called a mutable reference and gives read/write access to the borrower. </p>
-<p>In contrast, &amp;T borrows the data via an immutable reference, and the borrower can read the data but not modify it:</p>
-<p>Example:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#[allow(dead_code)]</span></span><br><span class="line"><span class="meta">#[derive(Clone, Copy)]</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Book</span></span> &#123;</span><br><span class="line">    <span class="comment">// `&amp;'static str` is a reference to a string allocated in read only memory</span></span><br><span class="line">    author: &amp;<span class="symbol">'static</span> <span class="built_in">str</span>,</span><br><span class="line">    title: &amp;<span class="symbol">'static</span> <span class="built_in">str</span>,</span><br><span class="line">    year: <span class="built_in">u32</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function takes a reference to a book</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">borrow_book</span></span>(book: &amp;Book) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"I immutably borrowed &#123;&#125; - &#123;&#125; edition"</span>, book.title, book.year);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function takes a reference to a mutable book and changes `year` to 2014</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">new_edition</span></span>(book: &amp;<span class="keyword">mut</span> Book) &#123;</span><br><span class="line">    book.year = <span class="number">2014</span>;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"I mutably borrowed &#123;&#125; - &#123;&#125; edition"</span>, book.title, book.year);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Create an immutable Book named `immutabook`</span></span><br><span class="line">    <span class="keyword">let</span> immutabook = Book &#123;</span><br><span class="line">        <span class="comment">// string literals have type `&amp;'static str`</span></span><br><span class="line">        author: <span class="string">"Douglas Hofstadter"</span>,</span><br><span class="line">        title: <span class="string">"Gödel, Escher, Bach"</span>,</span><br><span class="line">        year: <span class="number">1979</span>,</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create a mutable copy of `immutabook` and call it `mutabook`</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> mutabook = immutabook;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Immutably borrow an immutable object</span></span><br><span class="line">    borrow_book(&amp;immutabook);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Immutably borrow a mutable object</span></span><br><span class="line">    borrow_book(&amp;mutabook);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Borrow a mutable object as mutable</span></span><br><span class="line">    new_edition(&amp;<span class="keyword">mut</span> mutabook);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Error! Cannot borrow an immutable object as mutable</span></span><br><span class="line">    <span class="comment">// new_edition(&amp;mut immutabook);</span></span><br><span class="line">    <span class="comment">// FIXME ^ Comment out this line</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> modify_immute_book = immutabook;</span><br><span class="line">    new_edition(&amp;<span class="keyword">mut</span> modify_immute_book)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="Freezing"><a href="#Freezing" class="headerlink" title="Freezing"></a>Freezing</h4><p>When data is immutably borrowed, it also freezes. Frozen data can’t be modified via the original object until all references to it go out of scope:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> _mutable_integer = <span class="number">7i32</span>;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Borrow `_mutable_integer`</span></span><br><span class="line">        <span class="keyword">let</span> <span class="keyword">mut</span> _large_integer = &amp;_mutable_integer;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error! `_mutable_integer` is frozen in this scope</span></span><br><span class="line">        <span class="comment">// cannot assign to `_mutable_integer` because it is borrowed</span></span><br><span class="line">        <span class="comment">// _mutable_integer = 50;</span></span><br><span class="line">        <span class="comment">// FIXME ^ Comment out this line</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"before :&#123;&#125;"</span>, _large_integer);</span><br><span class="line">        _large_integer = &amp;<span class="number">30i32</span>;</span><br><span class="line">        <span class="comment">// `_large_integer` goes out of scope</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"after :&#123;&#125;"</span>, _large_integer)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Ok! `_mutable_integer` is not frozen in this scope</span></span><br><span class="line">    _mutable_integer = <span class="number">3</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="Aliasing"><a href="#Aliasing" class="headerlink" title="Aliasing"></a>Aliasing</h4><p>Data can be immutably borrowed any number of times, but while immutably borrowed, the original data can’t be mutably borrowed. On the other hand, only one mutable borrow is allowed at a time. The original data can be borrowed again only after the mutable reference goes out of scope.</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Point</span></span> &#123; x: <span class="built_in">i32</span>, y: <span class="built_in">i32</span>, z: <span class="built_in">i32</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> point = Point &#123; x: <span class="number">0</span>, y: <span class="number">0</span>, z: <span class="number">0</span> &#125;;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">let</span> borrowed_point = &amp;point;</span><br><span class="line">        <span class="keyword">let</span> another_borrow = &amp;point;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Data can be accessed via the references and the original owner</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"Point has coordinates: (&#123;&#125;, &#123;&#125;, &#123;&#125;)"</span>,</span><br><span class="line">                 borrowed_point.x, another_borrow.y, point.z);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error! Can't borrow point as mutable because it's currently</span></span><br><span class="line">        <span class="comment">// borrowed as immutable.</span></span><br><span class="line">        <span class="comment">//let mutable_borrow = &amp;mut point;</span></span><br><span class="line">        <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Immutable references go out of scope</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">let</span> mutable_borrow = &amp;<span class="keyword">mut</span> point;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Change data via mutable reference</span></span><br><span class="line">        mutable_borrow.x = <span class="number">5</span>;</span><br><span class="line">        mutable_borrow.y = <span class="number">2</span>;</span><br><span class="line">        mutable_borrow.z = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error! Can't borrow `point` as immutable because it's currently</span></span><br><span class="line">        <span class="comment">// borrowed as mutable.</span></span><br><span class="line">        <span class="comment">//let y = &amp;point.y;</span></span><br><span class="line">        <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Error! Can't print because `println!` takes an immutable reference.</span></span><br><span class="line">        <span class="comment">//println!("Point Z coordinate is &#123;&#125;", point.z);</span></span><br><span class="line">        <span class="comment">// TODO ^ Try uncommenting this line</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Ok! Mutable references can be passed as immutable to `println!`</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"Point has coordinates: (&#123;&#125;, &#123;&#125;, &#123;&#125;)"</span>,</span><br><span class="line">                 mutable_borrow.x, mutable_borrow.y, mutable_borrow.z);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Mutable reference goes out of scope</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Immutable references to point are allowed again</span></span><br><span class="line">    <span class="keyword">let</span> borrowed_point = &amp;point;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"Point now has coordinates: (&#123;&#125;, &#123;&#125;, &#123;&#125;)"</span>,</span><br><span class="line">             borrowed_point.x, borrowed_point.y, borrowed_point.z);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li><p>在第一个block里面，point已经被borrowed_point借用，此时如果试图进行mutable borrow是禁止的，但是immutable是可以多次的。即，如果一个对象已经被borrow了，都不能再进行mutable borrrow，除非borrow已经结束。</p>
-</li>
-<li><p>在第二个block里面，point已经被mutable borrow，此时即使是immutable borrow也是不允许的。</p>
-</li>
-</ul>
-<h3 id="The-Ref-Pattern"><a href="#The-Ref-Pattern" class="headerlink" title="The Ref Pattern"></a>The Ref Pattern</h3><p>When doing pattern matching or destructuring via the let binding, the ref keyword can be used to take references to the fields of a struct/tuple. </p>
-<p>The example below shows a few instances where this can be useful:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#[derive(Clone, Copy)]</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Point</span></span> &#123; x: <span class="built_in">i32</span>, y: <span class="built_in">i32</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> c = <span class="string">'Q'</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A `ref` borrow on the left side of an assignment is equivalent to</span></span><br><span class="line">    <span class="comment">// an `&amp;` borrow on the right side.</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">ref</span> ref_c1 = c;</span><br><span class="line">    <span class="keyword">let</span> ref_c2 = &amp;c;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"ref_c1 equals ref_c2: &#123;&#125;"</span>, *ref_c1 == *ref_c2);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> point = Point &#123; x: <span class="number">1</span>, y: <span class="number">0</span> &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// `ref` is also valid when destructuring a struct.</span></span><br><span class="line">    <span class="keyword">let</span> _copy_of_x = &#123;</span><br><span class="line">        <span class="comment">// `ref_to_x` is a reference to the `x` field of `point`.</span></span><br><span class="line">        <span class="keyword">let</span> Point &#123; x: <span class="keyword">ref</span> ref_to_x, y: _ &#125; = point;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Return a copy of the `x` field of `point`.</span></span><br><span class="line">        *ref_to_x</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"copy_of_x: &#123;&#125;"</span>, _copy_of_x);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A mutable copy of `point`</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> mutable_point = point;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// `ref` can be paired with `mut` to take mutable references.</span></span><br><span class="line">        <span class="keyword">let</span> Point &#123; x: _, y: <span class="keyword">ref</span> <span class="keyword">mut</span> mut_ref_to_y &#125; = mutable_point;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Mutate the `y` field of `mutable_point` via a mutable reference.</span></span><br><span class="line">        *mut_ref_to_y = <span class="number">3</span>;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"point is (&#123;&#125;, &#123;&#125;)"</span>, point.x, point.y);</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"mutable_point is (&#123;&#125;, &#123;&#125;)"</span>, mutable_point.x, mutable_point.y);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A mutable tuple that includes a pointer</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> mutable_tuple = (<span class="built_in">Box</span>::new(<span class="number">5u32</span>), <span class="number">3u32</span>);</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"original tuple is &#123;:?&#125;"</span>, mutable_tuple);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Destructure `mutable_tuple` to change the value of `last`.</span></span><br><span class="line">        <span class="keyword">let</span> (_, <span class="keyword">ref</span> <span class="keyword">mut</span> last) = mutable_tuple;</span><br><span class="line">        *last = <span class="number">2u32</span>;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"tuple is &#123;:?&#125;"</span>, mutable_tuple);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ref_c1 equals ref_c2: <span class="literal">true</span></span><br><span class="line">copy_of_x: 1</span><br><span class="line">point is (1, 0)</span><br><span class="line">mutable_point is (1, 3)</span><br><span class="line">original tuple is (5, 3)</span><br><span class="line">tuple is (5, 2)</span><br></pre></td></tr></table></figure>
-<h3 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h3><blockquote>
-<p><a href="https://doc.rust-lang.org/stable/rust-by-example" target="_blank" rel="noopener">https://doc.rust-lang.org/stable/rust-by-example</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/01/Rust/Basic/Lifetimes/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/01/Rust/Basic/Lifetimes/" itemprop="url">Rust Lifetimes</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-01T13:24:03+08:00">
-                2018-12-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/" itemprop="url" rel="index">
-                    <span itemprop="name">Rust</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>A lifetime is a construct the compiler (or more specifically, its borrow checker) uses to ensure all borrows are valid. </p>
-<p>Specifically, a variable’s lifetime begins when it is created and ends when it is destroyed. <strong>While lifetimes and scopes are often referred to together, they are not the same.</strong></p>
-<p>Take, for example, the case where we borrow a variable via &amp;. The borrow has a lifetime that is determined by where it is declared. </p>
-<p>As a result, <strong>the borrow is valid as long as it ends before the lender is destroyed. However, the scope of the borrow is determined by where the reference is used.</strong></p>
-<p>showcase:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Lifetimes are annotated below with lines denoting the creation</span></span><br><span class="line"><span class="comment">// and destruction of each variable.</span></span><br><span class="line"><span class="comment">// `i` has the longest lifetime because its scope entirely encloses</span></span><br><span class="line"><span class="comment">// both `borrow1` and `borrow2`. The duration of `borrow1` compared</span></span><br><span class="line"><span class="comment">// to `borrow2` is irrelevant since they are disjoint.</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> i = <span class="number">3</span>; <span class="comment">// Lifetime for `i` starts. ────────────────┐</span></span><br><span class="line">    <span class="comment">//                                                     │</span></span><br><span class="line">    &#123; <span class="comment">//                                                   │</span></span><br><span class="line">        <span class="keyword">let</span> borrow1 = &amp;i; <span class="comment">// `borrow1` lifetime starts. ──┐│</span></span><br><span class="line">        <span class="comment">//                                                ││</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"borrow1: &#123;&#125;"</span>, borrow1); <span class="comment">//              ││</span></span><br><span class="line">    &#125; <span class="comment">// `borrow1 ends. ──────────────────────────────────┘│</span></span><br><span class="line">    <span class="comment">//                                                     │</span></span><br><span class="line">    <span class="comment">//                                                     │</span></span><br><span class="line">    &#123; <span class="comment">//                                                   │</span></span><br><span class="line">        <span class="keyword">let</span> borrow2 = &amp;i; <span class="comment">// `borrow2` lifetime starts. ──┐│</span></span><br><span class="line">        <span class="comment">//                                                ││</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"borrow2: &#123;&#125;"</span>, borrow2); <span class="comment">//              ││</span></span><br><span class="line">    &#125; <span class="comment">// `borrow2` ends. ─────────────────────────────────┘│</span></span><br><span class="line">    <span class="comment">//                                                     │</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>Note that no names or types are assigned to label lifetimes. This restricts how lifetimes will be able to be used as we will see.</p>
-<p>需要注意的是，lifetime需要开发人员自己去标记出来，IDE并不会帮助你标记一个变量的lifetime。</p>
-<p>从上面的代码可知，i的lifetime和scope的周期完全不同，scope周期 &lt;= lifetime周期。</p>
-<hr>
-<h3 id="Elision-annotation"><a href="#Elision-annotation" class="headerlink" title="Elision annotation"></a>Elision annotation</h3><p>Some lifetime patterns are overwhelmingly(强制地) common and so the borrow checker will implicitly add them to save typing and to improve readability. This process of implicit addition is called elision. Elision exists in Rust solely because these patterns are common.</p>
-<p>The following code shows a few examples of elision. For a more comprehensive description of elision</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// `elided_input` and `annotated_input` essentially have identical signatures</span></span><br><span class="line"><span class="comment">// because the lifetime of `elided_input` is elided by the compiler:</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">elided_input</span></span>(x: &amp;<span class="built_in">i32</span>) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"`elided_input`: &#123;&#125;"</span>, x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">annotated_input</span></span>&lt;<span class="symbol">'a</span>&gt;(x: &amp;<span class="symbol">'a</span> <span class="built_in">i32</span>) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"`annotated_input`: &#123;&#125;"</span>, x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Similarly, `elided_pass` and `annotated_pass` have identical signatures</span></span><br><span class="line"><span class="comment">// because the lifetime is added implicitly to `elided_pass`:</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">elided_pass</span></span>(x: &amp;<span class="built_in">i32</span>) -&gt; &amp;<span class="built_in">i32</span> &#123; x &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">annotated_pass</span></span>&lt;<span class="symbol">'a</span>&gt;(x: &amp;<span class="symbol">'a</span> <span class="built_in">i32</span>) -&gt; &amp;<span class="symbol">'a</span> <span class="built_in">i32</span> &#123; x &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line">    elided_input(&amp;x);</span><br><span class="line">    annotated_input(&amp;x);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"`elided_pass`: &#123;&#125;"</span>, elided_pass(&amp;x));</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"`annotated_pass`: &#123;&#125;"</span>, annotated_pass(&amp;x));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Functions"><a href="#Functions" class="headerlink" title="Functions"></a>Functions</h3><p>Ignoring elision, function signatures with lifetimes have a few constraints:</p>
-<ul>
-<li>any reference must have an annotated lifetime.</li>
-<li>any reference being returned must have the same lifetime as an input or be static.</li>
-</ul>
-<p>Additionally, note that returning references without input is banned if it would result in returning references to invalid data. The following example shows off(强调) some valid forms of functions with lifetimes:</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// One input reference with lifetime `'a` which must live</span></span><br><span class="line"><span class="comment">// at least as long as the function.</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">print_one</span></span>&lt;<span class="symbol">'a</span>&gt;(x: &amp;<span class="symbol">'a</span> <span class="built_in">i32</span>) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"`print_one`: x is &#123;&#125;"</span>, x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Mutable references are possible with lifetimes as well.</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">add_one</span></span>&lt;<span class="symbol">'a</span>&gt;(x: &amp;<span class="symbol">'a</span> <span class="keyword">mut</span> <span class="built_in">i32</span>) &#123;</span><br><span class="line">    *x += <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Multiple elements with different lifetimes. In this case, it</span></span><br><span class="line"><span class="comment">// would be fine for both to have the same lifetime `'a`, but</span></span><br><span class="line"><span class="comment">// in more complex cases, different lifetimes may be required.</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">print_multi</span></span>&lt;<span class="symbol">'a</span>, <span class="symbol">'b</span>&gt;(x: &amp;<span class="symbol">'a</span> <span class="built_in">i32</span>, y: &amp;<span class="symbol">'b</span> <span class="built_in">i32</span>) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"`print_multi`: x is &#123;&#125;, y is &#123;&#125;"</span>, x, y);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Returning references that have been passed in is acceptable.</span></span><br><span class="line"><span class="comment">// However, the correct lifetime must be returned.</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">pass_x</span></span>&lt;<span class="symbol">'a</span>, <span class="symbol">'b</span>&gt;(x: &amp;<span class="symbol">'a</span> <span class="built_in">i32</span>, _: &amp;<span class="symbol">'b</span> <span class="built_in">i32</span>) -&gt; &amp;<span class="symbol">'a</span> <span class="built_in">i32</span> &#123; x &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//fn invalid_output&lt;'a&gt;() -&gt; &amp;'a String &#123; &amp;String::from("foo") &#125;</span></span><br><span class="line"><span class="comment">// The above is invalid: `'a` must live longer than the function.</span></span><br><span class="line"><span class="comment">// Here, `&amp;String::from("foo")` would create a `String`, followed by a</span></span><br><span class="line"><span class="comment">// reference. Then the data is dropped upon exiting the scope, leaving</span></span><br><span class="line"><span class="comment">// a reference to invalid data to be returned.</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> x = <span class="number">7</span>;</span><br><span class="line">    <span class="keyword">let</span> y = <span class="number">9</span>;</span><br><span class="line"></span><br><span class="line">    print_one(&amp;x);</span><br><span class="line">    print_multi(&amp;x, &amp;y);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> z = pass_x(&amp;x, &amp;y);</span><br><span class="line">    print_one(z);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> t = <span class="number">3</span>;</span><br><span class="line">    add_one(&amp;<span class="keyword">mut</span> t);</span><br><span class="line">    print_one(&amp;t);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果function有返回值，则返回值必须声明lifetime。</p>
-<hr>
-<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="Case-Explicit-annotation"><a href="#Case-Explicit-annotation" class="headerlink" title="Case: Explicit annotation"></a>Case: Explicit annotation</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// `print_refs` takes two references to `i32` which have different</span></span><br><span class="line"><span class="comment">// lifetimes `'a` and `'b`. These two lifetimes must both be at</span></span><br><span class="line"><span class="comment">// least as long as the function `print_refs`.</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">print_refs</span></span>&lt;<span class="symbol">'a</span>, <span class="symbol">'b</span>&gt;(x: &amp;<span class="symbol">'a</span> <span class="built_in">i32</span>, y: &amp;<span class="symbol">'b</span> <span class="built_in">i32</span>) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"x is &#123;&#125; and y is &#123;&#125;"</span>, x, y);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// A function which takes no arguments, but has a lifetime parameter `'a`.</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">failed_borrow</span></span>&lt;<span class="symbol">'a</span>&gt;() &#123;</span><br><span class="line">    <span class="keyword">let</span> _x = <span class="number">12</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ERROR: `_x` does not live long enough</span></span><br><span class="line">    <span class="comment">//let y: &amp;'a i32 = &amp;_x;</span></span><br><span class="line">    <span class="comment">// Attempting to use the lifetime `'a` as an explicit type annotation</span></span><br><span class="line">    <span class="comment">// inside the function will fail because the lifetime of `&amp;_x` is shorter</span></span><br><span class="line">    <span class="comment">// than that of `y`. A short lifetime cannot be coerced into a longer one.</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Create variables to be borrowed below.</span></span><br><span class="line">    <span class="keyword">let</span> (four, nine) = (<span class="number">4</span>, <span class="number">9</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Borrows (`&amp;`) of both variables are passed into the function.</span></span><br><span class="line">    print_refs(&amp;four, &amp;nine);</span><br><span class="line">    <span class="comment">// Any input which is borrowed must outlive the borrower.</span></span><br><span class="line">    <span class="comment">// In other words, the lifetime of `four` and `nine` must</span></span><br><span class="line">    <span class="comment">// be longer than that of `print_refs`.</span></span><br><span class="line"></span><br><span class="line">    failed_borrow();</span><br><span class="line">    <span class="comment">// `failed_borrow` contains no references to force `'a` to be</span></span><br><span class="line">    <span class="comment">// longer than the lifetime of the function, but `'a` is longer.</span></span><br><span class="line">    <span class="comment">// Because the lifetime is never constrained, it defaults to `'static`.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/14/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><span class="page-number current">15</span><a class="page-number" href="/page/16/">16</a><span class="space">&hellip;</span><a class="page-number" href="/page/58/">58</a><a class="extend next" rel="next" href="/page/16/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/14/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><span class="page-number current">15</span><a class="page-number" href="/page/16/">16</a><span class="space">&hellip;</span><a class="page-number" href="/page/59/">59</a><a class="extend next" rel="next" href="/page/16/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2235,7 +2076,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">577</span>
+                <span class="site-state-item-count">581</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2257,7 +2098,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">633</span>
+                <span class="site-state-item-count">637</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

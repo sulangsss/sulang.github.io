@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="DB,MySQL,Optimize,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="SQL 优化准则在应用层，通过pt工具和慢查询日志的配合，可以轻松地分辨出全表扫描的语句 基本原则 避免全表扫描  建立索引  尽量避免向客户端返回大数据量，若数据量过大，应该考虑相应需求是否合理  尽量避免大事务操作，提高系统并发能力  使用基于游标的方法或临时表方法之前，应先寻找基于集的解决方案来解决问题，基于集的方法通常更有效。尽量避免使用游标，因为游标的效率较差。   关于where 后的">
+<meta name="keywords" content="DB,MySQL,Optimize">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL SQL语句调优">
+<meta property="og:url" content="https://sulangsss.github.io/2017/09/18/DB/MySQL/Optimize/Optimize-SQL/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="SQL 优化准则在应用层，通过pt工具和慢查询日志的配合，可以轻松地分辨出全表扫描的语句 基本原则 避免全表扫描  建立索引  尽量避免向客户端返回大数据量，若数据量过大，应该考虑相应需求是否合理  尽量避免大事务操作，提高系统并发能力  使用基于游标的方法或临时表方法之前，应先寻找基于集的解决方案来解决问题，基于集的方法通常更有效。尽量避免使用游标，因为游标的效率较差。   关于where 后的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-08-22T04:03:42.073Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL SQL语句调优">
+<meta name="twitter:description" content="SQL 优化准则在应用层，通过pt工具和慢查询日志的配合，可以轻松地分辨出全表扫描的语句 基本原则 避免全表扫描  建立索引  尽量避免向客户端返回大数据量，若数据量过大，应该考虑相应需求是否合理  尽量避免大事务操作，提高系统并发能力  使用基于游标的方法或临时表方法之前，应先寻找基于集的解决方案来解决问题，基于集的方法通常更有效。尽量避免使用游标，因为游标的效率较差。   关于where 后的">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2017/09/18/DB/MySQL/Optimize/Optimize-SQL/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>MySQL SQL语句调优 | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/09/18/DB/MySQL/Optimize/Optimize-SQL/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">MySQL SQL语句调优</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-18T20:31:19+08:00">
+                2017-09-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
+                    <span itemprop="name">Optimize</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="SQL-优化准则"><a href="#SQL-优化准则" class="headerlink" title="SQL 优化准则"></a>SQL 优化准则</h3><p>在应用层，通过pt工具和慢查询日志的配合，可以轻松地分辨出全表扫描的语句</p>
+<h3 id="基本原则"><a href="#基本原则" class="headerlink" title="基本原则"></a>基本原则</h3><ul>
+<li><p>避免全表扫描</p>
+</li>
+<li><p>建立索引</p>
+</li>
+<li><p>尽量避免向客户端返回大数据量，若数据量过大，应该考虑相应需求是否合理</p>
+</li>
+<li><p>尽量避免大事务操作，提高系统并发能力</p>
+</li>
+<li><p>使用基于游标的方法或临时表方法之前，应先寻找基于集的解决方案来解决问题，基于集的方法通常更有效。尽量避免使用游标，因为游标的效率较差。</p>
+</li>
+</ul>
+<h4 id="关于where-后的条件"><a href="#关于where-后的条件" class="headerlink" title="关于where 后的条件"></a>关于where 后的条件</h4><ul>
+<li><p>应尽量避免在where子句中使用 != 或 &lt;&gt; 操作符，否则引擎将放弃使用索引，而是进行全表扫描。</p>
+</li>
+<li><p>应尽量避免在where子句中使用or来连接条件,可以考虑使用union代替</p>
+</li>
+<li><p>in和not in也要慎用，对于连续的数值，能用between就不要用in，exists 代替 in</p>
+</li>
+<li><p>尽量避免在where子句中对字段进行表达式操作和函数操作</p>
+</li>
+</ul>
+<h4 id="关于数据类型"><a href="#关于数据类型" class="headerlink" title="关于数据类型"></a>关于数据类型</h4><ul>
+<li><p>尽量使用数字型字段，若只含数值信息的字段尽量不要设计为字符型，这会降低查询和连接的性能，并会增加存储开销。</p>
+</li>
+<li><p>尽可能的使用 varchar/nvarchar 代替 char/nchar ，因为变长字段存储空间小，对于查询来说，在一个相对较小的字段内搜索效率显然要高些。</p>
+</li>
+<li><p>最好不要给数据库留NULL，尽可能的使用 NOT NULL填充数据库.备注、描述、评论之类的可以设置为 NULL，其他的，最好不要使用NULL。</p>
+</li>
+<li><p>任何地方都不要使用 select <em> from t ，用具体的字段列表代替“</em>”，不要返回用不到的任何字段。</p>
+</li>
+</ul>
+<h4 id="关于临时表"><a href="#关于临时表" class="headerlink" title="关于临时表"></a>关于临时表</h4><ul>
+<li><p>避免频繁创建和删除临时表，以减少系统表资源的消耗。对于一次性事件，最好使用导出表。</p>
+</li>
+<li><p>在新建临时表时，如果一次性插入数据量很大，那么可以使用 select into 代替 create table，避免造成大量log，以提高速度；<br>如果数据量不大，为了缓和系统表的资源，应先create table，然后insert。</p>
+</li>
+<li><p>如果使用到了临时表，在最后将所有的临时表显式删除时，先truncate table ，然后drop table，这样可以避免系统表的较长时间锁定。</p>
+</li>
+</ul>
+<h4 id="关于索引"><a href="#关于索引" class="headerlink" title="关于索引"></a>关于索引</h4><ul>
+<li><p>先应考虑在 where 及 order by 涉及的列上建立索引。</p>
+</li>
+<li><p>在使用索引字段作为条件时，如果该索引是复合索引，那么必须使用到该索引中的第一个字段作为条件时才能保证系统使用该索引， 否则该索引将不会被使用，<br>并且应尽可能的让字段顺序与索引顺序相一致。</p>
+</li>
+<li><p>索引并不是越多越好，索引固然可以提高相应的select的效率，但同时也降低了insert和update的效率，因为insert或update时有可能会重建索引，所以<br>视具体情况而定。一个表的索引数最好不要超过7个，若太多则应考虑一些不常使用到的列上建的索引是否有必要.</p>
+</li>
+</ul>
+<h4 id="数据库架构调优"><a href="#数据库架构调优" class="headerlink" title="数据库架构调优"></a>数据库架构调优</h4><ul>
+<li>分区分表</li>
+<li>业务分库</li>
+<li>主从同步与读写分离</li>
+<li>数据缓存</li>
+<li>主从热备与HA双活</li>
+</ul>
+<hr>
+<h3 id="SQL-优化实战"><a href="#SQL-优化实战" class="headerlink" title="SQL 优化实战"></a>SQL 优化实战</h3><h4 id="explain"><a href="#explain" class="headerlink" title="explain"></a>explain</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">explain</span> <span class="keyword">select</span> * from.....</span><br></pre></td></tr></table></figure>
+<p>输出结果说明</p>
+<ul>
+<li><p>select_type：查询类型</p>
+</li>
+<li><p>table：查询表名</p>
+</li>
+<li><p>type：扫描方式，all全表</p>
+</li>
+<li><p>possible_keys：可能使用到的索引</p>
+</li>
+<li><p>key：实际使用到的索引</p>
+</li>
+<li><p>rows：sql语句扫描了多少行记录才得到所要的结果</p>
+</li>
+<li><p>extra：附加说明，比如排序方式</p>
+</li>
+</ul>
+<h4 id="group-by"><a href="#group-by" class="headerlink" title="group by"></a>group by</h4><p>在使用group by 分组查询是，默认分组后，还会排序，可能会降低速度。在group by 后面增加 order by null 就可以防止排序。</p>
+<p>有些情况下，可以使用连接来替代子查询。因为使用join，MySQL不需要在内存中创建临时表。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/DB/" rel="tag"># DB</a>
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+            <a href="/tags/Optimize/" rel="tag"># Optimize</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/09/18/DB/Redis/command/" rel="next" title="redis command">
+                <i class="fa fa-chevron-left"></i> redis command
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/09/18/DB/MySQL/Error/" rel="prev" title="MySQL Error">
+                MySQL Error <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">581</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">246</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">637</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#SQL-优化准则"><span class="nav-number">1.</span> <span class="nav-text">SQL 优化准则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基本原则"><span class="nav-number">2.</span> <span class="nav-text">基本原则</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#关于where-后的条件"><span class="nav-number">2.1.</span> <span class="nav-text">关于where 后的条件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关于数据类型"><span class="nav-number">2.2.</span> <span class="nav-text">关于数据类型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关于临时表"><span class="nav-number">2.3.</span> <span class="nav-text">关于临时表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关于索引"><span class="nav-number">2.4.</span> <span class="nav-text">关于索引</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数据库架构调优"><span class="nav-number">2.5.</span> <span class="nav-text">数据库架构调优</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SQL-优化实战"><span class="nav-number">3.</span> <span class="nav-text">SQL 优化实战</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#explain"><span class="nav-number">3.1.</span> <span class="nav-text">explain</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#group-by"><span class="nav-number">3.2.</span> <span class="nav-text">group by</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
