@@ -284,6 +284,1332 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/07/06/Java/Rx/Rx-Quick-Start/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/07/06/Java/Rx/Rx-Quick-Start/" itemprop="url">RxJava Quick Start</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-06T14:22:22+08:00">
+                2019-07-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/RxJava/" itemprop="url" rel="index">
+                    <span itemprop="name">RxJava</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Basic-Theory"><a href="#Basic-Theory" class="headerlink" title="Basic Theory"></a>Basic Theory</h3><img src="/2019/07/06/Java/Rx/Rx-Quick-Start/components-of-the-rxjava.png">
+<ul>
+<li>Flowable: 多个流，响应式流和背压</li>
+<li>Observable: 多个流，无背压</li>
+<li>Single: 只有一个元素或者错误的流</li>
+</ul>
+<h3 id="Testing-Model"><a href="#Testing-Model" class="headerlink" title="Testing Model"></a>Testing Model</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">class DataManager(size: Int = 16) &#123;</span><br><span class="line">    <span class="keyword">private</span> val data = mutableListOf&lt;Student&gt;()</span><br><span class="line"></span><br><span class="line">    init &#123;</span><br><span class="line">        <span class="keyword">for</span> (index in <span class="number">0</span> until size) &#123;</span><br><span class="line">            val student = Student(<span class="string">"Jack-$index"</span>, mutableListOf(Course(<span class="string">"English-$index"</span>)))</span><br><span class="line">            data.add(student)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">queryOrigin</span><span class="params">()</span>: MutableList&lt;Student&gt; </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.data</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">data class <span class="title">Student</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    var name: String,</span></span></span><br><span class="line"><span class="function"><span class="params">    var courses: MutableList&lt;Course&gt; = mutableListOf()</span></span></span><br><span class="line"><span class="function">)</span></span><br><span class="line"><span class="function">data class <span class="title">Course</span><span class="params">(var name: String)</span></span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Transforming-Observables"><a href="#Transforming-Observables" class="headerlink" title="Transforming Observables"></a>Transforming Observables</h3><h4 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h4><p>transform the items emitted by an Observable by applying a function to each item</p>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/map-execution.png">
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>)</span><br><span class="line">        .map &#123; it.toDouble() &#125;</span><br><span class="line">        .subscribe &#123;</span><br><span class="line">            println(it)</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="flatMap-vs-concatMap"><a href="#flatMap-vs-concatMap" class="headerlink" title="flatMap vs concatMap"></a>flatMap vs concatMap</h4><p>transform the items emitted by an Observable into Observables, then <strong>flatten the emissions from those into a single Observable</strong></p>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/rx-flatmap.png">
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">val dataManager = DataManager()</span><br><span class="line">val flatCourse = mutableListOf&lt;Course&gt;()</span><br><span class="line">val queryOrigin = dataManager.queryOrigin()</span><br><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .flatMap &#123; stu -&gt;</span><br><span class="line">            Observable.fromIterable(stu.courses)</span><br><span class="line">        &#125;.subscribeOn(Schedulers.newThread())</span><br><span class="line">        .blockingSubscribe &#123; course -&gt;</span><br><span class="line">            flatCourse.add(course)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">val concatCourse = mutableListOf&lt;Course&gt;()</span><br><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .concatMap &#123; stu -&gt;</span><br><span class="line">            Observable.fromIterable(stu.courses)</span><br><span class="line">        &#125;.subscribeOn(Schedulers.newThread())</span><br><span class="line">        .blockingSubscribe &#123; course -&gt;</span><br><span class="line">            concatCourse.add(course)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">println(<span class="string">"origin = $&#123;dataManager.queryOrigin()&#125;"</span>)</span><br><span class="line">println(<span class="string">"flatMap = $flatCourse"</span>)</span><br><span class="line">println(<span class="string">"concatMap = $concatCourse"</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">origin = [Student(name=Jack-<span class="number">0</span>, courses=[Course(name=English-<span class="number">0</span>)]), Student(name=Jack-<span class="number">1</span>, courses=[Course(name=English-<span class="number">1</span>)]), Student(name=Jack-<span class="number">2</span>, courses=[Course(name=English-<span class="number">2</span>)])]</span><br><span class="line">flatMap = [Course(name=English-<span class="number">0</span>), Course(name=English-<span class="number">1</span>), Course(name=English-<span class="number">2</span>)]</span><br><span class="line">concatMap = [Course(name=English-<span class="number">0</span>), Course(name=English-<span class="number">1</span>), Course(name=English-<span class="number">2</span>)]</span><br></pre></td></tr></table></figure>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/concat_vs_flatmap_1.png">
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/concat_vs_flatmap_2.png">
+<p>flatMap将一个发送事件的上游Observable变换为多个发送事件的Observables，然后将它们发射的事件合并后放进一个单独的Observable里。需要注意的是, flatMap并不保证事件的顺序，也就是说转换之后的Observables的顺序不必与转换之前的序列的顺序一致。</p>
+<p>与flatMap对应的方法是contactMap，后者能够保证最终输出的顺序与上游发送的顺序一致。</p>
+<blockquote>
+<p>Both methods look pretty much the same, but there is a difference: operator usage when merging the final results.</p>
+</blockquote>
+<blockquote>
+<p>The <strong>flatMap()</strong> method creates a new Observable by applying a function that you supply to each item emitted by the original Observable, where that function is itself an Observable that emits items, and then merges the results of that function applied to every item emitted by the original Observable, emitting these merged results.</p>
+</blockquote>
+<blockquote>
+<p>Note that <strong>flatMap()</strong> may interleave the items emitted by the Observables that result from transforming the items emitted by the source Observable.</p>
+</blockquote>
+<blockquote>
+<p>If it is important that these items not be <strong>interleaved</strong>, you can instead use the similar <strong>concatMap()</strong> method.</p>
+</blockquote>
+<blockquote>
+<p>FlatMap对这些Observables发射的数据做的是合并(merge)操作，因此它们可能是交错的。也就说，传入的顺序可能跟出来的顺序不一样。如果要保证顺的的话，可以使用concatMap。</p>
+</blockquote>
+<h4 id="flatMapIterable"><a href="#flatMapIterable" class="headerlink" title="flatMapIterable"></a>flatMapIterable</h4><h4 id="switchMap"><a href="#switchMap" class="headerlink" title="switchMap"></a>switchMap</h4><p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">val dataManager = DataManager()</span><br><span class="line"></span><br><span class="line">val switchMapCourse = mutableListOf&lt;String&gt;()</span><br><span class="line">val queryOrigin = dataManager.queryOrigin()</span><br><span class="line"></span><br><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .switchMap &#123; stu -&gt;</span><br><span class="line">            Observable.timer(<span class="number">1</span>, TimeUnit.SECONDS)</span><br><span class="line">                    .map &#123; stu.name &#125;</span><br><span class="line">        &#125;.subscribeOn(Schedulers.newThread())</span><br><span class="line">        .blockingSubscribe &#123; course -&gt;</span><br><span class="line">            switchMapCourse.add(course)</span><br><span class="line">        &#125;</span><br><span class="line">println(<span class="string">"origin = $&#123;dataManager.queryOrigin()&#125;"</span>)</span><br><span class="line">println(<span class="string">"switchMap = $switchMapCourse"</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">origin = [Student(name=Jack-<span class="number">0</span>, courses=[Course(name=English-<span class="number">0</span>)]), Student(name=Jack-<span class="number">1</span>, courses=[Course(name=English-<span class="number">1</span>)]), Student(name=Jack-<span class="number">2</span>, courses=[Course(name=English-<span class="number">2</span>)])]</span><br><span class="line">switchMap = [Jack-<span class="number">2</span>]</span><br></pre></td></tr></table></figure>
+<p>If just return a normal observable on switchMap(), example:</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .switchMap &#123; stu -&gt;</span><br><span class="line">            Observable.just(stu.name)</span><br><span class="line">        &#125;.subscribeOn(Schedulers.newThread())</span><br><span class="line">        .blockingSubscribe &#123; course -&gt;</span><br><span class="line">            switchMapCourse.add(course)</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">origin = [Student(name=Jack-<span class="number">0</span>, courses=[Course(name=English-<span class="number">0</span>)]), Student(name=Jack-<span class="number">1</span>, courses=[Course(name=English-<span class="number">1</span>)]), Student(name=Jack-<span class="number">2</span>, courses=[Course(name=English-<span class="number">2</span>)])]</span><br><span class="line">switchMap = [Jack-<span class="number">0</span>, Jack-<span class="number">1</span>, Jack-<span class="number">2</span>]</span><br></pre></td></tr></table></figure>
+<h4 id="cast"><a href="#cast" class="headerlink" title="cast"></a>cast</h4><p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>)</span><br><span class="line">        .cast(Number.class)</span><br><span class="line">        .subscribe(num -&gt; println(num)));</span><br></pre></td></tr></table></figure>
+<h4 id="scan"><a href="#scan" class="headerlink" title="scan"></a>scan</h4><p>apply a function to each item emitted by an Observable, sequentially, and emit each successive value</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">val dataManager = DataManager()</span><br><span class="line"></span><br><span class="line">val scanStudent = mutableListOf&lt;Student&gt;()</span><br><span class="line">val queryOrigin = dataManager.queryOrigin()</span><br><span class="line"></span><br><span class="line">Observable.fromIterable(queryOrigin)</span><br><span class="line">        .scan &#123; lastStu: Student, student: Student -&gt;</span><br><span class="line">            println(<span class="string">"---------------------"</span>)</span><br><span class="line">            println(<span class="string">"lastStu $&#123;lastStu.name&#125;"</span>)</span><br><span class="line">            println(<span class="string">"current Stu $&#123;student.name&#125;"</span>)</span><br><span class="line">            println(<span class="string">"next Stu $&#123;lastStu.name&#125; + $&#123;student.name&#125;"</span>)</span><br><span class="line">            Student(name = <span class="string">"$&#123;lastStu.name&#125; + $&#123;student.name&#125;"</span>)</span><br><span class="line">        &#125;.subscribe &#123;</span><br><span class="line">            scanStudent.add(it)</span><br><span class="line">        &#125;</span><br><span class="line">println(<span class="string">"===================================================================================="</span>)</span><br><span class="line">println(<span class="string">"origin = $&#123;dataManager.queryOrigin()&#125;"</span>)</span><br><span class="line">println(<span class="string">"===================================================================================="</span>)</span><br><span class="line"><span class="keyword">for</span> (student in scanStudent) &#123;</span><br><span class="line">    println(<span class="string">"student $&#123;student.name&#125;"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">---------------------</span><br><span class="line">lastStu Jack-<span class="number">0</span></span><br><span class="line">current Stu Jack-<span class="number">1</span></span><br><span class="line">next Stu Jack-<span class="number">0</span> + Jack-<span class="number">1</span></span><br><span class="line">---------------------</span><br><span class="line">lastStu Jack-<span class="number">0</span> + Jack-<span class="number">1</span></span><br><span class="line">current Stu Jack-<span class="number">2</span></span><br><span class="line">next Stu Jack-<span class="number">0</span> + Jack-<span class="number">1</span> + Jack-<span class="number">2</span></span><br><span class="line">====================================================================================</span><br><span class="line">origin = [Student(name=Jack-<span class="number">0</span>, courses=[Course(name=English-<span class="number">0</span>)]), Student(name=Jack-<span class="number">1</span>, courses=[Course(name=English-<span class="number">1</span>)]), Student(name=Jack-<span class="number">2</span>, courses=[Course(name=English-<span class="number">2</span>)])]</span><br><span class="line">====================================================================================</span><br><span class="line">student Jack-<span class="number">0</span></span><br><span class="line">student Jack-<span class="number">0</span> + Jack-<span class="number">1</span></span><br><span class="line">student Jack-<span class="number">0</span> + Jack-<span class="number">1</span> + Jack-<span class="number">2</span></span><br></pre></td></tr></table></figure>
+<h4 id="buffer"><a href="#buffer" class="headerlink" title="buffer"></a>buffer</h4><p>periodically gather items from an Observable into bundles and emit these bundles rather than emitting the items one at a time</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>)</span><br><span class="line">        .buffer(<span class="number">2</span>)</span><br><span class="line">        .subscribe &#123;</span><br><span class="line">            println(it)</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="windows"><a href="#windows" class="headerlink" title="windows"></a>windows</h4><p>periodically subdivide items from an Observable into Observable windows and emit these windows rather than emitting the items one at a time</p>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/rx-window-theory.png">
+<p>Window is similar to Buffer, but rather than emitting packets of items from the source Observable, it emits Observables, each one of which emits a subset of items from the source Observable and then terminates with an onCompleted notification. </p>
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/rx-buffer-vs-windwos-1.png">
+<img src="/2019/07/06/Java/Rx/Rx-Quick-Start/rx-buffer-vs-windwos-2.png">
+<p>Window和Buffer类似，但不是发射来自原始Observable的数据包，它发射的是Observable，这些Observables中的每一个都发射原始Observable数据的一个子集，最后发射一个onCompleted通知。<br>以下面的程序为例，这里我们首先生成了一个由10个数字组成的整数序列，然后使用window函数将它们每3个作为一组，每组会返回一个对应的Observable对象。<br>这里我们对该返回的结果进行订阅并进行消费，因为10个数字，所以会被分成4个组，每个对应一个Observable：</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Observable.range(<span class="number">1</span>, <span class="number">10</span>).window(<span class="number">3</span>)</span><br><span class="line">            .subscribe &#123; observable -&gt;</span><br><span class="line">                observable.subscribe &#123; integer -&gt;</span><br><span class="line">                    println(observable.hashCode().toString() + <span class="string">" : "</span> + integer)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">901506536</span> : <span class="number">1</span></span><br><span class="line"><span class="number">901506536</span> : <span class="number">2</span></span><br><span class="line"><span class="number">901506536</span> : <span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="number">747464370</span> : <span class="number">4</span></span><br><span class="line"><span class="number">747464370</span> : <span class="number">5</span></span><br><span class="line"><span class="number">747464370</span> : <span class="number">6</span></span><br><span class="line"></span><br><span class="line"><span class="number">1513712028</span> : <span class="number">7</span></span><br><span class="line"><span class="number">1513712028</span> : <span class="number">8</span></span><br><span class="line"><span class="number">1513712028</span> : <span class="number">9</span></span><br><span class="line"></span><br><span class="line"><span class="number">1018547642</span> : <span class="number">10</span></span><br></pre></td></tr></table></figure>
+<h4 id="groupBy"><a href="#groupBy" class="headerlink" title="groupBy"></a>groupBy</h4><p>divide an Observable into a set of Observables that each emit a different group of items from the original Observable, organized by key</p>
+<p>groupBy用于分组元素，它可以被用来根据指定的条件将元素分成若干组。</p>
+<p><strong>Example 1</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Observable.concat(</span><br><span class="line">            Observable.range(<span class="number">1</span>, <span class="number">4</span>),</span><br><span class="line">            Observable.range(<span class="number">1</span>, <span class="number">6</span>)</span><br><span class="line">    ).groupBy &#123; integer -&gt;</span><br><span class="line">        integer</span><br><span class="line">    &#125;.subscribe &#123; groupedObservable: GroupedObservable&lt;Int, Int&gt; -&gt;</span><br><span class="line">        groupedObservable.subscribe &#123; println(<span class="string">"key $&#123;groupedObservable.key&#125; -&gt; value $it"</span>) &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">key <span class="number">1</span> -&gt; value <span class="number">1</span></span><br><span class="line">key <span class="number">2</span> -&gt; value <span class="number">2</span></span><br><span class="line">key <span class="number">3</span> -&gt; value <span class="number">3</span></span><br><span class="line">key <span class="number">4</span> -&gt; value <span class="number">4</span></span><br><span class="line">key <span class="number">1</span> -&gt; value <span class="number">1</span></span><br><span class="line">key <span class="number">2</span> -&gt; value <span class="number">2</span></span><br><span class="line">key <span class="number">3</span> -&gt; value <span class="number">3</span></span><br><span class="line">key <span class="number">4</span> -&gt; value <span class="number">4</span></span><br><span class="line">key <span class="number">5</span> -&gt; value <span class="number">5</span></span><br><span class="line">key <span class="number">6</span> -&gt; value <span class="number">6</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Math"><a href="#Math" class="headerlink" title="Math"></a>Math</h3><h4 id="average"><a href="#average" class="headerlink" title="average"></a>average</h4><h4 id="count"><a href="#count" class="headerlink" title="count"></a>count</h4><h4 id="max"><a href="#max" class="headerlink" title="max"></a>max</h4><h4 id="min"><a href="#min" class="headerlink" title="min"></a>min</h4><h4 id="reduce"><a href="#reduce" class="headerlink" title="reduce"></a>reduce</h4><p>apply a function to each item emitted by an Observable, sequentially, and emit the final value</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="http://reactivex.io/documentation/operators.html" target="_blank" rel="noopener">http://reactivex.io/documentation/operators.html</a></li>
+<li><a href="https://maxwell-nc.github.io/android/rxjava2-6.html" target="_blank" rel="noopener">https://maxwell-nc.github.io/android/rxjava2-6.html</a></li>
+<li><a href="https://medium.com/mindorks/rxjava-operator-map-vs-flatmap-427c09678784" target="_blank" rel="noopener">https://medium.com/mindorks/rxjava-operator-map-vs-flatmap-427c09678784</a></li>
+<li><a href="https://fernandocejas.com/2015/01/11/rxjava-observable-tranformation-concatmap-vs-flatmap/" target="_blank" rel="noopener">https://fernandocejas.com/2015/01/11/rxjava-observable-tranformation-concatmap-vs-flatmap/</a></li>
+<li><a href="https://my.oschina.net/u/2277632/blog/2986715" target="_blank" rel="noopener">https://my.oschina.net/u/2277632/blog/2986715</a></li>
+<li><a href="https://juejin.im/post/5b72f76551882561354462dd" target="_blank" rel="noopener">https://juejin.im/post/5b72f76551882561354462dd</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/07/06/Java/Kotlin/sort/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/07/06/Java/Kotlin/sort/" itemprop="url">Kotlin sort</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-06T00:08:22+08:00">
+                2019-07-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/Kotlin/" itemprop="url" rel="index">
+                    <span itemprop="name">Kotlin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Define-Class"><a href="#Define-Class" class="headerlink" title="Define Class"></a>Define Class</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">data class <span class="title">Person</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    var name: String = <span class="string">""</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    var age: Int = <span class="number">0</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    var money: Double = <span class="number">0.0</span></span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="sortBy"><a href="#sortBy" class="headerlink" title="sortBy"></a>sortBy</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">val persons = mutableListOf&lt;Person&gt;()</span><br><span class="line"></span><br><span class="line">persons.add(Person(<span class="string">"Hello-1"</span>, <span class="number">1</span>, <span class="number">10.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-5"</span>, <span class="number">5</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-3"</span>, <span class="number">3</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-2"</span>, <span class="number">2</span>, <span class="number">100.0</span>))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br><span class="line">println(<span class="string">"========================="</span>)</span><br><span class="line">persons.sortBy &#123; it.age &#125;</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Person(name=Hello-<span class="number">1</span>, age=<span class="number">1</span>, money=<span class="number">10.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">5</span>, age=<span class="number">5</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">3</span>, age=<span class="number">3</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">2</span>, age=<span class="number">2</span>, money=<span class="number">100.0</span>)</span><br><span class="line">=========================</span><br><span class="line">Person(name=Hello-<span class="number">1</span>, age=<span class="number">1</span>, money=<span class="number">10.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">2</span>, age=<span class="number">2</span>, money=<span class="number">100.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">3</span>, age=<span class="number">3</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">5</span>, age=<span class="number">5</span>, money=<span class="number">20.0</span>)</span><br></pre></td></tr></table></figure>
+<p>sortBy 为正序排列，跟其对应的降序方法为 sortByDescending。</p>
+<hr>
+<h3 id="sortWith"><a href="#sortWith" class="headerlink" title="sortWith"></a>sortWith</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">val persons = mutableListOf&lt;Person&gt;()</span><br><span class="line"></span><br><span class="line">persons.add(Person(<span class="string">"Hello-1"</span>, <span class="number">1</span>, <span class="number">10.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-5"</span>, <span class="number">5</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-3"</span>, <span class="number">3</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-2"</span>, <span class="number">2</span>, <span class="number">100.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-6"</span>, <span class="number">2</span>, <span class="number">50.0</span>))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br><span class="line">println(<span class="string">"========================="</span>)</span><br><span class="line">persons.sortWith(compareBy(&#123; it.age &#125;, &#123; it.money &#125;))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Person(name=Hello-<span class="number">1</span>, age=<span class="number">1</span>, money=<span class="number">10.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">5</span>, age=<span class="number">5</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">3</span>, age=<span class="number">3</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">2</span>, age=<span class="number">2</span>, money=<span class="number">100.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">6</span>, age=<span class="number">2</span>, money=<span class="number">50.0</span>)</span><br><span class="line">=========================</span><br><span class="line">Person(name=Hello-<span class="number">1</span>, age=<span class="number">1</span>, money=<span class="number">10.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">6</span>, age=<span class="number">2</span>, money=<span class="number">50.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">2</span>, age=<span class="number">2</span>, money=<span class="number">100.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">3</span>, age=<span class="number">3</span>, money=<span class="number">20.0</span>)</span><br><span class="line">Person(name=Hello-<span class="number">5</span>, age=<span class="number">5</span>, money=<span class="number">20.0</span>)</span><br></pre></td></tr></table></figure>
+<p>sortWith 方法中，传入的 compareBy({属性1},{属性2},…)参数，参数个数是可变的。但是都是默认的升序排列。</p>
+<p>可以给sortWith传入一个Comparator对象，来达到一个更高级更复杂的逻辑。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">val persons = mutableListOf&lt;Person&gt;()</span><br><span class="line"></span><br><span class="line">persons.add(Person(<span class="string">"Hello-1"</span>, <span class="number">1</span>, <span class="number">10.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-5"</span>, <span class="number">5</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-3"</span>, <span class="number">3</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-2"</span>, <span class="number">2</span>, <span class="number">100.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-6"</span>, <span class="number">2</span>, <span class="number">50.0</span>))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br><span class="line">println(<span class="string">"========================="</span>)</span><br><span class="line">val comparator: Comparator&lt;Person&gt; = Comparator &#123; o1, o2 -&gt;</span><br><span class="line">    <span class="keyword">if</span> (o2.age == o1.age) &#123;</span><br><span class="line">        o1.money.compareTo(o2.money)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        o1.age - o2.age</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">persons.sortWith(comparator)</span><br><span class="line"><span class="comment">//  persons.sortWith(compareBy(&#123; it.age &#125;, &#123; it.money &#125;))</span></span><br><span class="line">persons.forEach(::println)</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Comparable"><a href="#Comparable" class="headerlink" title="Comparable"></a>Comparable</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">data class <span class="title">Person</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    var name: String = <span class="string">""</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    var age: Int = <span class="number">0</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    var money: Double = <span class="number">0.0</span></span></span></span><br><span class="line"><span class="function"><span class="params">)</span> : Comparable&lt;Person&gt; </span>&#123;</span><br><span class="line">    <span class="function">override fun <span class="title">compareTo</span><span class="params">(other: Person)</span>: Int </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">if</span> (other.age == <span class="keyword">this</span>.age) &#123;</span><br><span class="line">            <span class="keyword">this</span>.money.compareTo(other.money)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">this</span>.age - other.age</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">val persons = mutableListOf&lt;Person&gt;()</span><br><span class="line"></span><br><span class="line">persons.add(Person(<span class="string">"Hello-1"</span>, <span class="number">1</span>, <span class="number">10.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-5"</span>, <span class="number">5</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-3"</span>, <span class="number">3</span>, <span class="number">20.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-2"</span>, <span class="number">2</span>, <span class="number">100.0</span>))</span><br><span class="line">persons.add(Person(<span class="string">"Hello-6"</span>, <span class="number">2</span>, <span class="number">50.0</span>))</span><br><span class="line"></span><br><span class="line">persons.forEach(::println)</span><br><span class="line">println(<span class="string">"========================="</span>)</span><br><span class="line">persons.sort()</span><br><span class="line">persons.forEach(::println)</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/06/28/Linux/Basic/total-vm-and-rss/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/06/28/Linux/Basic/total-vm-and-rss/" itemprop="url">Linux total-vm and rss</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-06-28T17:00:06+08:00">
+                2019-06-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Issue: GCP kill some pod at node</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Memory cgroup out of memory: Kill process 2177348 (java) score 1465 or sacrifice child Killed process 2177348 (java) total-vm:19172696kB, anon-rss:12547720kB, file-rss:17176kB, shmem-rss:57592kB</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/06/04/DB/MySQL/How-Batch-Insert-Large-Data/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/06/04/DB/MySQL/How-Batch-Insert-Large-Data/" itemprop="url">MySQL 如何高效地插入大量数据</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-06-04T09:55:07+08:00">
+                2019-06-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://www.cnblogs.com/micrari/p/7112781.html" target="_blank" rel="noopener">https://www.cnblogs.com/micrari/p/7112781.html</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/06/04/Architecture/CQRS/Command Query Responsibility Segregation/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/06/04/Architecture/CQRS/Command Query Responsibility Segregation/" itemprop="url">Command Query Responsibility Segregation</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-06-04T00:47:19+08:00">
+                2019-06-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Architecture/" itemprop="url" rel="index">
+                    <span itemprop="name">Architecture</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Architecture/CQRS/" itemprop="url" rel="index">
+                    <span itemprop="name">CQRS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://microservices.io/patterns/data/cqrs.html" target="_blank" rel="noopener">https://microservices.io/patterns/data/cqrs.html</a></li>
+<li><a href="https://spring.io/blog/2016/03/22/springone2gx-2015-replay-building-microservices-with-event-sourcing-and-cqrs" target="_blank" rel="noopener">https://spring.io/blog/2016/03/22/springone2gx-2015-replay-building-microservices-with-event-sourcing-and-cqrs</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/06/02/Tools/Tools-Menu/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/06/02/Tools/Tools-Menu/" itemprop="url">Tools Menu</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-06-02T11:34:06+08:00">
+                2019-06-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tools/" itemprop="url" rel="index">
+                    <span itemprop="name">Tools</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Shell"><a href="#Shell" class="headerlink" title="Shell"></a>Shell</h3><h4 id="ShellCheck"><a href="#ShellCheck" class="headerlink" title="ShellCheck"></a>ShellCheck</h4><p>ShellCheck - A shell script static analysis tool</p>
+<blockquote>
+<p><a href="https://github.com/koalaman/shellcheck" target="_blank" rel="noopener">https://github.com/koalaman/shellcheck</a></p>
+</blockquote>
+<hr>
+<h3 id="Docker"><a href="#Docker" class="headerlink" title="Docker"></a>Docker</h3><h4 id="Dockly"><a href="#Dockly" class="headerlink" title="Dockly"></a>Dockly</h4><ol>
+<li><p>Install</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g dockly</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Usage</p>
+</li>
+</ol>
+<ul>
+<li>= – Refresh the Dockly interface,</li>
+<li>/ – Search the containers list view,</li>
+<li>i – Display the information about the currently selected container or service,</li>
+<li><return> – Show logs of the current container or service,</return></li>
+<li>v – Toggle between Containers and Services view,</li>
+<li>l – Launch a /bin/bash session on the selected Container,</li>
+<li>r – Restart the selected Container,</li>
+<li>s – Stop the selected Container,</li>
+<li>h – Show HELP window,</li>
+<li>q – Quit Dockly.</li>
+</ul>
+<blockquote>
+<p><a href="https://github.com/lirantal/" target="_blank" rel="noopener">https://github.com/lirantal/</a><br><a href="https://www.ostechnix.com/install-node-js-linux/" target="_blank" rel="noopener">https://www.ostechnix.com/install-node-js-linux/</a><br><a href="https://www.ostechnix.com/dockly-manage-docker-containers-from-terminal/" target="_blank" rel="noopener">https://www.ostechnix.com/dockly-manage-docker-containers-from-terminal/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/31/Kubenetes/GCP/ip-masq-agent/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/31/Kubenetes/GCP/ip-masq-agent/" itemprop="url">ip-masq-agent</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-31T11:15:06+08:00">
+                2019-05-31
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/GCP/" itemprop="url" rel="index">
+                    <span itemprop="name">GCP</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://cloud.google.com/kubernetes-engine/docs/how-to/ip-masquerade-agent#create_manual" target="_blank" rel="noopener">https://cloud.google.com/kubernetes-engine/docs/how-to/ip-masquerade-agent#create_manual</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/TDD/Mockito/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/28/TDD/Mockito/" itemprop="url">Mockito</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-28T19:51:19+08:00">
+                2019-05-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/TDD/" itemprop="url" rel="index">
+                    <span itemprop="name">TDD</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://medium.com/joe-tsai/mockk-%E4%B8%80%E6%AC%BE%E5%BC%B7%E5%A4%A7%E7%9A%84-kotlin-mocking-library-part-1-4-39a85e42b8" target="_blank" rel="noopener">https://medium.com/joe-tsai/mockk-%E4%B8%80%E6%AC%BE%E5%BC%B7%E5%A4%A7%E7%9A%84-kotlin-mocking-library-part-1-4-39a85e42b8</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/Docker/JVM/Java-JVM-On-Docker/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -486,150 +1812,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/TDD/Mockito/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/28/TDD/Mockito/" itemprop="url">Mockito</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-28T19:51:19+08:00">
-                2019-05-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/TDD/" itemprop="url" rel="index">
-                    <span itemprop="name">TDD</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://medium.com/joe-tsai/mockk-%E4%B8%80%E6%AC%BE%E5%BC%B7%E5%A4%A7%E7%9A%84-kotlin-mocking-library-part-1-4-39a85e42b8" target="_blank" rel="noopener">https://medium.com/joe-tsai/mockk-%E4%B8%80%E6%AC%BE%E5%BC%B7%E5%A4%A7%E7%9A%84-kotlin-mocking-library-part-1-4-39a85e42b8</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/TDD/Basic/Red-Green-Refactor Pattern/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -772,1412 +1954,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/28/Futures/How-to-calculate-margin/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/28/Futures/How-to-calculate-margin/" itemprop="url">How to calculate margin?</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-28T10:25:22+08:00">
-                2019-05-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Futures/" itemprop="url" rel="index">
-                    <span itemprop="name">Futures</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Margin = Collateral + uGnL + eGnL</p>
-<blockquote>
-<p>uGnL ：Unrealized Gains and Losses; eGnL ：Estimated Gains and Losses.</p>
-</blockquote>
-<ul>
-<li>Margin Requirements are requirements on margins for the user to perform certain actions. </li>
-<li>Initial Margin is required to increase a position.</li>
-<li>Maintenance Margin to keep a position. </li>
-</ul>
-<hr>
-<h3 id="Margin-Impacts"><a href="#Margin-Impacts" class="headerlink" title="Margin Impacts"></a>Margin Impacts</h3><img src="/2019/05/28/Futures/How-to-calculate-margin/margin_impact.png">
-<p>Positions and orders all require a certain amount of margin and, at the same time(同时), impact(影响) available margin. In the table above, we categorize positions and orders and show how their requirements and impacts are determined when considered separately.</p>
-<p>Under margin impact, we further classify different impacts into 3 sub-categories: <strong>settled</strong>, <strong>unsettled</strong>, and <strong>probable</strong>.</p>
-<ul>
-<li><p>Settled margin impacts have already been settled. So to calculate available margin, settled margin impacts should be left out(忽略，不考虑), as they have already been incorporated(合并的) into collateral balance. </p>
-</li>
-<li><p>Unsettled margin impacts are <strong>unrealized PnL</strong>, <strong>accrued interests</strong>, and <strong>fee</strong>, <strong>unsettled</strong>, but payable if a settlement occurs right away. </p>
-</li>
-<li><p>Probable margin impact consider a probable scenario or a possible scenario where most negative impact happens.</p>
-</li>
-</ul>
-<hr>
-<h3 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h3><p>A container is a collection of positions and open orders under the same Portfolio, sharing the same margin pool in their common settlement currency.</p>
-<p>Under a portfolio, positions settled in the same currency will be collected into the same container with a communal margin shared among them. A winning position’s unrealized profit adds to collateral, bolsters(支持,支撑) the shared margin, and helps avoid liquidation of other losing positions in the container.</p>
-<p>To segregate  positions settled in a common currency, consider allocate them to different portfolios.</p>
-<h4 id="Aggregate-总体的-合计的-Requirements-amp-Impacts"><a href="#Aggregate-总体的-合计的-Requirements-amp-Impacts" class="headerlink" title="Aggregate(总体的,合计的) Requirements &amp; Impacts"></a>Aggregate(总体的,合计的) Requirements &amp; Impacts</h4><p>Aggregating margin requirements and impacts at the portfolio level isn’t simply adding them up. Instead, it is another exercise of finding out the worst scenario(情形,情况) that demands the most collateral. The aggregation is done at 2 layers.</p>
-<p><strong>Contract Level</strong></p>
-<p>At the contract level, we collect all orders and position for the contract and then:</p>
-<ol>
-<li>Convert incoming market orders into incoming limit orders;</li>
-<li>Categorize open orders and incoming limit orders buy orders and sell orders;</li>
-<li>With everything else (market price, model price, etc.) held equal, consider 2 scenarios<ol>
-<li>All buy orders filled at their limit prices;</li>
-<li>All sell orders filled at their limit prices;</li>
-</ol>
-</li>
-</ol>
-<p>Given current position holdings, either of the scenarios where a bigger collateral is demanded shall be considered in checking margin sufficiency and determining free collateral.</p>
-
-<p>In the expression above, <strong>subscript o denotes orders on either buy or sell side</strong>. The scenario under which the expression evaluates to be bigger, In the following calculation.</p>
-<p>At contract level, the required margin and margin impact are the following formula evaluated in the worse scenario.</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/worst_required_margin_and_impact_margin_formula.png">
-<p><strong>Portfolio Level</strong></p>
-<p>At the portfolio level, contracts are grouped by their settlement currency into containers. So the Required Margin and Margin Impact for a portfolio and specific settlement currency, is the summations of contract level RM and MI.</p>
-<p><strong>Margin Sufficiency</strong></p>
-<p>When checking for margin sufficiency at portfolio level (i.e. container level), we simply evaluate the inequality below across contracts under the container in question.</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/margin_suffiency.png">
-<p>The left hand side is simply collateral adjusted by <strong>margin impacts</strong> from positions and their related orders in the container.</p>
-<p>The right hand side of the inequality computes the required margin for the container by summing up the <strong>required margin for each contract</strong>.</p>
-<p><strong>Free Collateral</strong></p>
-<p>Free collateral is the amount of collateral that can be removed from a container. Removing such amount must not:</p>
-<ul>
-<li>Immediately cause <strong>liquidation</strong> or auto deleveraging of positions in the container;</li>
-<li>Cause the container to be <strong>insufficient</strong> for the initial margin requirement;</li>
-<li>Exceed the total collateral in the container.</li>
-</ul>
-<p>So the free collateral value for a container is the smaller of the 2 values below:</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/free_collateral_formula.png">
-<p><strong>Margin Coverage</strong></p>
-<p>Margin coverage ratios show how much margin one has to cover the margin requirements imposed on a container. They are defined as <strong>IMC</strong> and <strong>MMC</strong>.</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/IMC_MMC_formula.png">
-<p>When a container’s <strong>IMC falls below 1</strong>, a trader will not be able to increase the size of positions in it. And so on our trading terminal, when <strong>IMC falls lower than 1</strong>, its indicator will lit up in red.</p>
-<p>When a container’s MMC falls towards 1, a liquidation looms imminent. Unlike IMC, which can stay below 1 for a period, once MMC touches 1, liquidation kicks in and almost instantly brings MMC above 1. To warning users about the approaching liquidation, <strong>we lit the MMC indicator in red when the following ratio falls below 1</strong>.</p>
-<img src="/2019/05/28/Futures/How-to-calculate-margin/MMC_formula.png">
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/26/Java/Log/正确输出Log的姿势/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/26/Java/Log/正确输出Log的姿势/" itemprop="url">正确输出Log的姿势</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-26T18:54:22+08:00">
-                2019-05-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Log/" itemprop="url" rel="index">
-                    <span itemprop="name">Log</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Slf4j"><a href="#Slf4j" class="headerlink" title="Slf4j"></a>Slf4j</h3><p>全称：Simple Logging Facade for Java，即简单日志门面接口，和 Apache 的 commons-logging 是一样的概念，它们都不是具体的日志框架，你可以指定其他主流的日志实现框架。</p>
-<hr>
-<h3 id="Log级别及使用说明"><a href="#Log级别及使用说明" class="headerlink" title="Log级别及使用说明"></a>Log级别及使用说明</h3><img src="/2019/05/26/Java/Log/正确输出Log的姿势/log-level.png">
-<table>
-<thead>
-<tr>
-<th>日志级别</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>OFF</td>
-<td>关闭：最高级别，不输出日志。</td>
-</tr>
-<tr>
-<td>FATAL</td>
-<td>致命：输出非常严重的可能会导致应用程序终止的错误。</td>
-</tr>
-<tr>
-<td>ERROR</td>
-<td>错误：输出错误，但应用还能继续运行。</td>
-</tr>
-<tr>
-<td>WARN</td>
-<td>警告：输出可能潜在的危险状况。</td>
-</tr>
-<tr>
-<td>INFO</td>
-<td>信息：输出应用运行过程的详细信息。</td>
-</tr>
-<tr>
-<td>DEBUG</td>
-<td>调试：输出更细致的对调试应用有用的信息。</td>
-</tr>
-<tr>
-<td>TRACE</td>
-<td>跟踪：输出更细致的程序运行轨迹。</td>
-</tr>
-<tr>
-<td>ALL</td>
-<td>所有：输出所有级别信息。</td>
-</tr>
-</tbody>
-</table>
-<p>日志输出关系，如下图所示：</p>
-<img src="/2019/05/26/Java/Log/正确输出Log的姿势/output-level.png">
-<h4 id="日志场景说明"><a href="#日志场景说明" class="headerlink" title="日志场景说明"></a>日志场景说明</h4><ul>
-<li>DEBUG：记录对调试程序有帮助的信息。</li>
-<li>INFO：用来记录程序运行现场，虽然此处并未发生错误，但是对排查其他错误具有指导意义。</li>
-<li>WARN：可以用来记录程序运行现场，但是更偏向于表明此处有出现潜在错误的可能。</li>
-<li>ERROR：表明当前程序运行发生了错误，需要被关注。但是当前发生的错误，没有影响系统的继续运行。</li>
-<li>FATAL：表明当前程序运行出现了严重的错误事件，并且将会导致应用程序中断。</li>
-</ul>
-<p>需要注意点：</p>
-<ul>
-<li>避免无效日志打印：日志配置设置 additivity=”false”。</li>
-<li>区别对待错误日志：WARN 与 ERROR 都是与错误有关的日志级别，但不要一发生错误就笼统地输出 ERROR 级别日志。一些业务异常是可以通过引导重试就能恢复正常的，例如用户输入参数错误。在这种情况下，记录日志是为了在用户咨询时可以还原现场，如果输出为 ERROR 级别就不适合了。ERROR 级别只记录系统逻辑错误、异常或者违反重要的业务规则，其他错误都可以归为 WARN 级别。</li>
-<li>保证记录内容完整：日志记录的内容包括现场上下文信息与异常堆栈信息。记录异常时，一定要输出异常堆栈，例如，logger.error(“xxxx: ${e.message}”, e)；日志中如果输出对象实例，要确保实例类重写了 toString() 方法，否则只输出对象的 hash code 值，没有意义。</li>
-</ul>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://juejin.im/post/5b9871895188255c57212459" target="_blank" rel="noopener">https://juejin.im/post/5b9871895188255c57212459</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/26/读书笔记/认知/修昔底德陷阱/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/26/读书笔记/认知/修昔底德陷阱/" itemprop="url">修昔底德陷阱</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-26T14:24:07+08:00">
-                2019-05-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/" itemprop="url" rel="index">
-                    <span itemprop="name">读书笔记</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/认知/" itemprop="url" rel="index">
-                    <span itemprop="name">认知</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>“修昔底德陷阱”，是指<strong>一个新崛起的大国必然要挑战现存大国，而现存大国也必然会回应这种威胁，这样战争变得不可避免。</strong>此说法源自古希腊著名历史学家修昔底德，他认为，当一个崛起的大国与既有的统治霸主竞争时，双方面临的危险多数以战争告终。</p>
-<p>这样的事例曾经发生在公元前5世纪，修昔底德自己的时代，新崛起的雅典震动了陆地霸主斯巴达，结果双方爆发了长达30年的战争，两国均遭毁灭。类似的事例也发生在16世纪的新崛起的新教英国与天主教的西班牙之间，以及19世纪末与20世纪初的老牌帝国英国与新兴强国日耳曼的德国之间。</p>
-<hr>
-<h3 id="修昔底德陷阱的由来"><a href="#修昔底德陷阱的由来" class="headerlink" title="修昔底德陷阱的由来"></a>修昔底德陷阱的由来</h3><p>修昔底德陷阱是古希腊大历史学家修昔底德在其不朽的名著—-《伯罗奔尼撒战争史》中阐述的一个核心思想，<strong>指新兴大国随着其力量的增强，一定会向老牌的霸权国家发起挑战，而老牌的霸权国家也一定会为了维护其霸权而全力打压新兴大国的崛起势头，甚至发动战争。</strong></p>
-<p>《伯罗奔尼撒战争史》还指出：“使战争不可避免的真正原因是雅典势力的增长和因而引起斯巴达的恐惧。”但修昔底德并没有明确概括出修昔底德陷阱这个概念，而美国学者艾利森根据这一论断则提出“修昔底德陷阱”的概念，认为一个新崛起的大国必然要挑战现存大国，而现存大国也必然来回应这种威胁，这样战争变得不可避免。</p>
-<p>2017年5月，这位美国著名国际问题专家、哈佛大学肯尼迪学院首任院长的格雷厄姆·艾利森（Graham Allison）出版了他的新书——《注定开战：美国和中国能否逃脱修昔底德陷阱？》（Destined for War: Can America and China Escape Thucydides’s Trap）。该书的出版，标志着这一概念的正式提出。</p>
-<p>艾利森还说，我们不必成为中国的奴隶，但我们必须学会接受其强大，尽管有时它展示自己强大的方式令我们反感。而为了避免一场战争，这一点可能还不是我们必须要吞下最苦的药片。战争的风险是切实存在的，而其后果难以形容得可怕。</p>
-<p>他特别强调第一次世界大战的典型性，说这次战争的根源就是新崛起的大国德国挑战了当时的现存大国英国，从而引发了世界灾难，正如同雅典挑战斯巴达，斯巴达便发动战争，导致整个希腊世界受到重创。</p>
-<hr>
-<h3 id="历史的回顾与思考"><a href="#历史的回顾与思考" class="headerlink" title="历史的回顾与思考"></a>历史的回顾与思考</h3><p>古希腊罗马的斯巴达和雅典的伯罗奔尼撒战争是修昔底德立论的现实基础，在艾利森看来，自是有着无可辩驳的逻辑和说服力，其他人类历史上的著名霸权兴衰交替的历史似乎也在佐证着他的论断。比如罗马和迦太基；西班牙和大英帝国；荷兰和大英帝国；法兰西帝国和大英帝国；德意志帝国和大英帝国；美利坚合众国和大日本帝国，和大英帝国，这些世界历史上著名的帝国之间的竞争和争斗，似乎也无不是如此的。再看中华帝国漫长的历史上，也是写满了霸权兴衰的斑斑血迹的，春秋五霸，战国七雄，秦汉相替，汉匈奴战争等等，都看不出有异曲不同工的妙处。</p>
-<p>那么，在人类历史上究竟有没有不经过激烈的斗争甚至战争而实现的霸权的和平过渡呢？</p>
-<p>应该说有的，最明显的例证就是大英帝国以和平的方式将霸权禅让给了美利坚合众国，但这一例证并不是在完全的意义上是如此的，因为大英帝国的霸权随着第二次世界大战的开始，已经处于分崩离析，土崩瓦解的局面下了，在欧洲，希特勒的德意志第三帝国横扫西欧大陆，一举打败了宿敌，号称世界第一陆上强国的法国，然后又兵锋直抵大英帝国的本土，上演了伦敦上空的大空战，之后又发动了巴巴罗莎计划，与苏维埃巨人苏联战成一团。</p>
-<p>在远东，大日本帝国则早已占领中国的东北，建立了满洲国，七七事变后，又发动了全面的侵华战争，之后，又发动了太平洋战争，横扫了大英帝国在远东和东南亚的传统势力，大英帝国只剩下半条命，美利坚合众国则乘势崛起，不仅打败了所谓的大日本帝国，而且通过大西洋宪章，逼迫大英帝国的掌门人丘吉尔承诺殖民地独立，实质上也就是签下大英帝国解体的卖身契，所以说与其说是禅让，还不如说美国假途灭虢，或者说大英帝国只是将其残山剩水拿出来禅让于美国，不是将完整的霸权禅让于美国的，美利坚是以战争的手段夺得世界霸权的。这显然不同于经典的修昔底德陷阱，修昔底德陷阱过于简单地聚焦于两个大国之间的争霸，在概括第二次世界大战这样多个世界强国争霸的复杂局面时，就显得不够全面，不够贴切。</p>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://baike.baidu.com/item/%E4%BF%AE%E6%98%94%E5%BA%95%E5%BE%B7%E9%99%B7%E9%98%B1" target="_blank" rel="noopener">https://baike.baidu.com/item/%E4%BF%AE%E6%98%94%E5%BA%95%E5%BE%B7%E9%99%B7%E9%98%B1</a></li>
-<li><a href="https://zhuanlan.zhihu.com/p/45687804" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/45687804</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/25/读书笔记/行业/金融/为什么牛奶宁可倒掉也不送人/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/25/读书笔记/行业/金融/为什么牛奶宁可倒掉也不送人/" itemprop="url">为什么牛奶宁可倒掉也不送人？</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-25T23:24:07+08:00">
-                2019-05-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Finance/" itemprop="url" rel="index">
-                    <span itemprop="name">Finance</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>为什么在大萧条的时候，资本家宁可倒掉牛奶也不愿意送人？</p>
-<hr>
-<h3 id="古典经济学"><a href="#古典经济学" class="headerlink" title="古典经济学"></a>古典经济学</h3><p>古典经济学，也就是亚当斯密和李嘉图那一套。古典经济学认为，<strong>自由竞争的市场机制这只”看不见的手”能够有效地调节资源配置并使其达到最优</strong>，而政府干预则会使得市场在某种程度扭曲，从而降低市场效率，所以<strong>政府管的越少越好</strong>。</p>
-<p>这在上个世纪大萧条之前，是经济学界的主流观点，也广泛被资本主义国家政府接受。然而，<strong>市场并不是像古典经济学家假设的那样是可以达到完全竞争的</strong>，在现实社会中，很多因素导致市场失灵，市场失灵的结果就是<strong>资源错配</strong>——资本家卖不出去牛奶不得不倒掉的同时，穷人买不起食物不得不挨饿，这就是资源错配的结果。</p>
-<hr>
-<h3 id="资源错配的机理"><a href="#资源错配的机理" class="headerlink" title="资源错配的机理"></a>资源错配的机理</h3><p>市场的不完备性：</p>
-<ul>
-<li>滞后性</li>
-<li>交易成本</li>
-</ul>
-<blockquote>
-<p>机理是指为实现某一特定功能，一定的系统结构中各要素的内在工作方式以及诸要素在一定环境条件下相互联系、相互作用的运行规则和原理。</p>
-</blockquote>
-<h4 id="滞后性"><a href="#滞后性" class="headerlink" title="滞后性"></a>滞后性</h4><p>假设，今年猪肉价格很高，大家都动心了，但你即使现在立马开始养猪，那也至少要等几个月之后猪才能长大。而几个月后的市场行情，绝对不是现在的市场行情了。</p>
-<p>大萧条之前的美国经济是怎样的？各个产业高速发展的黄金期（或者说过热期），各个产业都很繁荣，工人工资得以保障，消费水平上涨，那对牛奶等消费的需求就会程上升趋势。所以，奶农有扩大生产的动机。</p>
-<p>但我们知道，市场有滞后性，<strong>大萧条来临的时候，其他产业出现问题，股票暴跌，工人失业，对牛奶的需求降低，牛奶价格暴跌</strong>。但奶农短期之内，无法对即时的市场做出反应，因为他现在的奶牛数量和生产量，都基于之前对未来的乐观市场局面的估计。他就算现在立马减少生产（卖牛或者杀牛），也要等几个月之后才能降下来产量。</p>
-<p>那调整产量用的这几个月呢？牛奶生产出来了，然后呢？这就涉及到市场不完备的另一个特点了。</p>
-<h4 id="交易成本"><a href="#交易成本" class="headerlink" title="交易成本"></a>交易成本</h4><p>大家要注意，在高度资本化和高度分工化的社会中，<strong>奶厂是不直接面对消费者的</strong>（消费者直接端着碗去养奶牛的人那里打奶，那是小农经济，跟我们讲的资本主义经济危机没有半毛钱关系。</p>
-<p>牛奶从奶厂到消费者手里面，是有中间渠道和成本的。即使牛奶是免费的，消费者也不可能免费拿到牛奶。</p>
-<p>为什么呢？牛奶消毒、储存、包装、运输、贩卖，都需要成本。这些成本，都是加到最后消费者要付的价格里面去的。哪怕资本家免费提供牛奶，运输工人免费运输，售货员甚至都不要工资，那包装盒总要钱的吧？储存总要钱的吧？运输车的汽油总要钱的吧？</p>
-<p>当时大萧条的时候，社会是怎样的呢？<strong>工人普遍失业，没钱</strong>；就算奶厂白送牛奶，经过消毒、储存、包装、运输、贩卖这一系列程序，牛奶到商店里的价格，工人仍然买不起；工人买不起商店的牛奶；商店卖不出去牛奶，就不会进货；商店不进货，奶厂的牛奶就卖不出去；奶厂的牛奶卖不出去，就只能存着；储存需要电（低温），需要消毒，需要雇佣工人操作，都要钱的（而且存着也卖不出去，只会越存越多）。</p>
-<p>所以，<strong>牛奶只能倒掉。</strong></p>
-<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>这就是由于市场的不完备性（滞后性和交易成本）导致的资源错配的典型案例。</p>
-<p>所以，牛奶宁愿倒掉也不免费送人，是由于自由市场不完备造成的市场失灵的结果，说白了就是，奶厂的牛奶免费送人，工人也买不起，所以只能倒掉。这跟资本家的阴谋、为了维持价格宁愿不卖也要倒掉、万恶的资本主义、人性的丑恶没有一毛钱关系。</p>
-<hr>
-<h3 id="如何解决市场不完备带来的问题？"><a href="#如何解决市场不完备带来的问题？" class="headerlink" title="如何解决市场不完备带来的问题？"></a>如何解决市场不完备带来的问题？</h3><p>资源错配的根源找到了，就是市场不完备。那我们就<strong>让政府去解决市场不完备的问题</strong>。</p>
-<h4 id="滞后性-1"><a href="#滞后性-1" class="headerlink" title="滞后性"></a>滞后性</h4><p>对此，政府就要出面，给奶农前瞻性的信息，让奶农知道，今年牛奶大涨价，并不能盲目扩大生产，否则明年大家都生产很多牛奶，奶价大跌，大家都受损——这里又涉及很复杂的社会心理层面的博弈问题，比如，政府是否有足够高的信誉。要是政府本身就没啥信用，腐败盛兴，那么调控就会出问题——你不让我们扩大生产，是不是就让你小姨子小舅子二姐夫三舅妈的厂子扩大生产，明年就便宜你们家亲戚了。</p>
-<p>调控还可以是另一种形式——一个强有力的政府。商店里的牛奶不是卖不出去吗？我政府花钱买全买了，买了我发给公务员加餐也好，发给穷人当福利也好，给学校当营养餐也好，哪怕是买了我政府倒掉也好（至少奶厂不会倒闭了，奶农和工人不会破产了）。</p>
-<p>这就要求你政府要强啊，该拿钱的时候要拿得出来啊（经济危机中牛奶真的是不值一提，花钱的地方海了去了，政府公信力和财力不够真的撑不下去）。</p>
-<h4 id="交易成本-1"><a href="#交易成本-1" class="headerlink" title="交易成本"></a>交易成本</h4><p>这个也是政府可以操控的。你可以补贴啊：消毒、包装、储存、运输、售卖，你一环一环给它补贴，让这个环节流通起来，让交易成本降下来，自然而然，这个问题就解决了。</p>
-<p>有人说了，是工人失业买不起牛奶，为啥不给工人发钱让他们买得起牛奶，尽给资本家补贴了？真是万恶的资本主义啊。</p>
-<p>先理一下逻辑：</p>
-<ul>
-<li>工人为啥买不起牛奶？因为他失业了；</li>
-<li>工人为啥失业？因为他的工厂倒闭了；</li>
-<li>他的工厂为啥倒闭破产？因为东西卖不出去，所以资本家老板只能缩减生产，大幅裁员。</li>
-</ul>
-<p><strong>奶厂，就是这个社会生产的一环。</strong>只要政府能让奶厂这个环正常运转，那么奶农和奶厂工人就不会失业，他们就有工资拿，有工资拿就消费得起其他商品。</p>
-<p>同样的，工人买不起牛奶，重要的不是补贴工人让他们买得起牛奶，而是让他们所在的行业这个环也运转起来，这样他们的工厂就不会减产裁员，工人就有工资拿，他们就买得起牛奶。</p>
-<p>所以，<strong>宏观调控，就是对由于市场本身出问题而转不动的各行各业进行调控和补贴，让它们都转起来。只要各个环都转起来，经济就会正常运转。</strong></p>
-<p>由此，可知为什么美国在大萧条后走出经济危机相对于很多国家比较容易了–<strong>美国政府很强大，也很有钱，而且公信力在国内还可以</strong>。</p>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://www.zhihu.com/question/36274714" target="_blank" rel="noopener">https://www.zhihu.com/question/36274714</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/13/Java/Advance/volatile与CAS的区别/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/13/Java/Advance/volatile与CAS的区别/" itemprop="url">Java volatile 与 CAS 的区别</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-13T23:35:06+08:00">
-                2019-05-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
-                    <span itemprop="name">Advance</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="锁的特性"><a href="#锁的特性" class="headerlink" title="锁的特性"></a>锁的特性</h4><p>锁具有两种主要特性：<strong>互斥</strong>和<strong>可见性</strong>。</p>
-<ul>
-<li>互斥指的是一次只允许一个线程持有某个特定的锁，因此可以保证共享数据内容的一致性；</li>
-<li>可见性指的是必须确保锁被释放之前对共享数据的修改，随后获得锁的另一个线程能够知道该行为。</li>
-</ul>
-<h4 id="锁的代价"><a href="#锁的代价" class="headerlink" title="锁的代价"></a>锁的代价</h4><p>锁是用来做并发最简单的方式，当然其代价也是最高的。内核态的锁的时候需要操作系统进行一次上下文切换，加锁、释放锁会导致比较多的上下文切换和调度延时，等待锁的线程会被挂起直至锁释放。在上下文切换的时候，cpu之前缓存的指令和数据都将失效，对性能有很大的损失。操作系统对多线程的锁进行判断就像两姐妹在为一个玩具在争吵，然后操作系统就是能决定他们谁能拿到玩具的父母，这是很慢的。用户态的锁虽然避免了这些问题，但是其实它们只是在没有真实的竞争时才有效。</p>
-<p>Java在JDK1.5之前都是靠synchronized关键字保证同步的，这种通过使用一致的锁定协议来协调对共享状态的访问，可以确保无论哪个线程持有守护变量的锁，都采用独占的方式来访问这些变量，如果出现多个线程同时访问锁，那第一些线线程将被挂起，当线程恢复执行时，必须等待其它线程执行完他们的时间片以后才能被调度执行，在挂起和恢复执行过程中存在着很大的开销。锁还存在着其它一些缺点，当一个线程正在等待锁时，它不能做任何事。如果一个线程在持有锁的情况下被延迟执行，那么所有需要这个锁的线程都无法执行下去。如果被阻塞的线程优先级高，而持有锁的线程优先级低，将会导致优先级反转(Priority Inversion)。</p>
-<h4 id="乐观锁和悲观锁"><a href="#乐观锁和悲观锁" class="headerlink" title="乐观锁和悲观锁"></a>乐观锁和悲观锁</h4><p>独占锁是一种<strong>悲观锁</strong>，synchronized就是一种独占锁，它假设最坏的情况，并且只有在确保其它线程不会造成干扰的情况下执行，会导致其它所有需要锁的线程挂起，等待持有锁的线程释放锁。而另一个更加有效的锁就是乐观锁。所谓<strong>乐观锁</strong>就是，每次不加锁而是假设没有冲突而去完成某项操作，如果因为冲突失败就重试，直到成功为止。</p>
-<h4 id="volatile"><a href="#volatile" class="headerlink" title="volatile"></a>volatile</h4><p>与锁相比，volatile变量是一和更轻量级的同步机制，因为在使用这些变量时不会发生上下文切换和线程调度等操作，但是volatile变量也存在一些局限：<strong>不能用于构建原子的复合操作，因此当一个变量依赖旧值时就不能使用volatile变量。</strong></p>
-<blockquote>
-<p>所有读值操作都执行一个包含获取语义的读取操作，这些方法读取由参数address引用的值，然后使得CPU高速缓存内的相应字节失效；所有写值操作都执行一个包含释放语义的写入操作，这些方法将CPU高速缓存内的字节刷到内存中，然后将address参数引用的值修改为value参数所表示的值。</p>
-</blockquote>
-<p><strong>volatile变量具有”lock”的可见性，却不具备原子特性。</strong>也就是说线程能够自动发现volatile变量的最新值。volatile变量可以实现线程安全，但其应用有限。使用volatile变量的主要原因在于它使用非常简单，至少比使用锁机制要简单的多；其次便是性能原因了，某些情况下，它的性能要优于锁机制。此外，volatile操作不会造成阻塞。</p>
-<p>使用volatile来确保线程安全的前提条件：</p>
-<ul>
-<li>对变量的写操作不依赖于当前值；</li>
-<li>该变量没有包含在具有其他变量的不变式中。</li>
-</ul>
-<hr>
-<h3 id="Atomic-Operations"><a href="#Atomic-Operations" class="headerlink" title="Atomic Operations"></a>Atomic Operations</h3><ul>
-<li>all assignments of primitive types except for long and double</li>
-<li>all assignments of references</li>
-<li>all operations of java.concurrent.Atomic* classes</li>
-<li>all assignments to volatile longs and doubles</li>
-</ul>
-<p><strong>常见的i++操作</strong></p>
-<p>如果是非原子性操作，那么i++将分为三步完成：</p>
-<ul>
-<li>读取当前i的值；</li>
-<li>对i进行自增；</li>
-<li>写入i最新的值。</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Counter</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> var count = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">dec</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count -= <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function">fun <span class="title">getValue</span><span class="params">()</span>: Int </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.count</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>假设有两个线程分别执行 inc() 和 dec() 操作，两个线程操作时序如下：</p>
-<ol>
-<li>Thread A 读取到 count 值为 0；</li>
-<li>Thread B 读取到 count 值为 0；</li>
-<li>Thread A inc()，count变成了 1；</li>
-<li>Thread B dec()，变成了 -1；</li>
-<li>Thread A 更新 count 的值为 1；</li>
-<li>Thread B 更新 count 的值为 -1；</li>
-</ol>
-<p>执行的结果就是 Thread B 的写入操作覆盖了 Thread A的值。</p>
-<p><strong>为什么long型赋值不是原子操作呢？</strong></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">long</span> foo = <span class="number">65465498L</span>;</span><br></pre></td></tr></table></figure>
-<p>因为在实际中，Java会分两步写入这个long变量，先写32位，再写后32位。这样就线程不安全了。如果改成下面的就线程安全了：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  volatile内部已经做了synchronized</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">long</span> foo;</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="volatile不能保证原子性"><a href="#volatile不能保证原子性" class="headerlink" title="volatile不能保证原子性"></a>volatile不能保证原子性</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestVolatileAtomic</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Volatile</span></span><br><span class="line">    var count = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    val threadCount = <span class="number">100</span></span><br><span class="line">    val volatileAtomic = TestVolatileAtomic()</span><br><span class="line">    var runningTimes = <span class="number">0</span></span><br><span class="line">    var errorTimes = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        val countDownLatch = CountDownLatch(threadCount)</span><br><span class="line">        val startup = CountDownLatch(threadCount)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (index in <span class="number">0</span> until threadCount) &#123;</span><br><span class="line">            thread &#123;</span><br><span class="line">                startup.countDown()</span><br><span class="line">                <span class="comment">//  println("threadId $&#123;Thread.currentThread().id&#125; waiting")</span></span><br><span class="line">                startup.await()</span><br><span class="line">                volatileAtomic.inc()</span><br><span class="line">                countDownLatch.countDown()</span><br><span class="line">                <span class="comment">//  println("threadId $&#123;Thread.currentThread().id&#125; finish")</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        countDownLatch.await()</span><br><span class="line">        <span class="keyword">if</span> (volatileAtomic.count % threadCount != <span class="number">0</span>) &#123;</span><br><span class="line">            println(<span class="string">"count $&#123;volatileAtomic.count&#125;"</span>)</span><br><span class="line">            errorTimes += <span class="number">1</span></span><br><span class="line">        &#125;</span><br><span class="line">        volatileAtomic.count = <span class="number">0</span></span><br><span class="line">        runningTimes += <span class="number">1</span></span><br><span class="line">        println(<span class="string">"runningTimes $runningTimes, errorTimes=$errorTimes"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>测试输出结果：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">runningTimes 1128, errorTimes=9</span><br><span class="line">runningTimes 1129, errorTimes=9</span><br></pre></td></tr></table></figure>
-<h4 id="Synchronized-确保”原子性”"><a href="#Synchronized-确保”原子性”" class="headerlink" title="Synchronized 确保”原子性”"></a>Synchronized 确保”原子性”</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Synchronized</span> <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    count += <span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="Atomic-Class-确保”原子性”"><a href="#Atomic-Class-确保”原子性”" class="headerlink" title="Atomic Class 确保”原子性”"></a>Atomic Class 确保”原子性”</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TestVolatileAtomic</span> </span>&#123;</span><br><span class="line">    <span class="comment">//  @Volatile</span></span><br><span class="line">    var count = AtomicInteger(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function">fun <span class="title">inc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        count.incrementAndGet()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="http://java-latte.blogspot.com/2012/10/what-is-atomicoperation-in-java-atomic.html" target="_blank" rel="noopener">http://java-latte.blogspot.com/2012/10/what-is-atomicoperation-in-java-atomic.html</a></li>
-<li><a href="https://www.vogella.com/tutorials/JavaConcurrency/article.html" target="_blank" rel="noopener">https://www.vogella.com/tutorials/JavaConcurrency/article.html</a></li>
-<li><a href="https://cloud.tencent.com/developer/article/1152642" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1152642</a></li>
-<li><a href="http://www.cnblogs.com/Mainz/p/3546347.html" target="_blank" rel="noopener">http://www.cnblogs.com/Mainz/p/3546347.html</a></li>
-<li><a href="http://www.cnblogs.com/lucifer1982/archive/2008/03/23/1116981.html" target="_blank" rel="noopener">http://www.cnblogs.com/lucifer1982/archive/2008/03/23/1116981.html</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/09/Network/TCP三次握手/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/09/Network/TCP三次握手/" itemprop="url">深入理解TCP握手</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-09T23:04:19+08:00">
-                2019-05-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Network/" itemprop="url" rel="index">
-                    <span itemprop="name">Network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Three-way-Handshake"><a href="#Three-way-Handshake" class="headerlink" title="Three-way Handshake"></a>Three-way Handshake</h3><p>所谓三次握手(<strong>Three-way Handshake</strong>)，是指建立一个 TCP 连接时，需要客户端和服务器总共发送3个包。</p>
-<p><strong>三次握手的目的是连接服务器指定端口，建立 TCP 连接，并同步连接双方的序列号和确认号，交换 TCP 窗口大小信息。</strong>在 socket 编程中，客户端执行 connect() 时。将触发三次握手。</p>
-
-<ol>
-<li><p>第一次握手(SYN=1，seq=x)：客户端发送一个 TCP 的 SYN 标志位1的包，指明客户端打算连接的服务器的端口，以及初始序号 X，保存在包头的序列号(Sequence Number)字段里。发送完毕后，客户端进入 SYN_SEND 状态。</p>
-</li>
-<li><p>第二次握手(SYN=1，ACK=1, seq=y, ACKnum=x+1)：服务器发回确认包(ACK)应答。即 SYN 标志位和 ACK 标志位均为1。服务器端选择自己 ISN 序列号，放到 Seq 域里，同时将确认序号(Acknowledgement Number)设置为客户的 ISN 加1，即X+1。发送完毕后，服务器端进入 SYN_RCVD 状态。</p>
-</li>
-<li><p>第三次握手(ACK=1，ACKnum=y+1)：客户端再次发送确认包(ACK)，SYN 标志位为0，ACK 标志位为1，并且把服务器发来 ACK 的序号字段+1，放在确定字段中发送给对方，并且在数据段放写ISN的+1发送完毕后，客户端进入 ESTABLISHED 状态，当服务器端接收到这个包时，也进入 ESTABLISHED 状态，TCP 握手结束。</p>
-</li>
-</ol>
-<blockquote>
-<p>SYN：同步序列编号（Synchronize Sequence Numbers），是TCP/IP建立连接时使用的握手信号。在客户机和服务器之间建立正常的TCP网络连接时，客户机首先发出一个SYN消息，服务器使用SYN+ACK应答表示接收到了这个消息，最后客户机再以ACK消息响应。这样在客户机和服务器之间才能建立起可靠的TCP连接，数据才可以在客户机和服务器之间传递。<br>SYN攻击：利用TCP协议缺陷，发送了大量伪造的TCP连接请求，使得被攻击方资源耗尽，无法及时回应或处理正常的服务请求。一个正常的TCP连接需要三次握手，首先客户端发送一个包含SYN标志的数据包，其后服务器返回一个SYN/ACK的应答包，表示客户端的请求被接受，最后客户端再返回一个确认包ACK，这样才完成TCP连接。在服务器端发送应答包后，如果客户端不发出确认，服务器会等待到超时，期间这些半连接状态都保存在一个空间有限的缓存队列中；如果大量的SYN包发到服务器端后没有应答，就会使服务器端的TCP资源迅速耗尽，导致正常的连接不能进入，甚至会导致服务器的系统崩溃。</p>
-</blockquote>
-<hr>
-<h3 id="Four-way-handshake"><a href="#Four-way-handshake" class="headerlink" title="Four-way handshake"></a>Four-way handshake</h3><p>断开 TCP 连接需要发送四个包，因此称为四次挥手(Four-way handshake)，也叫做改进的三次握手。客户端或服务器均可主动发起挥手动作，在 socket 编程中，任何一方执行 close() 操作即可产生挥手操作。</p>
-
-<ol>
-<li><p>第一次挥手(FIN=1，seq=x)：假设客户端想要关闭连接，客户端发送一个 FIN 标志位为1的包，表示自己已经没有数据可以发送了，但是仍然可以接受数据。发送完毕后，客户端进入 FIN_WAIT_1 状态。</p>
-</li>
-<li><p>第二次挥手(ACK=1，ACKnum=x+1)：服务器端确认客户端的 FIN 包，发送一个确认包，表明自己接受到了客户端关闭连接的请求，但还没有准备好关闭连接。发送完毕后，服务器端进入 CLOSE_WAIT 状态，客户端接收到这个确认包之后，进入 FIN_WAIT_2 状态，等待服务器端关闭连接。</p>
-</li>
-<li><p>第三次挥手(FIN=1，seq=y)：服务器端准备好关闭连接时，向客户端发送结束连接请求，FIN 置为1。发送完毕后，服务器端进入 LAST_ACK 状态，等待来自客户端的最后一个ACK。</p>
-</li>
-<li><p>第四次挥手(ACK=1，ACKnum=y+1)：客户端接收到来自服务器端的关闭请求，发送一个确认包，并进入 TIME_WAIT 状态，等待可能出现的要求重传的 ACK 包。服务器端接收到这个确认包之后，关闭连接，进入 CLOSED 状态。客户端等待了某个固定时间（两个最大段生命周期，2MSL，2 Maximum Segment Lifetime）之后，没有收到服务器端的 ACK，认为服务器端已经正常关闭连接，于是自己也关闭连接，进入 CLOSED 状态。</p>
-</li>
-</ol>
-<hr>
-<h3 id="SYN攻击"><a href="#SYN攻击" class="headerlink" title="SYN攻击"></a>SYN攻击</h3><p>SYN 攻击是一种典型的 DoS/DDoS 攻击。</p>
-<p>在三次握手过程中，服务器发送 SYN-ACK 之后，收到客户端的 ACK 之前的 TCP 连接称为半连接(half-open connect)。此时服务器处于 SYN_RCVD 状态。当收到 ACK 后，服务器才能转入 ESTABLISHED 状态。</p>
-<p>SYN 攻击指的是，攻击客户端在短时间内伪造大量不存在的IP地址，向服务器不断地发送SYN包，服务器回复确认包，并等待客户的确认。由于源地址是不存在的，服务器需要不断的重发直至超时，这些伪造的SYN包将长时间占用未连接队列，正常的SYN请求被丢弃，导致目标系统运行缓慢，严重者会引起网络堵塞甚至系统瘫痪。</p>
-<p><strong>如何检测SYN攻击？</strong></p>
-<p>检测 SYN 攻击非常的方便，当你在服务器上看到大量的半连接状态时，特别是源IP地址是随机的，基本上可以断定这是一次SYN攻击。在 Linux/Unix 上可以使用系统自带的 netstats 命令来检测 SYN 攻击。</p>
-<p><strong>如何防御 SYN 攻击？</strong></p>
-<p>SYN攻击不能完全被阻止，除非将TCP协议重新设计。我们所做的是尽可能的减轻SYN攻击的危害，常见的防御 SYN 攻击的方法有如下几种：</p>
-<ul>
-<li>缩短超时（SYN Timeout）时间</li>
-<li>增加最大半连接数</li>
-<li>过滤网关防护</li>
-<li>SYN cookies技术</li>
-</ul>
-<hr>
-<h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><p>TCP 的三次握手最重要的就是协商传输数据用的序列号。那这个序列号究竟有些什么用呢？</p>
-<p>这个序号能够帮助后续两端进行确认数据包是否收到，解决顺序、丢包问题；另外我们还可以看到有一个 win 字段，这是双方交流的窗口大小，这在每次传输数据过程中也会携带。主要是告诉对方，我窗口是这么大，别发多了或者别发太少。</p>
-<p>TCP的特点是：</p>
-<ul>
-<li>顺序问题，依靠序号</li>
-<li>丢包问题，依靠序号</li>
-<li>流量控制，依靠滑动窗口</li>
-<li>拥塞控制，依靠拥塞窗口+滑动窗口</li>
-<li>连接维护，三次握手/四次挥手</li>
-</ul>
-<h4 id="顺序与丢包问题"><a href="#顺序与丢包问题" class="headerlink" title="顺序与丢包问题"></a>顺序与丢包问题</h4><p>由于数据在传输前我们已经有序号了，这里注意一下这个序号是随机的，重复的概率极低，避免了程序发生乱入的可能性。</p>
-<p>由于我们每个数据包有序号，虽然发送与到达可能不是顺序的，但是TCP层收到数据后，可以根据序号进行重新排列；另外在这个排列过程中，发现有了1，2，3，5，6这几个包，一检查就知道4要么延时未到达，要么丢包了，等待重传。</p>
-<p>这里需要重要说明的一点是。为了提升效率，TCP其实并不是收到一个包就发一个ack。那是如何ACK的呢？还是以上面为例，TCP收到了1，2，3，5，6这几个包，它可能会发送一个 ack(seq=3)的确认包，这样次一次确认了3个包。但是它不会发送 5，6的ack。因为4没有收到啊！一旦4延时到达或者重发到达，就会发送一个 ack(seq=6)，又一次确认了3个包。</p>
-<h4 id="流量控制与拥塞控制"><a href="#流量控制与拥塞控制" class="headerlink" title="流量控制与拥塞控制"></a>流量控制与拥塞控制</h4><p>举例子说明，A给B发送数据，通过握手后，A知道B一次可以收 1000Byte 的数据（B有这么大的处理能力），那么这个时候滑动窗口就可以设置成 1000Byte。那是不是最后真的可以一次发这么多数据给B呢？还不是，这时候得问问拥塞窗口，老兄，现在网络情况怎么样？一次运 1000Byte 的数据有压力吗？拥塞窗口一通计算说不行，现在是高峰期，最多只能有 600Byte 的货上路。最终这次传数据的时候就是 600Byte。</p>
-<blockquote>
-<p>可以关注抓包数据的 win 值，一直在动态调整。</p>
-</blockquote>
-<p>每次能够发送多少数据，有这么一个公式：<strong>LastByteSend - LastByteAcked &lt;= min{cwnd,rwnd}</strong></p>
-<blockquote>
-<p>LastByteSend 是最后一个发送的字节的序号；LastByteAcked 最后一个被确认的字节的序号。</p>
-</blockquote>
-<p>这两个相减得到的是本次能够发送的数据，这个数据一定小于或等于 cwnd 与 rwnd 中最小的一个值。</p>
-<hr>
-<h3 id="Status-Machine"><a href="#Status-Machine" class="headerlink" title="Status Machine"></a>Status Machine</h3><h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4>
-<h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4>
-<hr>
-<h3 id="是什么限制了你的连接"><a href="#是什么限制了你的连接" class="headerlink" title="是什么限制了你的连接"></a>是什么限制了你的连接</h3>
-<p>以Nginx为服务端进行举例说明，当客户端调用 connect() 方式时，会向服务端发起三次握手操作，当连接建立成功，在服务器端会生成一个 socket 对象，称为接收数据的 socket。服务向客户端发起的 connect() 也会生成一个 socket 对象，该对象叫发送数据的 socket。</p>
-<blockquote>
-<p>确定一个 socket 所需的元素有：源IP、源Port、目标IP、目标Port和协议。</p>
-</blockquote>
-<p>这里之所针对收发数据分别建立不同的 socket 对象，主要是从效率和管理上考虑。</p>
-<h4 id="连接上限是多少？"><a href="#连接上限是多少？" class="headerlink" title="连接上限是多少？"></a>连接上限是多少？</h4><p>在服务器监听端，IP 和 Port 都是固定的，那么只有客户端的 IP 和 Port 是可变化的，假设使用的是 IPv4，那么理论上的连接数应该是 2^32(IP) * 2^16(Port) = 2^48。但实际上是服务器端是不能建立这么多连接的，因为每一个 socket 都需要消耗内存，以及每一个进程的文件描述符是有上限的，这些都限制了最终的连接数。</p>
-<h4 id="提高连接数的手段"><a href="#提高连接数的手段" class="headerlink" title="提高连接数的手段"></a>提高连接数的手段</h4><ol>
-<li>多进程</li>
-<li>多线程</li>
-<li>IO多路复用</li>
-<li>协程</li>
-</ol>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://juejin.im/post/5cd103e2f265da03804383e1" target="_blank" rel="noopener">https://juejin.im/post/5cd103e2f265da03804383e1</a></li>
-<li><a href="https://hit-alibaba.github.io/interview/basic/network/TCP.html" target="_blank" rel="noopener">https://hit-alibaba.github.io/interview/basic/network/TCP.html</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/05/08/Java/Advance/Java-Bean-Memory/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/08/Java/Advance/Java-Bean-Memory/" itemprop="url">Java Bean Memory</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-08T13:13:06+08:00">
-                2019-05-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Advance/" itemprop="url" rel="index">
-                    <span itemprop="name">Advance</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Java-Object-Structure"><a href="#Java-Object-Structure" class="headerlink" title="Java Object Structure"></a>Java Object Structure</h4><p>一个Java对象在Heap的表示，可以分为三部分：</p>
-<ul>
-<li>Object Header</li>
-<li>Class Pointer</li>
-<li>Fields</li>
-</ul>
-<p>每个普通Java对象在堆(heap)中都有一个头信息(object header)，头信息是必不可少的，记录着对象的状态。</p>
-<img src="/2019/05/08/Java/Advance/Java-Bean-Memory/object_header.png">
-<ul>
-<li>32位：hash(25) + age(4) + lock(3) = 32bit</li>
-<li>64位：unused(25+1) + hash(31) + age(4) + lock(3) = 64bit</li>
-</ul>
-<p>在Java中，一切皆对象；每个类都有一个父类，Class Pointer就是当前对象父类的一个指针，在32位系统中，这个指针为4byte；在64位系统中，如果开启指针压缩(-XX:+UseCompressedOops)或者JVM堆的最大值小于32G，这个指针也是4byte，否则是8byte。</p>
-<p>关于字段(Fields)，这里指的是类的实例字段；也就是说不包括静态字段，因为这个字段是共享内存的，只会存在一份。</p>
-<h4 id="java-lang-Integer"><a href="#java-lang-Integer" class="headerlink" title="java.lang.Integer"></a>java.lang.Integer</h4><p>在32位系统上，计算java.lang.Integer对象内存占用。</p>
-<p>Object Header和Pointer都是固定的，4 + 4 = 8 byte，数值int占用4 byte，所以总共占用 4 + 4 + 4 = 12byte。此外，Heap的内存分配是按照 8byte 对齐的，因此该对象实际内存占用是 16byte。</p>
-<h4 id="Array"><a href="#Array" class="headerlink" title="Array"></a>Array</h4><p>在Java中还有一种特殊的对象，数组！这个对象有点特殊，它比其他对象多了一个属性：长度(length)。所以我们计算数组长度的时候，需要额外加上一个长度的字段，即一个int的大小。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span>[] arr = <span class="keyword">new</span> <span class="keyword">int</span>[<span class="number">10</span>];</span><br></pre></td></tr></table></figure>
-<p>4(object header) + 4(pointer) + 4(length) + 4*10(10个int大小) = 52byte，由于需要8位对齐，所以最终大小为 56byte。</p>
-<hr>
-<h3 id="节约内存原则"><a href="#节约内存原则" class="headerlink" title="节约内存原则"></a>节约内存原则</h3><h4 id="尽量使用基本类型，而不是包装类型"><a href="#尽量使用基本类型，而不是包装类型" class="headerlink" title="尽量使用基本类型，而不是包装类型"></a>尽量使用基本类型，而不是包装类型</h4><p>一个java.lang.Integer占用 16byte，而一个int占用 4byte，4:1 的比例！也就是说整数类的类型是基本类型内存的4倍！</p>
-<h4 id="斟酌字段类型，在满足容量前提下，尽量用小字段"><a href="#斟酌字段类型，在满足容量前提下，尽量用小字段" class="headerlink" title="斟酌字段类型，在满足容量前提下，尽量用小字段"></a>斟酌字段类型，在满足容量前提下，尽量用小字段</h4><p>数据库建表的时候字段类型需要仔细推敲，同样JavaBean中的属性字段类型也需要仔细斟酌。不要吝啬使用short，byte，boolean，如果短类型能放下数据，尽量不要使用更长的类型。一个long比一个int才多4byte，但是你要想，如果内存中有100W个long，那就白白浪费了约4MB空间，不要小看这一点点的空间浪费，因为随便一个应用的JVM中，对象都能达到上千万！内存是节省出来的。</p>
-<h4 id="如果可能，尽量用数组，少用集合"><a href="#如果可能，尽量用数组，少用集合" class="headerlink" title="如果可能，尽量用数组，少用集合"></a>如果可能，尽量用数组，少用集合</h4><p>你知道一个ArrayList集合，如果里面放了10个数字，占用多少内存吗？让我们算算：</p>
-<p>ArrayList中有两个字段：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* The array buffer into which the elements of the ArrayList are stored.</span></span><br><span class="line"><span class="comment">* The capacity of the ArrayList is the length of this array buffer. Any</span></span><br><span class="line"><span class="comment">* empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA</span></span><br><span class="line"><span class="comment">* will be expanded to DEFAULT_CAPACITY when the first element is added.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">transient</span> Object[] elementData; <span class="comment">// non-private to simplify nested class access</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* The size of the ArrayList (the number of elements it contains).</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* <span class="doctag">@serial</span></span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">int</span> size;</span><br></pre></td></tr></table></figure>
-<p>Object Header占 4byte，Pointer占 4byte，一个int字段(size)占 4byte，elementData数组本身占 12(4+4+4)byte，数组中10个Integer对象占 10 × 16 = 160byte。所以整个集合空间大小为 4 + 4 + 4 + 12 + 160 = 184byte。</p>
-<p>如果我们用int[]代替集合呢，12 + 4 × 10 = 52byte，对其后 56byte。集合跟数组的比例是 184:56，超过3:1。</p>
-<p>数组中是可以使用基本类型的，但是集合中只能放包装类型！</p>
-<p>如果实在需要使用集合，推荐一个比较节约内存的集合工具，fastutil。这里面包含了JKD集合中绝大部分的实现，而且比较省内存。</p>
-<h4 id="Other"><a href="#Other" class="headerlink" title="Other"></a>Other</h4><p>以下方法根具体场景的数据有关系，可以根据实际情况进行激进优化节省内存。</p>
-<ul>
-<li>时间用long/int表示，不用 Date 或者 String。</li>
-<li>短字符串如果能穷举或者转换成ascii表示，可以用long或者int表示。</li>
-</ul>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="http://blog.lichengwu.cn/java/2014/01/05/building-memory-efficient-javabean/" target="_blank" rel="noopener">http://blog.lichengwu.cn/java/2014/01/05/building-memory-efficient-javabean/</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2229,7 +2005,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">581</span>
+                <span class="site-state-item-count">588</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2240,7 +2016,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">246</span>
+                <span class="site-state-item-count">250</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2251,7 +2027,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">637</span>
+                <span class="site-state-item-count">644</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
