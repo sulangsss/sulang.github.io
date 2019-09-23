@@ -284,6 +284,788 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Fluentd/Conf/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/07/ELK/Fluentd/Conf/" itemprop="url">Fluentd Conf</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-07T19:13:06+08:00">
+                2018-10-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/Fluentd/" itemprop="url" rel="index">
+                    <span itemprop="name">Fluentd</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Tag"><a href="#Tag" class="headerlink" title="Tag"></a>Tag</h3><ul>
+<li>source：确定输入源</li>
+<li>match： 确定输出目的地</li>
+<li>filter：确定 event 处理流</li>
+<li>system：设置系统范围的配置</li>
+<li>label：将内部路由的输出和过滤器分组</li>
+<li>@include：包括其它文件</li>
+</ul>
+<h3 id="Syntax"><a href="#Syntax" class="headerlink" title="Syntax"></a>Syntax</h3><h4 id="Event-structure"><a href="#Event-structure" class="headerlink" title="Event structure"></a>Event structure</h4><ul>
+<li>tag: 事件来自何处</li>
+<li>time: 事件发生事件(原子时间)</li>
+<li>record: log内容(json)</li>
+</ul>
+<h4 id="Processing-Events"><a href="#Processing-Events" class="headerlink" title="Processing Events"></a>Processing Events</h4><ul>
+<li>Filters</li>
+<li>Labels</li>
+<li>Buffers</li>
+</ul>
+<hr>
+<h3 id="Source"><a href="#Source" class="headerlink" title="Source"></a>Source</h3><p>Fluentd支持多输入。每一个输入配置必须包含类型／type，比如tcp数据输入，或者http类型输入。type将指定使用的input plugin。</p>
+<p>以下的示例中就定义了两个输入源，一个是从24224端口进入的tcp数据流，另一个是从9880端口进入的http数据。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Receive events from 24224/tcp</span></span><br><span class="line"><span class="comment"># This is used by log forwarding and the fluent-cat command</span></span><br><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> forward</span><br><span class="line">  port 24224</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># http://this.host:9880/myapp.access?json=&#123;"event":"data"&#125;</span></span><br><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> http</span><br><span class="line">  port 9880</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br></pre></td></tr></table></figure>
+<h4 id="举例说明"><a href="#举例说明" class="headerlink" title="举例说明"></a>举例说明</h4><ul>
+<li>tail</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;<span class="built_in">source</span>&gt;</span><br><span class="line">  @<span class="built_in">type</span> tail</span><br><span class="line">  path /var/<span class="built_in">log</span>/httpd-access.log</span><br><span class="line">  pos_file /var/<span class="built_in">log</span>/td-agent/httpd-access.log.pos</span><br><span class="line">  tag apache.access</span><br><span class="line">  format apache2</span><br><span class="line">&lt;/<span class="built_in">source</span>&gt;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>配置tail，表示从日志文件的尾部开始读取；如果是新文件，则从头开始读。</li>
+<li>重启后，从pos文件读取上次读取位置。</li>
+</ol>
+<ul>
+<li><p>path：路径读取。可以指定多个路径“、“分离。（可以同时收集多个log日志，而不用在重新起一个source）</p>
+</li>
+<li><p>tag：The tag of the event</p>
+</li>
+<li><p>format：日志的格式</p>
+</li>
+</ul>
+<p>支持：regexp 和 正则表达式</p>
+<p>Example：Apache</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 读取日志文件apache的为以下字段:主机、用户、时间、方法、路径、代码、大小、推荐人和代理</span></span><br><span class="line">format /^(?&lt;host&gt;[^ ]*) [^ ]* (?&lt;user&gt;[^ ]*) \[(?&lt;time&gt;[^\]]*)\] <span class="string">"(?&lt;method&gt;\S+)(?: +(?&lt;path&gt;[^ ]*) +\S*)?"</span> (?&lt;code&gt;[^ ]*) (?&lt;size&gt;[^ ]*)(?: <span class="string">"(?&lt;referer&gt;[^\"]*)"</span> <span class="string">"(?&lt;agent&gt;[^\"]*)"</span>)?$/</span><br><span class="line">time_format %d/%b/%Y:%H:%M:%S %z</span><br></pre></td></tr></table></figure>
+<p>Example：syslog</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 读取syslog的输出文件(例如,/var/log/syslog)对下列字段:时间、主机，识别,和消息</span></span><br><span class="line">format /^(?&lt;time&gt;[^ ]* [^ ]* [^ ]*) (?&lt;host&gt;[^ ]*) (?&lt;ident&gt;[a-zA-Z0-9_\/\.\-]*)(?:\[(?&lt;pid&gt;[0-9]+)\])?[^\:]*\: *(?&lt;message&gt;.*)$/</span><br><span class="line">time_format %b %d %H:%M:%S</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>time_key：用来确定记录的时间戳。时间戳是当Fluentd读取记录是默认情况下使用的。</p>
+</li>
+<li><p>pos_file（必不可少）：Fluentd将记录它上次读到这个文件的位置。</p>
+</li>
+</ul>
+<p>Example</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pos_file /var/<span class="built_in">log</span>/td-agent/tmp/access.log.pos</span><br></pre></td></tr></table></figure>
+<ul>
+<li>time_format：时间格式</li>
+</ul>
+<hr>
+<h3 id="Match"><a href="#Match" class="headerlink" title="Match"></a>Match</h3><p>Match配置了数据流的匹配规则和匹配成功后所需执行的动作，和路由表项类似。</p>
+<p>比如以下的配置中就对匹配myapp.access标签成功的数据包执行file类型动作，将数据写入到路径为/var/log/fluent/access的文件中。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Match events tagged with "myapp.access" and</span></span><br><span class="line"><span class="comment"># store them to /var/log/fluent/access.%Y-%m-%d</span></span><br><span class="line"><span class="comment"># Of course, you can control how you partition your data</span></span><br><span class="line"><span class="comment"># with the time_slice_format option.</span></span><br><span class="line">&lt;match myapp.access&gt;</span><br><span class="line">  @<span class="built_in">type</span> file</span><br><span class="line">  path /var/<span class="built_in">log</span>/fluent/access</span><br><span class="line">&lt;/match&gt;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h3><hr>
+<h3 id="System"><a href="#System" class="headerlink" title="System"></a>System</h3><hr>
+<h3 id="Label"><a href="#Label" class="headerlink" title="Label"></a>Label</h3><hr>
+<h3 id="include"><a href="#include" class="headerlink" title="@include"></a>@include</h3><hr>
+<h3 id="Plugin"><a href="#Plugin" class="headerlink" title="Plugin"></a>Plugin</h3><p>Fluentd有5种类型的插件，分别是：</p>
+<ul>
+<li>Input：完成输入数据的读取，由source部分配置</li>
+<li>Parser：解析插件</li>
+<li>Output：完成输出数据的操作，由match部分配置</li>
+<li>Formatter：消息格式化的插件，属于filter类型</li>
+<li>Buffer：缓存插件，用于缓存数据</li>
+</ul>
+<hr>
+<h3 id="Route"><a href="#Route" class="headerlink" title="Route"></a>Route</h3><p>Route指的是数据在Fluentd中的处理流水线，一般的流程为</p>
+<ul>
+<li>input -&gt; filter -&gt; output</li>
+<li>input -&gt; filter -&gt; output with label</li>
+</ul>
+<p>即由输入插件获取数据，然后交给filter做处理，然后交给output插件去转发。同时，也支持数据包／事件的重新提交，比如修改tag之后重新路由等等。</p>
+<ul>
+<li>reroute event by tags</li>
+<li>reroute event by record content</li>
+<li>reroute event to other label</li>
+</ul>
+<p><a href="https://docs.fluentd.org/v0.12/articles/routing-examples" target="_blank" rel="noopener">https://docs.fluentd.org/v0.12/articles/routing-examples</a></p>
+<h3 id="Fluentd-to-Fluentd"><a href="#Fluentd-to-Fluentd" class="headerlink" title="Fluentd to Fluentd"></a>Fluentd to Fluentd</h3><h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"># Takes the messages sent over TCP</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  port 24224</span><br><span class="line">  bind 0.0.0.0</span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @id fluentd-server</span><br><span class="line">  @type elasticsearch</span><br><span class="line">  @log_level info</span><br><span class="line">  include_tag_key true</span><br><span class="line">  host elasticsearch</span><br><span class="line">  port 9200</span><br><span class="line">  logstash_format true</span><br><span class="line">  index_name fluentd</span><br><span class="line">  type_name fluentd</span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">buffer</span>&gt;</span></span><br><span class="line">    @type file</span><br><span class="line">    path /var/log/fluentd/kubernetes.system.buffer</span><br><span class="line">    flush_mode interval</span><br><span class="line">    retry_type exponential_backoff</span><br><span class="line">    flush_thread_count 2</span><br><span class="line">    flush_interval 5s</span><br><span class="line">    retry_forever</span><br><span class="line">    retry_max_interval 30</span><br><span class="line">    chunk_limit_size 2M</span><br><span class="line">    queue_limit_length 4</span><br><span class="line">    overflow_action block</span><br><span class="line">  <span class="tag">&lt;/<span class="name">buffer</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">containers.input.conf: |-</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @id fluentd-containers.log</span><br><span class="line">  @type tail</span><br><span class="line">  path /var/log/containers/*.log</span><br><span class="line">  pos_file /var/log/es-containers.log.pos</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">  tag raw.kubernetes.*</span><br><span class="line">  read_from_head true</span><br><span class="line">  <span class="tag">&lt;<span class="name">parse</span>&gt;</span></span><br><span class="line">    @type multi_format</span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format json          time_key time</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format /^(?<span class="tag">&lt;<span class="name">time</span>&gt;</span>.+) (?<span class="tag">&lt;<span class="name">stream</span>&gt;</span>stdout|stderr) [^ ]* (?<span class="tag">&lt;<span class="name">log</span>&gt;</span>.*)$/</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">parse</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"># Detect exceptions in the log output and forward them as one log entry.</span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> <span class="attr">raw.kubernetes.</span>**&gt;</span></span><br><span class="line">  @id raw.kubernetes</span><br><span class="line">  @type detect_exceptions</span><br><span class="line">  remove_tag_prefix raw</span><br><span class="line">  message log</span><br><span class="line">  stream stream</span><br><span class="line">  multiline_flush_interval 5</span><br><span class="line">  max_bytes 500000</span><br><span class="line">  max_lines 1000</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br><span class="line"></span><br><span class="line">output.conf: |-</span><br><span class="line"># Enriches records with Kubernetes metadata</span><br><span class="line"><span class="tag">&lt;<span class="name">filter</span> <span class="attr">kubernetes.</span>**&gt;</span></span><br><span class="line">  @type kubernetes_metadata</span><br><span class="line"><span class="tag">&lt;/<span class="name">filter</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;<span class="name">server</span>&gt;</span></span><br><span class="line">      host fluentd-service</span><br><span class="line">      port 24224</span><br><span class="line">    <span class="tag">&lt;/<span class="name">server</span>&gt;</span></span><br><span class="line">  flush_interval 1s</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://blog.csdn.net/hxpjava1/article/details/79447630" target="_blank" rel="noopener">https://blog.csdn.net/hxpjava1/article/details/79447630</a></p>
+<p><a href="http://www.muzixing.com/pages/2017/02/05/fluentdru-men-jiao-cheng.html" target="_blank" rel="noopener">http://www.muzixing.com/pages/2017/02/05/fluentdru-men-jiao-cheng.html</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/07/ELK/Kuberntes/Elasticsearch/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/07/ELK/Kuberntes/Elasticsearch/" itemprop="url">ELK Kuberntes Conf</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-07T19:13:06+08:00">
+                2018-10-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/Kuberntes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kuberntes</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Description"><a href="#Description" class="headerlink" title="Description"></a>Description</h3><h4 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h4><ul>
+<li>Elasticsearch<ul>
+<li>存储数据</li>
+</ul>
+</li>
+<li>Kibana<ul>
+<li>数据可视化</li>
+</ul>
+</li>
+<li>Fluentd<ul>
+<li>Client收集数据</li>
+<li>Server接收Client的数据，并转发到Elasticsearch</li>
+</ul>
+</li>
+<li>Metricbeat<ul>
+<li>收集性能指标数据</li>
+<li>替代方案：Heapster</li>
+</ul>
+</li>
+<li>Kube-state-metrics<ul>
+<li>listens to the Kubernetes API server and generates metrics about the state of the objects</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="Elasticsearch"><a href="#Elasticsearch" class="headerlink" title="Elasticsearch"></a>Elasticsearch</h3><h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><ul>
+<li>Master<ul>
+<li>intended for clustering management only, no data, no HTTP API</li>
+</ul>
+</li>
+<li>Client<ul>
+<li>intended for document pre-processing during ingestion</li>
+</ul>
+</li>
+<li>Data<ul>
+<li>intended for client usage and data</li>
+</ul>
+</li>
+</ul>
+<h3 id="Fluentd"><a href="#Fluentd" class="headerlink" title="Fluentd"></a>Fluentd</h3><h4 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h4><ul>
+<li>Server</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"># Takes the messages sent over TCP</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  port 24224</span><br><span class="line">  bind 0.0.0.0</span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @id fluentd-server</span><br><span class="line">  @type elasticsearch</span><br><span class="line">  @log_level info</span><br><span class="line">  include_tag_key true</span><br><span class="line">  host elasticsearch</span><br><span class="line">  port 9200</span><br><span class="line">  logstash_format true</span><br><span class="line">  index_name fluentd</span><br><span class="line">  type_name fluentd</span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">buffer</span>&gt;</span></span><br><span class="line">    @type file</span><br><span class="line">    path /var/log/fluentd/kubernetes.system.buffer</span><br><span class="line">    flush_mode interval</span><br><span class="line">    retry_type exponential_backoff</span><br><span class="line">    flush_thread_count 2</span><br><span class="line">    flush_interval 5s</span><br><span class="line">    retry_forever</span><br><span class="line">    retry_max_interval 30</span><br><span class="line">    chunk_limit_size 2M</span><br><span class="line">    queue_limit_length 4</span><br><span class="line">    overflow_action block</span><br><span class="line">  <span class="tag">&lt;/<span class="name">buffer</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>Client</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">containers.input.conf: |-</span><br><span class="line"><span class="tag">&lt;<span class="name">source</span>&gt;</span></span><br><span class="line">  @id fluentd-containers.log</span><br><span class="line">  @type tail</span><br><span class="line">  path /var/log/containers/*.log</span><br><span class="line">  pos_file /var/log/es-containers.log.pos</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">  tag raw.kubernetes.*</span><br><span class="line">  read_from_head true</span><br><span class="line">  <span class="tag">&lt;<span class="name">parse</span>&gt;</span></span><br><span class="line">    @type multi_format</span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format json          time_key time</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%NZ</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">pattern</span>&gt;</span></span><br><span class="line">      format /^(?<span class="tag">&lt;<span class="name">time</span>&gt;</span>.+) (?<span class="tag">&lt;<span class="name">stream</span>&gt;</span>stdout|stderr) [^ ]* (?<span class="tag">&lt;<span class="name">log</span>&gt;</span>.*)$/</span><br><span class="line">      time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">parse</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">source</span>&gt;</span></span><br><span class="line"></span><br><span class="line"># Detect exceptions in the log output and forward them as one log entry.</span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> <span class="attr">raw.kubernetes.</span>**&gt;</span></span><br><span class="line">  @id raw.kubernetes</span><br><span class="line">  @type detect_exceptions</span><br><span class="line">  remove_tag_prefix raw</span><br><span class="line">  message log</span><br><span class="line">  stream stream</span><br><span class="line">  multiline_flush_interval 5</span><br><span class="line">  max_bytes 500000</span><br><span class="line">  max_lines 1000</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br><span class="line"></span><br><span class="line">output.conf: |-</span><br><span class="line"># Enriches records with Kubernetes metadata</span><br><span class="line"><span class="tag">&lt;<span class="name">filter</span> <span class="attr">kubernetes.</span>**&gt;</span></span><br><span class="line">  @type kubernetes_metadata</span><br><span class="line"><span class="tag">&lt;/<span class="name">filter</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">match</span> **&gt;</span></span><br><span class="line">  @type forward</span><br><span class="line">  time_format %Y-%m-%dT%H:%M:%S.%N%:z</span><br><span class="line">    <span class="tag">&lt;<span class="name">server</span>&gt;</span></span><br><span class="line">      host fluentd-service</span><br><span class="line">      port 24224</span><br><span class="line">    <span class="tag">&lt;/<span class="name">server</span>&gt;</span></span><br><span class="line">  flush_interval 1s</span><br><span class="line"><span class="tag">&lt;/<span class="name">match</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Metricbeat"><a href="#Metricbeat" class="headerlink" title="Metricbeat"></a>Metricbeat</h3><h4 id="配置文件-1"><a href="#配置文件-1" class="headerlink" title="配置文件"></a>配置文件</h4><p>注意：使用该配置文件，Kibana可以直接开启Kuberntes Dashboard（默认配置文件无法开启）</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">metricbeat-daemonset-config</span></span><br><span class="line">  <span class="comment">#  namespace: kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">metricbeat</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="string">metricbeat.yml:</span> <span class="string">|-</span></span><br><span class="line">    <span class="string">metricbeat.config.modules:</span></span><br><span class="line">      <span class="comment"># Mounted `metricbeat-daemonset-modules` configmap:</span></span><br><span class="line"><span class="attr">      path:</span> <span class="string">$&#123;path.config&#125;/modules.d/*.yml</span></span><br><span class="line">      <span class="comment"># Reload module configs as they change:</span></span><br><span class="line">      <span class="string">reload.enabled:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># To enable hints based autodiscover uncomment this:</span></span><br><span class="line">    <span class="comment">#metricbeat.autodiscover:</span></span><br><span class="line">    <span class="comment">#  providers:</span></span><br><span class="line">    <span class="comment">#    - type: kubernetes</span></span><br><span class="line">    <span class="comment">#      host: $&#123;NODE_NAME&#125;</span></span><br><span class="line">    <span class="comment">#      hints.enabled: true</span></span><br><span class="line"></span><br><span class="line"><span class="attr">    processors:</span></span><br><span class="line"><span class="attr">      - add_cloud_metadata:</span></span><br><span class="line"></span><br><span class="line">    <span class="string">cloud.id:</span> <span class="string">$&#123;ELASTIC_CLOUD_ID&#125;</span></span><br><span class="line">    <span class="string">cloud.auth:</span> <span class="string">$&#123;ELASTIC_CLOUD_AUTH&#125;</span></span><br><span class="line"></span><br><span class="line">    <span class="string">output.elasticsearch:</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">['$&#123;ELASTICSEARCH_HOST:elasticsearch&#125;:$&#123;ELASTICSEARCH_PORT:9200&#125;']</span></span><br><span class="line"><span class="attr">      username:</span> <span class="string">$&#123;ELASTICSEARCH_USERNAME&#125;</span></span><br><span class="line"><span class="attr">      password:</span> <span class="string">$&#123;ELASTICSEARCH_PASSWORD&#125;</span></span><br><span class="line">    <span class="string">setup.kibana:</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">kibana-service</span></span><br><span class="line">      <span class="string">setup.kibana.protocol:</span> <span class="string">"http"</span></span><br><span class="line">    <span class="string">setup.dashboards:</span></span><br><span class="line"><span class="attr">      enabled:</span> <span class="literal">true</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">metricbeat-daemonset-modules</span></span><br><span class="line">  <span class="comment">#  namespace: kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">metricbeat</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="string">system.yml:</span> <span class="string">|-</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">system</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">cpu</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">load</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">memory</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">network</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">process</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">process_summary</span></span><br><span class="line">        <span class="comment">#- core</span></span><br><span class="line">        <span class="comment">#- diskio</span></span><br><span class="line">        <span class="comment">#- socket</span></span><br><span class="line"><span class="attr">      processes:</span> <span class="string">['.*']</span></span><br><span class="line">      <span class="string">process.include_top_n:</span></span><br><span class="line"><span class="attr">        by_cpu:</span> <span class="number">5</span>      <span class="comment"># include top 5 processes by CPU</span></span><br><span class="line"><span class="attr">        by_memory:</span> <span class="number">5</span>   <span class="comment"># include top 5 processes by memory</span></span><br><span class="line"></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">system</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">1</span><span class="string">m</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">filesystem</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">fsstat</span></span><br><span class="line"><span class="attr">      processors:</span></span><br><span class="line"><span class="bullet">      -</span> <span class="string">drop_event.when.regexp:</span></span><br><span class="line">          <span class="string">system.filesystem.mount_point:</span> <span class="string">'^/(sys|cgroup|proc|dev|etc|host|lib)($|/)'</span></span><br><span class="line">  <span class="string">kubernetes.yml:</span> <span class="string">|-</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">kubernetes</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">node</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">system</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">pod</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">container</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">volume</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">$&#123;NODE_NAME&#125;</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">["localhost:10255"]</span></span><br><span class="line"><span class="attr">    - module:</span> <span class="string">kubernetes</span></span><br><span class="line"><span class="attr">      metricsets:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_node</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_deployment</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_replicaset</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_pod</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">state_container</span></span><br><span class="line">        <span class="comment"># Uncomment this to get k8s events:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">event</span></span><br><span class="line"><span class="attr">      period:</span> <span class="number">10</span><span class="string">s</span></span><br><span class="line"><span class="attr">      host:</span> <span class="string">$&#123;NODE_NAME&#125;</span></span><br><span class="line"><span class="attr">      hosts:</span> <span class="string">["kube-state-metrics:8080"]</span></span><br></pre></td></tr></table></figure>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://github.com/pires/kubernetes-elasticsearch-cluster" target="_blank" rel="noopener">https://github.com/pires/kubernetes-elasticsearch-cluster</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch" target="_blank" rel="noopener">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/05/Kubenetes/Log/Structure/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/05/Kubenetes/Log/Structure/" itemprop="url">Kubernetes Log Structure</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-05T02:13:06+08:00">
+                2018-10-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Log/" itemprop="url" rel="index">
+                    <span itemprop="name">Log</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Structure"><a href="#Structure" class="headerlink" title="Structure"></a>Structure</h3><h3 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h3><p>k8s集群日志通用收集方案</p>
+<ul>
+<li>集群内相关组件日志使用fluentd/filebeat收集</li>
+<li>应用输出到标准输出或标准错误输出的日志使用fluentd/filebeat收集</li>
+<li>应用输出到容器中指定文件日志使用fluent-bit/filebeat收集</li>
+</ul>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://juejin.im/post/5b6eaef96fb9a04fa25a0d37" target="_blank" rel="noopener">https://juejin.im/post/5b6eaef96fb9a04fa25a0d37</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DB/MySQL/Error/CommonError/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/DB/MySQL/Error/CommonError/" itemprop="url">MySQL Common Error</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T22:00:18+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Error/" itemprop="url" rel="index">
+                    <span itemprop="name">Error</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="The-last-packet-sent-successfully-to-the-server-was-0-milliseconds-ago-The-driver-has-not-received-any-packets-from-the-server"><a href="#The-last-packet-sent-successfully-to-the-server-was-0-milliseconds-ago-The-driver-has-not-received-any-packets-from-the-server" class="headerlink" title="The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server."></a>The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.</h3><ol>
+<li><p>查看数据的 timeout 设置 <strong>show global variables like ‘wait_timeout’</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 3600 sec = 60 min</span></span><br><span class="line">wait_timeout	3600</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>druid</p>
+<blockquote>
+<p><a href="https://www.cnblogs.com/wangiqngpei557/p/10291606.html" target="_blank" rel="noopener">https://www.cnblogs.com/wangiqngpei557/p/10291606.html</a></p>
+</blockquote>
+</li>
+</ol>
+<h3 id="‘Operation-aborted-Failed-to-acquire-lock-due-to-max-num-locks-limit’-from-ROCKSDB"><a href="#‘Operation-aborted-Failed-to-acquire-lock-due-to-max-num-locks-limit’-from-ROCKSDB" class="headerlink" title="‘Operation aborted: Failed to acquire lock due to max_num_locks limit’ from ROCKSDB"></a>‘Operation aborted: Failed to acquire lock due to max_num_locks limit’ from ROCKSDB</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">show global variables like <span class="string">'rocksdb_max_row_locks'</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># set global rocksdb_max_row_locks=2000000;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">set</span> session rocksdb_max_row_locks=2000000;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Solution/ELK/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -394,6 +1176,216 @@
 </ul>
 <p>Due to some reason the first character of the username was set to uppercase in Google Cloud/IAM settings, however the above command returned all characters in lowercase.</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gcloud config get-value core/account</span><br><span class="line"></span><br><span class="line">kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=<span class="string">"&lt;case-sensitive-username&gt;@gmail.com"</span></span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DB/MySQL/ViewStatus/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/10/03/DB/MySQL/ViewStatus/" itemprop="url">MySQL View Status</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T15:00:18+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status  <span class="comment"># 输出所有记录的状态</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status like <span class="string">'%xxxx%'</span>  <span class="comment"># 输出记录带有xxx关键字的状态，show global status like ‘thread%’</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Status"><a href="#Status" class="headerlink" title="Status"></a>Status</h3><h4 id="Connection"><a href="#Connection" class="headerlink" title="Connection"></a>Connection</h4><ul>
+<li>Aborted_clients<ul>
+<li>由于客户端没有正确关闭连接导致客户端终止而中断的连接数。 如，客户端和服务端建立连接好之后，等待 wait_time 时间后，客户端和服务器之间的连接自动退出，此时会发现 Aborted_clients 计数器加 1。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Aborted_connects<ul>
+<li>试图连接到 MySQL 服务器而失败的连接数。如:telnet 127.0.0.1 3306， 然后什么都不做，ctrl+]，quit 退出，就会发现 aborted_connects 计数器加 1。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>connections<ul>
+<li>试图连接到 (不管成功与否)MySQL 服务器的连接数计数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Bytes_received<ul>
+<li>从所有客户端接收到的字节数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Bytes_sent<ul>
+<li>发送给所有客户端的字节数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_cached<ul>
+<li>代表当前此时此刻线程缓存中有多少空闲线程。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_connected<ul>
+<li>代表当前已建立连接的数量，因为一个连接就需要一个线程，所以也可以看成当前被使用的线程数。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_created<ul>
+<li>创建用来处理连接的线程数。如果 Threads_created 较大，则需要增加 thread_cached_size 的值。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Threads_running<ul>
+<li>代表当前激活的（非睡眠状态）线程数。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
+
           
         
       
@@ -624,216 +1616,6 @@
 <p>获取MySQL连接是多次握手的结果，除了用户名和密码的匹配校验外，还有 IP-&gt;HOST-&gt;DNS-&gt;IP 验证，任何一步都可能因为网络问题导致线程阻塞。为了防止线程浪费在不必要的校验等待上，超过connect_timeout的连接请求将会被拒绝。<br>即使没有网络问题，也不能允许客户端一直占用连接。对于保持 sleep 状态超过了 wait_timeout（或 interactive_timeout，取决于 CLIENT_INTERACTIVE 标志）的客户端，MySQL 会主动断开连接。</p>
 <p>即使连接没有处于 sleep 状态，即客户端忙于计算或者存储数据，MySQL 也选择了有条件的等待。在数据包的分发过程中，客户端可能来不及响应（发送、接收、或者处理数据包太慢）。为了保证连接不被浪费在无尽的等待中，MySQL 也会选择有条件（net_read_timeout 和 net_write_timeout）地主动断开连接。比如我在客户端用 load data infile 的方式导入很大的一个文件到数据库中，然后中途用 iptables 禁用掉 mysql 的 3306 端口，这个时候服务器端该连接状态是 reading from net，在等待 net_read_timeout 后关闭该连接。同理，在程序里面查询一个很大的表时，在查询过程中同样禁用掉端口，制造网络不通的情况，这样该连接状态是 writing to net，然后在 net_write_timeout 后关闭该连接。</p>
 <h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>MySQL 连接机制浅析及运维：<a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/DB/MySQL/ViewStatus/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/03/DB/MySQL/ViewStatus/" itemprop="url">MySQL View Status</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T15:00:18+08:00">
-                2018-10-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status  <span class="comment"># 输出所有记录的状态</span></span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global status like <span class="string">'%xxxx%'</span>  <span class="comment"># 输出记录带有xxx关键字的状态，show global status like ‘thread%’</span></span><br></pre></td></tr></table></figure>
-<hr>
-<h3 id="Status"><a href="#Status" class="headerlink" title="Status"></a>Status</h3><h4 id="Connection"><a href="#Connection" class="headerlink" title="Connection"></a>Connection</h4><ul>
-<li>Aborted_clients<ul>
-<li>由于客户端没有正确关闭连接导致客户端终止而中断的连接数。 如，客户端和服务端建立连接好之后，等待 wait_time 时间后，客户端和服务器之间的连接自动退出，此时会发现 Aborted_clients 计数器加 1。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Aborted_connects<ul>
-<li>试图连接到 MySQL 服务器而失败的连接数。如:telnet 127.0.0.1 3306， 然后什么都不做，ctrl+]，quit 退出，就会发现 aborted_connects 计数器加 1。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>connections<ul>
-<li>试图连接到 (不管成功与否)MySQL 服务器的连接数计数。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Bytes_received<ul>
-<li>从所有客户端接收到的字节数。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Bytes_sent<ul>
-<li>发送给所有客户端的字节数。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Threads_cached<ul>
-<li>代表当前此时此刻线程缓存中有多少空闲线程。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Threads_connected<ul>
-<li>代表当前已建立连接的数量，因为一个连接就需要一个线程，所以也可以看成当前被使用的线程数。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Threads_created<ul>
-<li>创建用来处理连接的线程数。如果 Threads_created 较大，则需要增加 thread_cached_size 的值。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>Threads_running<ul>
-<li>代表当前激活的（非睡眠状态）线程数。</li>
-</ul>
-</li>
-</ul>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
 
           
         
@@ -1353,689 +2135,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/02/DB/MySQL/连接机制/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/02/DB/MySQL/连接机制/" itemprop="url">MySQL 连接机制及运维</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-02T22:00:18+08:00">
-                2018-10-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="MySQL连接方式"><a href="#MySQL连接方式" class="headerlink" title="MySQL连接方式"></a>MySQL连接方式</h3><h4 id="查看当前连接方式"><a href="#查看当前连接方式" class="headerlink" title="查看当前连接方式"></a>查看当前连接方式</h4><p>SELECT DISTINCT connection_type from performance_schema.threads where connection_type is not null</p>
-<hr>
-<h4 id="类型"><a href="#类型" class="headerlink" title="类型"></a>类型</h4><ul>
-<li><p>TCP/IP</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql --protocol=tcp -uroot</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>TLS/SSL</p>
-</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql --protocol=tcp -uroot --ssl=on</span><br></pre></td></tr></table></figure>
-<ul>
-<li><p>Unix Sockets</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql -uroot</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Shared Memory</p>
-</li>
-<li>Named pipes</li>
-</ul>
-<hr>
-<h4 id="如何选择连接类型"><a href="#如何选择连接类型" class="headerlink" title="如何选择连接类型"></a>如何选择连接类型</h4><ol>
-<li>如果程序和数据库在同一台机子 (类 Unix 系统) 上，推荐使用 Unix Sockets，因为它效率更高；</li>
-<li>若数据库分布在不同的机子上，且能确保连接安全或者安全性要求不是那么高，推荐使用 TCP/IP，反之使用 TLS/SSL；</li>
-</ol>
-<hr>
-<h4 id="长短连接"><a href="#长短连接" class="headerlink" title="长短连接"></a>长短连接</h4><p>当数据库服务器和客户端位于不同的主机时，就需要通过建立网络连接来进行通信。客户端必须使用数据库连接来发送命令和接收应答、数据。根据服务器的处理机制分为短连接和长连接。</p>
-<ol>
-<li>短连接</li>
-</ol>
-<p>短连接是指程序和数据库通信时需要建立连接，执行操作后，连接关闭。短连接简单来说就是每一次操作数据库，都要打开和关闭数据库连接，基本步骤是：连接→数据传输→关闭连接。</p>
-<p>在慢速网络下使用短连接，连接的开销会很大；在生产繁忙的系统中，连接也可能会受到系统端口数的限制，如果要每秒建立几千个连接，那么连接断开后，端口不会被马上回收利用，必须经历一个“FIN”阶段的等待，直到可被回收利用为止，这样就可能会导致端口资源不够用。</p>
-<p>在 Linux 上，可以通过调整 /proc/sys/net/ipv4/ip_local_port_range 来扩大端口的使用范围；调整 /proc/sys/net/ipv4/tcp_fin_timeout 来减少回收延期（如果想在应用服务器上调整这个参数，一定要慎重！）。</p>
-<p>另外一个办法是主机使用多个IP地址。端口数的限制其实是基于同一个IP:PORT 的，如果主机增加了IP，MySQL 就可以监听多个IP地址，客户端也可以选择连接某个IP:PORT，这样就增加了端口资源。</p>
-<ol start="2">
-<li>长连接</li>
-</ol>
-<p>长连接是指程序之间的连接在建立之后，就一直打开，被后续程序重用。使用长连接的初衷是减少连接的开销，尽管MySQL的连接比其他数据库要快得多。</p>
-<p>以 PHP 程序为例，当收到一个永久连接的请求时，PHP 将检查是否已经存在一个（前面已经开启了的）相同的永久连接。如果存在，则将直接使用这个连接；如果不存在，则建立一个新的连接。所谓“相同”的连接是指用相同的用户名和密码到相同主机的连接。</p>
-<p>从客户端的角度来说，使用长连接有一个好处，可以不用每次创建新连接，若客户端对 MySQL 服务器的连接请求很频繁，永久连接将更加高效。对于高并发业务，如果可能会碰到连接的冲击，推荐使用长连接或连接池。</p>
-<p>从服务器的角度来看，情况则略有不同，它可以节省创建连接的开销，但维持连接也是需要内存的。如果滥用长连接的话，可能会使用过多的 MySQL 服务器连接。现代的操作系统可以拥有几千个 MySQL 连接，但很有可能绝大部分都是睡眠（sleep）状态的，这样的工作方式不够高效，而且连接占据内存，也会导致内存的浪费。</p>
-<p>对于扩展性好的站点来说，其实大部分的访问并不需要连接数据库。如果用户需要频繁访问数据库，那么可能会在流量增大的时候产生性能问题，此时长短连接都是无法解决问题的，所以应该进行合理的设计和优化来避免性能问题。</p>
-<p>如果客户端和 MySQL 数据库之间有连接池或 Proxy 代理，一般在客户端推荐使用短连接。对于长连接的使用一定要慎重，不可滥用。如果没有每秒几百、上千的新连接请求，就不一定需要长连接，也无法从长连接中得到太多好处。在 Java 语言中，由于有连接池，如果控制得当，则不会对数据库有较大的冲击，但PHP的长连接可能导致数据库的连接数超过限制，或者占用过多的内存。</p>
-<ol start="3">
-<li>连接池</li>
-</ol>
-<p>由于一些数据库创建和销毁连接的开销很大，或者相对于所执行的具体数据操作，连接所耗的资源过多，此时就可能需要添加连接池来改进性能。</p>
-<p>数据库连接池是一些网络代理服务或应用服务器实现的特性，如 J2EE 服务器，它实现了一个持久连接的“池”，允许其他程序、客户端来连接，这个连接池将被所有连接的客户端共享使用，连接池可以加速连接，也可以减少数据库连接，降低数据库服务器的负载。</p>
-<hr>
-<h4 id="持久连接和连接池的区别"><a href="#持久连接和连接池的区别" class="headerlink" title="持久连接和连接池的区别"></a>持久连接和连接池的区别</h4><p>长连接是一些驱动、驱动框架、ORM 工具的特性，由驱动来保持连接句柄的打开，以便后续的数据库操作可以重用连接，从而减少数据库的连接开销。而连接池是应用服务器的组件，它可以通过参数来配置连接数、连接检测、连接的生命周期等。</p>
-<p>如果连接池或长连接使用的连接数很多，有可能会超过数据库实例的限制，那么就需要留意连接相关的设置了，比如连接池的最小、最大连接数设置，以及 php-fpm 的进程个数等，否则程序将不能申请新的连接。</p>
-<hr>
-<h4 id="MySQL如何管理连接"><a href="#MySQL如何管理连接" class="headerlink" title="MySQL如何管理连接"></a>MySQL如何管理连接</h4><p>MySQL 连接管理器线程负责处理服务器侦听的网络接口上的客户端连接请求。连接管理器线程将每个客户端连接与专用于它的线程相关联，以处理该连接的身份验证和请求处理。</p>
-<p>连接管理线程在必要时创建一个新线程，但是会先尝试避免这样做，MySQL 连接管理器线程首先会查看线程缓存是否包含空闲可用于连接的线程，如果有，则从线程缓存中选取一个空闲的线程分配给客户端，如果没有，则重新创建一个线程。当连接结束时，如果缓存未满，则其线程返回到线程缓存中，用于下次使用。</p>
-<p>在这种连接线​​程模型中，存在与当前连接的客户端一样多的线程，这在服务器工作负载高还必须以处理大量的连接时具有一些缺点，例如，线程创建和处理变得昂贵。此外，每个线程都需要消耗服务器的内核资源，如堆栈空间。所以为了适应大量的并发连接，每个线程的堆栈大小必须保持较小，否则会由于太大导致消耗服务器大量内存的情况，也可能耗尽其他资源，调度开销也会变得很大。</p>
-<p>为了控制和监视服务器如何管理客户端连接的线程，有几个系统和状态变量可以查看。</p>
-<p>线程缓存由 thread_cache_size 系统变量确定其大小，默认值为 0（无缓存），这将导致为每个新连接设置一个线程，并在连接终止时进行处理。设置 thread_cache_size 为 N，启用 N 个非活动连接线程被缓存。thread_cache_size 可以在服务器启动时设置或在服务器运行时更​​改，连接线程在与其关联的客户端连接终止时变为不活动。</p>
-<p>通过 MySQL 状态变量 Threads_cached 和 Threads_created 可以监控高速缓存中的线程数和已经创建了多少个线程。另外你也可以通过 max_connections 变量控制可以同时连接的最大客户端数。</p>
-<p>但当线程堆栈太小时，会限制了服务器可以处理的 SQL 语句的复杂性，存储过程的递归深度和其他内存消耗的操作。</p>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>MySQL连接机制浅析及运维：<a href="https://hacpai.com/article/1536248398959" target="_blank" rel="noopener">https://hacpai.com/article/1536248398959</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/02/DB/MySQL/Optimize/索引优化分析/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/02/DB/MySQL/Optimize/索引优化分析/" itemprop="url">未命名</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-02T21:33:26+08:00">
-                2018-10-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <hr>
-<p>title: MySQL 索引优化分析<br>date: 2018-09-08 22:55:07<br>tags:</p>
-<ul>
-<li>DB</li>
-<li>MySQL</li>
-<li>Optimize</li>
-<li>索引优化分析<br>categories:</li>
-<li>DB</li>
-<li>MySQL</li>
-<li>Optimize</li>
-</ul>
-<hr>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://hacpai.com/article/1535034154103" target="_blank" rel="noopener">https://hacpai.com/article/1535034154103</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/02/DB/MySQL/Optimize/Explain/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/02/DB/MySQL/Optimize/Explain/" itemprop="url">未命名</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-02T16:13:06+08:00">
-                2018-10-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <hr>
-<p>title: MySQL Explain<br>date: 2018-09-08 22:55:07<br>tags:</p>
-<ul>
-<li>DB</li>
-<li>MySQL</li>
-<li>Optimize</li>
-<li>Explain<br>categories:</li>
-<li>DB</li>
-<li>MySQL</li>
-<li>Optimize</li>
-</ul>
-<hr>
-<h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><p>MySQL的EXPLAIN 命令用于SQL语句的查询执行计划 (QEP)。这条命令的输出结果能够让我们了解MySQL优化器是如何执行SQL 语句的。这条命令并没有提供任何调整建议，但它能够提供重要的信息帮助你做出调优决策。</p>
-<h3 id="字段说明"><a href="#字段说明" class="headerlink" title="字段说明"></a>字段说明</h3><ul>
-<li><p>id：数字越大越先执行，如果说数字一样大，那么就从上往下依次执行，id列为null的就表是这是一个结果集，不需要使用它来进行查询。</p>
-</li>
-<li><p>select_type</p>
-<ul>
-<li>simple：表示不需要union操作或者不包含子查询的简单select查询。有连接查询时，外层的查询为simple，且只有一个</li>
-<li>primary：一个需要union操作或者含有子查询的select，位于最外层的单位查询的select_type即为primary。且只有一个</li>
-<li>union：union连接的两个select查询，第一个查询是dervied派生表，除了第一个表外，第二个以后的表select_type都是union</li>
-<li>dependent union：与union一样，出现在union 或union all语句中，但是这个查询要受到外部查询的影响</li>
-<li>union result：包含union的结果集，在union和union all语句中,因为它不需要参与查询，所以id字段为null</li>
-<li>union result：包含union的结果集，在union和union all语句中,因为它不需要参与查询，所以id字段为null</li>
-<li>dependent subquery：与dependent union类似，表示这个subquery的查询要受到外部表查询的影响</li>
-<li>derived：from字句中出现的子查询，也叫做派生表，其他数据库中可能叫做内联视图或嵌套select</li>
-</ul>
-</li>
-<li><p>table</p>
-<ul>
-<li>显示的查询表名，如果查询使用了别名，那么这里显示的是别名，如果不涉及对数据表的操作，那么这显示为null。</li>
-<li>如果显示为尖括号括起来的<derived n="">就表示这个是临时表，后边的N就是执行计划中的id，表示结果来自于这个查询产生。</derived></li>
-<li>如果是尖括号括起来的<union m,n="">，与<derived n="">类似，也是一个临时表，表示这个结果来自于union查询的id为M,N的结果集。</derived></union></li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>type：system &gt; const &gt; eq_ref &gt; ref &gt; fulltext &gt; ref_or_null &gt; unique_subquery &gt; index_subquery &gt; range &gt; index_merge &gt; index &gt; all，其中除了all以外，其他都会用到索引，而且只有index_merge可以使用多个索引（即其他类型仅能使用一个索引）<ul>
-<li>system：表中只有一行数据或者是空表，且只能用于myisam和memory表。如果是Innodb引擎表，type列在这个情况通常都是all或者index。</li>
-<li><strong>const</strong>：使用唯一索引或者主键，返回记录一定是1行记录的等值where条件时，通常type是const。其他数据库也叫做唯一索引扫描</li>
-<li>eq_ref：出现在要连接过个表的查询计划中，驱动表只返回一行数据，且这行数据是第二个表的主键或者唯一索引，且必须为not null，唯一索引和主键是多列时，只有所有的列都用作比较时才会出现eq_ref</li>
-<li>ref：不像eq_ref那样要求连接顺序，也没有主键和唯一索引的要求，只要使用相等条件检索时就可能出现，常见与辅助索引的等值查找。或者多列主键、唯一索引中，使用第一个列之外的列作为等值查找也会出现，总之，<strong>返回数据不唯一的等值查找就可能出现</strong>。</li>
-<li>fulltext：全文索引检索，要注意，全文索引的优先级很高，若全文索引和普通索引同时存在时，mysql不管代价，优先选择使用全文索引</li>
-<li>ref_or_null：与ref方法类似，只是增加了null值的比较。实际用的不多。</li>
-<li>unique_subquery：用于where中的in形式子查询，子查询返回不重复值唯一值</li>
-<li>index_subquery：用于in形式子查询使用到了辅助索引或者in常数列表，子查询可能返回重复值，可以使用索引将子查询去重。</li>
-<li>range：索引范围扫描，常见于使用&gt;,&lt;,is null,between ,in ,like等运算符的查询中。</li>
-<li><strong>index_merge</strong>：表示查询使用了两个以上的索引，最后取交集或者并集，常见and ，or的条件使用了不同的索引，官方排序这个在ref_or_null之后，但是实际上由于要读取所个索引，性能可能大部分时间都不如range</li>
-<li><strong>index</strong>：索引全表扫描，把索引从头到尾扫一遍，常见于使用索引列就可以处理不需要读取数据文件的查询、可以使用索引排序或者分组的查询。</li>
-<li>all：这个就是全表扫描数据文件，然后再在server层进行过滤返回符合要求的记录。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li><p>possible_keys：查询可能使用到的索引都会在这里列出来</p>
-</li>
-<li><p>key：查询真正使用到的索引，select_type为index_merge时，这里可能出现两个以上的索引，其他的select_type这里只会出现一个</p>
-</li>
-<li><p>ref：如果是使用的常数等值查询，这里会显示const，如果是连接查询，被驱动表的执行计划这里会显示驱动表的关联字段，如果是条件使用了表达式或者函数，或者条件列发生了内部隐式转换，这里可能显示为func</p>
-</li>
-<li><p>rows：这里是执行计划中估算的扫描行数，不是精确值</p>
-</li>
-<li><p>extra：</p>
-<ul>
-<li>distinct：在select部分使用了distinc关键字</li>
-<li>no tables used：不带from字句的查询或者From dual查询</li>
-<li>使用not in()形式子查询或not exists运算符的连接查询，这种叫做反连接。即，一般连接查询是先查询内表，再查询外表，反连接就是先查询外表，再查询内表。</li>
-<li><strong>using filesort</strong>：排序时无法使用到索引时，就会出现这个。常见于order by和group by语句中</li>
-<li><strong>using index</strong>：查询时不需要回表查询，直接通过索引就可以获取查询的数据。</li>
-<li>using join buffer（block nested loop），using join buffer（batched key accss）：5.6.x之后的版本优化关联查询的BNL，BKA特性。主要是减少内表的循环数量以及比较顺序地扫描查询。</li>
-<li>using intersect：表示使用and的各个索引的条件时，该信息表示是从处理结果获取交集</li>
-<li>using union：表示使用or连接各个使用索引的条件时，该信息表示从处理结果获取并集</li>
-<li>using sort_union和using sort_intersection：与前面两个对应的类似，只是他们是出现在用and和or查询信息量大时，先查询主键，然后进行排序合并后，才能读取记录并返回。</li>
-<li>using temporary：表示使用了临时表存储中间结果。临时表可以是内存临时表和磁盘临时表，执行计划中看不出来，需要查看status变量，used_tmp_table，used_tmp_disk_table才能看出来。</li>
-<li>using where：表示存储引擎返回的记录并不是所有的都满足查询条件，需要在server层进行过滤。查询条件中分为限制条件和检查条件，5.6之前，存储引擎只能根据限制条件扫描数据并返回，然后server层根据检查条件进行过滤再返回真正符合查询的数据。5.6.x之后支持ICP特性，可以把检查条件也下推到存储引擎层，不符合检查条件和限制条件的数据，直接不读取，这样就大大减少了存储引擎扫描的记录数量。extra列显示using index condition</li>
-<li>firstmatch(tb_name)：5.6.x开始引入的优化子查询的新特性之一，常见于where字句含有in()类型的子查询。如果内表的数据量比较大，就可能出现这个</li>
-<li>loosescan(m..n)：5.6.x之后引入的优化子查询的新特性之一，在in()类型的子查询中，子查询返回的可能有重复记录时，就可能出现这个</li>
-</ul>
-</li>
-<li><p>filtered：使用explain extended时会出现这个列，5.7之后的版本默认就有这个字段，不需要使用explain extended了。这个字段表示存储引擎返回的数据在server层过滤后，剩下多少满足查询的记录数量的比例，注意是百分比，不是具体记录数。</p>
-</li>
-</ul>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p><a href="https://www.cnblogs.com/xiaoboluo768/p/5400990.html" target="_blank" rel="noopener">https://www.cnblogs.com/xiaoboluo768/p/5400990.html</a></p>
-<p><a href="https://hacpai.com/article/1495764695034" target="_blank" rel="noopener">https://hacpai.com/article/1495764695034</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/01/DB/MySQL/Optimize/Query-Cache/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/01/DB/MySQL/Optimize/Query-Cache/" itemprop="url">未命名</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-01T23:53:44+08:00">
-                2018-10-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <hr>
-<p>title: MySQL Query Cache<br>date: 2018-09-08 22:55:07<br>tags:</p>
-<ul>
-<li>DB</li>
-<li>MySQL</li>
-<li>Optimize</li>
-<li>Query Cache<br>categories:</li>
-<li>DB</li>
-<li>MySQL</li>
-<li>Optimize</li>
-</ul>
-<hr>
-<h3 id="查询缓存简介"><a href="#查询缓存简介" class="headerlink" title="查询缓存简介"></a>查询缓存简介</h3><p>MySQL 查询缓存是 MySQL 中比较独特的一个缓存区域，用来缓存特定 Query 的整个结果集信息，且共享给所有客户端。为了提高完全相同的 Query 语句的响应速度，MySQL Server 会对查询语句进行 Hash 计算后，把得到的 hash 值与 Query 查询的结果集对应存放在 Query Cache 中。当 MySQL Server 打开 Query Cache 之后，MySQL Server 会对接收到的每一个 SELECT 语句通过特定的 Hash 算法计算该 Query 的 Hash 值，然后通过该 hashi 值到 Query Cache 中去匹配。</p>
-<h3 id="Refer-to"><a href="#Refer-to" class="headerlink" title="Refer to"></a>Refer to</h3><p>MySQL之四]MySQL缓存机制：<a href="https://hacpai.com/article/1538300197601" target="_blank" rel="noopener">https://hacpai.com/article/1538300197601</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/24/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/24/">24</a><span class="page-number current">25</span><a class="page-number" href="/page/26/">26</a><span class="space">&hellip;</span><a class="page-number" href="/page/59/">59</a><a class="extend next" rel="next" href="/page/26/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/24/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/24/">24</a><span class="page-number current">25</span><a class="page-number" href="/page/26/">26</a><span class="space">&hellip;</span><a class="page-number" href="/page/60/">60</a><a class="extend next" rel="next" href="/page/26/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2082,7 +2186,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">588</span>
+                <span class="site-state-item-count">592</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2093,7 +2197,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">250</span>
+                <span class="site-state-item-count">251</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2104,7 +2208,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">644</span>
+                <span class="site-state-item-count">646</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
