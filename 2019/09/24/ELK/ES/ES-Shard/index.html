@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="ELK,ES,Shard,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="ShardShard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。  一个 Index 其实是有存储上限的（除非你设置足够多的 Shards 和机器），如官方声明单个 Shard 的文档数不能超过 20 亿（受限于 Lucene index，每个 Shard 是一个 Lucene index）。每个搜索请求会调度到索引的每个分片中. 如果分片分散在不同的节点倒是问">
+<meta name="keywords" content="ELK,ES,Shard">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ES Shard">
+<meta property="og:url" content="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Shard/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="ShardShard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。  一个 Index 其实是有存储上限的（除非你设置足够多的 Shards 和机器），如官方声明单个 Shard 的文档数不能超过 20 亿（受限于 Lucene index，每个 Shard 是一个 Lucene index）。每个搜索请求会调度到索引的每个分片中. 如果分片分散在不同的节点倒是问">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Shard/replica_exp_1.png">
+<meta property="og:updated_time" content="2019-09-24T10:15:13.362Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ES Shard">
+<meta name="twitter:description" content="ShardShard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。  一个 Index 其实是有存储上限的（除非你设置足够多的 Shards 和机器），如官方声明单个 Shard 的文档数不能超过 20 亿（受限于 Lucene index，每个 Shard 是一个 Lucene index）。每个搜索请求会调度到索引的每个分片中. 如果分片分散在不同的节点倒是问">
+<meta name="twitter:image" content="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Shard/replica_exp_1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Shard/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>ES Shard | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Shard/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">ES Shard</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-24T18:13:06+08:00">
+                2019-09-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/ES/" itemprop="url" rel="index">
+                    <span itemprop="name">ES</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Shard"><a href="#Shard" class="headerlink" title="Shard"></a>Shard</h3><p>Shard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。</p>
+<blockquote>
+<p>一个 Index 其实是有存储上限的（除非你设置足够多的 Shards 和机器），如官方声明单个 Shard 的文档数不能超过 20 亿（受限于 Lucene index，每个 Shard 是一个 Lucene index）。<br>每个搜索请求会调度到索引的每个分片中. 如果分片分散在不同的节点倒是问题不太. 但当分片开始竞争相同的硬件资源时, 性能便会逐步下降。</p>
+</blockquote>
+<p>shard_num = hash(_routing) % num_primary_shards</p>
+<blockquote>
+<p>其中 hash(_routing) 得出一个数字，然后除以主 Shards 的数量得到一个余数，余数的范围是 0 到 number_of_primary_shards - 1，这个数字就是文档所在的 Shard。Routing 默认是 id 值，当然可以自定义，合理指定 Routing 能够大幅提升查询效率，Routing 支持 GET、Delete、Update、Post、Put 等操作。</p>
+</blockquote>
+<p>考虑到 I、O，针对 Index 每个 Node 的 Shards 数最好不超过 3 个，那面对这样一个庞大的 Index，我们是采用更多的 Shards，还是更多的 Index，我们如何选择？</p>
+<p>Index 的 Shards 总量也不宜太多，更多的 Shards 会带来更多的 I、O 开销，其实答案就已经很明确，除非你能接受长时间的查询等待。</p>
+<p>Index 拆分的思路很简单，时序索引有一个好处就是只有增加，没有变更，按时间累积，天然对索引的拆分友好支持，可以按照时间和数据量做任意时间段的拆分。</p>
+<p>ES 提供的 Rollover Api + Index Template 可以非常便捷和友好的实现 Index 的拆分工作，把单个 index docs 数量控制在百亿内，也就是一个 Index 默认 5 个 Shards 左右即可，保证查询的即时响应。</p>
+<h4 id="Shard-Count"><a href="#Shard-Count" class="headerlink" title="Shard Count"></a>Shard Count</h4><p>当我们节点数和Shard数相等时，ElasticSearch 集群的性能可以达到最优。即，对于一个3节点集群，我们为每个集群节点分配1个 Shard，总共3个 Shard。</p>
+<p>但是由于 ElasticSearch 的不可变性（Immutable）的限制，系统无法对 Shard 进行重新拆分分配，除非重新索引这个文件集合。所以，当我们需要增加更多节点的时候，又希望 Shard 能利用到增加节点带来的系统性能提升时，我们就不得不进行重新索引，由于重索引开销巨大，这是我们不希望看到的。</p>
+<p>如果单个node分配多个Shard，就会引入另外一系列的性能问题，我们知道对于任意一次完整的搜索，ElasticSearch会分别对每个Shard进行查询，最后进行汇总。当节点数和Shard数是一对一的时候，所有的查询可以并行运行。但是，对于具有多个Shard的节点，如果磁盘是15000RPM或SSD，可能会相对较快，但是这也会存在等待响应的问题，所以通常不推荐一个节点超过2个Shard。</p>
+<p>3节点6个Shard，即每个节点2个Shard，这可以使我们在未来轻松的横向扩展到6个节点，应对许多极端的场景。</p>
+<h4 id="Replica-Count"><a href="#Replica-Count" class="headerlink" title="Replica Count"></a>Replica Count</h4><p>Replica也是Shard，与Shard不同的是，Replica只会参与读操作，同时也能提高集群的可用性。</p>
+<p>对于Replica来说，它的主要作用就是提高集群错误恢复的能力，所以Replica的数目与Shard的数目以及Node的数目相关，与Shard不同的是，Replica的数目可以在集群建立之后变更，切代价较小，所以相比Shard的数目而言，没有那么重要。</p>
+<p>如果宕机了，Replica是什么情况？</p>
+<p><strong>假设条件: 3 Nodes, 3 Shards, 0 Relicas</strong></p>
+<p><strong>假设一个Node宕机</strong></p>
+<img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_1.png">
+<p>此时，对应的索引不可用。</p>
+<p><strong>假设条件: 3 Nodes, 3 Shards, 1 Relicas</strong></p>
+<p><strong>假设一个Node宕机</strong></p>
+
+<p>此时，索引可用</p>
+<p><strong>假设两个Node宕机</strong></p>
+
+<p>此时，索引仍然可用。</p>
+<p><strong>假设条件: 3 Nodes, 3 Shards, 2 Relicas</strong></p>
+
+<blockquote>
+<p>如果存储费用比较便宜，推荐使用</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[Shard数调优]<a href="https://www.cnblogs.com/richaaaard/p/5231905.html" target="_blank" rel="noopener">https://www.cnblogs.com/richaaaard/p/5231905.html</a></li>
+<li><a href="https://www.javazhiyin.com/36443.html" target="_blank" rel="noopener">https://www.javazhiyin.com/36443.html</a></li>
+<li><a href="https://segmentfault.com/a/1190000008868585" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008868585</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ELK/" rel="tag"># ELK</a>
+          
+            <a href="/tags/ES/" rel="tag"># ES</a>
+          
+            <a href="/tags/Shard/" rel="tag"># Shard</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/23/ELK/ES/ES-ERROR/" rel="next" title="ES Error">
+                <i class="fa fa-chevron-left"></i> ES Error
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/09/24/ELK/ES/ES-Optimize/" rel="prev" title="ES Optimize">
+                ES Optimize <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">595</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">251</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">648</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Shard"><span class="nav-number">1.</span> <span class="nav-text">Shard</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Shard-Count"><span class="nav-number">1.1.</span> <span class="nav-text">Shard Count</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replica-Count"><span class="nav-number">1.2.</span> <span class="nav-text">Replica Count</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">2.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
