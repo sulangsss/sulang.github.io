@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://sulangsss.github.io/"/>
-  <updated>2019-09-24T10:49:08.685Z</updated>
+  <updated>2019-10-11T04:40:13.208Z</updated>
   <id>https://sulangsss.github.io/</id>
   
   <author>
@@ -15,6 +15,66 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>HTTP/1、HTTP/2和HTTP/3</title>
+    <link href="https://sulangsss.github.io/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/"/>
+    <id>https://sulangsss.github.io/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/</id>
+    <published>2019-10-11T02:55:18.000Z</published>
+    <updated>2019-10-11T04:40:13.208Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="HTTP-1-x"><a href="#HTTP-1-x" class="headerlink" title="HTTP/1.x"></a>HTTP/1.x</h2><p>HTTP协议是HyperText Transfer Protocol（超文本传输协议）的缩写，它是互联网上应用最为广泛的一种网络协议。所有的WWW文件都必须遵守这个标准。伴随着计算机网络和浏览器的诞生，HTTP1.0也随之而来，处于计算机网络中的应用层，HTTP是建立在TCP协议之上，所以HTTP协议的瓶颈及其优化技巧都是基于TCP协议本身的特性，例如tcp建立连接的3次握手和断开连接的4次挥手以及每次建立连接带来的RTT延迟时间。</p><h3 id="Weakness"><a href="#Weakness" class="headerlink" title="Weakness"></a>Weakness</h3><h4 id="连接无法复用"><a href="#连接无法复用" class="headerlink" title="连接无法复用"></a>连接无法复用</h4><p>连接无法复用会导致每次请求都经历三次握手和慢启动。三次握手在高延迟的场景下影响较明显，慢启动则对大量小文件请求影响较大（没有达到最大窗口请求就被终止）。</p><ul><li>HTTP/1.0：传输数据时，每次都需要重新建立连接，增加延迟。</li><li>HTTP/1.1：虽然加入keep-alive可以复用一部分连接，但域名分片等情况下仍然需要建立多个connection，耗费资源，给服务器带来性能压力。</li></ul><h4 id="Head-Of-Line-Blocking（HOLB）"><a href="#Head-Of-Line-Blocking（HOLB）" class="headerlink" title="Head-Of-Line Blocking（HOLB）"></a>Head-Of-Line Blocking（HOLB）</h4><p>导致带宽无法被充分利用，以及后续健康请求被阻塞。HOLB是指一系列包（package）因为第一个包被阻塞；当页面中需要请求很多资源的时候，HOLB（队头阻塞）会导致在达到最大请求数量时，剩余的资源需要等待其他资源请求完成后才能发起请求。</p><ul><li>HTTP/1.0：下个请求必须在前一个请求返回后才能发出，request-response对按序发生。显然，如果某个请求长时间没有返回，那么接下来的请求就全部阻塞了。</li><li>HTTP/1.1：尝试使用 pipeling 来解决，即浏览器可以一次性发出多个请求（同个域名，同一条 TCP 链接）。但 pipeling 要求返回是按序的，那么前一个请求如果很耗时（比如处理大图片），那么后面的请求即使服务器已经处理完，仍会等待前面的请求处理完才开始按序返回。所以，pipeling 只部分解决了 HOLB。</li></ul><h4 id="协议开销大"><a href="#协议开销大" class="headerlink" title="协议开销大"></a>协议开销大</h4><p>HTTP1.x在使用时，header里携带的内容过大，在一定程度上增加了传输的成本，并且每次请求header基本不怎么变化，尤其在移动端增加用户流量。</p><h4 id="安全因素"><a href="#安全因素" class="headerlink" title="安全因素"></a>安全因素</h4><p>HTTP1.x在传输数据时，所有传输的内容都是明文，客户端和服务器端都无法验证对方的身份，这在一定程度上无法保证数据的安全性。</p><hr><h2 id="HTTP-2"><a href="#HTTP-2" class="headerlink" title="HTTP/2"></a>HTTP/2</h2><p>2015年，HTTP/2 发布。HTTP/2是现行HTTP协议（HTTP/1.x）的替代，但它不是重写，HTTP方法/状态码/语义都与HTTP/1.x一样。HTTP/2基于SPDY3，专注于性能，最大的一个目标是在用户和网站间只用一个连接（connection）。</p><p>HTTP/2由两个规范（Specification）组成：</p><ul><li>Hypertext Transfer Protocol version 2 - RFC7540</li><li>HPACK - Header Compression for HTTP/2 - RFC7541</li></ul><h3 id="SPDY-协议"><a href="#SPDY-协议" class="headerlink" title="SPDY 协议"></a>SPDY 协议</h3><p>因为HTTP/1.x的问题，我们会引入雪碧图、将小图内联、使用多个域名等等的方式来提高性能。不过这些优化都绕开了协议，直到2009年，谷歌公开了自行研发的 SPDY 协议，主要解决HTTP/1.1效率不高的问题。谷歌推出SPDY，才算是正式改造HTTP协议本身。降低延迟，压缩header等等，SPDY的实践证明了这些优化的效果，也最终带来HTTP/2的诞生。</p><p>SPDY 协议在Chrome浏览器上证明可行以后，就被当作 HTTP/2 的基础，主要特性都在 HTTP/2 之中得到继承。</p><hr><h3 id="New-Feature"><a href="#New-Feature" class="headerlink" title="New Feature"></a>New Feature</h3><h4 id="二进制传输"><a href="#二进制传输" class="headerlink" title="二进制传输"></a>二进制传输</h4><p>HTTP/2 采用二进制格式传输数据，而非 HTTP 1.x 的文本格式，二进制协议解析起来更高效。 HTTP/1 的请求和响应报文，都是由起始行，首部和实体正文（可选）组成，各部分之间以文本换行符分隔。<strong>HTTP/2 将请求和响应数据分割为更小的帧，并且它们采用二进制编码。</strong></p><h4 id="多路复用"><a href="#多路复用" class="headerlink" title="多路复用"></a>多路复用</h4><p>在 HTTP/2 中引入了多路复用的技术。多路复用很好的解决了浏览器限制<strong>同一个域名下的请求数量的问题</strong>，同时也接更容易实现<strong>全速传输</strong>，毕竟新开一个 TCP 连接都需要慢慢提升传输速度。</p><p>在 HTTP/2 中，有了二进制分帧之后，HTTP /2 不再依赖 TCP 链接去实现多流并行了，在 HTTP/2中：</p><ul><li>同域名下所有通信都在单个连接上完成。</li><li>单个连接可以承载任意数量的双向数据流。</li><li>数据流以消息的形式发送，而消息又由一个或多个帧组成，多个帧之间可以乱序发送，因为根据帧首部的流标识可以重新组装。</li></ul><p>这一特性，使性能有了极大提升：</p><ul><li>同个域名只需要占用一个 TCP 连接，使用一个连接并行发送多个请求和响应，消除了因多个 TCP 连接而带来的延时和内存消耗；</li><li>并行交错地发送多个请求，请求之间互不影响；</li><li>并行交错地发送多个响应，响应之间互不干扰；</li><li>在HTTP/2中，每个请求都可以带一个31bit的优先值，0表示最高优先级，数值越大优先级越低。有了这个优先值，客户端和服务器就可以在处理不同的流时采取不同的策略，以最优的方式发送流、消息和帧。</li></ul><img src="/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/http1-vs-http2.png"><p>如上图所示，多路复用的技术可以只通过一个 TCP 连接就可以传输所有的请求数据。</p><h4 id="Header-压缩"><a href="#Header-压缩" class="headerlink" title="Header 压缩"></a>Header 压缩</h4><p>在 HTTP/1 中，我们使用文本的形式传输 header，在 header 携带 cookie 的情况下，可能每次都需要重复传输几百到几千的字节。</p><p>为了减少这块的资源消耗并提升性能， HTTP/2对这些首部采取了压缩策略：</p><ul><li>HTTP/2在客户端和服务器端使用“首部表”来跟踪和存储之前发送的键－值对，对于相同的数据，不再通过每次请求和响应发送；</li><li>首部表在HTTP/2的连接存续期内始终存在，由客户端和服务器共同渐进地更新；</li><li>每个新的首部键－值对要么被追加到当前表的末尾，要么替换表中之前的值。</li></ul><h4 id="Server-Push"><a href="#Server-Push" class="headerlink" title="Server Push"></a>Server Push</h4><p>Server Push即服务端能通过push的方式将客户端需要的内容预先推送过去，也叫 “cache push”。</p><p>可以想象以下情况，某些资源客户端是一定会请求的，这时就可以采取服务端 push 的技术，提前给客户端推送必要的资源，这样就可以相对减少一点延迟时间。当然在浏览器兼容的情况下你也可以使用 prefetch。<br>例如服务端可以主动把JS和CSS文件推送给客户端，而不需要客户端解析HTML时再发送这些请求。</p><p>服务端可以主动推送，客户端也有权利选择是否接收。如果服务端推送的资源已经被浏览器缓存过，浏览器可以通过发送RST_STREAM帧来拒收。主动推送也遵守同源策略，换句话说，服务器不能随便将第三方资源推送给客户端，而必须是经过双方确认才行。</p><hr><h2 id="HTTP-3"><a href="#HTTP-3" class="headerlink" title="HTTP/3"></a>HTTP/3</h2><p>虽然 HTTP/2 解决了很多之前旧版本的问题，但是它还是存在一个巨大的问题，主要是底层支撑的 TCP 协议造成的。</p><p>上面提到 HTTP/2 使用了多路复用，一般来说同一域名下只需要使用一个 TCP 连接。但当这个连接中出现了丢包的情况，那就会导致 HTTP/2 的表现情况反倒不如 HTTP/1 了。因为在出现丢包的情况下，整个 TCP 都要开始等待重传，也就导致了后面的所有数据都被阻塞了。但是对于 HTTP/1.1 来说，可以开启多个 TCP 连接，出现这种情况反到只会影响其中一个连接，剩余的 TCP 连接还可以正常传输数据。</p><blockquote><p>那么可能就会有人考虑到去修改 TCP 协议，其实这已经是一件不可能完成的任务了。因为 TCP 存在的时间实在太长，已经充斥在各种设备中，并且这个协议是由操作系统实现的，更新起来不大现实。</p></blockquote><p>基于这个原因，Google 就更起炉灶搞了一个基于 UDP 协议的 QUIC 协议，并且使用在了 HTTP/3 上，HTTP/3 之前名为 HTTP-over-QUIC，从这个名字中我们也可以发现，HTTP/3 最大的改造就是使用了 QUIC。</p><h3 id="QUIC"><a href="#QUIC" class="headerlink" title="QUIC"></a>QUIC</h3><h4 id="0-RTT"><a href="#0-RTT" class="headerlink" title="0-RTT"></a>0-RTT</h4><p>通过使用类似 TCP 快速打开的技术，缓存当前会话的上下文，在下次恢复会话的时候，只需要将之前的缓存传递给服务端验证通过就可以进行传输了。<strong>0-RTT 建连可以说是 QUIC 相比 HTTP2 最大的性能优势。</strong></p><p>0RTT 建连的两层含义：</p><ol><li>传输层 0RTT 就能建立连接。</li><li>加密层 0RTT 就能建立加密连接。</li></ol><img src="/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/https-and-quic-0rtt.png"><p>上图左边是 HTTPS 的一次完全握手的建连过程，需要3个 RTT。就算是会话复用也需要至少2个 RTT。</p><p>QUIC 由于建立在 UDP 的基础上，同时又实现了 0RTT 的安全握手，所以在大部分情况下，只需要 0 个 RTT 就能实现数据发送，在实现前向加密的基础上，并且 0RTT 的成功率相比 TLS 的会话记录单要高很多。</p><blockquote><p>RTT：Round-trip delay time，来回通信延迟。</p></blockquote><h4 id="多路复用-1"><a href="#多路复用-1" class="headerlink" title="多路复用"></a>多路复用</h4><p>虽然 HTTP/2 支持了多路复用，但是 TCP 协议终究是没有这个功能的。QUIC 原生就实现了这个功能，并且传输的单个数据流可以保证有序交付且不会影响其他的数据流，这样的技术就解决了之前 TCP 存在的问题。</p><p>同HTTP2.0一样，同一条 QUIC连接上可以创建多个stream，来发送多个HTTP请求，但是，QUIC是基于UDP的，一个连接上的多个stream之间没有依赖。比如下图中stream2丢了一个UDP包，不会影响后面跟着 Stream3 和 Stream4，不存在 TCP 队头阻塞。虽然stream2的那个包需要重新传，但是stream3、stream4的包无需等待，就可以发给用户。</p><img src="/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/quic-loss-package.png"><p>另外QUIC 在移动端的表现也会比 TCP 好。因为 TCP 是基于 IP 和端口去识别连接的，这种方式在多变的移动端网络环境下是很脆弱的。但是 QUIC 是通过 ID 的方式去识别一个连接，不管你网络环境如何变化，只要 ID 不变，就能迅速重连上。</p><h4 id="加密认证的报文"><a href="#加密认证的报文" class="headerlink" title="加密认证的报文"></a>加密认证的报文</h4><p>TCP 协议头部没有经过任何加密和认证，所以在传输过程中很容易被中间网络设备篡改，注入和窃听。比如修改序列号、滑动窗口。这些行为有可能是出于性能优化，也有可能是主动攻击。但是 QUIC 的 packet 可以说是武装到了牙齿。除了个别报文比如 PUBLIC_RESET 和 CHLO，所有报文头部都是经过认证的，报文 Body 都是经过加密的。这样只要对 QUIC 报文任何修改，接收端都能够及时发现，有效地降低了安全风险。</p><h4 id="向前纠错机制"><a href="#向前纠错机制" class="headerlink" title="向前纠错机制"></a>向前纠错机制</h4><p>QUIC协议有一个非常独特的特性，称为向前纠错 (Forward Error Correction，FEC)，每个数据包除了它本身的内容之外，还包括了部分其他数据包的数据，因此少量的丢包可以通过其他包的冗余数据直接组装而无需重传。向前纠错牺牲了每个数据包可以发送数据的上限，但是减少了因为丢包导致的数据重传，因为数据重传将会消耗更多的时间(包括确认数据包丢失、请求重传、等待新数据包等步骤的时间消耗)。</p><p>假如说这次我要发送三个包，那么协议会算出这三个包的异或值并单独发出一个校验包，也就是总共发出了四个包。当出现其中的非校验包丢包的情况时，可以通过另外三个包计算出丢失的数据包的内容。<strong>当然这种技术只能使用在丢失一个包的情况下，如果出现丢失多个包就不能使用纠错机制了，只能使用重传的方式了。</strong></p><hr><h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ul><li>HTTP/1.x 有连接无法复用、队头阻塞、协议开销大和安全因素等多个缺陷；</li><li>HTTP/2 通过多路复用、二进制流、Header 压缩等等技术，极大地提高了性能，但是还是存在着问题的；</li><li>QUIC 基于 UDP 实现，是 HTTP/3 中的底层支撑协议，该协议基于 UDP，又取了 TCP 中的精华，实现了即快又可靠的协议。</li></ul><hr><h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul><li>[一文读懂HTTP/2 及 HTTP/3特性]<a href="https://segmentfault.com/a/1190000018401534" target="_blank" rel="noopener">https://segmentfault.com/a/1190000018401534</a></li><li>[HTTP/3 的过去、现在和未来]<a href="https://www.infoq.cn/article/x80uOvcRyxVYw3KVusUm" target="_blank" rel="noopener">https://www.infoq.cn/article/x80uOvcRyxVYw3KVusUm</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;HTTP-1-x&quot;&gt;&lt;a href=&quot;#HTTP-1-x&quot; class=&quot;headerlink&quot; title=&quot;HTTP/1.x&quot;&gt;&lt;/a&gt;HTTP/1.x&lt;/h2&gt;&lt;p&gt;HTTP协议是HyperText Transfer Protocol（超文本传输协议）的缩写
+      
+    
+    </summary>
+    
+      <category term="Network" scheme="https://sulangsss.github.io/categories/Network/"/>
+    
+      <category term="HTTP" scheme="https://sulangsss.github.io/categories/Network/HTTP/"/>
+    
+    
+      <category term="HTTP" scheme="https://sulangsss.github.io/tags/HTTP/"/>
+    
+      <category term="Network" scheme="https://sulangsss.github.io/tags/Network/"/>
+    
+      <category term="HTTP/2" scheme="https://sulangsss.github.io/tags/HTTP-2/"/>
+    
+      <category term="HTTP/3" scheme="https://sulangsss.github.io/tags/HTTP-3/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Liquibase Quick Start</title>
+    <link href="https://sulangsss.github.io/2019/09/29/DB/Liquibase/Liquibase-Quick-Start/"/>
+    <id>https://sulangsss.github.io/2019/09/29/DB/Liquibase/Liquibase-Quick-Start/</id>
+    <published>2019-09-29T08:54:07.000Z</published>
+    <updated>2019-09-29T08:55:38.333Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h3><h4 id="Data-Type"><a href="#Data-Type" class="headerlink" title="Data Type"></a>Data Type</h4><blockquote><p><a href="https://gist.github.com/JohnnyNiu/e5f7232362cc085e2a9c9e2b683c6026" target="_blank" rel="noopener">https://gist.github.com/JohnnyNiu/e5f7232362cc085e2a9c9e2b683c6026</a></p></blockquote>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Basic&quot;&gt;&lt;a href=&quot;#Basic&quot; class=&quot;headerlink&quot; title=&quot;Basic&quot;&gt;&lt;/a&gt;Basic&lt;/h3&gt;&lt;h4 id=&quot;Data-Type&quot;&gt;&lt;a href=&quot;#Data-Type&quot; class=&quot;headerlink&quot; ti
+      
+    
+    </summary>
+    
+      <category term="DB" scheme="https://sulangsss.github.io/categories/DB/"/>
+    
+      <category term="Liquibase" scheme="https://sulangsss.github.io/categories/DB/Liquibase/"/>
+    
+    
+      <category term="Liquibase" scheme="https://sulangsss.github.io/tags/Liquibase/"/>
+    
+  </entry>
   
   <entry>
     <title>ES API</title>
@@ -85,7 +145,7 @@
     <published>2019-09-24T10:13:06.000Z</published>
     <updated>2019-09-24T10:15:13.362Z</updated>
     
-    <content type="html"><![CDATA[<h3 id="Shard"><a href="#Shard" class="headerlink" title="Shard"></a>Shard</h3><p>Shard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。</p><blockquote><p>一个 Index 其实是有存储上限的（除非你设置足够多的 Shards 和机器），如官方声明单个 Shard 的文档数不能超过 20 亿（受限于 Lucene index，每个 Shard 是一个 Lucene index）。<br>每个搜索请求会调度到索引的每个分片中. 如果分片分散在不同的节点倒是问题不太. 但当分片开始竞争相同的硬件资源时, 性能便会逐步下降。</p></blockquote><p>shard_num = hash(_routing) % num_primary_shards</p><blockquote><p>其中 hash(_routing) 得出一个数字，然后除以主 Shards 的数量得到一个余数，余数的范围是 0 到 number_of_primary_shards - 1，这个数字就是文档所在的 Shard。Routing 默认是 id 值，当然可以自定义，合理指定 Routing 能够大幅提升查询效率，Routing 支持 GET、Delete、Update、Post、Put 等操作。</p></blockquote><p>考虑到 I、O，针对 Index 每个 Node 的 Shards 数最好不超过 3 个，那面对这样一个庞大的 Index，我们是采用更多的 Shards，还是更多的 Index，我们如何选择？</p><p>Index 的 Shards 总量也不宜太多，更多的 Shards 会带来更多的 I、O 开销，其实答案就已经很明确，除非你能接受长时间的查询等待。</p><p>Index 拆分的思路很简单，时序索引有一个好处就是只有增加，没有变更，按时间累积，天然对索引的拆分友好支持，可以按照时间和数据量做任意时间段的拆分。</p><p>ES 提供的 Rollover Api + Index Template 可以非常便捷和友好的实现 Index 的拆分工作，把单个 index docs 数量控制在百亿内，也就是一个 Index 默认 5 个 Shards 左右即可，保证查询的即时响应。</p><h4 id="Shard-Count"><a href="#Shard-Count" class="headerlink" title="Shard Count"></a>Shard Count</h4><p>当我们节点数和Shard数相等时，ElasticSearch 集群的性能可以达到最优。即，对于一个3节点集群，我们为每个集群节点分配1个 Shard，总共3个 Shard。</p><p>但是由于 ElasticSearch 的不可变性（Immutable）的限制，系统无法对 Shard 进行重新拆分分配，除非重新索引这个文件集合。所以，当我们需要增加更多节点的时候，又希望 Shard 能利用到增加节点带来的系统性能提升时，我们就不得不进行重新索引，由于重索引开销巨大，这是我们不希望看到的。</p><p>如果单个node分配多个Shard，就会引入另外一系列的性能问题，我们知道对于任意一次完整的搜索，ElasticSearch会分别对每个Shard进行查询，最后进行汇总。当节点数和Shard数是一对一的时候，所有的查询可以并行运行。但是，对于具有多个Shard的节点，如果磁盘是15000RPM或SSD，可能会相对较快，但是这也会存在等待响应的问题，所以通常不推荐一个节点超过2个Shard。</p><p>3节点6个Shard，即每个节点2个Shard，这可以使我们在未来轻松的横向扩展到6个节点，应对许多极端的场景。</p><h4 id="Replica-Count"><a href="#Replica-Count" class="headerlink" title="Replica Count"></a>Replica Count</h4><p>Replica也是Shard，与Shard不同的是，Replica只会参与读操作，同时也能提高集群的可用性。</p><p>对于Replica来说，它的主要作用就是提高集群错误恢复的能力，所以Replica的数目与Shard的数目以及Node的数目相关，与Shard不同的是，Replica的数目可以在集群建立之后变更，切代价较小，所以相比Shard的数目而言，没有那么重要。</p><p>如果宕机了，Replica是什么情况？</p><p><strong>假设条件: 3 Nodes, 3 Shards, 0 Relicas</strong></p><p><strong>假设一个Node宕机</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_1.png"><p>此时，对应的索引不可用。</p><p><strong>假设条件: 3 Nodes, 3 Shards, 1 Relicas</strong></p><p><strong>假设一个Node宕机</strong></p><p>此时，索引可用</p><p><strong>假设两个Node宕机</strong></p><p>此时，索引仍然可用。</p><p><strong>假设条件: 3 Nodes, 3 Shards, 2 Relicas</strong></p><blockquote><p>如果存储费用比较便宜，推荐使用</p></blockquote><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Shard数调优]<a href="https://www.cnblogs.com/richaaaard/p/5231905.html" target="_blank" rel="noopener">https://www.cnblogs.com/richaaaard/p/5231905.html</a></li><li><a href="https://www.javazhiyin.com/36443.html" target="_blank" rel="noopener">https://www.javazhiyin.com/36443.html</a></li><li><a href="https://segmentfault.com/a/1190000008868585" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008868585</a></li></ul>]]></content>
+    <content type="html"><![CDATA[<h3 id="Shard"><a href="#Shard" class="headerlink" title="Shard"></a>Shard</h3><p>Shard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。</p><blockquote><p>一个 Index 其实是有存储上限的（除非你设置足够多的 Shards 和机器），如官方声明单个 Shard 的文档数不能超过 20 亿（受限于 Lucene index，每个 Shard 是一个 Lucene index）。<br>每个搜索请求会调度到索引的每个分片中. 如果分片分散在不同的节点倒是问题不太. 但当分片开始竞争相同的硬件资源时, 性能便会逐步下降。</p></blockquote><p>shard_num = hash(_routing) % num_primary_shards</p><blockquote><p>其中 hash(_routing) 得出一个数字，然后除以主 Shards 的数量得到一个余数，余数的范围是 0 到 number_of_primary_shards - 1，这个数字就是文档所在的 Shard。Routing 默认是 id 值，当然可以自定义，合理指定 Routing 能够大幅提升查询效率，Routing 支持 GET、Delete、Update、Post、Put 等操作。</p></blockquote><p>考虑到 I、O，针对 Index 每个 Node 的 Shards 数最好不超过 3 个，那面对这样一个庞大的 Index，我们是采用更多的 Shards，还是更多的 Index，我们如何选择？</p><p>Index 的 Shards 总量也不宜太多，更多的 Shards 会带来更多的 I、O 开销，其实答案就已经很明确，除非你能接受长时间的查询等待。</p><p>Index 拆分的思路很简单，时序索引有一个好处就是只有增加，没有变更，按时间累积，天然对索引的拆分友好支持，可以按照时间和数据量做任意时间段的拆分。</p><p>ES 提供的 Rollover Api + Index Template 可以非常便捷和友好的实现 Index 的拆分工作，把单个 index docs 数量控制在百亿内，也就是一个 Index 默认 5 个 Shards 左右即可，保证查询的即时响应。</p><h4 id="Shard-Count"><a href="#Shard-Count" class="headerlink" title="Shard Count"></a>Shard Count</h4><p>当我们节点数和Shard数相等时，ElasticSearch 集群的性能可以达到最优。即，对于一个3节点集群，我们为每个集群节点分配1个 Shard，总共3个 Shard。</p><p>但是由于 ElasticSearch 的不可变性（Immutable）的限制，系统无法对 Shard 进行重新拆分分配，除非重新索引这个文件集合。所以，当我们需要增加更多节点的时候，又希望 Shard 能利用到增加节点带来的系统性能提升时，我们就不得不进行重新索引，由于重索引开销巨大，这是我们不希望看到的。</p><p>如果单个node分配多个Shard，就会引入另外一系列的性能问题，我们知道对于任意一次完整的搜索，ElasticSearch会分别对每个Shard进行查询，最后进行汇总。当节点数和Shard数是一对一的时候，所有的查询可以并行运行。但是，对于具有多个Shard的节点，如果磁盘是15000RPM或SSD，可能会相对较快，但是这也会存在等待响应的问题，所以通常不推荐一个节点超过2个Shard。</p><p>3节点6个Shard，即每个节点2个Shard，这可以使我们在未来轻松的横向扩展到6个节点，应对许多极端的场景。</p><h4 id="Replica-Count"><a href="#Replica-Count" class="headerlink" title="Replica Count"></a>Replica Count</h4><p>Replica也是Shard，与Shard不同的是，Replica只会参与读操作，同时也能提高集群的可用性。</p><p>对于Replica来说，它的主要作用就是提高集群错误恢复的能力，所以Replica的数目与Shard的数目以及Node的数目相关，与Shard不同的是，Replica的数目可以在集群建立之后变更，切代价较小，所以相比Shard的数目而言，没有那么重要。</p><p>如果宕机了，Replica是什么情况？</p><p><strong>假设条件: 3 Nodes, 3 Shards, 0 Relicas</strong></p><p><strong>假设一个Node宕机</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_1.png"><p>此时，对应的索引不可用。</p><p><strong>假设条件: 3 Nodes, 3 Shards, 1 Relicas</strong></p><p><strong>假设一个Node宕机</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_2.png"><p>此时，索引可用</p><p><strong>假设两个Node宕机</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_3.png"><p>此时，索引仍然可用。</p><p><strong>假设条件: 3 Nodes, 3 Shards, 2 Relicas</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_4.png"><blockquote><p>如果存储费用比较便宜，推荐使用</p></blockquote><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Shard数调优]<a href="https://www.cnblogs.com/richaaaard/p/5231905.html" target="_blank" rel="noopener">https://www.cnblogs.com/richaaaard/p/5231905.html</a></li><li><a href="https://www.javazhiyin.com/36443.html" target="_blank" rel="noopener">https://www.javazhiyin.com/36443.html</a></li><li><a href="https://segmentfault.com/a/1190000008868585" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008868585</a></li></ul>]]></content>
     
     <summary type="html">
     
@@ -568,67 +628,6 @@
       <category term="Optimize" scheme="https://sulangsss.github.io/tags/Optimize/"/>
     
       <category term="Preparement SQL" scheme="https://sulangsss.github.io/tags/Preparement-SQL/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Kubernetes CI/CD OVH CDS</title>
-    <link href="https://sulangsss.github.io/2019/08/19/Kubenetes/CI-CD/OVH-CDS/"/>
-    <id>https://sulangsss.github.io/2019/08/19/Kubenetes/CI-CD/OVH-CDS/</id>
-    <published>2019-08-19T09:35:06.000Z</published>
-    <updated>2019-08-19T15:23:05.923Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Worker-Model"><a href="#Worker-Model" class="headerlink" title="Worker Model"></a>Worker Model</h3><h4 id="Attentions"><a href="#Attentions" class="headerlink" title="Attentions"></a>Attentions</h4><ol><li>What’s a restricted worker model?</li></ol><p>A <strong>shared.infra</strong> hatchery can launch all worker models, except <strong>‘restricted’</strong> worker models.</p><p>Use case: users can launch their own hatchery. To use their worker models only with their hatchery, they have to set worker model as ‘restricted’.</p><p>为什么需要使用 restricted mode？因为 CDS build 是基于 docker in docker 方式，在 docker 里面执行 docker 命令，需要依赖 –privileged 权限(启动 docker deamon 需要)。</p><p>特别注意：–privileged is implemented on swarm hatchery only</p><blockquote><p><a href="https://ovh.github.io/cds/docs/concepts/worker-model/" target="_blank" rel="noopener">https://ovh.github.io/cds/docs/concepts/worker-model/</a><br><a href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/" target="_blank" rel="noopener">https://ovh.github.io/cds/docs/tutorials/worker_model-docker/</a><br><a href="https://ovh.github.io/cds/docs/components/hatchery/" target="_blank" rel="noopener">https://ovh.github.io/cds/docs/components/hatchery/</a></p></blockquote>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Worker-Model&quot;&gt;&lt;a href=&quot;#Worker-Model&quot; class=&quot;headerlink&quot; title=&quot;Worker Model&quot;&gt;&lt;/a&gt;Worker Model&lt;/h3&gt;&lt;h4 id=&quot;Attentions&quot;&gt;&lt;a href=&quot;#Att
-      
-    
-    </summary>
-    
-      <category term="Kubernetes" scheme="https://sulangsss.github.io/categories/Kubernetes/"/>
-    
-      <category term="CI/CD" scheme="https://sulangsss.github.io/categories/Kubernetes/CI-CD/"/>
-    
-    
-      <category term="Kubernetes" scheme="https://sulangsss.github.io/tags/Kubernetes/"/>
-    
-      <category term="CI/CD" scheme="https://sulangsss.github.io/tags/CI-CD/"/>
-    
-      <category term="OVH" scheme="https://sulangsss.github.io/tags/OVH/"/>
-    
-      <category term="CDS" scheme="https://sulangsss.github.io/tags/CDS/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>URL Shorteners</title>
-    <link href="https://sulangsss.github.io/2019/08/17/Network/URL-Shorteners/"/>
-    <id>https://sulangsss.github.io/2019/08/17/Network/URL-Shorteners/</id>
-    <published>2019-08-17T15:44:19.000Z</published>
-    <updated>2019-08-18T09:17:40.801Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Theory"><a href="#Theory" class="headerlink" title="Theory"></a>Theory</h3><ol><li>当我们在浏览器里输入 <a href="http://abc.com/RlB2d2" target="_blank" rel="noopener">http://abc.com/RlB2d2</a> 时，DNS首先解析获得 <a href="http://abc.com" target="_blank" rel="noopener">http://abc.com</a> 的 IP 地址 111.125.123.72；</li><li>当 DNS 获得 IP 地址以后，会向这个地址发送 HTTP GET 请求，查询短码 RlB2d2 对应的长 URL；</li><li>请求通过 HTTP 301 转到对应的长 URL <a href="https://m.domain.com。" target="_blank" rel="noopener">https://m.domain.com。</a></li></ol><hr><h3 id="301-与-302-的区别"><a href="#301-与-302-的区别" class="headerlink" title="301 与 302 的区别"></a>301 与 302 的区别</h3><p>301 是永久重定向，302 是临时重定向。短地址一经生成就不会变化，所以用 301 是符合 http 语义的，同时对服务器压力也会有一定减少。但是如果使用了 301，我们就无法统计到短地址被点击的次数了。而这个点击次数是一个非常有意思的大数据分析数据源。能够分析出的东西非常非常多。所以选择302虽然会增加服务器压力，但是我想是一个更好的选择。</p><hr><h3 id="URL-Shortener"><a href="#URL-Shortener" class="headerlink" title="URL Shortener"></a>URL Shortener</h3><h4 id="YOURLS"><a href="#YOURLS" class="headerlink" title="YOURLS"></a>YOURLS</h4><ul><li>YOURLS: <a href="http://yourls.org/" target="_blank" rel="noopener">http://yourls.org/</a><blockquote><p><a href="http://yourls.org/" target="_blank" rel="noopener">http://yourls.org/</a><br><a href="http://einverne.github.io/post/2018/04/yourls.html" target="_blank" rel="noopener">http://einverne.github.io/post/2018/04/yourls.html</a></p></blockquote></li></ul><p><strong>How to add plugin?</strong></p><p>default plugin directory: /var/www/html/user/plugins</p><p>Example: <a href="https://github.com/YOURLS/random-keywords" target="_blank" rel="noopener">https://github.com/YOURLS/random-keywords</a></p><p><strong>短地址生成书序</strong></p><p>短地址默认是是按照顺序生成，从1开始，有可能我们想不按照这样顺序，可以推荐用时间戳来生成</p><p>只需要修改 includes/functions.php 272行附近</p><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">将 $id = yourls_get_next_decimal(); 改为 $id = time();</span><br></pre></td></tr></table></figure><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[短网址(short URL)系统的原理及其实现]<a href="https://segmentfault.com/a/1190000012088345" target="_blank" rel="noopener">https://segmentfault.com/a/1190000012088345</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Theory&quot;&gt;&lt;a href=&quot;#Theory&quot; class=&quot;headerlink&quot; title=&quot;Theory&quot;&gt;&lt;/a&gt;Theory&lt;/h3&gt;&lt;ol&gt;
-&lt;li&gt;当我们在浏览器里输入 &lt;a href=&quot;http://abc.com/RlB2d2&quot; targe
-      
-    
-    </summary>
-    
-      <category term="Network" scheme="https://sulangsss.github.io/categories/Network/"/>
-    
-    
-      <category term="Network" scheme="https://sulangsss.github.io/tags/Network/"/>
-    
-      <category term="URL" scheme="https://sulangsss.github.io/tags/URL/"/>
     
   </entry>
   

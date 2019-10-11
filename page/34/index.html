@@ -284,6 +284,384 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/12/SpringBoot/Aop/tutorial/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/05/12/SpringBoot/Aop/tutorial/" itemprop="url">Spring Boot AOP Tutorial</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-12T14:34:18+08:00">
+                2018-05-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/SpringBoot/AOP/" itemprop="url" rel="index">
+                    <span itemprop="name">AOP</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="定义计算执行时间"><a href="#定义计算执行时间" class="headerlink" title="定义计算执行时间"></a>定义计算执行时间</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExecutedTimeAop</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> val logger = LoggerFactory.getLogger(ExecutedTimeAop::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>)</span></span><br><span class="line">    @Around("execution(* com.six.god..create(..))")</span><br><span class="line">    <span class="meta">@Throws</span>(Throwable::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">    fun run(joinPoint: ProceedingJoinPoint): Any? &#123;</span><br><span class="line">        var result: Any? = <span class="keyword">null</span></span><br><span class="line">        val timeMillis = measureTimeMillis &#123;</span><br><span class="line">            result = joinPoint.proceed()</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>作用于com.six.god下所有名字为create()的方法</p>
+<h4 id="配合注解使用"><a href="#配合注解使用" class="headerlink" title="配合注解使用"></a>配合注解使用</h4><p>定义注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target</span>(AnnotationTarget.FUNCTION)</span><br><span class="line"><span class="meta">@Retention</span>(AnnotationRetention.RUNTIME)</span><br><span class="line"><span class="meta">@Inherited</span></span><br><span class="line"><span class="meta">@MustBeDocumented</span></span><br><span class="line">annotation <span class="class"><span class="keyword">class</span> <span class="title">ExecutedTime</span></span></span><br></pre></td></tr></table></figure>
+<p>定义AOP</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExecutedTimeAop</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> val logger = LoggerFactory.getLogger(ExecutedTimeAop::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>)</span></span><br><span class="line"><span class="class">    @<span class="title">Around</span>(<span class="title">value</span> </span>= <span class="string">"@annotation(ExecutedTime)"</span>)</span><br><span class="line">    <span class="meta">@Throws</span>(Throwable::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">    fun run(joinPoint: ProceedingJoinPoint): Any? &#123;</span><br><span class="line">        var result: Any? = <span class="keyword">null</span></span><br><span class="line">        val timeMillis = measureTimeMillis &#123;</span><br><span class="line">            result = joinPoint.proceed()</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/12/Server/Deployment/deployment-policy/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/05/12/Server/Deployment/deployment-policy/" itemprop="url">部署升级策略</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-12T09:45:19+08:00">
+                2018-05-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Deployment/" itemprop="url" rel="index">
+                    <span itemprop="name">Deployment</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="部署模式-Deployment-Mode"><a href="#部署模式-Deployment-Mode" class="headerlink" title="部署模式 (Deployment Mode)"></a>部署模式 (Deployment Mode)</h3><ul>
+<li><p>停机部署（Big Bang / Recreate）： 把现有版本的服务停机，然后部署新的版本。</p>
+</li>
+<li><p>蓝绿部署（Blue/Green /Stage）：部署好新版本后，把流量从老服务那边切过来。</p>
+</li>
+<li><p>滚动部署（Rolling Update / Ramped）： 一点一点地升级现有的服务。</p>
+</li>
+<li><p>灰度部署（Canary）：把一部分用户切到新版上来，然后看一下有没有问题。如果没有问题就继续扩大升级，直到全部升级完成。</p>
+</li>
+<li><p>AB 测试（A/B Testing）：同时上线两个版本，然后做相关的比较。</p>
+</li>
+</ul>
+<h3 id="停机部署"><a href="#停机部署" class="headerlink" title="停机部署"></a>停机部署</h3><p>停机部署其实是最简单粗暴的方式，就是简单地把现有版本的服务停机，然后部署新的版本。在一些时候，我们必需使用这样的方式来部署或升级多个服务。</p>
+<p>比如，新版本中的服务使用到了和老版本完全不兼容的数据表的设计。这个时候，我们对生产有两个变更，一个是数据库，另一个是服务，而且新老版本互<br>不兼容，所以只能使用停机部署的方式。</p>
+<p>这种方式的优势是，在部署过程中不会出现新老版本同时在线的情况，所有状态完全一致。停机部署主要是为了新版本的一致性问题。</p>
+<p>这种方式最不好的问题就是会停机，对用户的影响会很大。所以，一般来说，这种部署方式需要事前挂公告，选择一个用户访问少的时间段来做。</p>
+<h3 id="蓝绿部署"><a href="#蓝绿部署" class="headerlink" title="蓝绿部署"></a>蓝绿部署</h3><p>蓝绿部署与停机部署最大的不同是，其在生产线上部署相同数量的新的服务，然后当新的服务测试确认 OK 后，把流量切到新的服务这边来。蓝绿部署比<br>停机部署好的地方是，它无需停机。</p>
+<p>我们可以看到这种部署方式，就是我们说的预发环境。在金融公司里经常用这种方式，生产线上有两套相同的集群，一套是 Prod 是真实服务的，另一套是<br>Stage 是预发环境，发布发 Stage，然后把流量切到 Stage 这边，于是 Stage 就成了 Prod，而之前的 Prod 则成了 Stage。有点像换页似的。</p>
+<p>这种方式的优点是没有停机，实时发布和升级，也避免有新旧版本同时在线的问题。但这种部署的问题就是有点浪费，因为需要使用双倍的资源（不过，这只<br>是在物理机时代，在云计算时代没事，因为虚拟机部署完就可以释放了）。</p>
+<p>特别注意：<strong>如果我们的服务中有状态，比如一些缓存什么的，停机部署和蓝绿部署都会有问题。</strong></p>
+<h3 id="滚动部署"><a href="#滚动部署" class="headerlink" title="滚动部署"></a>滚动部署</h3><p>滚动部署策略是指通过逐个替换应用的所有实例，来缓慢发布应用的一个新版本。通常过程如下：在负载调度后有个版本A的应用实例池，一个版本B的实例部署<br>成功，可以响应请求时，该实例被加入到池中。然后，版本A的一个实例从池中删除并下线。</p>
+<p>这种部署方式直接对现有的服务进行升级，虽然便于操作，而且在缓慢地更新的过程中，对于有状态的服务也是比较友好的，状态可以在更新中慢慢重建起来。<br>但是，这种部署的问题也是比较多的。</p>
+<ul>
+<li><p>在发布过程中，会出现新老两个版本同时在线的情况，同一用户的请求可能在新老版中切换而导致问题。</p>
+</li>
+<li><p>我们的新版程序没有在生产线上经过验证就上线了。</p>
+</li>
+<li><p>在整个过程中，生产环境处于一个新老更替的中间状态，如果有问题要回滚就有点麻烦了。</p>
+</li>
+<li><p>如果在升级过程中，需要做别的一些运维工作，我们还要判断哪些结点是老版本的，哪些结点是新版本的。这太痛苦了。</p>
+</li>
+<li><p>因为新老版本的代码同时在线，所以其依赖的服务需要同时处理两个版本的请求，这可能会带来兼容性问题。</p>
+</li>
+<li><p>无法让流量在新老版本中切换。</p>
+</li>
+</ul>
+<h3 id="灰度部署（金丝雀）"><a href="#灰度部署（金丝雀）" class="headerlink" title="灰度部署（金丝雀）"></a>灰度部署（金丝雀）</h3><p>灰度部署又叫金丝雀部署。其得名来源于矿井中的金丝雀 –17 世纪，英国矿井工人发现，金丝雀对瓦斯这种气体十分敏感。空气中哪怕有极其微量的瓦斯，<br>金丝雀也会停止歌唱。而当瓦斯含量超过一定限度时，虽然鲁钝的人类毫无察觉，金丝雀却早已毒发身亡。</p>
+<p>当时在采矿设备相对简陋的条件下，工人们每次下井都会带上一只金丝雀作为 “ 瓦斯检测指标 “，以便在危险状况下紧急撤离。</p>
+<p>灰度部署是指逐渐将生产环境流量从老版本切换到新版本。通常流量是按比例分配的。例如90%的请求流向老版本，10%的流向新版本。然后没有发现问题，<br>就逐步扩大新版本上的流量，减少老版本上的流量。</p>
+<p>除了切流量外，对于多租户的平台，例如云计算平台，灰度部署也可以将一些新的版本先部署到一些用户上，如果没有问题，扩大部署，直到全部用户。<br>一般的策略是，从内部用户开始，然后是一般用户，最后是大客户。</p>
+<p><strong>这个技术大多数用于缺少足够测试，或者缺少可靠测试，或者对新版本的稳定性缺乏信心的情况下。</strong></p>
+<p>把一部分用户切到新版上来，然后看一下有没有问题。如果没有问题就继续扩大升级，直到全部升级完成。</p>
+<h3 id="AB-测试"><a href="#AB-测试" class="headerlink" title="AB 测试"></a>AB 测试</h3><p>AB 测试和蓝绿部署或是金丝雀灰度部署完全是不一样的。</p>
+<p>AB 测试是同时上线两个版本，然后做相关的比较。是用来测试应用功能表现的方法，例如可用性、受欢迎程度、可见性等。</p>
+<p><strong>蓝绿部署是为了不停机，灰度部署是对新版本的质量没信心。而AB测试是对新版的功能没信心。注意，一个是质量，一个是功能。</strong></p>
+<p>AB 测试，其包含了灰度发布的功能。也就是说，我们的观测如果只是观测有没有 bug，那就是灰度发布了。当然，如果我们复杂一点，要观测用户的一些<br>数据指标，这完全也可能做成自动化的，如果新版本数据好，就自动化地切一点流量过来，如果不行，就换一批用户（样本）再试试。</p>
+<h4 id="实现AB测试方案"><a href="#实现AB测试方案" class="headerlink" title="实现AB测试方案"></a>实现AB测试方案</h4><ul>
+<li><p>浏览器 cookie</p>
+</li>
+<li><p>查询参数</p>
+</li>
+<li><p>地理位置</p>
+</li>
+<li><p>技术支持，如浏览器版本、屏幕尺寸、操作系统等</p>
+</li>
+<li><p>客户端语言</p>
+</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/11/Docker/Docker-Error/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -379,6 +757,370 @@
           
             <h3 id="on-network-bridge-failed-to-add-the-host-veth3240c96-lt-gt-sandbox-vethee48fd7-pair-interfaces-operation-not-supported"><a href="#on-network-bridge-failed-to-add-the-host-veth3240c96-lt-gt-sandbox-vethee48fd7-pair-interfaces-operation-not-supported" class="headerlink" title="on network bridge: failed to add the host (veth3240c96) &lt;=&gt; sandbox (vethee48fd7) pair interfaces: operation not supported"></a>on network bridge: failed to add the host (veth3240c96) &lt;=&gt; sandbox (vethee48fd7) pair interfaces: operation not supported</h3><p>更换系统内核版本，重启系统</p>
 <h3 id="com-docker-hyperkit-内存和CPU占用过高"><a href="#com-docker-hyperkit-内存和CPU占用过高" class="headerlink" title="com.docker.hyperkit 内存和CPU占用过高"></a>com.docker.hyperkit 内存和CPU占用过高</h3>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/11/DB/MySQL/Optimize/Optimize-MySQL/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/05/11/DB/MySQL/Optimize/Optimize-MySQL/" itemprop="url">MySQL Optimize</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-11T12:08:13+08:00">
+                2018-05-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
+                    <span itemprop="name">Optimize</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="InnoDB-缓存相关优化"><a href="#InnoDB-缓存相关优化" class="headerlink" title="InnoDB 缓存相关优化"></a>InnoDB 缓存相关优化</h3><h4 id="innodb-buffer-pool-size"><a href="#innodb-buffer-pool-size" class="headerlink" title="innodb_buffer_pool_size"></a>innodb_buffer_pool_size</h4><p>InnoDB存储引擎的缓存机制和MyISAM的最大区别就在于：InnoDB不仅仅缓存索引，同时还会缓存实际的数据。所以InnoDB 存储引擎可以使用更多的内存来缓存数据库的相关信息。</p>
+<p>innodb_buffer_pool_size 参数用来设置InnoDB最主要的Buffer（InnoDB Buffer Pool）的大小，缓存用户表及索引数据的最主要缓存空间，对InnoDB 整体性能影响也最大。</p>
+<p>InnoDB 的 Buffer Pool 简单设置为整个系统物理内存的 50%~80%之间，具体设置多大要根据实际环境技术。</p>
+<p>比如，例如一台单独 MySQL 主机，物理内存 8G，MySQL最大连接数为 500，同时还是用了MyISAM存储引擎。内存整体分析：</p>
+<ul>
+<li><p>系统使用，假设预留800MB</p>
+</li>
+<li><p>线程独享：最大约为2GB = 500 * （1MB + 1MB + 1MB + 512KB + 512KB），其中sort_buffer_size：1MB；join_buffer_size:1MB；read_buffer_size：1MB；read_rnd_buffer_size：512KB；thread_statck：512KB</p>
+</li>
+<li><p>MyISAM Key Cache：假设大概 1.5GB</p>
+</li>
+<li><p>InnoDB Buffer Pool：最大可用是8GB - 800MB - 2GB - 1.5GB = 3.7 GB</p>
+</li>
+</ul>
+<p>查看MySQL实际使用情况</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'innodb_buffer_pool_%'</span>;</span><br></pre></td></tr></table></figure>
+<p>输出结果</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Innodb_buffer_pool_dump_status	Dumping of buffer pool not started</span><br><span class="line">Innodb_buffer_pool_load_status	Buffer pool(s) load completed at 180515 12:12:29</span><br><span class="line">Innodb_buffer_pool_resize_status	</span><br><span class="line">Innodb_buffer_pool_pages_data	1226754</span><br><span class="line">Innodb_buffer_pool_bytes_data	20099137536</span><br><span class="line">Innodb_buffer_pool_pages_dirty	34470</span><br><span class="line">Innodb_buffer_pool_bytes_dirty	564756480</span><br><span class="line">Innodb_buffer_pool_pages_flushed	86235350</span><br><span class="line">Innodb_buffer_pool_pages_free	16383</span><br><span class="line">Innodb_buffer_pool_pages_misc	2046</span><br><span class="line">Innodb_buffer_pool_pages_total	1245183</span><br><span class="line">Innodb_buffer_pool_read_ahead_rnd	0</span><br><span class="line">Innodb_buffer_pool_read_ahead	1428253</span><br><span class="line">Innodb_buffer_pool_read_ahead_evicted	0</span><br><span class="line">Innodb_buffer_pool_read_requests	8912846406</span><br><span class="line">Innodb_buffer_pool_reads	98002</span><br><span class="line">Innodb_buffer_pool_wait_free	0</span><br><span class="line">Innodb_buffer_pool_write_requests	1368490569</span><br></pre></td></tr></table></figure>
+<p>pages有1245183，其中free是16383，pages_data是1226754</p>
+<p>read_requests是8912846406，物理磁盘请求pool_reads是98002，命中率=(8912846406-98002)/8912846406=0.99998900441054</p>
+<hr>
+<h4 id="innodb-log-buffer-size"><a href="#innodb-log-buffer-size" class="headerlink" title="innodb_log_buffer_size"></a>innodb_log_buffer_size</h4><p>系统默认 1MB。 Log Buffer 的主要作用就是 缓冲 Log 数据，提高写 Log 的 IO 性能。一般来说，如果系统不是写负载非常高而且以大事务居多的话，8MB 以内大小足够。</p>
+<p>查看MySQL实际使用情况：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'innodb_log_%'</span>;</span><br></pre></td></tr></table></figure>
+<p>输出结果</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Innodb_log_waits	0</span><br><span class="line">Innodb_log_write_requests	238931308</span><br><span class="line">Innodb_log_writes	64915618</span><br></pre></td></tr></table></figure>
+<hr>
+<h4 id="事务与-IO-的关系及优化"><a href="#事务与-IO-的关系及优化" class="headerlink" title="事务与 IO 的关系及优化"></a>事务与 IO 的关系及优化</h4><p>InnoDB 修改数据操作，实际上修改的是Buffer Pool中的数据，并不是一个事务提交后就将Buffer Pool中被修改的数据同步到磁盘上，而是通过记录到事务日志中，在连续写入磁盘。</p>
+<p>控制 InnoDB 事务日志刷新方式参数：innodb_flush_log_at_trx_commit</p>
+<ul>
+<li><p>innodb_flush_log_at_trx_commit = 0，InnoDB 中的 Log Thread 每隔1秒将log buffer中的数据写入文件，同时还会通知文件系统进行与文件同步的 flush操作，保证数据确实已经写入磁盘。</p>
+</li>
+<li><p>innodb_flush_log_at_trx_commit = 1，InnoDB 默认设置。每次事务的结束都会出发 Log Thread将Log Buffer中的数据写入文件、并通知文件系统同步文件。这个设置最安全，能够保证不论是 MySQL 崩溃、OS崩溃还是主机断电都不会丢失任何已经提交的数据。</p>
+</li>
+<li><p>innodb_flush_log_at_trx_commit = 2，每次事务结束的时候将数据写入事务日志，仅仅是调用了文件系统的文件写入操作。而文件系统都是有缓存机制的，所以 Log Thread 的写入并不能保证内容已经写入到物理磁盘完成持久化的动作。文件系统什么时候会将缓存中的数据同步到物理磁盘、文件，Log Thread 就完全不知道，所以，当设置2的时候，MySQL崩溃并不会造成数据的丢失，但是OS崩溃或主机断电后可能丢失的数据量就完全控制在文件上了。</p>
+</li>
+</ul>
+<h5 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h5><p><a href="https://yq.aliyun.com/articles/225749" target="_blank" rel="noopener">https://yq.aliyun.com/articles/225749</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/11/DB/MySQL/Sharding/Sharding-Migration/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/05/11/DB/MySQL/Sharding/Sharding-Migration/" itemprop="url">MySQL 分库分表迁移方案</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-11T12:08:13+08:00">
+                2018-05-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/Sharding/" itemprop="url" rel="index">
+                    <span itemprop="name">Sharding</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            
           
         
       
@@ -917,370 +1659,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/11/DB/MySQL/Sharding/Sharding-Migration/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/11/DB/MySQL/Sharding/Sharding-Migration/" itemprop="url">MySQL 分库分表迁移方案</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-11T12:08:13+08:00">
-                2018-05-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Sharding/" itemprop="url" rel="index">
-                    <span itemprop="name">Sharding</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/11/DB/MySQL/Optimize/Optimize-MySQL/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/11/DB/MySQL/Optimize/Optimize-MySQL/" itemprop="url">MySQL Optimize</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-11T12:08:13+08:00">
-                2018-05-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/Optimize/" itemprop="url" rel="index">
-                    <span itemprop="name">Optimize</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="InnoDB-缓存相关优化"><a href="#InnoDB-缓存相关优化" class="headerlink" title="InnoDB 缓存相关优化"></a>InnoDB 缓存相关优化</h3><h4 id="innodb-buffer-pool-size"><a href="#innodb-buffer-pool-size" class="headerlink" title="innodb_buffer_pool_size"></a>innodb_buffer_pool_size</h4><p>InnoDB存储引擎的缓存机制和MyISAM的最大区别就在于：InnoDB不仅仅缓存索引，同时还会缓存实际的数据。所以InnoDB 存储引擎可以使用更多的内存来缓存数据库的相关信息。</p>
-<p>innodb_buffer_pool_size 参数用来设置InnoDB最主要的Buffer（InnoDB Buffer Pool）的大小，缓存用户表及索引数据的最主要缓存空间，对InnoDB 整体性能影响也最大。</p>
-<p>InnoDB 的 Buffer Pool 简单设置为整个系统物理内存的 50%~80%之间，具体设置多大要根据实际环境技术。</p>
-<p>比如，例如一台单独 MySQL 主机，物理内存 8G，MySQL最大连接数为 500，同时还是用了MyISAM存储引擎。内存整体分析：</p>
-<ul>
-<li><p>系统使用，假设预留800MB</p>
-</li>
-<li><p>线程独享：最大约为2GB = 500 * （1MB + 1MB + 1MB + 512KB + 512KB），其中sort_buffer_size：1MB；join_buffer_size:1MB；read_buffer_size：1MB；read_rnd_buffer_size：512KB；thread_statck：512KB</p>
-</li>
-<li><p>MyISAM Key Cache：假设大概 1.5GB</p>
-</li>
-<li><p>InnoDB Buffer Pool：最大可用是8GB - 800MB - 2GB - 1.5GB = 3.7 GB</p>
-</li>
-</ul>
-<p>查看MySQL实际使用情况</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'innodb_buffer_pool_%'</span>;</span><br></pre></td></tr></table></figure>
-<p>输出结果</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Innodb_buffer_pool_dump_status	Dumping of buffer pool not started</span><br><span class="line">Innodb_buffer_pool_load_status	Buffer pool(s) load completed at 180515 12:12:29</span><br><span class="line">Innodb_buffer_pool_resize_status	</span><br><span class="line">Innodb_buffer_pool_pages_data	1226754</span><br><span class="line">Innodb_buffer_pool_bytes_data	20099137536</span><br><span class="line">Innodb_buffer_pool_pages_dirty	34470</span><br><span class="line">Innodb_buffer_pool_bytes_dirty	564756480</span><br><span class="line">Innodb_buffer_pool_pages_flushed	86235350</span><br><span class="line">Innodb_buffer_pool_pages_free	16383</span><br><span class="line">Innodb_buffer_pool_pages_misc	2046</span><br><span class="line">Innodb_buffer_pool_pages_total	1245183</span><br><span class="line">Innodb_buffer_pool_read_ahead_rnd	0</span><br><span class="line">Innodb_buffer_pool_read_ahead	1428253</span><br><span class="line">Innodb_buffer_pool_read_ahead_evicted	0</span><br><span class="line">Innodb_buffer_pool_read_requests	8912846406</span><br><span class="line">Innodb_buffer_pool_reads	98002</span><br><span class="line">Innodb_buffer_pool_wait_free	0</span><br><span class="line">Innodb_buffer_pool_write_requests	1368490569</span><br></pre></td></tr></table></figure>
-<p>pages有1245183，其中free是16383，pages_data是1226754</p>
-<p>read_requests是8912846406，物理磁盘请求pool_reads是98002，命中率=(8912846406-98002)/8912846406=0.99998900441054</p>
-<hr>
-<h4 id="innodb-log-buffer-size"><a href="#innodb-log-buffer-size" class="headerlink" title="innodb_log_buffer_size"></a>innodb_log_buffer_size</h4><p>系统默认 1MB。 Log Buffer 的主要作用就是 缓冲 Log 数据，提高写 Log 的 IO 性能。一般来说，如果系统不是写负载非常高而且以大事务居多的话，8MB 以内大小足够。</p>
-<p>查看MySQL实际使用情况：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'innodb_log_%'</span>;</span><br></pre></td></tr></table></figure>
-<p>输出结果</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Innodb_log_waits	0</span><br><span class="line">Innodb_log_write_requests	238931308</span><br><span class="line">Innodb_log_writes	64915618</span><br></pre></td></tr></table></figure>
-<hr>
-<h4 id="事务与-IO-的关系及优化"><a href="#事务与-IO-的关系及优化" class="headerlink" title="事务与 IO 的关系及优化"></a>事务与 IO 的关系及优化</h4><p>InnoDB 修改数据操作，实际上修改的是Buffer Pool中的数据，并不是一个事务提交后就将Buffer Pool中被修改的数据同步到磁盘上，而是通过记录到事务日志中，在连续写入磁盘。</p>
-<p>控制 InnoDB 事务日志刷新方式参数：innodb_flush_log_at_trx_commit</p>
-<ul>
-<li><p>innodb_flush_log_at_trx_commit = 0，InnoDB 中的 Log Thread 每隔1秒将log buffer中的数据写入文件，同时还会通知文件系统进行与文件同步的 flush操作，保证数据确实已经写入磁盘。</p>
-</li>
-<li><p>innodb_flush_log_at_trx_commit = 1，InnoDB 默认设置。每次事务的结束都会出发 Log Thread将Log Buffer中的数据写入文件、并通知文件系统同步文件。这个设置最安全，能够保证不论是 MySQL 崩溃、OS崩溃还是主机断电都不会丢失任何已经提交的数据。</p>
-</li>
-<li><p>innodb_flush_log_at_trx_commit = 2，每次事务结束的时候将数据写入事务日志，仅仅是调用了文件系统的文件写入操作。而文件系统都是有缓存机制的，所以 Log Thread 的写入并不能保证内容已经写入到物理磁盘完成持久化的动作。文件系统什么时候会将缓存中的数据同步到物理磁盘、文件，Log Thread 就完全不知道，所以，当设置2的时候，MySQL崩溃并不会造成数据的丢失，但是OS崩溃或主机断电后可能丢失的数据量就完全控制在文件上了。</p>
-</li>
-</ul>
-<h5 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h5><p><a href="https://yq.aliyun.com/articles/225749" target="_blank" rel="noopener">https://yq.aliyun.com/articles/225749</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/10/Java/Interview-keyword/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1580,232 +1958,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/09/DB/MySQL/High-Availability/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/09/DB/MySQL/High-Availability/" itemprop="url">MySQL High Availability</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-09T09:55:07+08:00">
-                2018-05-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="主从或主主半同步复制"><a href="#主从或主主半同步复制" class="headerlink" title="主从或主主半同步复制"></a>主从或主主半同步复制</h3><h3 id="半同步复制优化"><a href="#半同步复制优化" class="headerlink" title="半同步复制优化"></a>半同步复制优化</h3><hr>
-<h3 id="MGR"><a href="#MGR" class="headerlink" title="MGR"></a>MGR</h3><h4 id="Group-Replication全同步复制"><a href="#Group-Replication全同步复制" class="headerlink" title="Group Replication全同步复制"></a>Group Replication全同步复制</h4><p>相对于MySQL源生复制和semi-sync半同步复制的差异</p>
-<ol>
-<li><p>全同步复制，主备无延迟，一个节点宕机后其他两个节点可以立即提供服务，而semi-sync需要应用（执行）完所有relay log，并依赖第三方高可用软件实现数据不丢失；</p>
-</li>
-<li><p>事务冲突检测保证数据一致性，多个节点可以同时读写数据，可以极大简化数据访问；</p>
-</li>
-<li><p>行级别并行复制，MySQL 5.7/MariaDB 10.0之前slave sql线程只有一个，这个长期饱受诟病，是导致slave落后master的主要原因。</p>
-</li>
-</ol>
-<p>参考链接：<a href="https://blog.csdn.net/poxiaonie/article/details/73505948" target="_blank" rel="noopener">https://blog.csdn.net/poxiaonie/article/details/73505948</a></p>
-<h4 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h4><ol>
-<li><p>真正的多主架构，任何节点都可以进行读写，无需进行读写分离；（注：生产环境建议只在一台机器上写，由于集群是乐观锁并发控制，事务冲突的情况会在commit阶段发生。如果有两个事务在集群中不同的节点上对同一行写入并提交，失败的节点将回滚，客户端返回报错，作为DBA你不想被一群开发投诉的话，还是默默的开启Single-Primary写入模式）</p>
-</li>
-<li><p>MGR使用的Paxos协议，性能更好，即使MGR集群节点数再多，性能也能平稳。解决了Gelera实际只能用三个节点，网络抖动造成的性能和稳定性问题；</p>
-</li>
-<li><p>支持多个操作系统平台，而Galera仅支持Linux系统</p>
-</li>
-<li><p>无集中管理，可以在任何时间点失去任何一个节点，集群将正常工作不受影响；</p>
-</li>
-<li><p>节点宕机不会导致数据丢失；对应用透明。</p>
-</li>
-</ol>
-<h4 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h4><ol>
-<li>加入新节点，开销大，需要复制完整的数据。</li>
-<li>不能有效的解决写扩展问题，磁盘空间满了，无法自动扩容，不能像MongoDB分片那样自动移动chunk做balance</li>
-<li>有多少个节点就有多少份重复的数据</li>
-<li>由于事务提交需要跨节点通讯（分布式事务），写入会比主从复制慢</li>
-<li>对网络要求非常高，如果网络出现波动或机房被ARP攻击，造成两个节点失联，Group Replication集群发生脑裂，服务将不可用。</li>
-<li>集群自身不提供VIP机制，也没有像MongoDB副本集那样提供JAVA/PHP客户端API接口实现故障切换（需要开发自己写，成本较高），需要结合第三方HaProxy软件（建议2块网卡做bond0）+自定义脚本实现秒级故障切换，另通过代理方式，性能会降低，因为多了一层网络转发。</li>
-</ol>
-<h4 id="限制"><a href="#限制" class="headerlink" title="限制"></a>限制</h4><ol>
-<li>仅支持InnoDB表，并且每张表一定要有一个主键，用于做write set的冲突检测；</li>
-<li>必须打开GTID特性，二进制日志格式必须设置为ROW，用于选主与write set</li>
-<li>COMMIT可能会导致失败，类似于快照事务隔离级别的失败场景</li>
-<li>目前一个MGR集群最多支持9个节点</li>
-<li>不支持外键于save point特性，无法做全局间的约束检测与部分部分回滚</li>
-<li>二进制日志不支持binlog event checksum</li>
-<li>只支持ipv4网络</li>
-<li>不支持Savepoints，不支持SERIALIZABLE隔离级别在Multi-Primary多主模式，不支持外键在Multi-Primary多主模式</li>
-<li>整个集群的写入吞吐量是由最弱的节点限制，如果有一个节点变得缓慢，比如硬盘故障（RAID10坏了一块盘），那么整个集群将是缓慢的。为了稳定的高性能要求，所有的节点应使用统一的硬件。</li>
-</ol>
-<h4 id="Group-Replication的特性和注意事项"><a href="#Group-Replication的特性和注意事项" class="headerlink" title="Group Replication的特性和注意事项"></a>Group Replication的特性和注意事项</h4><ol>
-<li>全同步复制，事务要么在所有节点都提交，要么都回滚；</li>
-<li>多主复制，可以在任意节点进行写操作；</li>
-<li>在从服务器上并行应用事件，真正意义上的并行复制；</li>
-<li>节点自动配置–故障节点自动从集群中移除，当故障节点再次加入集群，无需手工备份当前数据库并拷贝至故障节点；</li>
-<li>应用程序的兼容性：无需更改应用程序，原生的MySQL接口；</li>
-<li>生产环境上集群推荐配置3个节点； 每个节点都包含完整的数据副本；</li>
-<li>各个节点的同步复制，通过GTID binlog ROW实现。</li>
-</ol>
-<hr>
-<h3 id="Keepalived-Heartbeat"><a href="#Keepalived-Heartbeat" class="headerlink" title="Keepalived/Heartbeat"></a>Keepalived/Heartbeat</h3><hr>
-<h3 id="MHA"><a href="#MHA" class="headerlink" title="MHA"></a>MHA</h3><p>MHA Manager会定时探测集群中的master节点，当master出现故障时，它可以自动将最新数据的slave提升为新的master，然后将所有其他的slave重新指向新的master，整个故障转移过程对应用程序完全透明。</p>
-<p>MHA Node运行在每台MySQL服务器上，主要作用是切换时处理二进制日志，确保切换尽量少丢数据。</p>
-<hr>
-<h3 id="共享存储"><a href="#共享存储" class="headerlink" title="共享存储"></a>共享存储</h3><hr>
-<h3 id="DRBD磁盘复制"><a href="#DRBD磁盘复制" class="headerlink" title="DRBD磁盘复制"></a>DRBD磁盘复制</h3><p>DRBD是一种基于软件、基于网络的块复制存储解决方案，主要用于对服务器之间的磁盘、分区、逻辑卷等进行数据镜像，当用户将数据写入本地磁盘时，还会将数据发送到网络中另一台主机的磁盘上，这样的本地主机(主节点)与远程主机(备节点)的数据就可以保证实时同步。</p>
-<h4 id="优点-1"><a href="#优点-1" class="headerlink" title="优点"></a>优点</h4><ol>
-<li>两节点即可，部署简单，切换逻辑简单；</li>
-<li>相比于SAN储存网络，价格低廉；</li>
-<li>保证数据的强一致性；</li>
-</ol>
-<h4 id="缺点-1"><a href="#缺点-1" class="headerlink" title="缺点"></a>缺点</h4><ol>
-<li>对io性能影响较大；</li>
-<li>从库不提供读操作；</li>
-</ol>
-<hr>
-<h3 id="Galera"><a href="#Galera" class="headerlink" title="Galera"></a>Galera</h3><hr>
-<h3 id="POAXS"><a href="#POAXS" class="headerlink" title="POAXS"></a>POAXS</h3><hr>
-<h3 id="Percona-XtraDB-Cluster"><a href="#Percona-XtraDB-Cluster" class="headerlink" title="Percona XtraDB Cluster"></a>Percona XtraDB Cluster</h3><hr>
-<h3 id="MariaDB-Galera-Cluster"><a href="#MariaDB-Galera-Cluster" class="headerlink" title="MariaDB Galera Cluster"></a>MariaDB Galera Cluster</h3><h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://zhuanlan.zhihu.com/p/25960208" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/25960208</a></p>
-<p><a href="https://blog.csdn.net/wulantian/article/details/72652005" target="_blank" rel="noopener">https://blog.csdn.net/wulantian/article/details/72652005</a></p>
-<p><a href="http://database.51cto.com/art/201801/563545.htm" target="_blank" rel="noopener">http://database.51cto.com/art/201801/563545.htm</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/09/DB/MySQL/DataType/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1965,170 +2117,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/05/07/Linux/Command/at/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/07/Linux/Command/at/" itemprop="url">At</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-07T12:30:23+08:00">
-                2018-05-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="At"><a href="#At" class="headerlink" title="At"></a>At</h3><p>at 命令的运行方式是在后面紧跟着你想要运行任务的运行时间。</p>
-<p>时间格式</p>
-<ul>
-<li>Minute    at now + 5 minutes   任务在5分钟后运行</li>
-<li>Hour      at now + 1 hour      任务在1小时后运行</li>
-<li>Days      at now + 3 days      任务在3天后运行</li>
-<li>Weeks     at now + 2 weeks     任务在两周后运行</li>
-<li>Fixed     at midnight          任务在午夜运行</li>
-<li>Fixed     at 10:30pm           任务在晚上10点30分</li>
-<li>Fixed     at 23:59 12/31/2018　　 任务在2018年12月31号23点59分　</li>
-</ul>
-<p>Manjaro需要安装at命令，然后启动atd服务<br><code>`</code></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2180,7 +2168,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">595</span>
+                <span class="site-state-item-count">597</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2191,7 +2179,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">251</span>
+                <span class="site-state-item-count">252</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2202,7 +2190,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">648</span>
+                <span class="site-state-item-count">651</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
