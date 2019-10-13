@@ -101,18 +101,18 @@
 
 
 
-<meta name="description" content="Reference [Configure inputs]https://www.elastic.co/guide/en/beats/filebeat/6.4/configuration-filebeat-options.html">
+<meta name="description" content="IntroductionLog rotation通俗的说，log rotation 是指当日志文件达到指定大小后，把随后的日志写到新的日志文件中，原来的日志文件重命名，加上日志的起止时间，以实现日志归档的目的。 Filebeat 默认支持 log rotation，但需要注意的是，Filebeat 不支持使用 NAS 或挂载磁盘保存日志的情况。因为在 Linux 系列的操作系统中，Filebeat">
 <meta name="keywords" content="Configuration,ELK,Filebeats">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ELK Filebeats Configuration">
 <meta property="og:url" content="https://sulangsss.github.io/2019/08/29/ELK/Filebeats/Filebeats-Prospectors/index.html">
 <meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
-<meta property="og:description" content="Reference [Configure inputs]https://www.elastic.co/guide/en/beats/filebeat/6.4/configuration-filebeat-options.html">
+<meta property="og:description" content="IntroductionLog rotation通俗的说，log rotation 是指当日志文件达到指定大小后，把随后的日志写到新的日志文件中，原来的日志文件重命名，加上日志的起止时间，以实现日志归档的目的。 Filebeat 默认支持 log rotation，但需要注意的是，Filebeat 不支持使用 NAS 或挂载磁盘保存日志的情况。因为在 Linux 系列的操作系统中，Filebeat">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-08-29T10:03:47.956Z">
+<meta property="og:updated_time" content="2019-10-12T10:52:41.034Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ELK Filebeats Configuration">
-<meta name="twitter:description" content="Reference [Configure inputs]https://www.elastic.co/guide/en/beats/filebeat/6.4/configuration-filebeat-options.html">
+<meta name="twitter:description" content="IntroductionLog rotation通俗的说，log rotation 是指当日志文件达到指定大小后，把随后的日志写到新的日志文件中，原来的日志文件重命名，加上日志的起止时间，以实现日志归档的目的。 Filebeat 默认支持 log rotation，但需要注意的是，Filebeat 不支持使用 NAS 或挂载磁盘保存日志的情况。因为在 Linux 系列的操作系统中，Filebeat">
 
 
 
@@ -388,8 +388,19 @@
       
 
       
-        <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li>[Configure inputs]<a href="https://www.elastic.co/guide/en/beats/filebeat/6.4/configuration-filebeat-options.html" target="_blank" rel="noopener">https://www.elastic.co/guide/en/beats/filebeat/6.4/configuration-filebeat-options.html</a></li>
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="Log-rotation"><a href="#Log-rotation" class="headerlink" title="Log rotation"></a>Log rotation</h4><p>通俗的说，log rotation 是指当日志文件达到指定大小后，把随后的日志写到新的日志文件中，原来的日志文件重命名，加上日志的起止时间，以实现日志归档的目的。</p>
+<p>Filebeat 默认支持 log rotation，但需要注意的是，Filebeat 不支持使用 NAS 或挂载磁盘保存日志的情况。因为在 Linux 系列的操作系统中，Filebeat 使用文件的 inode 信息判断当前文件是新文件还是旧文件。如果是 NAS 或挂载盘，同一个文件的 inode 信息会变化，导致 Filebeat 无法完整读取 log。</p>
+<p>虽然 Filebeat 默认支持 log rotation，但是有三个参数的设置需要留意。</p>
+<ul>
+<li>registry_file：这个文件记录了当前打开的所有 log 文件，以及每个文件的 inode、当前读取位置等信息。当 Filebeat 拿到一个 log 文件，首先查找 registry_file，如果是旧文件，就从记录的当前读取位置处开始读取；如果是新文件，则从开始位置读取；</li>
+<li>close_older：如果某个日志文件经过 close_older 时间后没有修改操作，Filebeat 就关闭该文件的 handler。如果该值过长，则随着时间推移，Filebeat 打开的文件数量很多，耗费系统内存；</li>
+<li>scan_frequency：每隔 scan_frequency 时间读取一次文件内容。对于关闭的文件，如果后续有更新，则经过 scan_frequency 时间后，Filebeat 将重新打开该文件，读取新增加的内容。</li>
+</ul>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[Configure inputs] <a href="https://www.elastic.co/guide/en/beats/filebeat/6.4/configuration-filebeat-options.html" target="_blank" rel="noopener">https://www.elastic.co/guide/en/beats/filebeat/6.4/configuration-filebeat-options.html</a></li>
+<li>[ELK 架构和Filebeat 工作原理详解 - IBM] <a href="https://www.ibm.com/developerworks/cn/opensource/os-cn-elk-filebeat/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/opensource/os-cn-elk-filebeat/index.html</a></li>
+<li>[记filebeat内存泄漏问题分析及调优 ] <a href="https://elasticsearch.cn/article/6206" target="_blank" rel="noopener">https://elasticsearch.cn/article/6206</a></li>
 </ul>
 
       
@@ -425,8 +436,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/08/29/ELK/Logstash/Logstash-Configuration/" rel="next" title="ELK Logstash Configuration">
-                <i class="fa fa-chevron-left"></i> ELK Logstash Configuration
+              <a href="/2019/08/29/ELK/ES/ES-Configuration/" rel="next" title="ES Configurations">
+                <i class="fa fa-chevron-left"></i> ES Configurations
               </a>
             
           </div>
@@ -435,8 +446,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2019/09/07/Network/UDP/Message-too-long/" rel="prev" title="UDP - Message too long">
-                UDP - Message too long <i class="fa fa-chevron-right"></i>
+              <a href="/2019/08/29/ELK/Logstash/Logstash-Configuration/" rel="prev" title="ELK Logstash Configuration">
+                ELK Logstash Configuration <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -515,7 +526,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">597</span>
+                <span class="site-state-item-count">608</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -526,7 +537,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">252</span>
+                <span class="site-state-item-count">256</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -537,7 +548,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">651</span>
+                <span class="site-state-item-count">661</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -579,7 +590,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">1.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Log-rotation"><span class="nav-number">1.1.</span> <span class="nav-text">Log rotation</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">2.</span> <span class="nav-text">Reference</span></a></li></ol></div>
             
 
           </div>

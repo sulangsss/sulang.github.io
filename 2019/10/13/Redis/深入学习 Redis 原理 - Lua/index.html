@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Redis,Lua,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="IntroductionEVAL and EVALSHA are used to evaluate scripts using the Lua interpreter built into Redis starting from version 2.6.0. Related commands  EVAL EVALSHA  为什么要用Lua？  减少网络开销（批量执行命令）：不使用 Lua 的代码需">
+<meta name="keywords" content="Redis,Lua">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入学习 Redis 原理 - Lua">
+<meta property="og:url" content="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - Lua/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="IntroductionEVAL and EVALSHA are used to evaluate scripts using the Lua interpreter built into Redis starting from version 2.6.0. Related commands  EVAL EVALSHA  为什么要用Lua？  减少网络开销（批量执行命令）：不使用 Lua 的代码需">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-10-13T08:10:15.652Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入学习 Redis 原理 - Lua">
+<meta name="twitter:description" content="IntroductionEVAL and EVALSHA are used to evaluate scripts using the Lua interpreter built into Redis starting from version 2.6.0. Related commands  EVAL EVALSHA  为什么要用Lua？  减少网络开销（批量执行命令）：不使用 Lua 的代码需">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - Lua/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>深入学习 Redis 原理 - Lua | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - Lua/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">深入学习 Redis 原理 - Lua</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T09:36:06+08:00">
+                2019-10-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>EVAL and EVALSHA are used to evaluate scripts using the Lua interpreter built into Redis starting from version 2.6.0.</p>
+<p><strong>Related commands</strong></p>
+<ul>
+<li>EVAL</li>
+<li>EVALSHA</li>
+</ul>
+<p><strong>为什么要用Lua？</strong></p>
+<ol>
+<li>减少网络开销（批量执行命令）：不使用 Lua 的代码需要向 Redis 发送多次请求, 而脚本只需一次即可, 减少网络传输；</li>
+<li>原子操作：Redis 将整个脚本作为一个原子执行，无需担心并发，也就无需事务；</li>
+<li>复用：脚本会永久保存 Redis 中，其他客户端可继续使用。</li>
+</ol>
+<h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><h4 id="EVAL"><a href="#EVAL" class="headerlink" title="EVAL"></a>EVAL</h4><p>EVAL script numkeys key [key …] arg [arg …]</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">EVAL <span class="string">"return &#123;KEYS[1],KEYS[2],ARGV[1],ARGV[2]&#125;"</span> 2 key1 key2 first second</span><br><span class="line"></span><br><span class="line">1) <span class="string">"key1"</span></span><br><span class="line">2) <span class="string">"key2"</span></span><br><span class="line">3) <span class="string">"first"</span></span><br><span class="line">4) <span class="string">"second"</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">eval</span> <span class="string">"return redis.call('set', KEYS[1], ARGV[1])"</span> 1 username Jason</span><br><span class="line"></span><br><span class="line"><span class="comment"># execute script</span></span><br><span class="line"><span class="comment"># redis-cli --eval script.lua</span></span><br></pre></td></tr></table></figure>
+<h4 id="Evalsha"><a href="#Evalsha" class="headerlink" title="Evalsha"></a>Evalsha</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">script load <span class="string">"return 'hello world'"</span></span><br><span class="line"><span class="comment"># output "8df13960c2be12fec0947206c9e087cd68b2f1b9"</span></span><br><span class="line"></span><br><span class="line">evalsha <span class="string">"8df13960c2be12fec0947206c9e087cd68b2f1b9"</span> 0</span><br><span class="line"><span class="comment"># output "hello world"</span></span><br></pre></td></tr></table></figure>
+<h4 id="IP-Access-Limitation"><a href="#IP-Access-Limitation" class="headerlink" title="IP Access Limitation"></a>IP Access Limitation</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">local</span> access = redis.call(<span class="string">'incr'</span>, KEYS[1])</span><br><span class="line"><span class="keyword">if</span> tonumber(access) == 1 <span class="keyword">then</span></span><br><span class="line">    redis.call(<span class="string">'expire'</span>, KEYS[1], ARGV[1])</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> tonumber(access) &gt; tonumber(ARGV[2])</span><br><span class="line">    <span class="built_in">return</span> 0</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">return</span> 1</span><br><span class="line">end</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5秒访问10次</span></span><br><span class="line"><span class="comment"># redis-cli --eval "ip-limitation.lua" 192.168.1.1 , 5 10</span></span><br></pre></td></tr></table></figure>
+<h4 id="Endless-Loop"><a href="#Endless-Loop" class="headerlink" title="Endless Loop"></a>Endless Loop</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">eval</span> <span class="string">'while(true) do end'</span> 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 此时 Redis 完全阻塞，如果此时另一个客户端进行操作，则输出</span></span><br><span class="line"><span class="comment"># (error) BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.</span></span><br><span class="line"><span class="comment"># execute command SCRIPT KILL to stop execute script</span></span><br><span class="line"><span class="comment"># relatived configuration is lua-time-limit</span></span><br><span class="line"><span class="comment"># Redis提供了一个lua-time-limit参数，默认是5秒，它是Lua脚本的“超时时间”，但这个超时时间仅仅是当Lua脚本超过lua-time-limit后，向其他命令发送BUSY的信号，但是不会停止掉服务端和客户端的执行脚本。</span></span><br><span class="line">``` </span><br><span class="line"></span><br><span class="line">``` bash</span><br><span class="line"><span class="built_in">eval</span> <span class="string">"redis.call('set', 'username', 'jason') while(true) do end"</span> 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># execute command SCRIPT KILL to stop execute script</span></span><br><span class="line"><span class="comment"># (error) UNKILLABLE Sorry the script already executed write commands against the dataset. You can either wait the script termination or kill the server in a hard way using the SHUTDOWN NOSAVE command.</span></span><br><span class="line"><span class="comment"># 注意：如果当前Lua脚本已经执行过写操作，那么script kill将不会生效</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><h4 id="redis-call-与-redis-pcall-的区别"><a href="#redis-call-与-redis-pcall-的区别" class="headerlink" title="redis.call() 与 redis.pcall() 的区别"></a>redis.call() 与 redis.pcall() 的区别</h4><p>两者唯一区别在于它们对错误处理的不同：</p>
+<ol>
+<li><p>当 redis.call() 在执行命令的过程中发生错误时，脚本会停止执行，并返回一个脚本错误，错误的输出信息会说明错误造成的原因：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">EVAL <span class="string">"return redis.call('SADD','evalShell','a')"</span> 0</span><br><span class="line">(error) ERR Error running script (call to f_e17faafbc130014cebb229b71e0148b1f8f52389): @user_script:1: WRONGTYPE Operation against a key holding the wrong kind of value</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>redis.pcall() 出错时并不引发(raise)错误，而是返回一个带 err 域的 Lua 表(table)，用于表示错误（这样与命令行客户端直接操作返回相同）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">EVAL <span class="string">"return redis.pcall('SADD','evalShell','a')"</span> 0</span><br><span class="line">(error) WRONGTYPE Operation against a key holding the wrong kind of value</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="Redis-是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？"><a href="#Redis-是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？" class="headerlink" title="Redis 是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？"></a>Redis 是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？</h4><hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li><a href="https://www.cnblogs.com/barrywxx/p/8563284.html" target="_blank" rel="noopener">https://www.cnblogs.com/barrywxx/p/8563284.html</a></li>
+<li><a href="https://www.cnblogs.com/huangxincheng/p/6230129.html" target="_blank" rel="noopener">https://www.cnblogs.com/huangxincheng/p/6230129.html</a></li>
+<li>[实例Jedis常见异常汇总] <a href="https://help.aliyun.com/knowledge_detail/71967.html#section-nx4-7r8-82y" target="_blank" rel="noopener">https://help.aliyun.com/knowledge_detail/71967.html#section-nx4-7r8-82y</a></li>
+<li>[Redis与Lua] <a href="https://www.cnblogs.com/yangmingxianshen/p/8100250.html" target="_blank" rel="noopener">https://www.cnblogs.com/yangmingxianshen/p/8100250.html</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Redis/" rel="tag"># Redis</a>
+          
+            <a href="/tags/Lua/" rel="tag"># Lua</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/13/Redis/深入学习 Redis 原理 - 持久化/" rel="next" title="深入学习 Redis 原理 - 持久化">
+                <i class="fa fa-chevron-left"></i> 深入学习 Redis 原理 - 持久化
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/10/13/Redis/深入学习 Redis 原理 - 数据类型/" rel="prev" title="深入学习 Redis 原理 - 数据类型">
+                深入学习 Redis 原理 - 数据类型 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">608</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">256</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">661</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Practice"><span class="nav-number">2.</span> <span class="nav-text">Practice</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#EVAL"><span class="nav-number">2.1.</span> <span class="nav-text">EVAL</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Evalsha"><span class="nav-number">2.2.</span> <span class="nav-text">Evalsha</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IP-Access-Limitation"><span class="nav-number">2.3.</span> <span class="nav-text">IP Access Limitation</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Endless-Loop"><span class="nav-number">2.4.</span> <span class="nav-text">Endless Loop</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Attention"><span class="nav-number">3.</span> <span class="nav-text">Attention</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#redis-call-与-redis-pcall-的区别"><span class="nav-number">3.1.</span> <span class="nav-text">redis.call() 与 redis.pcall() 的区别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Redis-是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？"><span class="nav-number">3.2.</span> <span class="nav-text">Redis 是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

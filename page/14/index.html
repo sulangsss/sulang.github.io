@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/18/Linux/Generate-RSA-Key/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/22/Java/JVM/Basic/Minor GC vs Major GC vs Full GC/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/12/18/Linux/Generate-RSA-Key/" itemprop="url">Linux Generate RSA Key</a></h2>
+                <a class="post-title-link" href="/2018/12/22/Java/JVM/Basic/Minor GC vs Major GC vs Full GC/" itemprop="url">JVM Minor GC vs Major GC vs Full GC</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-18T11:49:06+08:00">
-                2018-12-18
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-22T16:00:22+08:00">
+                2018-12-22
               </time>
             
 
@@ -338,8 +338,30 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
                   </a>
                 </span>
 
@@ -377,8 +399,89 @@
       
         
           
-            <h3 id="SSH-Key"><a href="#SSH-Key" class="headerlink" title="SSH-Key"></a>SSH-Key</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -b 2048 -t rsa -f id_rsa -P <span class="string">""</span></span><br></pre></td></tr></table></figure>
-<h3 id="OpenSSL"><a href="#OpenSSL" class="headerlink" title="OpenSSL"></a>OpenSSL</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Private Key</span></span><br><span class="line">openssl genrsa -out private.pem 2048</span><br><span class="line"><span class="comment"># Convert Private Key to PKCS8</span></span><br><span class="line">openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -<span class="keyword">in</span> private.pem -out private.key</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># Public Key</span></span><br><span class="line">openssl rsa -<span class="keyword">in</span> private.key -outform PEM -pubout -out public.pem</span><br></pre></td></tr></table></figure>
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>The post expects the reader to be familiar with generic garbage collection principles built into the JVM. Division of Heap into Eden, Survivor and Tenured/Old spaces, generational hypothesis(假设) and different GC algorithms are beyond the scope of this post.</p>
+<img src="/2018/12/22/Java/JVM/Basic/Minor%20GC%20vs%20Major%20GC%20vs%20Full%20GC/jvm-generational.jpg">
+<hr>
+<h3 id="Difference"><a href="#Difference" class="headerlink" title="Difference"></a>Difference</h3><hr>
+<h3 id="Minor-GC"><a href="#Minor-GC" class="headerlink" title="Minor GC"></a>Minor GC</h3><p>Collecting garbage from Young space (consisting of <strong>Eden</strong> and <strong>Survivor</strong> spaces) is called a Minor GC. </p>
+<p>This definition is both clear(清晰的) and uniformly(统一的) understood. But there are still some interesting take-aways you should be aware of when dealing with Minor Garbage Collection events:</p>
+<ul>
+<li><p>Minor GC is always triggered when JVM is unable to allocate space for a new Object, e.g. the Eden is getting full. So the higher the allocation rate, the more frequently Minor GC is executed.</p>
+</li>
+<li><p>Whenever the pool is filled, its entire content is copied and the pointer can start tracking the free memory from zero again. So instead of(而不是…) classical(传统的) Mark, Sweep and Compact, cleaning Eden and Survivor spaces is carried out with Mark and Copy instead. So, no fragmentation(内存碎片) actually takes place inside Eden or Survivor spaces. The write pointer is always residing on the top of the used pool.</p>
+</li>
+<li><p>During a Minor GC event, Tenured generation is effectively ignored. References from tenured generation to young generation are considered de facto GC roots. References from young generation to Tenured generation are simply ignored during the markup phase.</p>
+</li>
+<li><p>Against common belief, <strong>all Minor GCs do trigger stop-the-world pauses, stopping the application threads</strong>. For most of the applications, the length of the pauses is negligible(微不足道的) latency-wise. This is true if most of the objects in Eden can be considered garbage and are never copied to Survivor/Old spaces. If the opposite is true and most of the newborn objects are not eligible for GC, Minor GC pauses start taking considerably more time.</p>
+</li>
+</ul>
+<blockquote>
+<p>Minor GC并不意味着不会STW，只是Minor GC会比Full GC开销小。</p>
+</blockquote>
+<hr>
+<h3 id="Major-GC-vs-Full-GC"><a href="#Major-GC-vs-Full-GC" class="headerlink" title="Major GC vs Full GC"></a>Major GC vs Full GC</h3><ul>
+<li>Major GC is cleaning the Tenured space.</li>
+<li>Full GC is cleaning the entire Heap – both Young and Tenured spaces.</li>
+</ul>
+<p>This leads us to the point where instead of worrying whether the GC is called Major or Full GC, you should focus to finding out whether the GC at hand stopped all the application threads or was it able to progress concurrently with the application threads.</p>
+<p>This confusion is even built right into the JVM standard tools. What I mean by that is best explained via an example. Lets compare the output of two different tools tracing the GC on a JVM running with <strong>Concurrent Mark</strong> and <strong>Sweep collector</strong> (-XX:+UseConcMarkSweepGC)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jstat -gc -t 4235 1s</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Time    S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC       MU    CCSC   CCSU     YGC     YGCT    FGC    FGCT     GCT   </span><br><span class="line"> 5.7 34048.0 34048.0  0.0   34048.0 272640.0 194699.7 1756416.0   181419.9  18304.0 17865.1 2688.0 2497.6      3    0.275   0      0.000    0.275</span><br><span class="line"> 6.7 34048.0 34048.0 34048.0  0.0   272640.0 247555.4 1756416.0   263447.9  18816.0 18123.3 2688.0 2523.1      4    0.359   0      0.000    0.359</span><br><span class="line"> 7.7 34048.0 34048.0  0.0   34048.0 272640.0 257729.3 1756416.0   345109.8  19072.0 18396.6 2688.0 2550.3      5    0.451   0      0.000    0.451</span><br><span class="line"> 8.7 34048.0 34048.0 34048.0 34048.0 272640.0 272640.0 1756416.0  444982.5  19456.0 18681.3 2816.0 2575.8      7    0.550   0      0.000    0.550</span><br><span class="line"> 9.7 34048.0 34048.0 34046.7  0.0   272640.0 16777.0  1756416.0   587906.3  20096.0 19235.1 2944.0 2631.8      8    0.720   0      0.000    0.720</span><br><span class="line">10.7 34048.0 34048.0  0.0   34046.2 272640.0 80171.6  1756416.0   664913.4  20352.0 19495.9 2944.0 2657.4      9    0.810   0      0.000    0.810</span><br><span class="line">11.7 34048.0 34048.0 34048.0  0.0   272640.0 129480.8 1756416.0   745100.2  20608.0 19704.5 2944.0 2678.4     10    0.896   0      0.000    0.896</span><br><span class="line">12.7 34048.0 34048.0  0.0   34046.6 272640.0 164070.7 1756416.0   822073.7  20992.0 19937.1 3072.0 2702.8     11    0.978   0      0.000    0.978</span><br><span class="line"><span class="comment"># Focus</span></span><br><span class="line">13.7 34048.0 34048.0 34048.0  0.0   272640.0 211949.9 1756416.0   897364.4  21248.0 20179.6 3072.0 2728.1     12    1.087   1      0.004    1.091</span><br><span class="line">14.7 34048.0 34048.0  0.0   34047.1 272640.0 245801.5 1756416.0   597362.6  21504.0 20390.6 3072.0 2750.3     13    1.183   2      0.050    1.233</span><br><span class="line"><span class="comment"># Focus</span></span><br><span class="line">15.7 34048.0 34048.0  0.0   34048.0 272640.0 21474.1  1756416.0   757347.0  22012.0 20792.0 3200.0 2791.0     15    1.336   2      0.050    1.386</span><br><span class="line">16.7 34048.0 34048.0 34047.0  0.0   272640.0 48378.0  1756416.0   838594.4  22268.0 21003.5 3200.0 2813.2     16    1.433   2      0.050    1.484</span><br></pre></td></tr></table></figure>
+<p>This snippet is extracted from the first 17 seconds after the JVM was launched. </p>
+<p>Based on this information we could conclude that after 12 Minor GC runs two Full GC runs were performed, spanning 50ms in total. You would get the same confirmation via GUI-based tools, such as the jconsole or jvisualvm.</p>
+<p>lets look at to the output of the garbage collection logs gathered from the same JVM launch. Apparently -XX:+PrintGCDetails tells us a different and more detailed story:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -XX:+PrintGCDetails -XX:+UseConcMarkSweepGC eu.plumbr.demo.GarbageProducer</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">3.157: [GC (Allocation Failure) 3.157: [ParNew: 272640K-&gt;34048K(306688K), 0.0844702 secs] 272640K-&gt;69574K(2063104K), 0.0845560 secs] [Times: user=0.23 sys=0.03, real=0.09 secs] </span><br><span class="line">4.092: [GC (Allocation Failure) 4.092: [ParNew: 306688K-&gt;34048K(306688K), 0.1013723 secs] 342214K-&gt;136584K(2063104K), 0.1014307 secs] [Times: user=0.25 sys=0.05, real=0.10 secs] </span><br><span class="line">... cut <span class="keyword">for</span> brevity ...</span><br><span class="line">11.292: [GC (Allocation Failure) 11.292: [ParNew: 306686K-&gt;34048K(306688K), 0.0857219 secs] 971599K-&gt;779148K(2063104K), 0.0857875 secs] [Times: user=0.26 sys=0.04, real=0.09 secs] </span><br><span class="line">12.140: [GC (Allocation Failure) 12.140: [ParNew: 306688K-&gt;34046K(306688K), 0.0821774 secs] 1051788K-&gt;856120K(2063104K), 0.0822400 secs] [Times: user=0.25 sys=0.03, real=0.08 secs] </span><br><span class="line">12.989: [GC (Allocation Failure) 12.989: [ParNew: 306686K-&gt;34048K(306688K), 0.1086667 secs] 1128760K-&gt;931412K(2063104K), 0.1087416 secs] [Times: user=0.24 sys=0.04, real=0.11 secs] </span><br><span class="line"><span class="comment"># Focus CMS Initial Mark 0.0041705 secs</span></span><br><span class="line">13.098: [GC (CMS Initial Mark) [1 CMS-initial-mark: 897364K(1756416K)] 936667K(2063104K), 0.0041705 secs] [Times: user=0.02 sys=0.00, real=0.00 secs] </span><br><span class="line">13.102: [CMS-concurrent-mark-start]</span><br><span class="line">13.341: [CMS-concurrent-mark: 0.238/0.238 secs] [Times: user=0.36 sys=0.01, real=0.24 secs] </span><br><span class="line">13.341: [CMS-concurrent-preclean-start]</span><br><span class="line">13.350: [CMS-concurrent-preclean: 0.009/0.009 secs] [Times: user=0.03 sys=0.00, real=0.01 secs] </span><br><span class="line">13.350: [CMS-concurrent-abortable-preclean-start]</span><br><span class="line">13.878: [GC (Allocation Failure) 13.878: [ParNew: 306688K-&gt;34047K(306688K), 0.0960456 secs] 1204052K-&gt;1010638K(2063104K), 0.0961542 secs] [Times: user=0.29 sys=0.04, real=0.09 secs] </span><br><span class="line">14.366: [CMS-concurrent-abortable-preclean: 0.917/1.016 secs] [Times: user=2.22 sys=0.07, real=1.01 secs] </span><br><span class="line"><span class="comment"># Focus CMS Final Remark 0.0462010 secs</span></span><br><span class="line">14.366: [GC (CMS Final Remark) [YG occupancy: 182593 K (306688 K)]14.366: [Rescan (parallel) , 0.0291598 secs]14.395: [weak refs processing, 0.0000232 secs]14.395: [class unloading, 0.0117661 secs]14.407: [scrub symbol table, 0.0015323 secs]14.409: [scrub string table, 0.0003221 secs][1 CMS-remark: 976591K(1756416K)] 1159184K(2063104K), 0.0462010 secs] [Times: user=0.14 sys=0.00, real=0.05 secs] </span><br><span class="line">14.412: [CMS-concurrent-sweep-start]</span><br><span class="line">14.633: [CMS-concurrent-sweep: 0.221/0.221 secs] [Times: user=0.37 sys=0.00, real=0.22 secs] </span><br><span class="line">14.633: [CMS-concurrent-reset-start]</span><br><span class="line">14.636: [CMS-concurrent-reset: 0.002/0.002 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]</span><br></pre></td></tr></table></figure>
+<p>Based on this information we can see that indeed after 12 Minor GC runs “something different” started happening. But instead two Full GC runs, this “different thing” was in reality just a single GC running in Tenured generation consisting of different phases:</p>
+<ul>
+<li>Initial Mark phase, spanning for 0.0041705 seconds or approximately 4ms. This phase is a stop-the-world event stopping all application threads for initial marking.</li>
+<li>Concurrenty executed Markup and Preclean phases. These are run concurrently with the application threads</li>
+<li>Final Remark phase, spanning for 0.0462010 seconds or approximately 46ms. This phase is again stop-the-world event.</li>
+<li>Concurrently executed Sweep operation. As the name states, this phase is also carried out concurrently without stopping the application threads.</li>
+</ul>
+<p>So what we see from the actual garbage collection logs is that – instead(而不是) two Full GC operations, just one Major GC cleaning Old space was actually executed.</p>
+<img src="/2018/12/22/Java/JVM/Basic/Minor%20GC%20vs%20Major%20GC%20vs%20Full%20GC/cms-gc-event.png">
+<h3 id="Pertaining-Terms"><a href="#Pertaining-Terms" class="headerlink" title="Pertaining Terms"></a>Pertaining Terms</h3><ul>
+<li>S0C：年轻代中第一个survivor（幸存区）的容量 (kb)</li>
+<li>S1C：年轻代中第二个survivor（幸存区）的容量 (kb)</li>
+<li>S0U：年轻代中第一个survivor（幸存区）目前已使用空间 (kb)</li>
+<li>S1U：年轻代中第二个survivor（幸存区）目前已使用空间 (kb)</li>
+<li>EC：年轻代中Eden（伊甸园）的容量 (kb)</li>
+<li>EU：年轻代中Eden（伊甸园）目前已使用空间 (kb)</li>
+<li>OC：Old代的容量 (kb)</li>
+<li>OU：Old代目前已使用空间 (kb)</li>
+<li>PC：Perm(持久代)的容量 (kb)</li>
+<li>PU：Perm(持久代)目前已使用空间 (kb)</li>
+<li><strong>YGC：从应用程序启动到采样时年轻代中gc次数</strong></li>
+<li><strong>YGCT：从应用程序启动到采样时年轻代中gc所用时间(s)</strong></li>
+<li><strong>FGC：从应用程序启动到采样时old代(全gc)gc次数</strong></li>
+<li><strong>FGCT：从应用程序启动到采样时old代(全gc)gc所用时间(s)</strong></li>
+<li><strong>GCT：从应用程序启动到采样时gc用的总时间(s)</strong></li>
+<li>NGCMN：年轻代(young)中初始化(最小)的大小 (kb)</li>
+<li>NGCMX：年轻代(young)的最大容量 (kb)</li>
+<li>NGC：年轻代(young)中当前的容量 (kb)</li>
+<li>OGCMN：old代中初始化(最小)的大小 (kb)</li>
+<li>OGCMX：old代的最大容量 (kb)</li>
+<li>OGC：old代当前新生成的容量 (kb)</li>
+<li>PGCMN：perm代中初始化(最小)的大小 (kb)</li>
+<li>PGCMX：perm代的最大容量 (kb)</li>
+<li>PGC：perm代当前新生成的容量 (kb)</li>
+<li>S0：年轻代中第一个survivor（幸存区）已使用的占当前容量百分比</li>
+<li>S1：年轻代中第二个survivor（幸存区）已使用的占当前容量百分比</li>
+<li>E：年轻代中Eden（伊甸园）已使用的占当前容量百分比</li>
+<li>O：old代已使用的占当前容量百分比</li>
+<li>P：perm代已使用的占当前容量百分比</li>
+<li>S0CMX：年轻代中第一个survivor（幸存区）的最大容量 (kb)</li>
+<li>S1CMX ：年轻代中第二个survivor（幸存区）的最大容量 (kb)</li>
+<li>ECMX：年轻代中Eden（伊甸园）的最大容量 (kb)</li>
+<li>DSS：当前需要survivor（幸存区）的容量 (kb)（Eden区已满）</li>
+<li>TT：持有次数限制</li>
+<li>MTT ：最大持有次数限制</li>
+</ul>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://plumbr.io/blog/garbage-collection/minor-gc-vs-major-gc-vs-full-gc" target="_blank" rel="noopener">https://plumbr.io/blog/garbage-collection/minor-gc-vs-major-gc-vs-full-gc</a><br><a href="https://www.cnblogs.com/zhangxiaoguang/p/5792468.html" target="_blank" rel="noopener">https://www.cnblogs.com/zhangxiaoguang/p/5792468.html</a></p>
+</blockquote>
+
           
         
       
@@ -426,7 +529,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/18/Java/SpringBoot/Filter/RequestFilter/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/22/读书笔记/黄宗羲定律/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -445,7 +548,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/12/18/Java/SpringBoot/Filter/RequestFilter/" itemprop="url">Spring Cloud Request Filter</a></h2>
+                <a class="post-title-link" href="/2018/12/22/读书笔记/黄宗羲定律/" itemprop="url">黄宗羲定律</a></h2>
         
 
         <div class="post-meta">
@@ -457,7 +560,1780 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-18T10:50:22+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-22T13:10:07+08:00">
+                2018-12-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Note/" itemprop="url" rel="index">
+                    <span itemprop="name">Note</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>所谓黄宗羲定律是由秦晖先生依据黄宗羲的观点而总结出来的某种历史规律：<strong>历史上的税费改革不止一次，但每次税费改革后，由于当时社会政治环境的局限性，农民负担在下降一段时间后又涨到一个比改革前更高的水平。</strong>明清思想家黄宗羲称之为“积累莫返之害”。</p>
+<hr>
+<h3 id="Why"><a href="#Why" class="headerlink" title="Why?"></a>Why?</h3><p>黄宗羲定律谈的主要是赋税问题，说起来很复杂，但核心的观点就一个：税越改革越多。</p>
+<p>税赋只是表象，分权才是根本，而中央和地方有限争权又是中央集权制的必然。</p>
+<p>古代税赋分为杂税（包括贪腐）和正税，前者重，后者轻。正税归中央，杂税归地方，杂税属于地方搭车，中央默认的状态。税赋改革无非是把杂税并入正税，也归中央，这时赋税会降低。此时即便地方没有任何贪腐现象，纯为维持庶政考虑，也必须重新征收杂税，然后本来已经并入正税的名目，在新的杂税中又重复征收，加上贪腐的反弹，税赋自然更重。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.zhihu.com/question/22796484" target="_blank" rel="noopener">https://www.zhihu.com/question/22796484</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/21/Java/JVM/Basic/Quick-Start/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/21/Java/JVM/Basic/Quick-Start/" itemprop="url">JVM Quick Start</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-21T16:31:22+08:00">
+                2018-12-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="JVM-Running-Time"><a href="#JVM-Running-Time" class="headerlink" title="JVM Running Time"></a>JVM Running Time</h3><img src="/2018/12/21/Java/JVM/Basic/Quick-Start/jvm-running-time.png">
+<p>线程共享区域：</p>
+<ul>
+<li>Java对象实例存放在Heap中；</li>
+<li>常量存放在方法区的常量；</li>
+<li>池虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据放在方法区。</li>
+</ul>
+<p>线程独享区域：</p>
+<ul>
+<li>栈是线程私有的，存放该方法的局部变量表 (基本类型、对象引用)、操作数栈、动态链接、方法出口等信息。</li>
+</ul>
+<p>一个Java程序对应一个JVM，一个方法（线程）对应一个Java栈。</p>
+<h4 id="Heap"><a href="#Heap" class="headerlink" title="Heap"></a>Heap</h4><ul>
+<li>被所有线程共享的一块内存区域，在虚拟机启动时创建</li>
+<li>用来存储对象实例</li>
+<li>可以通过-Xmx和-Xms控制堆的大小</li>
+<li>OutOfMemoryError：当在堆中没有内存完成实例分配，且堆也无法再扩展时</li>
+</ul>
+<p>Heap是垃圾收集器管理的主要区域。</p>
+<img src="/2018/12/21/Java/JVM/Basic/Quick-Start/head-structure.png">
+<ul>
+<li><p>新生代(New/Young)：新建的对象都由新生代分配内存。</p>
+<blockquote>
+<p>常常又被划分为Eden区和Survivor区。Eden空间不足时会把存活的对象转移到Survivor。<br>新生代的大小可由-Xmn控制，也可用-XX:SurvivorRatio控制Eden和Survivor的比例。</p>
+</blockquote>
+</li>
+<li><p>旧生代/年老代(Old/Tenured)：存放经过多次垃圾回收仍然存活的对象。</p>
+<blockquote>
+<p>持久代（Permanent）在方法区，不属于Heap。<br>持久代：存放静态文件，如今Java类、方法等。持久代在方法区，对垃圾回收没有显著影响。</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h4 id="Direct-Memory"><a href="#Direct-Memory" class="headerlink" title="Direct Memory"></a>Direct Memory</h4><p>特点：</p>
+<ul>
+<li>直接内存并不是虚拟机运行的一部分，也不是Java虚拟机规范中定义的内存区域，但是这部分内存也被频繁使用</li>
+<li>NIO可以使用Native函数库直接分配堆外内存，堆中的DirectByteBuffer对象作为这块内存的引用进行操作</li>
+<li>大小不受Java堆大小的限制，受本机 (服务器) 内存限制</li>
+</ul>
+<hr>
+<h3 id="Compile-and-Running"><a href="#Compile-and-Running" class="headerlink" title="Compile and Running"></a>Compile and Running</h3><p>Java 代码的编译和执行包括了三个重要机制：</p>
+<ol>
+<li>Java源码编译机制（.java 源代码文件 -&gt; .class 字节码文件）</li>
+<li>类加载机制（ClassLoader）</li>
+<li>类执行机制（JVM 执行引擎）</li>
+</ol>
+<h4 id="Compile"><a href="#Compile" class="headerlink" title="Compile"></a>Compile</h4><img src="/2018/12/21/Java/JVM/Basic/Quick-Start/compile-java.png">
+<p>Java源代码是不能被机器识别的，需要先经过编译器编译成JVM可以执行的.class 字节码文件，再由解释器解释运行。</p>
+<blockquote>
+<p>Java 源文件（.java） –&gt; Java 编译器 –&gt; Java 字节码文件 （.class） –&gt; Java 解释器 –&gt; 执行</p>
+</blockquote>
+<ul>
+<li>字节码文件（.class）是平台无关的</li>
+<li>Java中字符只以一种形式存在：Unicode，字符转换发生在JVM和OS交界处（Reader/Writer）</li>
+<li>class文件组成：结构信息，元数据和方法信息<blockquote>
+<p>结构信息：包括class文件格式版本号及各部分的数量与大小的信息<br>元数据：对应于Java源码中声明与常量的信息。包含类/继承的超类/实现的接口的声明信息、域与方法声明信息和常量池<br>方法信息：对应Java源码中语句和表达式对应的信息。包含字节码、异常处理器表、求值栈与局部变量区大小、求值栈的类型记录、调试符号信息</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h4 id="ClassLoader"><a href="#ClassLoader" class="headerlink" title="ClassLoader"></a>ClassLoader</h4><p>Java程序并不一个可执行文件，是由多个独立的类文件组成。这些类文件并非一次性全部装入内存，而是依据程序逐步载入。</p>
+<p>JVM的类加载是通过 ClassLoader 及其子类来完成的，类的层次关系和加载顺序可以由下图来描述：</p>
+<img src="/2018/12/21/Java/JVM/Basic/Quick-Start/class-loading.png">
+<ul>
+<li>Bootstrap ClassLoader<blockquote>
+<p>JVM的根ClassLoader，由C++实现<br>JVM启动时即初始化此ClassLoader<br>加载rt.jar，它包含了Java规范定义的所有接口以及实现</p>
+</blockquote>
+</li>
+</ul>
+<blockquote>
+<p>The VM implements the bootstrap class loader, which loads classes from the BOOTPATH, including for example rt.jar. For faster startup, the VM can also process preloaded classes via Class Data Sharing.<br>Class Data Sharing：Class data sharing (CDS) is a feature introduced in J2SE 5.0 that is intended to reduce the startup time for Java programming language applications, in particular smaller applications, as well as reduce footprint. When the JRE is installed on 32-bit platforms using the Sun provided installer, <strong>the installer loads a set of classes from the system jar file into a private internal representation, and dumps that representation to a file, called a “shared archive”.</strong></p>
+</blockquote>
+<ul>
+<li><p>Extension ClassLoader</p>
+<blockquote>
+<p>加载Java扩展 API（lib/ext 中的类）</p>
+</blockquote>
+</li>
+<li><p>App ClassLoader</p>
+<blockquote>
+<p>加载Classpath目录下定义的class</p>
+</blockquote>
+</li>
+<li><p>Custom ClassLoader</p>
+<blockquote>
+<p>属于应用程序根据自身需要自定义的ClassLoader，如tomcat、jboss都会根据J2EE规范自行实现ClassLoader</p>
+</blockquote>
+</li>
+</ul>
+<p>加载过程中会先检查类是否被已加载，检查顺序是自底向上，从Custom ClassLoader到BootStrap ClassLoader逐层检查，只要某个classloader已加载就视为已加载此类，保证此类只所有ClassLoader加载一次。而加载的顺序是自顶向下，也就是由上层来逐层尝试加载此类。</p>
+<p>QA:</p>
+<ol>
+<li>什么是双亲委派机制？<br>JVM在加载类时默认采用的是双亲委派机制。通俗的讲，就是某个特定的类加载器在接到加载类的请求时，首先将加载任务委托给父类加载器，依次递归。如果父类加载器可以完成类加载任务，就成功返回；只有父类加载器无法完成此加载任务时，才自己去加载。</li>
+</ol>
+<p>作用：</p>
+<ul>
+<li>避免重复加载。</li>
+<li>更安全。如果没有双亲委派，那么用户可用在自己的classpath编写了一个java.lang.Object的类，那就无法保证Object的唯一性。</li>
+</ul>
+<hr>
+<h4 id="类执行机制"><a href="#类执行机制" class="headerlink" title="类执行机制"></a>类执行机制</h4><p>Java字节码的执行是由JVM执行引擎来完成，流程图如下所示：</p>
+<img src="/2018/12/21/Java/JVM/Basic/Quick-Start/class-execute.png">
+<p>JVM是基于栈的体系结构来执行class字节码的。当线程创建后，都会产生程序计数器（PC）和栈（Stack）。</p>
+<ul>
+<li>程序计数器存放下一条要执行的指令在方法内的偏移量。</li>
+<li>栈中存放一个个栈帧，每个栈帧对应着每个方法的每次调用，而栈帧又是有局部变量区和操作数栈两部分组成，局部变量区用于存放方法中的局部变量和参数，操作数栈中用于存放方法执行过程中产生的中间结果。</li>
+</ul>
+<p>涉及的技术点：</p>
+<ul>
+<li>解释属于第一代JVM</li>
+<li>即时编译JIT属于第二代JVM</li>
+<li>自适应优化（目前 Sun 的 HotspotJVM 采用这种技术）则吸取第一代JVM和第二代JVM的经验，采用两者结合的方式（开始时，对所有的代码都采取解释执行的方式，并监视代码执行情况。对那些经常调用的方法启动一个后台线程，将其编译为本地代码，并进行优化。若方法不再频繁使用，则取消编译过的代码，仍对其进行解释执行）。</li>
+</ul>
+<h4 id="VM-Class-Loading"><a href="#VM-Class-Loading" class="headerlink" title="VM Class Loading"></a>VM Class Loading</h4><p>The VM is responsible for resolving constant pool symbols, which requires loading, linking and then initializing classes and interfaces. </p>
+<p>We will use the term <strong>“class loading”</strong> to describe the overall(全部的) process of mapping a class or interface name to a class object, and the more specific terms loading, linking and initializing for the phases of class loading as defined by the JVMS(Java Virtual Machine Specification(说明,规范)).</p>
+<p><strong>The most common reason for class loading is during bytecode resolution</strong>, when a constant pool symbol in the classfile requires resolution. Java APIs such as Class.forName(), classLoader.loadClass(), reflection APIs, and JNI_FindClass can initiate class loading. </p>
+<p>The VM itself can initiate class loading. The VM loads core classes such as java.lang.Object, java.lang.Thread, etc. at JVM startup. Loading a class requires loading all superclasses and superinterfaces. And classfile verification, which is part of the linking phase, can require loading additional classes.</p>
+<p>The VM and Java SE class loading libraries share the responsibility for class loading. The VM performs constant pool resolution, linking and initialization for classes and interfaces. The loading phase is a cooperative(协同的,合作的) effort between the VM and specific class loaders (java.lang.classLoader).</p>
+<h4 id="Class-Loading-Phases"><a href="#Class-Loading-Phases" class="headerlink" title="Class Loading Phases"></a>Class Loading Phases</h4><p>The load class phase(阶段) <strong>takes</strong> a class or interface name, <strong>finds</strong> the binary in classfile format, <strong>defines</strong> the class and <strong>creates</strong> the java.lang.Class object. </p>
+<blockquote>
+<p>keyword: take，find，define，create</p>
+</blockquote>
+<p>The load class phase can throw a <strong>NoClassDefFound</strong> error if a binary representation can not be found. In addition, the load class phase does format checking on the syntax of the classfile, which can throw a <strong>ClassFormatError</strong> or <strong>UnsupportedClassVersionError</strong>. Prior to completing loading of a class, the VM must load all of its superclasses and superinterfaces. If the class hierarchy has a problem such that this class is its own superclass or superinterface (recursively), then the VM will throw a <strong>ClassCircularityError</strong>. The VM also throws <strong>IncompatibleClassChangeError</strong> if the direct superinterface is not an interface, or the direct superclass is an interface.</p>
+<p>The link class phase first does <strong>verification</strong>, which checks the classfile semantics(语义), checks the constant pool symbols and does type checking. These checks can throw a <strong>VerifyError</strong>. Linking then does preparation, which creates and initializes static fields to standard defaults and allocates method tables. Note that no Java code has yet been run. Linking then optionally does resolution of symbolic references.</p>
+<blockquote>
+<p>keyword: Linking，verification，preparation</p>
+</blockquote>
+<p>Class initialization runs the static initializers, and initializers for static fields. This is the first Java code which runs for this class. Note that class initialization requires superclass initialization, although(尽管) not superinterface initialization.</p>
+<blockquote>
+<p>keyword: static fields</p>
+</blockquote>
+<p>The JVMS specifies that class initialization occurs on the first <strong>“active use”</strong> of a class. The JLS allows flexibility in when the symbolic resolution step of linking occurs as long as we respect the semantics of the language, finish each step of loading, linking and initializing before performing the next step, and throw errors when programs would expect them. </p>
+<p><strong>For performance, the HotSpot VM generally waits until class initialization to load and link a class.</strong> So if class A references class B, loading class A will not necessarily cause loading of class B (unless required for verification). Execution of the first instruction that references B will cause initialization of B, which requires loading and linking of class B.</p>
+<h4 id="Class-Loader-Delegation"><a href="#Class-Loader-Delegation" class="headerlink" title="Class Loader Delegation"></a>Class Loader Delegation</h4><p><strong>When a class loader is asked to find and load a class, it can ask another class loader to do the actual loading. This is called class loader delegation.</strong> </p>
+<p>The first loader is an initiating loader, and the class loading that ultimately defines the class is called the defining loader. In the case of bytecode resolution, the initiating loader is the class loader for the class whose constant pool symbol we are resolving.</p>
+<p>Class loaders are defined hierarchically and each class loader has a delegation parent. The delegation defines a search order for binary class representations. </p>
+<p>The Java SE class loader hierarchy searches the <strong>bootstrap</strong> class loader, the <strong>extension</strong> class loader and the <strong>system</strong> class loader in that order.</p>
+<p>The system class loader is the default application class loader, which runs “main” and loads classes from the classpath. The application class loader can be a class loader from the Java SE class loader libraries, or it can be provided by an application developer. </p>
+<p>The Java SE class loader libraries implement the extension class loader which loads classes from the lib/ext directory of the JRE.</p>
+<hr>
+<h3 id="GC"><a href="#GC" class="headerlink" title="GC"></a>GC</h3><h4 id="Principle"><a href="#Principle" class="headerlink" title="Principle"></a>Principle</h4><p>GC将内存中<strong>不再被引用的对象</strong>进行回收。</p>
+<p>由于GC需要消耗一些资源和时间，Java在对对象的生命周期特征进行分析后，按照新生代、旧生代的方式来对对象进行收集，以尽可能的缩短GC对应用造成的暂停。</p>
+<ul>
+<li>对新生代的对象的收集称为Minor GC；</li>
+<li>对旧生代的对象的收集称为Full GC；</li>
+<li>程序中主动调用System.gc()的GC为Full GC。</li>
+</ul>
+<p>Java垃圾回收是单独的后台线程GC执行的，自动运行无需显示调用。即使主动调用了java.lang.System.gc()，该方法也只会提醒系统进行垃圾回收，但系统不一定会回应，可能会不予理睬。</p>
+<h4 id="Memory-Leak"><a href="#Memory-Leak" class="headerlink" title="Memory Leak"></a>Memory Leak</h4><p>一直持有不再使用对象的引用，造成对象不能被GC回收，无法释放内存空间。</p>
+<p>满足这两个条件即可判定为内存泄漏：</p>
+<ul>
+<li>对象是可达的</li>
+<li>对象是无用的</li>
+</ul>
+<p>常见原因：</p>
+<ul>
+<li>全局集合</li>
+<li>缓存</li>
+<li>ClassLoader</li>
+</ul>
+<h4 id="Optimize-GC"><a href="#Optimize-GC" class="headerlink" title="Optimize GC"></a>Optimize GC</h4><p>Direction：</p>
+<ul>
+<li>减少GC的频率尤其是Full GC的次数，过多的GC会占用很多系统资源影响吞吐量。特别要关注Full GC，因为它会对整个堆进行整理</li>
+<li>优化JVM的参数，提高垃圾回收的速度，合理分配堆内存各部分的比例</li>
+</ul>
+<p>The reason for triggering Full GC:</p>
+<ul>
+<li><p>旧生代空间不足</p>
+<blockquote>
+<p>尽量让对象在新生代被GC回收、不要创建过大的对象及数组避免直接在旧生代创建对象。</p>
+</blockquote>
+</li>
+<li><p>持久代（Pemanet Generation）空间不足</p>
+<blockquote>
+<p>增大Perm Gen空间和避免太多静态对象。</p>
+</blockquote>
+</li>
+<li><p>System.gc()被显示调用</p>
+<blockquote>
+<p>垃圾回收不要手动触发，尽量依靠JVM自身的机制。</p>
+</blockquote>
+</li>
+<li><p>从新生代晋升到旧生代的对象所需内存空间，大于旧生代剩余可用内存空间</p>
+<blockquote>
+<p>控制好新生代和旧生代的比例，避免新生代晋升到旧生代时，旧生代内存不够用，进而触发Full GC回收内存。</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<p>QA：</p>
+<ol>
+<li><p>堆内存比例不良设置会导致什么后果?</p>
+<blockquote>
+<p>新生代设置过小：新生代GC次数非常频繁，增大系统消耗；二是导致大对象直接进入旧生代，占据了旧生代剩余空间。<br>新生代设置过大：是新生代设置过大会导致旧生代过小（堆总量一定），从而容易触发Full GC；新生代GC耗时大幅度增加，一般说来新生代占整个堆1/3比较合适。<br>Survivor设置过小：导致对象从Eden直接到达旧生代，降低了在新生代的存活时间。<br>Survivor设置过大：导致Eden过小，增加了GC频率。可用通过-XX:MaxTenuringThreshold=n来控制新生代存活时间，尽量让对象在新生代被回收。</p>
+</blockquote>
+</li>
+<li><p>JVM可选的GC策略有哪些？</p>
+<blockquote>
+<p>吞吐量优先：自行选择相应的GC策略及控制新生代与旧生代的大小比例，来达到吞吐量指标。这个值可由-XX:GCTimeRatio=n来设置。<br>暂停时间优先：自行选择相应的GC策略及控制新生代与旧生代的大小比例，尽量保证每次GC造成的应用停止时间都在指定的数值范围内完成。这个值可由-XX:MaxGCPauseRatio=n来设置。</p>
+</blockquote>
+</li>
+</ol>
+<hr>
+<p>JVM Configuration:</p>
+<ul>
+<li>堆设置<blockquote>
+<p>-Xms: 堆初始大小<br>-Xmx: 堆最大大小<br>-XX:NewSize=n: 设置年轻代大小<br>-XX:NewRatio=n: 设置年轻代和年老代的比值。如果设为3，表示年轻代与年老代比值为1:3，年轻代占整个年轻代年老代和的1/4。<br>-XX:SurvivorRatio=n: 年轻代中Eden区与两个Survivor区的比值。注意Survivor区有两个。如果设为3，表示Eden:Survivor=3:2，一个Survivor区占整个年轻代的1/5。<br>-XX:MaxPermSize=n: 设置持久代大小</p>
+</blockquote>
+</li>
+</ul>
+<ul>
+<li>收集器设置<blockquote>
+<p>-XX:+UseSerialGC: 设置串行收集器<br>-XX:+UseParallelGC: 设置并行收集器<br>-XX:+UseParalledlOldGC: 设置并行年老代收集器<br>-XX:+UseParNewGC: 并发串行收集器<br>-XX:+UseConcMarkSweepGC: 设置并发收集器</p>
+</blockquote>
+</li>
+</ul>
+<ul>
+<li>垃圾回收统计信息<blockquote>
+<p>-XX:+PrintGC<br>-XX:+PrintGCDetails<br>-XX:+PrintGCTimeStamps<br>-Xloggc:filename</p>
+</blockquote>
+</li>
+</ul>
+<ul>
+<li>并行收集器设置<blockquote>
+<p>-XX:ParallelGCThreads=n: 设置并行收集器收集时使用的CPU数，并行收集线程数<br>-XX:MaxGCPauseMillis=n: 设置并行收集最大暂停时间<br>-XX:GCTimeRatio=n: 设置垃圾回收时间占程序运行时间的百分比。公式为 1/(1+n)</p>
+</blockquote>
+</li>
+</ul>
+<ul>
+<li>并发收集器设置<blockquote>
+<p>-XX:+CMSIncrementalMode: 设置为增量模式，适用于单CPU情况。<br>-XX:ParallelGCThreads=n: 设置并发收集器年轻代收集方式为并行收集时，使用的CPU数，并行收集线程数。</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h3 id="VM-Lifecycle"><a href="#VM-Lifecycle" class="headerlink" title="VM Lifecycle"></a>VM Lifecycle</h3><p>The following sections gives an overview of the general purpose java launcher pertaining(与…有关的) to the lifecyle of the HotSpot VM.</p>
+<ul>
+<li>Launcher</li>
+<li>JNI_CreateJavaVM</li>
+<li>DestroyJavaVM</li>
+</ul>
+<h4 id="Launcher"><a href="#Launcher" class="headerlink" title="Launcher"></a>Launcher</h4><p>There are several HotSpot VM launchers in the Java Standard Edition, <strong>the general purpose launcher typically used is the java command on Unix and on Windows java and javaw commands</strong>, not to be confused with javaws which is a network based launcher.</p>
+<ol>
+<li><p>Parse the command line options, some of the command line options are consumed by the launcher itself, for example -client or -server is used to determine and load the appropriate VM library, others are passed to the VM using <strong>JavaVMInitArgs</strong>.</p>
+</li>
+<li><p>Establish the heap sizes and the compiler type (client or server) if these options are not explicitly specified on the command line.</p>
+</li>
+<li><p>Establishes the environment variables such as LD_LIBRARY_PATH and CLASSPATH.</p>
+</li>
+<li><p>If the java Main-Class is not specified on the command line it <strong>fetches the Main-Class name from the JAR’s manifest</strong>.</p>
+</li>
+<li><p>Creates the VM using <strong>JNI_CreateJavaVM</strong> in a newly created thread (<strong>non primordial thread</strong>). </p>
+<blockquote>
+<p>Note: creating the VM in the primordial thread greatly reduces the ability to customize the VM, for example the stack size on Windows, and many other limitations.</p>
+</blockquote>
+</li>
+<li><p>Once the VM is created and initialized, the Main-Class is loaded, and the launcher gets the main method’s attributes from the Main-Class.</p>
+</li>
+<li><p>The java main method is then invoked in the VM using <strong>CallStaticVoidMethod</strong>, using the marshalled arguments from the command line. - main()真正开始被调用</p>
+</li>
+<li><p>Once the java main method completes, its very important to check and clear any pending exceptions that may have occurred and also pass back the exit status, the exception is cleared by calling <strong>ExceptionOccurred</strong>, the return value of this method is 0 if successful, any other value otherwise, this value is passed back to the calling process.</p>
+</li>
+<li><p>The main thread is detached using <strong>DetachCurrentThread</strong>, by doing so we decrement the thread count so the DestroyJavaVM can be called safely, also to ensure that the thread is not performing operations in the vm and that there are no active java frames on its stack.</p>
+</li>
+</ol>
+<hr>
+<h4 id="JNI-CreateJavaVM"><a href="#JNI-CreateJavaVM" class="headerlink" title="JNI_CreateJavaVM"></a>JNI_CreateJavaVM</h4><ol>
+<li><p>Ensures that no two threads call this method at the same time and that no two VM instances are created in the same process. Noting that a VM cannot be created in the same process space once a point in initialization is reached, “point of no return”. This is so because the VM creates static data structures that cannot be re-initialized, at this time.</p>
+</li>
+<li><p>Checks to make sure the JNI version is supported, and the ostream is initialized for gc logging. The OS modules are initialized such as the random number generator, the current pid, high-resolution time, memory page sizes, and the guard pages.</p>
+</li>
+<li><p>The arguments and properties passed in are parsed and stored away for later use. The standard java system properties are initialized.</p>
+</li>
+<li><p>The OS modules are further created and initialized, based on the parsed arguments and properties, are initialized for synchronization, stack, memory, and safepoint pages. At this time other libraries such as libzip, libhpi, libjava, libthread are loaded, signal handlers are initialized and set, and the thread library is initialized.</p>
+</li>
+<li><p>The output stream logger is initialized. Any agent libraries (hprof, jdi) required are initialized and started.</p>
+</li>
+<li><p>The thread states and the thread local storage (TLS), which holds several thread specific data required for the operation of threads, are initialized.</p>
+</li>
+<li><p>The global data is initialized as part of the I phase, such as event log, OS synchronization primitives, perfMemory (performance memory), chunkPool (memory allocator).</p>
+</li>
+<li><p>At this point, we can create Threads. The Java version of the main thread is created and attached to the current OS thread. However this thread will not be yet added to the known list of the Threads. The Java level synchronization is initialized and enabled.</p>
+</li>
+<li><p>The rest of the global modules are initialized such as the BootClassLoader, CodeCache, Interpreter, Compiler, JNI, SystemDictionary, and Universe. Noting that, we have reached our “point of no return”, ie. We can no longer create another VM in the same process address space.</p>
+</li>
+<li><p>The main thread is added to the list, by first locking the Thread_Lock. The Universe, a set of required global data structures, is sanity checked. The VMThread, which performs all the VM’s critical functions, is created. At this point the appropriate JVMTI events are posted to notify the current state.</p>
+</li>
+<li><p>The following classes java.lang.String, java.lang.System, java.lang.Thread, java.lang.ThreadGroup, java.lang.reflect.Method, java.lang.ref.Finalizer, java.lang.Class, and the rest of the System classes, are loaded and initialized. At this point, the VM is initialized and operational, but not yet fully functional.</p>
+</li>
+<li><p>The Signal Handler thread is started, the compilers are initialized and the CompileBroker thread is started. The other helper threads StatSampler and WatcherThreads are started, at this time the VM is fully functional, the JNIEnv is populated and returned to the caller, and the VM is ready to service new JNI requests.</p>
+</li>
+</ol>
+<hr>
+<h4 id="DestroyJavaVM"><a href="#DestroyJavaVM" class="headerlink" title="DestroyJavaVM"></a>DestroyJavaVM</h4><ol>
+<li><p>Wait until we are the last non-daemon thread to execute, noting that the VM is still functional.</p>
+</li>
+<li><p>Call java.lang.Shutdown.shutdown(), which will invoke Java level shutdown hooks, run finalizers if finalization-on-exit.</p>
+</li>
+<li><p>Call before_exit(), prepare for VM exit run VM level shutdown hooks (they are registered through JVM_OnExit()), stop the Profiler, StatSampler, Watcher and GC threads. Post the status events to JVMTI/PI, disable JVMPI, and stop the Signal thread.</p>
+</li>
+<li><p>Call JavaThread::exit(), to release JNI handle blocks, remove stack guard pages, and remove this thread from Threads list. From this point on we cannot execute any more Java code.</p>
+</li>
+<li><p>Stop VM thread, it will bring the remaining VM to a safepoint and stop the compiler threads. At a safepoint, care should that we should not use anything that could get blocked by a Safepoint.</p>
+</li>
+<li><p>Disable tracing at JNI/JVM/JVMPI barriers.</p>
+</li>
+<li><p>Set _vm_exited flag for threads that are still running native code.</p>
+</li>
+<li><p>Delete this thread.</p>
+</li>
+<li><p>Call exit_globals(), which deletes IO and PerfMemory resources.</p>
+</li>
+<li><p>Return to caller.</p>
+</li>
+</ol>
+<hr>
+<h3 id="Thread"><a href="#Thread" class="headerlink" title="Thread"></a>Thread</h3><img src="/2018/12/21/Java/JVM/Basic/Quick-Start/thread-extend-structure.png">
+<ul>
+<li>java.lang.Thread: 这个是Java语言里的线程类，由这个Java类创建的instance都会1:1映射到一个操作系统的osthread。</li>
+<li>JavaThread：JVM中C++定义的类，一个JavaThread的instance代表了在JVM中的java.lang.Thread的instance, 它维护了线程的状态，并且维护一个指针指向java.lang.Thread创建的对象(oop)。它同时还维护了一个指针指向对应的OSThread，来获取底层操作系统创建的osthread的状态。</li>
+<li>OSThread：JVM中C++定义的类，代表了JVM中对底层操作系统的osthread的抽象，它维护着实际操作系统创建的线程句柄handle，可以获取底层osthread的状态。</li>
+<li>VMThread：JVM中C++定义的类，这个类和用户创建的线程无关，是JVM本身用来进行虚拟机操作的线程，比如GC。</li>
+</ul>
+<h4 id="Thread-Creation-and-Destruction"><a href="#Thread-Creation-and-Destruction" class="headerlink" title="Thread Creation and Destruction"></a>Thread Creation and Destruction</h4><p>There are two basic ways for a thread to be introduced into the VM:</p>
+<ul>
+<li>execution of Java code that calls start() on a java.lang.Thread object</li>
+<li>attaching an existing native thread to the VM using JNI</li>
+</ul>
+<p>There are a number of objects associated with a given thread in the VM:</p>
+<ul>
+<li>The java.lang.Thread instance that represents a thread in Java code</li>
+<li><strong>A JavaThread instance that represents the java.lang.Thread instance inside the VM.</strong> It contains additional information to track the state of the thread. A JavaThread holds a reference to its associated java.lang.Thread object (as an oop), and the java.lang.Thread object also stores a reference to its JavaThread (as a raw int). A JavaThread also holds a reference to its associated OSThread instance.</li>
+<li><strong>An OSThread instance represents an operating system thread</strong>, and contains additional operating-system-level information needed to track thread state. The OSThread then contains a platform specific “handle” to identify the actual thread to the operating system</li>
+</ul>
+<blockquote>
+<p>JavaThread：HotSpot VM在内部管理Java线程执行状态的C++对象，里面会进一步引用一个OSThread对象，是HotSpot VM对底层操作系统线程的状态的抽象描述用的对象。这些管理用的对象都很小，可以忽略不计。<br>在每个平台上HotSpot VM对OSThread有特定的实现，里面会包含创建真正的平台线程（例如通过 pthread 在Linux上创建LWP）的逻辑，其中会传栈大小的参数下去来分配栈空间。例如说在Linux上现在HotSpot VM默认使用的栈大小是1MB，这个空间才是大头，远大于HotSpot VM用来管理线程用的那些小的C++对象的大小。<br>因此，在HotSpot VM上遇到 “unable to create new native thread” ，最主要的原因还就是无法分配Java线程的栈的情况。</p>
+</blockquote>
+<p>When a java.lang.Thread is started the VM creates the associated JavaThread and OSThread objects, and <strong>ultimately the native thread</strong>. After preparing all of the VM state (such as thread-local storage and allocation buffers, synchronization objects and so forth) the native thread is started. </p>
+<p><strong>The native thread completes initialization and then executes a start-up method that leads to the execution of the java.lang.Thread object’s run() method</strong>, and then, upon its return, terminates the thread after dealing with any uncaught exceptions, and interacting with the VM to check if termination of this thread requires termination of the whole VM. Thread termination releases all allocated resources, removes the JavaThread from the set of known threads, invokes destructors for the OSThread and JavaThread and ultimately ceases execution when it’s initial startup method completes.</p>
+<p>A native thread attaches to the VM using the JNI call <strong>AttachCurrentThread</strong>. In response to this an associated OSThread and JavaThread instance is created and basic initialization is performed. </p>
+<p>Next a java.lang.Thread object must be created for the attached thread, which is done by reflectively invoking the Java code for the Thread class constructor, based on the arguments supplied when the thread attached. Once attached, a thread can invoke whatever Java code it needs to via the other JNI methods available. </p>
+<p>Finally when the native thread no longer wishes to be involved with the VM it can call the JNI <strong>DetachCurrentThread</strong> method to disassociate it from the VM (release resources, drop the reference to the java.lang.Thread instance, destruct the JavaThread and OSThread objects and so forth).</p>
+<p>A special case of attaching a native thread is the initial creation of the VM via the JNI <strong>CreateJavaVM</strong> call, which can be done by a native application or by the launcher (java.c). This causes a range of initialization operations to take place and then acts effectively as if a call to <strong>AttachCurrentThread</strong> was made. The thread can then invoke Java code as needed, such as reflective invocation of the main method of an application. </p>
+<h4 id="Thread-States"><a href="#Thread-States" class="headerlink" title="Thread States"></a>Thread States</h4><p>The main thread states from the VM perspective are as follows:</p>
+<ul>
+<li>_thread_new: a new thread in the process of being initialized</li>
+<li>_thread_in_Java: a thread that is executing Java code</li>
+<li>_thread_in_vm: a thread that is executing inside the VM</li>
+<li>_thread_blocked: the thread is blocked for some reason (acquiring a lock, waiting for a condition, sleeping, performing a blocking I/O operation and so forth)</li>
+</ul>
+<p>For debugging purposes additional state:</p>
+<ul>
+<li>MONITOR_WAIT: a thread is waiting to acquire a contended monitor lock</li>
+<li>CONDVAR_WAIT: a thread is waiting on an internal condition variable used by the VM (not associated with any Java level object)</li>
+<li>OBJECT_WAIT: a thread is performing an Object.wait() call</li>
+</ul>
+<h4 id="Internal-VM-Threads"><a href="#Internal-VM-Threads" class="headerlink" title="Internal VM Threads"></a>Internal VM Threads</h4><ul>
+<li>VM thread: This singleton instance of VMThread is responsible for executing VM operations, which are discussed below</li>
+<li>Periodic task thread: This singleton instance of WatcherThread simulates timer interrupts for executing periodic operations withinthe VM</li>
+<li>GC threads: These threads, of different types, support parallel and concurrent garbage collection</li>
+<li>Compiler threads: These threads perform runtime compilation of bytecode to native code</li>
+<li>Signal dispatcher thread: This thread waits for process directed signals and dispatches them to a Java level signal handling method</li>
+</ul>
+<p>All threads are instances of the Thread class, and all threads that execute Java code are JavaThread instances (a subclass of Thread). </p>
+<p>The VM keeps track of all threads in a linked-list known as the Threads_list, and which is protected by the Threads_lock – one of the key synchronization locks used within the VM.</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://hacpai.com/article/1542904258051" target="_blank" rel="noopener">https://hacpai.com/article/1542904258051</a><br><a href="http://openjdk.java.net/groups/hotspot/docs/RuntimeOverview.html" target="_blank" rel="noopener">http://openjdk.java.net/groups/hotspot/docs/RuntimeOverview.html</a><br><a href="https://www.zhihu.com/question/64685291" target="_blank" rel="noopener">https://www.zhihu.com/question/64685291</a><br><a href="https://blog.csdn.net/justloveyou_/article/details/54347954" target="_blank" rel="noopener">https://blog.csdn.net/justloveyou_/article/details/54347954</a><br>关于JVM的类型和模式：<a href="https://my.oschina.net/itblog/blog/507822" target="_blank" rel="noopener">https://my.oschina.net/itblog/blog/507822</a><br>初探JAVA 10之CDS：<a href="https://www.jianshu.com/p/890196bf529a" target="_blank" rel="noopener">https://www.jianshu.com/p/890196bf529a</a><br>Java 并发：Thread 类深度解析: <a href="https://blog.csdn.net/justloveyou_/article/details/54347954" target="_blank" rel="noopener">https://blog.csdn.net/justloveyou_/article/details/54347954</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/21/Architecture/CloudSolution/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/21/Architecture/CloudSolution/" itemprop="url">Cloud Architecture</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-21T16:01:22+08:00">
+                2018-12-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Architecture/" itemprop="url" rel="index">
+                    <span itemprop="name">Architecture</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Cloud-Platform"><a href="#Cloud-Platform" class="headerlink" title="Cloud Platform"></a>Cloud Platform</h3><ul>
+<li>Kubernetes</li>
+</ul>
+<hr>
+<h3 id="Register-And-Discover"><a href="#Register-And-Discover" class="headerlink" title="Register And Discover"></a>Register And Discover</h3><ul>
+<li>eurake</li>
+<li>nacos</li>
+<li>zk</li>
+<li>consul</li>
+<li>etcd</li>
+</ul>
+<hr>
+<h3 id="Circuit-breaker"><a href="#Circuit-breaker" class="headerlink" title="Circuit breaker"></a>Circuit breaker</h3><ul>
+<li>istio</li>
+<li>Linkerd</li>
+</ul>
+<hr>
+<h3 id="Storage"><a href="#Storage" class="headerlink" title="Storage"></a>Storage</h3><ul>
+<li><p>GlusterFS</p>
+<blockquote>
+<p><a href="https://www.ibm.com/developerworks/cn/opensource/os-cn-glusterfs-docker-volume/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/opensource/os-cn-glusterfs-docker-volume/index.html</a></p>
+</blockquote>
+</li>
+<li><p>Ceph</p>
+</li>
+</ul>
+<hr>
+<h3 id="CI-CD"><a href="#CI-CD" class="headerlink" title="CI/CD"></a>CI/CD</h3><ul>
+<li>Jenkins</li>
+</ul>
+<hr>
+<h3 id="Deploy"><a href="#Deploy" class="headerlink" title="Deploy"></a>Deploy</h3><ul>
+<li>Spinnaker：一个持续交付平台，它定位于将产品快速且持续的部署到多种云平台上。</li>
+</ul>
+<h3 id="Docker-Repository"><a href="#Docker-Repository" class="headerlink" title="Docker Repository"></a>Docker Repository</h3><ul>
+<li>Docker Registry</li>
+<li>Habor</li>
+<li>Nexus</li>
+</ul>
+<hr>
+<h3 id="The-package-manager-for-Kubernetes"><a href="#The-package-manager-for-Kubernetes" class="headerlink" title="The package manager for Kubernetes"></a>The package manager for Kubernetes</h3><ul>
+<li>Helm</li>
+</ul>
+<hr>
+<h3 id="Monitoring"><a href="#Monitoring" class="headerlink" title="Monitoring"></a>Monitoring</h3><h4 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h4><ul>
+<li>Heapster+Grafana+InfluxDB</li>
+</ul>
+<h4 id="JVM"><a href="#JVM" class="headerlink" title="JVM"></a>JVM</h4><ul>
+<li>Spring Boot Actuator + Spring Boot Admin</li>
+</ul>
+<h4 id="GC"><a href="#GC" class="headerlink" title="GC"></a>GC</h4><ul>
+<li>gceasy</li>
+<li>fastthread</li>
+<li>gcplot</li>
+</ul>
+<h4 id="Trace"><a href="#Trace" class="headerlink" title="Trace"></a>Trace</h4><ul>
+<li>SkyWalking</li>
+<li>Zipkin</li>
+</ul>
+<h4 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h4><blockquote>
+<p><a href="https://www.v2ex.com/t/548878#reply4" target="_blank" rel="noopener">https://www.v2ex.com/t/548878#reply4</a></p>
+</blockquote>
+<hr>
+<h3 id="Log"><a href="#Log" class="headerlink" title="Log"></a>Log</h3><ul>
+<li>Fluentd + Elasticsearch + Kibana</li>
+</ul>
+<hr>
+<h3 id="Code"><a href="#Code" class="headerlink" title="Code"></a>Code</h3><ul>
+<li>GitLab</li>
+<li>SonarQube</li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/21/Java/RegEx/BasicSyntax/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/21/Java/RegEx/BasicSyntax/" itemprop="url">Java RegEx Syntax</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-21T11:31:22+08:00">
+                2018-12-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/RegEx/" itemprop="url" rel="index">
+                    <span itemprop="name">RegEx</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h4 id="if-else"><a href="#if-else" class="headerlink" title="if-else"></a>if-else</h4><p>Synatx: (?(?=regex)then|else)</p>
+<h4 id="Example：Split-Decimal-String"><a href="#Example：Split-Decimal-String" class="headerlink" title="Example：Split Decimal String"></a>Example：Split Decimal String</h4><p>Target</p>
+<ul>
+<li>1000.00 -&gt; (1000),(00)</li>
+<li>1000 -&gt; (1000),()</li>
+</ul>
+<p>Note:</p>
+<ul>
+<li>合法值</li>
+<li>非法值，比如00100，a100，100x100，100.a100等等</li>
+</ul>
+<p>对于非法值可以预先检查，如果包含非法值，直接忽略，比如用”[^\d\.]”来检测是否有非法字符</p>
+<p>Exp: (^[1-9]{1}\d+)(?=.<em>(\d+|\d</em>))</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/20/CS/DesignPattern/Decorator Pattern/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/20/CS/DesignPattern/Decorator Pattern/" itemprop="url">每天一个模式 - Decorator Pattern</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-20T13:48:18+08:00">
+                2018-12-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Design-Pattern/" itemprop="url" rel="index">
+                    <span itemprop="name">Design Pattern</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Waht"><a href="#Waht" class="headerlink" title="Waht?"></a>Waht?</h3><p><strong>Definition</strong></p>
+<p>在不改变原类文件以及不使用继承的情况下，动态地将责任附加到对象上，从而实现动态拓展一个对象的功能。它是通过创建一个包装对象，也就是装饰来包裹真实的对象。</p>
+<blockquote>
+<p>Attach additional responsibilities to an object dynamically. Decorators provide a flexible alternative to subclassing for extending functionality.</p>
+</blockquote>
+<p><strong>满足设计原则</strong></p>
+<ul>
+<li>多用组合，少用继承</li>
+<li>开放-关闭原则，类应该对拓展开放，对修改关闭</li>
+</ul>
+<hr>
+<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><img src="/2018/12/20/CS/DesignPattern/Decorator%20Pattern/pc-1.png">
+<ul>
+<li><p>Component是基类。通常是一个抽象类或者一个接口，定义了属性或者方法，方法的实现可以由子类实现或者自己实现。通常不会直接使用该类，而是通过继承该类来实现特定的功能，它约束了整个继承树的行为。比如说，如果Component代表人，即使通过装饰也不会使人变成别的动物。 </p>
+</li>
+<li><p>ConcreteComponent是Component的子类，实现了相应的方法，它充当了“被装饰者”的角色。 </p>
+</li>
+<li><p>Decorator也是Component的子类，它是装饰者共同实现的抽象类（也可以是接口）。比如说，Decorator代表衣服这一类装饰者，那么它的子类应该是T恤、裙子这样的具体的装饰者。 </p>
+</li>
+<li><p>ConcreteDecorator是Decorator的子类，是具体的装饰者，由于它同时也是Component的子类，因此它能方便地拓展Component的状态（比如添加新的方法）。每个装饰者都应该有一个实例变量用以保存某个Component的引用，这也是利用了组合的特性。在持有Component的引用后，由于其自身也是Component的子类，那么，相当于ConcreteDecorator包裹了Component，不但有Component的特性，同时自身也可以有别的特性，也就是所谓的装饰。</p>
+</li>
+</ul>
+<hr>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>人类吃肉方式变化过程：直接吃生肉 -&gt; 煮熟以后再吃 -&gt; 煮熟添加各种配菜和调料再吃 -&gt; …….</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 定义作为人类应有的一些规范</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">IHuman</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">eating</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 人类具体吃的行为</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Man</span> <span class="keyword">implements</span> <span class="title">IHuman</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">eating</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"吃刚刚捕获的美味佳肴"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 抽象装饰者</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * 在Decorator中并未真正实现eat()方法，而只是调用原有Human对象的eating()方法，</span></span><br><span class="line"><span class="comment"> * 它没有真正实施装饰，而是提供一个统一的接口，将具体装饰过程交给子类完成。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Decorator</span> <span class="keyword">implements</span> <span class="title">IHuman</span> </span>&#123;</span><br><span class="line">    <span class="comment">//维持对抽象构件的引用</span></span><br><span class="line">    <span class="keyword">private</span> IHuman human;</span><br><span class="line">    <span class="comment">//注入构件实例</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Decorator</span><span class="params">(IHuman human)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.human = human;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">eating</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        human.eating();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ConcreteDecorator</span> <span class="keyword">extends</span> <span class="title">Decorator</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ConcreteDecorator</span><span class="params">(IHuman human)</span></span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(human);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">eating</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"用火烤熟肉"</span>);</span><br><span class="line">        <span class="keyword">super</span>.eating();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//需要增加的其他方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="JDK"><a href="#JDK" class="headerlink" title="JDK"></a>JDK</h3><img src="/2018/12/20/CS/DesignPattern/Decorator%20Pattern/java-io-decorator.jpeg">
+<ul>
+<li>Component：InputStream就是装饰者模式中的超类</li>
+<li>ConcreteComponent：ByteArrayInputStream，FileInputStream相当于被装饰者</li>
+<li>Decorator：FilterInputStream</li>
+<li>ConcreteDecorator(继承FilterInputStream)：BufferedInputStream，DataInputStream，PushbackInputStream</li>
+</ul>
+<p>Code Example<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">File file = <span class="keyword">new</span> File(<span class="string">"hello.txt"</span>);</span><br><span class="line">FileInputStream in = <span class="keyword">new</span> FileInputStream(file);</span><br><span class="line">BufferedInputStream inBuffered = <span class="keyword">new</span> BufferedInputStream(in);</span><br></pre></td></tr></table></figure></p>
+<hr>
+<h3 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h3><h4 id="Advantage"><a href="#Advantage" class="headerlink" title="Advantage"></a>Advantage</h4><ul>
+<li><p>使用装饰者模式比使用继承更加灵活，因为它选择通过一种动态的方式来扩展一个对象的功能，在运行时可以选择不同的装饰器，从而实现不同的行为。</p>
+</li>
+<li><p>通过使用不同的具体装饰类以及这些装饰类的排列组合，可以创造出很多不同行为的组合。可以使用多个具体装饰类来装饰同一对象，得到功能更为强大的对象。</p>
+</li>
+<li><p>具体构件类与具体装饰类可以独立变化，他能是低耦合的。用户可以根据需要来增加新的具体构件类和具体装饰类，在使用时再对其进行各种组合，原有代码无须改变，符合“开闭原则”。</p>
+</li>
+</ul>
+<h4 id="Disadvantage"><a href="#Disadvantage" class="headerlink" title="Disadvantage"></a>Disadvantage</h4><ul>
+<li><p>会产生很多的小对象，增加了系统的复杂性</p>
+</li>
+<li><p>由于使用装饰模式，可以比使用继承关系需要较少数目的类。使用较少的类，当然使设计比较易于进行。但是在另一方面，使用装饰模式会产生比使用继承关系更多的对象。更多的对象会使得查错变得困难，特别是这些对象看上去都很相像。</p>
+</li>
+</ul>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://blog.csdn.net/a553181867/article/details/52108423" target="_blank" rel="noopener">https://blog.csdn.net/a553181867/article/details/52108423</a><br><a href="https://zhuanlan.zhihu.com/p/44003220" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/44003220</a><br>设计模式–装饰者模式（在IO体系中的应用）：<a href="https://blog.csdn.net/u013679744/article/details/77686646" target="_blank" rel="noopener">https://blog.csdn.net/u013679744/article/details/77686646</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/20/Java/SpringBoot/Validator/CustomValidator/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/20/Java/SpringBoot/Validator/CustomValidator/" itemprop="url">Spring Boot Custom Validator</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-20T13:46:22+08:00">
+                2018-12-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/SpringBoot/Validator/" itemprop="url" rel="index">
+                    <span itemprop="name">Validator</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><h3 id="Kotlin"><a href="#Kotlin" class="headerlink" title="Kotlin"></a>Kotlin</h3><h4 id="方案一：ConstraintValidator"><a href="#方案一：ConstraintValidator" class="headerlink" title="方案一：ConstraintValidator"></a>方案一：ConstraintValidator</h4><p>注意：Controller必须加上@Validated</p>
+<ul>
+<li><p>Define Validator Class</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">class OrderConstraintValidator : ConstraintValidator&lt;OrderValidatorAnnotation, Order&gt; &#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">override fun <span class="title">isValid</span><span class="params">(order: Order?, context: ConstraintValidatorContext?)</span>: Boolean </span>&#123;</span><br><span class="line">        context?.disableDefaultConstraintViolation()</span><br><span class="line">        context?.buildConstraintViolationWithTemplate(<span class="string">"order is null"</span>)</span><br><span class="line">                    ?.addConstraintViolation()</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Define Validator Annotation</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target</span>(AnnotationTarget.VALUE_PARAMETER)</span><br><span class="line"><span class="meta">@Retention</span>(AnnotationRetention.RUNTIME)</span><br><span class="line">@Constraint(validatedBy = [OrderConstraintValidator::class])</span><br><span class="line"><span class="function">annotation class <span class="title">OrderValidatorAnnotation</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">        val message: String = <span class="string">""</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">        val groups: Array&lt;KClass&lt;*&gt;&gt; = [],</span></span></span><br><span class="line"><span class="function"><span class="params">        val payload: Array&lt;KClass&lt;out Payload&gt;&gt; = []</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Handle ConstraintViolationException</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  消息的处理可以放在@ControllerAdvice里面</span></span><br><span class="line"><span class="comment">//  获取自定义错误消息 -&gt; "order is null"</span></span><br><span class="line">val message = ex.constraintViolations.iterator().next().message</span><br></pre></td></tr></table></figure>
+<h4 id="CustomValidatorBean"><a href="#CustomValidatorBean" class="headerlink" title="CustomValidatorBean"></a>CustomValidatorBean</h4><p>对应注解@Valid，等于覆盖框架的校验逻辑</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">class OrderValidatorBean : CustomValidatorBean() &#123;</span><br><span class="line">    <span class="function">override fun <span class="title">supports</span><span class="params">(clazz: Class&lt;*&gt;)</span>: Boolean </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Order::<span class="class"><span class="keyword">class</span>.<span class="title">isInstance</span>(<span class="title">clazz</span>)</span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line"><span class="class"></span></span><br><span class="line">    override fun validate(target: Any?, errors: Errors) &#123;</span><br><span class="line">        <span class="keyword">super</span>.validate(target, errors)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/18/Network/Socks5/Socks5协议/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/18/Network/Socks5/Socks5协议/" itemprop="url">Socks5协议</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-18T21:56:19+08:00">
+                2018-12-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>SOCKS是一种网络传输协议，主要用于客户端与外网服务器之间通讯的中间传递。SOCKS是”SOCKetS”的缩写。</p>
+<p>当防火墙后的客户端要访问外部的服务器时，就跟SOCKS代理服务器连接。这个代理服务器控制客户端访问外网的资格，允许的话，就将客户端的请求发往外部的服务器。</p>
+<img src="/2018/12/18/Network/Socks5/Socks5协议/tcpip-model.jpg">
+<p>根据OSI模型，SOCKS是会话层的协议，位于表示层与传输层之间。TCP/IP模型的应用层对应OSI的前三层，网络接入层对应OSI的最后两层。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p>shadowsocks实现原理:<a href="https://bingtaoli.github.io/2016/11/23/shadowsocks%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/" target="_blank" rel="noopener">https://bingtaoli.github.io/2016/11/23/shadowsocks%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/</a><br>协议官方规范：<a href="https://www.ietf.org/rfc/rfc1928.txt" target="_blank" rel="noopener">https://www.ietf.org/rfc/rfc1928.txt</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/18/Network/SS-SSR 原理/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/18/Network/SS-SSR 原理/" itemprop="url">SS和SSR的原理</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-18T21:56:19+08:00">
+                2018-12-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="SS"><a href="#SS" class="headerlink" title="SS"></a>SS</h4><p>SS全称是Shadowsocks，是一种基于Socks5代理方式的加密传输协议。</p>
+<p>Shadowsocks是一种基于Socks5代理方式的网络数据加密传输包，并采用Apache许可证、GPL、MIT许可证等多种自由软件许可协议开放源代码。shadowsocks分为服务器端和客户端，在使用之前，需要先将服务器端部署到服务器上面，然后通过客户端连接并创建本地代理。目前包使用Python、C、C++、C#、Go语言等编程语言开发。</p>
+<p>特点</p>
+<ul>
+<li>Shadowsocks使用自行设计的协议进行加密通信。加密算法有AES、Blowfish、IDEA、RC4等，除创建TCP连接外无需握手，每次请求只转发一个连接，无需保持“一直连线”的状态，因此在移动设备上相对较为省电。</li>
+<li>所有的流量都经过算法加密，允许自行选择算法。</li>
+<li>Shadowsocks通过异步I/O和事件驱动程序运行，响应速度快。</li>
+</ul>
+<p>安全性</p>
+<ul>
+<li>在某些极端的环境下，通过深度包检测（DPI）也有可能识别出协议特征。</li>
+<li>通过随机森林算法检测Shadowsocks流量的方法，并自称可达到85％的检测精度。</li>
+</ul>
+<blockquote>
+<p>shadowsocks.org</p>
+</blockquote>
+<h4 id="SSR"><a href="#SSR" class="headerlink" title="SSR"></a>SSR</h4><p>ShadowsocksR是breakwa11发起的Shadowsocks分支，在Shadowsocks的基础上增加了一些数据混淆方式，称修复了部分安全问题并可以提高QoS优先级。</p>
+<h3 id="Socks5"><a href="#Socks5" class="headerlink" title="Socks5"></a>Socks5</h3><p>Socks5是属于TCP/IP模型中应用层的协议，因此，网络连接过程可以理解基于Socks5协议的请求由客户机到代理机的整个过程如下：</p>
+<ul>
+<li>将用户数据添加SOCKS5头部，发到传输层；</li>
+<li>传输层将SOCKS5协议数据分段，添加TCP/UDP协议数据发到网络层；</li>
+<li>网络层将TCP/UDP协议数据添加IP协议头，发往链路层；</li>
+<li>链路层添加帧头与尾，将数据封装成帧发往代理机。</li>
+</ul>
+<h4 id="Socks5工作原理"><a href="#Socks5工作原理" class="headerlink" title="Socks5工作原理"></a>Socks5工作原理</h4><p>Socks5客户端  <---socks5--->  Socks5服务器  &lt;—正常请求—&gt;  目标主机</---socks5---></p>
+<p>Socks5客户端在与Socks5服务器交互的整个过程是有可能暴露在整个互联网中的，因此很容易被监控到，根据协议特征也可以很容易识别出来。</p>
+<h4 id="Shadowsocks-Socks5工作原理"><a href="#Shadowsocks-Socks5工作原理" class="headerlink" title="Shadowsocks Socks5工作原理"></a>Shadowsocks Socks5工作原理</h4><p>Socks5客户端  <---socks5--->  sslocal  &lt;–密文–&gt; ss-server  &lt;—正常请求—&gt;  目标主机</---socks5---></p>
+<p>Shadowsocks的处理方式是将Socks5客户端与Socks5服务器的连接提前，Socks5协议的交互完全是在本地进行的，在网络中传输的完全是利用加密算法加密后的密文，这就很好的进行了去特征化，使得传输的数据不是很容易的被特征识别。</p>
+<p>差异部分：</p>
+<ul>
+<li>本地的sslocal：sslocal对于Socks5客户端便是Socks5服务器,对于Socks5客户端是透明的，sslocal完成与Socks5客户端所有的交互。</li>
+<li>远程的ssserver：ssserver对于目标主机同样也是Socks5服务器，对于目标主机是透明的，完成Socks5服务器与目标主机的所有操作。</li>
+<li>sslocal-ssserver:sslocal接收到Socks5客户端发送的数据，会将数据加密，并将配置信息发送到ssserver，ssserver接收到配置信息进行权限验证，然后将数据进行解密，然后将明文发往目标主机；当目标主机响应ssserver，ssserver将接收到的数据进行解包，并将数据加密，发送到sslocal，sslocal接收到加密后的数据进行解密，再发送给Socks 5客户端，这就完成了一次交互。</li>
+</ul>
+<h3 id="阻断技术"><a href="#阻断技术" class="headerlink" title="阻断技术"></a>阻断技术</h3><h4 id="DNS污染-劫持"><a href="#DNS污染-劫持" class="headerlink" title="DNS污染/劫持"></a>DNS污染/劫持</h4><p>在进行域名访问时，首先会将域名通过dns解析为对应的真实IP，然后通过IP进行HTTP访问，所谓DNS攻击手段，即通过某种手段使得客户机发起DNS查询但得到的却是错误的IP，导致客户机无法正常访问。 防火长城会在骨干网出口的53端口进行IDS入侵检测，检测到黑名单域名等，会伪装成域名服务器向客户机发送虚假的回应，由于DNS查询请求一般是基于UDP无连接传输层协议，该协议特征是无状态连接、不可靠传输，DNS查询会接收最先到达的请求，抛弃之后到达的请求，因此导致客户机被欺骗，请求被重定位到虚假IP。</p>
+<hr>
+<h4 id="IP封锁"><a href="#IP封锁" class="headerlink" title="IP封锁"></a>IP封锁</h4><p>在客户机发送请求到服务器的过程中会经过一系列路由的转发，在路由器转发的过程中会根据路由表中存储的表项来决定下一跳的路由器或主机，选择的下一跳地址会根据路由协议来决定。 早期使用的是ACL（访问控制列表）来进行IP黑名单限制，现在更高效的路由扩散技术来进行对特定的IP进行封锁。早期路由器都是采用静态路由协议，每一条路由需要进行人工来配置路由表项，或者配置一些策略，在决定路由转发，这时可以通过检测，对相应要封锁的IP配置一条错误的路由，将之牵引到一个不做任何操作的服务器（黑洞服务器），此服务器所要做的就是丢包，这样便无声息封锁掉了。动态路由协议的出现可以更高效的进行屏蔽，动态路由协议可以让路由器通过交换路由表信息来动态更新路由表，并通过寻址算法来决定最优化的路径。因此可以通过动态路由协议的路由重分发功能将错误的信息散播到整个网络，从而达到屏蔽目的。</p>
+<hr>
+<h4 id="IP-端口黑名单"><a href="#IP-端口黑名单" class="headerlink" title="IP/端口黑名单"></a>IP/端口黑名单</h4><p>该手段可以结合上边提到的IP封锁技术，将封锁精确到具体的端口，使该IP的具体端口接收不到请求，从而达到更细粒度的封锁。</p>
+<p>经常被封锁的端口如下：</p>
+<ul>
+<li>SSH的TCP协议22端口</li>
+<li>HTTP的80端口</li>
+<li>PPTP类型VPN使用的TCP协议1723端口</li>
+<li>L2TP类型VPN使用的UDP协议1701端口</li>
+<li>IPSec类型VPN使用的UDP协议500端口和4500端口</li>
+<li>OpenVPN默认使用的TCP协议和UDP协议的1194端口</li>
+<li>TLS/SSL/HTTPS的TCP协议443端口</li>
+<li>Squid Cache的TCP协议3128端口</li>
+</ul>
+<hr>
+<h4 id="无状态TCP连接重置"><a href="#无状态TCP连接重置" class="headerlink" title="无状态TCP连接重置"></a>无状态TCP连接重置</h4><p>TCP连接会有三次握手，此种攻击方式利用了该特点来进行攻击，gfw会对特定IP的所有数据包进行监控，会对特定黑名单动作进行监控（如TLS加密连接），当进行TCP连接时，会在TCP连接的第二部SYNC-ACK阶段，伪装成客户端和服务器同时向真实的客户端和服务器发送RESET重置，以很低的成本来达到切断双方连接的目的。与丢弃客户机的包相比，在丢包后客户机会不断的发起重试，这样会加重黑洞服务器的负担，利用TCP连接重置来断开连接，客户机也不必发送ACK来确认，这样成本就要低得多。</p>
+<hr>
+<h4 id="TCP协议关键字阻断"><a href="#TCP协议关键字阻断" class="headerlink" title="TCP协议关键字阻断"></a>TCP协议关键字阻断</h4><p>该手段在无状态TCP连接重置手段之上，加入了关键字过滤功能，当协议的头部包含特定的关键字便对其连接进行重置，比如HTTP协议、ED2K协议等等。</p>
+<hr>
+<h4 id="深度包检测"><a href="#深度包检测" class="headerlink" title="深度包检测"></a>深度包检测</h4><p>深度数据包检测（Deep packet inspection,DPI）是一种于应用层对网络上传递的数据进行侦测与处理的技术，被广泛用于入侵检测、流量分析及数据挖掘。就字面意思考虑，所谓“深度”是相对于普通的报文检测而言的——DPI可对报文内容和协议特征进行检测。基于必要的硬件设施、适宜的检测模型及相应的模式匹配算法，gfw能够精确且快速地从实时网络环境中判别出有悖于预期标准的可疑流量，并对此及时作出审查者所期望的应对措施。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p>Shadowsocks原理详解(上篇):<a href="https://sq.163yun.com/blog/article/185530682109534208" target="_blank" rel="noopener">https://sq.163yun.com/blog/article/185530682109534208</a><br>Shadowsocks原理详解(中篇):<a href="https://sq.163yun.com/blog/article/185531711118745600" target="_blank" rel="noopener">https://sq.163yun.com/blog/article/185531711118745600</a><br>Shadowsocks原理详解(下篇):<a href="https://sq.163yun.com/blog/article/185532158474821632" target="_blank" rel="noopener">https://sq.163yun.com/blog/article/185532158474821632</a><br>shadowsocks实现原理:<a href="https://bingtaoli.github.io/2016/11/23/shadowsocks%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/" target="_blank" rel="noopener">https://bingtaoli.github.io/2016/11/23/shadowsocks%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/18/Java/SpringBoot/Resource/ReadResource/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/18/Java/SpringBoot/Resource/ReadResource/" itemprop="url">Spring Bood Read Resource</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-18T12:30:22+08:00">
                 2018-12-18
               </time>
             
@@ -502,8 +2378,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/Spring-Boot/Spring-Filter/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring Filter</span>
+                  <a href="/categories/Java/Spring-Boot/Resource/" itemprop="url" rel="index">
+                    <span itemprop="name">Resource</span>
                   </a>
                 </span>
 
@@ -541,1250 +2417,7 @@
       
         
           
-            <h3 id="OncePerRequestFilter"><a href="#OncePerRequestFilter" class="headerlink" title="OncePerRequestFilter"></a>OncePerRequestFilter</h3><p>For our one request, this filter will execute exactly one time (no more no less). This behavior is very useful while working with security authentication.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">class AuthorizationFilter : OncePerRequestFilter() &#123;</span><br><span class="line">    <span class="function">override fun <span class="title">doFilterInternal</span><span class="params">(request: HttpServletRequest, response: HttpServletResponse, filter: FilterChain)</span> </span>&#123;</span><br><span class="line">        val token = request.getHeader(HttpHeaders.AUTHORIZATION)</span><br><span class="line">        <span class="keyword">if</span> (token == <span class="keyword">null</span>) &#123;</span><br><span class="line">            val error = ErrorInfo(ErrorCode.ILLEGAL_TOKEN)</span><br><span class="line">            writeError(response, error, HttpStatus.UNAUTHORIZED.value())</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        val claims = JwtUtil.parseAuthToken(token)</span><br><span class="line">        <span class="keyword">if</span> (claims == <span class="keyword">null</span>) &#123;</span><br><span class="line">            val error = ErrorInfo(ErrorCode.ILLEGAL_TOKEN)</span><br><span class="line">            writeError(response, error, HttpStatus.UNAUTHORIZED.value())</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        filter.doFilter(request, response)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> fun <span class="title">writeError</span><span class="params">(response: HttpServletResponse, error: ErrorInfo, code: Int)</span> </span>&#123;</span><br><span class="line">        response.writer.write(JsonUtil.objToJson(error))</span><br><span class="line">        response.status = code</span><br><span class="line">        response.writer.flush()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">GatewayApplication</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function">fun <span class="title">configFilter</span><span class="params">()</span>: FilterRegistrationBean&lt;AuthorizationFilter&gt; </span>&#123;</span><br><span class="line">        val registration = FilterRegistrationBean&lt;AuthorizationFilter&gt;()</span><br><span class="line">        registration.filter = AuthorizationFilter()</span><br><span class="line">        registration.addUrlPatterns(<span class="string">"/*"</span>)</span><br><span class="line">        registration.setName(<span class="string">"AuthorizationFilter"</span>)</span><br><span class="line">        registration.order = Ordered.HIGHEST_PRECEDENCE</span><br><span class="line">        <span class="keyword">return</span> registration</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//  contracts</span></span><br><span class="line">StandaloneMockMvcBuilder mockMvc = MockMvcBuilders.standaloneSetup(</span><br><span class="line">        <span class="keyword">new</span> OrderController(),</span><br><span class="line">        <span class="keyword">new</span> PositionController()</span><br><span class="line">).addFilters(<span class="keyword">new</span> AuthorizationFilter());</span><br><span class="line">RestAssuredMockMvc.standaloneSetup(mockMvc);</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/17/Tools/IDE/Intellij-Plugin/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/17/Tools/IDE/Intellij-Plugin/" itemprop="url">IDE Intellij Plugins</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-17T14:28:19+08:00">
-                2018-12-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tools/" itemprop="url" rel="index">
-                    <span itemprop="name">Tools</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tools/IDE/" itemprop="url" rel="index">
-                    <span itemprop="name">IDE</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Convertor"><a href="#Convertor" class="headerlink" title="Convertor"></a>Convertor</h3><ul>
-<li>JsonToKotlinClass</li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/16/Rust/Basic/macro_rules!/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/16/Rust/Basic/macro_rules!/" itemprop="url">Rust macro_ruules!</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-16T23:20:03+08:00">
-                2018-12-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/" itemprop="url" rel="index">
-                    <span itemprop="name">Rust</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Rust provides a powerful macro system that allows metaprogramming. macros look like functions, except that their name ends with a bang !, but instead of generating a function call, macros are expanded into source code that gets compiled with the rest of the program. </p>
-<p>However, unlike macros in C and other languages, <strong>Rust macros are expanded into abstract syntax trees, rather than string preprocessing, so you don’t get unexpected precedence bugs.</strong></p>
-<p>Advantage</p>
-<ul>
-<li>Don’t repeat yourself. There are many cases where you may need similar functionality in multiple places but with different types. Often, writing a macro is a useful way to avoid repeating code.</li>
-<li>Domain-specific languages. Macros allow you to define special syntax for a specific purpose. </li>
-<li>Variadic interfaces. Sometime you want to define an interface that takes a variable number of arguments. An example is println! which could take any number of arguments, depending on the format string!</li>
-</ul>
-<blockquote>
-<p>Syntax: <a href="https://doc.rust-lang.org/rust-by-example/macros/syntax.html" target="_blank" rel="noopener">https://doc.rust-lang.org/rust-by-example/macros/syntax.html</a></p>
-</blockquote>
-<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="Case-Hello"><a href="#Case-Hello" class="headerlink" title="Case: Hello"></a>Case: Hello</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// This is a simple macro named `say_hello`.</span></span><br><span class="line"><span class="built_in">macro_rules!</span> say_hello &#123;</span><br><span class="line">    <span class="comment">// `()` indicates that the macro takes no argument.</span></span><br><span class="line">    () =&gt; (</span><br><span class="line">        <span class="comment">// The macro will expand into the contents of this block.</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"Hello!"</span>);</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// This call will expand into `println!("Hello");`</span></span><br><span class="line">    say_hello!()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/16/CS/CPU/DeadLock/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/16/CS/CPU/DeadLock/" itemprop="url">CPU DeadLock</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-16T15:44:07+08:00">
-                2018-12-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CPU/" itemprop="url" rel="index">
-                    <span itemprop="name">CPU</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/16/CS/CPU/Dispatch/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/16/CS/CPU/Dispatch/" itemprop="url">CPU Dispatch</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-16T15:28:07+08:00">
-                2018-12-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CPU/" itemprop="url" rel="index">
-                    <span itemprop="name">CPU</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/16/Rust/Basic/Trait/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/16/Rust/Basic/Trait/" itemprop="url">Rust Trait</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-16T15:20:03+08:00">
-                2018-12-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/" itemprop="url" rel="index">
-                    <span itemprop="name">Rust</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Rust/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>A trait is a collection of methods defined for an unknown type: Self. They can access other methods declared in the same trait.Traits can be implemented for any data type.</p>
-<p>Rust’Trait is like Java’Interface.</p>
-<ul>
-<li>Derive</li>
-<li>Operator Overloading</li>
-<li>Drop</li>
-<li>Iterators</li>
-<li>Clone</li>
-</ul>
-<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><h4 id="Case-Hello"><a href="#Case-Hello" class="headerlink" title="Case: Hello"></a>Case: Hello</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Sheep</span></span> &#123; naked: <span class="built_in">bool</span>, name: &amp;<span class="symbol">'static</span> <span class="built_in">str</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Animal</span></span> &#123;</span><br><span class="line">    <span class="comment">// Static method signature; `Self` refers to the implementor type.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">new</span></span>(name: &amp;<span class="symbol">'static</span> <span class="built_in">str</span>) -&gt; <span class="keyword">Self</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Instance method signatures; these will return a string.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">name</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="symbol">'static</span> <span class="built_in">str</span>;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">noise</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="symbol">'static</span> <span class="built_in">str</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Traits can provide default method definitions.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">talk</span></span>(&amp;<span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"&#123;&#125; says &#123;&#125;"</span>, <span class="keyword">self</span>.name(), <span class="keyword">self</span>.noise());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> Sheep &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">is_naked</span></span>(&amp;<span class="keyword">self</span>) -&gt; <span class="built_in">bool</span> &#123;</span><br><span class="line">        <span class="keyword">self</span>.naked</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">shear</span></span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">self</span>.is_naked() &#123;</span><br><span class="line">            <span class="comment">// Implementor methods can use the implementor's trait methods.</span></span><br><span class="line">            <span class="built_in">println!</span>(<span class="string">"&#123;&#125; is already naked..."</span>, <span class="keyword">self</span>.name());</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">println!</span>(<span class="string">"&#123;&#125; gets a haircut!"</span>, <span class="keyword">self</span>.name);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">self</span>.naked = <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Implement the `Animal` trait for `Sheep`.</span></span><br><span class="line"><span class="keyword">impl</span> Animal <span class="keyword">for</span> Sheep &#123;</span><br><span class="line">    <span class="comment">// `Self` is the implementor type: `Sheep`.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">new</span></span>(name: &amp;<span class="symbol">'static</span> <span class="built_in">str</span>) -&gt; Sheep &#123;</span><br><span class="line">        Sheep &#123; name: name, naked: <span class="literal">false</span> &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">name</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="symbol">'static</span> <span class="built_in">str</span> &#123;</span><br><span class="line">        <span class="keyword">self</span>.name</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">noise</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="symbol">'static</span> <span class="built_in">str</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">self</span>.is_naked() &#123;</span><br><span class="line">            <span class="string">"baaaaah?"</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="string">"baaaaah!"</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Default trait methods can be overridden.</span></span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">talk</span></span>(&amp;<span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="comment">// For example, we can add some quiet contemplation.</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"&#123;&#125; pauses briefly... &#123;&#125;"</span>, <span class="keyword">self</span>.name, <span class="keyword">self</span>.noise());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// Type annotation is necessary in this case.</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> dolly: Sheep = Animal::new(<span class="string">"Dolly"</span>);</span><br><span class="line">    <span class="comment">// TODO ^ Try removing the type annotations.</span></span><br><span class="line"></span><br><span class="line">    dolly.talk();</span><br><span class="line">    dolly.shear();</span><br><span class="line">    dolly.talk();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Dolly pauses briefly... baaaaah!</span><br><span class="line">Dolly gets a haircut!</span><br><span class="line">Dolly pauses briefly... baaaaah?</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/16/BlockChain/UTXO/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/16/BlockChain/UTXO/" itemprop="url">BlockChain UTXO</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-16T11:30:18+08:00">
-                2018-12-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/BlockChain/" itemprop="url" rel="index">
-                    <span itemprop="name">BlockChain</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>UTXO是Unspent Transaction Output的缩写，是比特币发明人”中本聪“的天才设计。</p>
-<p>本质上，UTXO就是流水账。了解过一点点会计学，见过企业记账的同学都知道，我们现在的会计系统绝大部分采用的是一种叫做”借贷记账法“的方法，账目分成借方和贷方，每发生一笔业务都要登记两个以上的科目。</p>
-<p>简单来说，Alice转账给Bob 1美元，使用借贷记账法至少要产生两条账目，Alice账户减少1美元，Bob账户增加1美元。这种记账法在企业经营、企业审计中有无数的好处，这里就不详述了。但是这种记账法也有一个最大的缺点，就是容易产生记账错误和记账误差。一笔交易需要登记两条以上的账目，本质上记录的是“交易的结果”，而不是“交易本身”。</p>
-<p>如果让一个程序员来设计基于“借贷记账法”的账本，数据库中记录的就是每一个账户的变动情况和余额。在数据库系统中，需要一系列额外的规则，来确保交易成功地进行。在Alice给Bob转账1美元的操作中，系统首先需要检查Alice账户余额是否大于等于1美元，然后检查Bob的账户地址是否合法，最后才是Alice账户减1，Bob账户加1。</p>
-<p>上述过程是不是非常复杂？其实会计的工作之所以那么忙，就是因为他们每天都要把交易拆分成不同的科目去记录。不同的会计对交易理解不同，可能记录的科目就不一样（当然在简单的转账系统中，不存在这个问题），于是产生了记账差异。</p>
-<p>“中本聪”没有采用这种复杂的记账方案，而是采用了一种追踪比特币的流水账记录法——UTXO。<strong>本质上，就是只记录交易本身，而不记录交易的结果。</strong>从金融系统设计角度来说，这种方式有点“交易清算分离”的意思。区块链系统只处理所有的交易，而需要清算、查看余额等信息，由区块链节点自行处理。</p>
-<p>UTXO系统遵守两个规则：</p>
-<ul>
-<li>除了CoinBase(挖矿交易)之外，所有的资金来源都必须来自前面某一个或者几个交易的UTXO；</li>
-<li>任何一笔交易的输入总量必须等于输出总量，等式两边必须配平。</li>
-</ul>
-<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>我们假设一个这样的场景：张三挖到12.5枚比特币。过了几天，他把其中2.5枚支付给李四。又过了几天，他和李四各出资2.5比特币凑成5比特币付给王五。</p>
-<p>如果是基于账户的设计，张、李、王三人在数据库中各有一个账户，则他们三人的账户变化如下图所示：</p>
-<img src="/2018/12/16/BlockChain/UTXO/utxo-account.jpg">
-<hr>
-<p>如果基于UTXO的设计，如下图所示：</p>
-<img src="/2018/12/16/BlockChain/UTXO/utxo-transaction.jpg">
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/15/CS/Kernel/Kernel Architecture/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/15/CS/Kernel/Kernel Architecture/" itemprop="url">Kernel Architechture</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-15T14:55:03+08:00">
-                2018-12-15
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Kernel/" itemprop="url" rel="index">
-                    <span itemprop="name">Kernel</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="http://gaocegege.com/Blog/csp/unikernel" target="_blank" rel="noopener">http://gaocegege.com/Blog/csp/unikernel</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/12/15/Docker/Unikernel/Unikernel-Introduction/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/15/Docker/Unikernel/Unikernel-Introduction/" itemprop="url">Unikernel</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-15T11:55:03+08:00">
-                2018-12-15
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Docker/" itemprop="url" rel="index">
-                    <span itemprop="name">Docker</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="What-Are-Unikernels"><a href="#What-Are-Unikernels" class="headerlink" title="What Are Unikernels?"></a>What Are Unikernels?</h3><p>Unikernels are specialised, single-address-space machine images constructed by using library operating systems.</p>
-<p>In other words, unikernels are <strong>small, fast, secure virtual machines that lack operating systems</strong>.</p>
-<p>其最大的卖点就是在，没有用户空间与内核空间之分，只有一个连续的地址空间。这样使得 Unikernel 中只能运行一个应用，而且对于运行的应用而言，没有硬件抽象可言，所有的逻辑，包括应用逻辑和操作硬件的逻辑，都在一个地址空间中。</p>
-<p>Unikernel就是一个单一内存空间的内核镜像，其中只能有一个应用在运行，那这样有啥好呢，为啥值得我放弃Linux而用你这么一个看上去像是阉割版的内核呢？好处就在，小，快，安全。</p>
-<p>Unikernel镜像都很小，由MirageOS实现的一个 DNS server 才 184KB，实现的一个 web server 674 KB，小到恐怖的程度。然后就是快，启动很快。因为镜像都很小，所以起停都在毫秒级别，比传统的kernel要快多了。最后是安全，一般来讲，小的东西相对而言比较安全。Unikernel中没有Shell可用，没有密码文件，没有多余的设备驱动，这使得Unikernel更加安全。</p>
-<hr>
-<h4 id="Unikernel架构"><a href="#Unikernel架构" class="headerlink" title="Unikernel架构"></a>Unikernel架构</h4><img src="/2018/12/15/Docker/Unikernel/Unikernel-Introduction/unikernel-architechture.png">
-<p>Unikernel在整个服务器的架构中取消了操作系统，应用直接运行在hypervisor或者硬件上。试图抹去现代操作系统带来的一些复杂性。因为“通用”的操作系统（就像任何Linux和Windows的发行版），通常会伴随着带来一些对你的应用来说并不需要的驱动、依赖包、服务、等等。</p>
-<hr>
-<h4 id="Unikernel的开发和测试"><a href="#Unikernel的开发和测试" class="headerlink" title="Unikernel的开发和测试"></a>Unikernel的开发和测试</h4><p>Unikernel 在真正实践中，如何开发与测试是一个值得关注的问题。在开发过程中，开发者可以假定自己在传统的操作系统上进行开发，而所有内核相关的功能，暂且由开发机的操作系统提供。</p>
-<p>而在测试环境中，大部分Unikernel的实现会将应用代码与需要的内核模块构建成Unikernel后，再将其跑在一个传统的操作系统上，利用传统操作系统上的工具来测试Unikernel。以Rumprun为例，它可以通过KVM/QEMU来运行一个 Rumprun Unikernel VM，随后用Host OS上的GDB来对其进行调试，</p>
-<blockquote>
-<p>更多关于调试的信息，可以查看<a href="https://news.ycombinator.com/item?id=10954132" target="_blank" rel="noopener">https://news.ycombinator.com/item?id=10954132</a></p>
-</blockquote>
-<p>在发布阶段，这是 Unikernel最简单的事情了。Unikernel最后的产物就是一个kernel image，可以在Hypervisor，Bare Metal等等各种环境上运行。</p>
-<p>所以可以看到，其中Unikernel在软件过程中与传统方式最大的不同就在于调试与测试。而在发布的阶段，传统的方式可能发布的是一个应用，或者一个容器镜像，而Unikernel则是一个高度定制化的kernel。</p>
-<p>目前的Unikernel项目：MirageOS、HaLVM、ClickOS和Rumprun等等。</p>
-<blockquote>
-<p>更多项目: <a href="http://unikernel.org/projects/" target="_blank" rel="noopener">http://unikernel.org/projects/</a></p>
-</blockquote>
-<hr>
-<h3 id="The-Problem-Our-Fat-Insecure-Clouds"><a href="#The-Problem-Our-Fat-Insecure-Clouds" class="headerlink" title="The Problem: Our Fat, Insecure Clouds"></a>The Problem: Our Fat, Insecure Clouds</h3><p>When cloud computing burst on(突然出现) the scene(场景), there were all sorts of(各种各样的) promises made of a grand future. It was said that our compute farms would magically allocate resources to meet the needs of applications.</p>
-<p>Resources would be automatically optimized to do the maximum work possible with the assets available. And compute clouds would leverage assets both in the datacenter and on the Internet, transparently to the end user.</p>
-<p>Emphasis was placed on developing excellent cloud orchestration(编排,调度) engines that could move applications with agility(灵活,敏捷) throughout the cloud. </p>
-<p>That(cloud orchestration engine) was an entirely appropriate(适合的) focus, as the datacenter in the time before the cloud was both immobile and slow to change. Many system administrators could walk blindfolded(vt.蒙住眼睛) through the aisles(通道) of their equipment racks(货架) and point out what each machine did for what department, stating(vt.说明) exactly what software was installed on each server. The placement of workloads on hardware was frequently laborious(费劲地) and static; changing those workloads was a slow, difficult, and arduous(费力的) task, requiring much verification and testing before even the smallest changes were made on production systems.</p>
-<p>The advent(到来) of cloud orchestration software (OpenStack, CloudStack, openNebula, etc.) altered all that—and many of us were very grateful. The ability of these orchestration systems to adapt and change with business needs turned the IT world on its head. A new world ensued(vi.跟着发生), and the promise of the cloud seemed to be fulfilled.</p>
-<hr>
-<h3 id="Security-Is-a-Growing-Problem"><a href="#Security-Is-a-Growing-Problem" class="headerlink" title="Security Is a Growing Problem"></a>Security Is a Growing Problem</h3><p>However, as the cloud era(时代) dawned(vi.出现), it became evident that a good orchestration engine alone is simply not enough to make a truly effective cloud. </p>
-<p>A quick review of industry headlines(新闻提要) over the past few years yields report after report of security breaches(breach vt.破坏, n.违反,缺口) in some of the most impressive organizations. </p>
-<p>Major retailers(零售商), credit card companies, even federal governments(联邦政府) have reported successful attacks on their infrastructure, including possible loss of sensitive data. For example, in May 2016, the Wall Street Journal ran a story about banks in three different countries that had been recently hacked to the tune of $90 million in losses. A quick review of the graphic representation of major attacks in the past decade will take your breath away. Even the US Pentagon(五角大楼) was reportedly hacked in the summer of (夏天的时候)2011. It is no longer unusual to receive a letter in the mail stating that your credit card is being reissued(vt.重新发行) because credit card data was compromised(vt.危害) by malicious(恶意的) hackers.</p>
-<blockquote>
-<p>to the tune of: 达…之多<br>take your breath away: 令人屏息</p>
-</blockquote>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p>official site: <a href="http://unikernel.org/" target="_blank" rel="noopener">http://unikernel.org/</a><br><a href="https://www.oreilly.com/library/view/unikernels/9781492042815/" target="_blank" rel="noopener">https://www.oreilly.com/library/view/unikernels/9781492042815/</a><br><a href="https://www.oreilly.com/library/view/unikernels/9781492042815/ch01.html" target="_blank" rel="noopener">https://www.oreilly.com/library/view/unikernels/9781492042815/ch01.html</a><br><a href="http://dockone.io/article/1379" target="_blank" rel="noopener">http://dockone.io/article/1379</a></p>
-</blockquote>
-
+            <h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  resources/keys/private.pem -&gt; path=/keys/private.pem</span></span><br><span class="line"><span class="function">fun <span class="title">readResourceFile</span><span class="params">(path: String, charset: Charset = Charsets.UTF_8)</span>: String </span>&#123;</span><br><span class="line">    val classResource = ClassPathResource(path)</span><br><span class="line">    <span class="keyword">return</span> classResource.file.readText(charset)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
           
         
       
@@ -1823,7 +2456,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/13/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/13/">13</a><span class="page-number current">14</span><a class="page-number" href="/page/15/">15</a><span class="space">&hellip;</span><a class="page-number" href="/page/60/">60</a><a class="extend next" rel="next" href="/page/15/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/13/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/13/">13</a><span class="page-number current">14</span><a class="page-number" href="/page/15/">15</a><span class="space">&hellip;</span><a class="page-number" href="/page/61/">61</a><a class="extend next" rel="next" href="/page/15/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1870,7 +2503,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">597</span>
+                <span class="site-state-item-count">608</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1881,7 +2514,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">252</span>
+                <span class="site-state-item-count">256</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1892,7 +2525,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">651</span>
+                <span class="site-state-item-count">661</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
