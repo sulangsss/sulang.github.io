@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Java,JVM,GC,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="GC Arithmetic可达性分析GC Roots其实不是一组对象，而通常是一组特别管理的指向引用类型对象的指针，这些指针是tracing GC的trace的起点。  只有引用类型的变量才被认为是Roots，值类型的变量永远不被认为是Roots。  哪些对象可以作为 GC Root：  虚拟机栈（栈帧中的局部变量表，Local Variable Table）中引用的对象； 方法区中类静态属性引用">
+<meta name="keywords" content="Java,JVM,GC">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入学习 JVM - GC">
+<meta property="og:url" content="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  GC/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="GC Arithmetic可达性分析GC Roots其实不是一组对象，而通常是一组特别管理的指向引用类型对象的指针，这些指针是tracing GC的trace的起点。  只有引用类型的变量才被认为是Roots，值类型的变量永远不被认为是Roots。  哪些对象可以作为 GC Root：  虚拟机栈（栈帧中的局部变量表，Local Variable Table）中引用的对象； 方法区中类静态属性引用">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/collectors-category.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/cms-process.png">
+<meta property="og:image" content="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/rset-example.jpg">
+<meta property="og:updated_time" content="2019-10-14T14:34:41.074Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入学习 JVM - GC">
+<meta name="twitter:description" content="GC Arithmetic可达性分析GC Roots其实不是一组对象，而通常是一组特别管理的指向引用类型对象的指针，这些指针是tracing GC的trace的起点。  只有引用类型的变量才被认为是Roots，值类型的变量永远不被认为是Roots。  哪些对象可以作为 GC Root：  虚拟机栈（栈帧中的局部变量表，Local Variable Table）中引用的对象； 方法区中类静态属性引用">
+<meta name="twitter:image" content="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/collectors-category.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  GC/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>深入学习 JVM - GC | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  GC/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">深入学习 JVM - GC</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-14T11:32:06+08:00">
+                2019-10-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="GC-Arithmetic"><a href="#GC-Arithmetic" class="headerlink" title="GC Arithmetic"></a>GC Arithmetic</h3><h4 id="可达性分析"><a href="#可达性分析" class="headerlink" title="可达性分析"></a>可达性分析</h4><p>GC Roots其实不是一组对象，而通常是一组特别管理的指向引用类型对象的指针，这些指针是tracing GC的trace的起点。</p>
+<blockquote>
+<p>只有引用类型的变量才被认为是Roots，值类型的变量永远不被认为是Roots。</p>
+</blockquote>
+<p>哪些对象可以作为 GC Root：</p>
+<ul>
+<li>虚拟机栈（栈帧中的局部变量表，Local Variable Table）中引用的对象；</li>
+<li>方法区中类静态属性引用的对象；</li>
+<li>方法区中常量引用的对象；</li>
+<li>本地方法栈中JNI（即一般说的Native方法）引用的对象。</li>
+</ul>
+<p><strong>选择这些对象作为 GC Root 的依据是什么？</strong></p>
+<p>可作为GC Roots的节点主要在全局性的引用与执行上下文中。</p>
+<p>要明确的是，<strong>tracing gc必须以当前存活的对象集为Roots</strong>，因此必须选取确定存活的引用类型对象。GC管理的区域是Java堆，而虚拟机栈、方法区和本地方法栈不被GC所管理，因此选用这些区域内引用的对象作为GC Roots，是不会被GC所回收的。</p>
+<p>其中虚拟机栈和本地方法栈都是线程私有的内存区域，只要线程没有终止，就能确保它们中引用的对象的存活。而方法区中类静态属性引用的对象是显然存活的。常量引用的对象在当前可能存活，因此，也可能是GC roots的一部分。</p>
+<h4 id="对象的结构"><a href="#对象的结构" class="headerlink" title="对象的结构"></a>对象的结构</h4><h4 id="常见回收算法"><a href="#常见回收算法" class="headerlink" title="常见回收算法"></a>常见回收算法</h4><h4 id="内存分配策略"><a href="#内存分配策略" class="headerlink" title="内存分配策略"></a>内存分配策略</h4><ol>
+<li>优先分配对象到 Eden 区；</li>
+<li>大对象直接分配到老年代；</li>
+<li>长期存活对象分配到老年代，-XX:MaxTenuringThreshold=15；</li>
+<li>空间分配担保，-XX:+HandlePromotionFailure，默认开启；</li>
+<li>动态对象年龄判定；</li>
+</ol>
+<hr>
+<p><strong>优先分配对象到 Eden 区</strong></p>
+<p>内存分配情况：将JVM内存划分为一块较大的Eden空间（80%）和两块小的Servivor（各占10%）。当回收时，将 Eden 和 Survivor 中还存活的对象一次性采用复制算法直接复制到另外一块 Survivor 空间上，最后清理 Eden 空间和原先的 Survivor 空间中的数据。</p>
+<p>大多数情况下，对象在新生代 Eden 区中分配。当 Eden 区没有足够空间进行分配时，JVM将发起一次 Minor GC。</p>
+<blockquote>
+<p>新生代GC（Minor GC）：指发生在新生代的垃圾收集动作，因为Java对象大多是具有朝生夕灭的特性，所以Minor GC非常频繁，而且该速度也比较快。<br>老年代GC（Major GC/Full GC）：指发生在老年代的GC，出现了Major GC，一般可能也会伴随着一次Minor GC，但是与Minor GC不同的是，Major GC的速度慢十倍以上。</p>
+</blockquote>
+<p><strong>大对象直接分配到老年代</strong></p>
+<p>大对象做一个定义：这里指的是需要大量连续内存空间的Java对象。最典型的大对象可以是很长的字符串和数组。</p>
+<p>大对象对于JVM的内存分配来说是十分麻烦的，如果我们将大对象分配在新生代中，那样子的话很容易导致内存还有不少空间时，提前触发垃圾收集以获取足够的连续空间来“安置”它们。</p>
+<p>为了避免上述情况的经常发生而导致不需要的GC活动所浪费的资源和时间，可采用的分配策略是将大对象直接分配到老年代中去，虚拟机中也提供了-XX:PretenureSizeThreshold参数，令大于这个设置值的对象直接在老年代里面分配内容。</p>
+<blockquote>
+<p>-XX:PretenureSizeThreshold，默认为0<br>-XX:PretenureSizeThreshold只对Serial和ParNew收集器有效。</p>
+</blockquote>
+<p><strong>长期存活对象分配到老年代</strong></p>
+<p>当 JVM 采用分代收集的思想来管理内存时，为了识别哪些对象应该放在新生代、哪些对象应该放在老年代，JVM 给每个对象定义了一个对象年龄计数器。</p>
+<p>对象年龄计数器：如果对象在Eden出生并经过第一次Minor GC后仍然存活，并且能被Survivor容纳的话，便可以被移动到Survivor空间中，年龄计数器将设置该对象的年龄为1。对于对象在Survivor区每经过一次Minor GC，年龄便增加1岁，当它的年龄增加到一定程度（可通过参数-XX:MaxTenuringThreshold设置）默认15，该对象便会进入到老年代中。成为老年代的对象。</p>
+<p><strong>动态对象年龄判定</strong></p>
+<p>事实上，有的虚拟机并不永远地要求对象的年龄必须达到MaxTeruringThreshold才能晋升老年代，如果在Survivor空间中相同年龄所有对象大小的总和大于Surivior空间的一半，年龄大于或等于该年龄的对象就可以直接进行老年代，无须等到MaxTeruringThreshold中所要求的年龄。</p>
+<p><strong>空间分配担保</strong></p>
+<p>在发生Minor GC之前，<strong>虚拟机会先检查老年代最大可用的连续空间是否大于新生代所有对象总空间</strong>，如果这个条件成立，那么Minor GC可以确保是安全的。</p>
+<p>如果不成立，则虚拟机会查看HandlePromotionFailure设置值是否允许担保失败。如果允许，那么会继续检查老年代最大可用的连续空间是否大于历次晋升到老年代对象的平均大小，如果大于，将尝试着进行一次Minor GC，尽管这次Minor GC是有风险的；如果小于，或者HandlePromotionFailure设置不允许冒险，那这时也要改为进行一次Full GC。</p>
+<p>前面提到过，新生代使用复制收集算法，但为了内存利用率，只使用其中一个Survivor空间来作为轮换备份，因此当出现大量对象在Minor GC后仍然存活的情况（最极端的情况就是内存回收后新生代中所有对象都存活），就需要老年代进行分配担保，把Survivor无法容纳的对象直接进入老年代。与生活中的贷款担保类似，老年代要进行这样的担保，前提是老年代本身还有容纳这些对象的剩余空间，一共有多少对象会活下来在实际完成内存回收之前是无法明确知道的，所以只好取之前每一次回收晋升到老年代对象容量的平均大小值作为经验值，与老年代的剩余空间进行比较，决定是否进行Full GC来让老年代腾出更多空间。</p>
+<p>取平均值进行比较其实仍然是一种动态概率的手段，也就是说，如果某次Minor GC存活后的对象突增，远远高于平均值的话，依然会导致担保失败（Handle Promotion Failure）。如果出现了HandlePromotionFailure失败，那就只好在失败后重新发起一次Full GC。虽然担保失败时绕的圈子是最大的，但大部分情况下都还是会将HandlePromotionFailure打开，避免Full GC过于频繁。</p>
+<blockquote>
+<p><a href="https://cloud.tencent.com/developer/article/1082730" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1082730</a></p>
+</blockquote>
+<h4 id="逃逸分析-Escape-Analysis-与栈上分配"><a href="#逃逸分析-Escape-Analysis-与栈上分配" class="headerlink" title="逃逸分析(Escape Analysis)与栈上分配"></a>逃逸分析(Escape Analysis)与栈上分配</h4><p>在编译程序优化理论中，逃逸分析是一种确定指针动态范围的方法——分析在程序的哪些地方可以访问到指针。它涉及到指针分析和形状分析。</p>
+<p><strong>逃逸分析(Escape Analysis)</strong>是目前Java虚拟机中比较前沿的优化技术。这是一种可以有效减少 Java 程序中同步负载和内存堆分配压力的跨函数全局数据流分析算法。通过逃逸分析，Java Hotspot编译器能够分析出一个新的对象的引用的使用范围从而决定是否要将这个对象分配到堆上。</p>
+<p><strong>简单说，就是把没有发生逃逸的对象分配到栈空间上。</strong></p>
+<p>逃逸分析的基本行为就是分析对象动态作用域：当一个对象在方法中被定义后，它可能被外部方法所引用，例如作为调用参数传递到其他地方中，称为<strong>方法逃逸</strong>。</p>
+<p>使用逃逸分析，编译器可以对代码做如下优化：</p>
+<ol>
+<li><p>同步省略。如果一个对象被发现只能从一个线程被访问到，那么对于这个对象的操作可以不考虑同步。</p>
+</li>
+<li><p>将堆分配转化为栈分配。如果一个对象在子程序中被分配，要使指向该对象的指针永远不会逃逸，对象可能是栈分配的候选，而不是堆分配。</p>
+</li>
+<li><p>分离对象或标量替换。有的对象可能不需要作为一个连续的内存结构存在也可以被访问到，那么对象的部分（或全部）可以不存储在内存，而是存储在CPU寄存器中。</p>
+</li>
+</ol>
+<blockquote>
+<p>JVM参数 XX:+DoEscapeAnalysis 和 -XX:-DoEscapeAnalysis，默认情况下开启。<br>以上三种优化中，栈上内存分配其实是依靠标量替换来实现的。</p>
+</blockquote>
+<hr>
+<h3 id="GC回收器"><a href="#GC回收器" class="headerlink" title="GC回收器"></a>GC回收器</h3><img src="/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/collectors-category.png">
+<h4 id="CMS"><a href="#CMS" class="headerlink" title="CMS"></a>CMS</h4><img src="/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/cms-process.png">
+<p>分代回收：</p>
+<ul>
+<li>年轻代：采用 stop-the-world mark-copy 算法；</li>
+<li>年老代：采用 Mostly Concurrent mark-sweep 算法；</li>
+</ul>
+<p>使用 Mark-Sweep GC Arithmetic，该算法不足之处在于：</p>
+<ol>
+<li>空间问题：标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后在程序运行过程中需要分配较大对象时，无法找到足够的连续内存而不得不触发另一次垃圾收集动作。</li>
+<li>效率问题：因为内存碎片的存在，操作会变得更加费时，因为查找下一个可用空闲块已不再是一个简单操作。</li>
+</ol>
+<hr>
+<p>GC Process：</p>
+<ol>
+<li>初始标记(STW)</li>
+<li>并发标记(两阶段：并发标记 和 并发预处理)</li>
+<li>重新标记(STW)</li>
+<li>并发清理(两阶段：并发清理 和 并发重置)</li>
+</ol>
+<p>Advantage：</p>
+<ol>
+<li>并发GC；</li>
+<li>低停顿；</li>
+</ol>
+<p>Weakness：</p>
+<ol>
+<li>占用较多CPU资源；</li>
+<li>无法处理Floating Garbage，并发标记与并发清除过程会产生浮动垃圾，如果CMS之前预留的内存无法满足程序需要，就会出现一次“Concurrent Mode Failure”失败，这时虚拟机将退化使用Serial Old收集器，重新进行老年代的垃圾收集，这样停顿时间就很长了。</li>
+<li>出现Concurrent Mode Failure问题，造成使用Serial Old GC进行回收老年代；</li>
+<li>基于“标记-清除算法”，收集结束时会有大量空间碎片产生，导致明明剩余空间充足，却无法为大对象分配足够的连续内存。</li>
+</ol>
+<blockquote>
+<p>Floating Garbage：由于CMS并发清理阶段用户线程还在运行着，伴随程序运行自然就还会有新的垃圾不断产生，这一部分垃圾出现在标记过程之后，CMS无法在当次收集中处理掉它们，只好留待下一次GC时再清理掉。这一部分垃圾就称为“浮动垃圾”。在这期间用户可能创建新的对象。为了处理这部分浮动垃圾和对象，CMS在并发清理之前，需要预留出足够空间给并发清理期间的用户线程使用。一般会显示使用-XX:CMSInitiatingOccupancyFraction参数设置触发CMS时的老年代空间比例，如果老年代增长不是太快，可以适当提高比例，以减少Full GC的次数。<br>关于浮动垃圾和内存碎片的问题，HDFS namenode在堆内存达到100G规模时，通常设置75%触发Full GC，不开启压缩，优先考虑STW造成的延迟。<br>打开-XX:+UseCMSCompactAtFullCollection开关参数（默认打开）在进行Full GC之前整理内存碎片（称为“压缩”）；使用-XX:CMSFullGCsBeforeCompaction参数（默认0）设置多少次不带压缩的Full CG之后才进行一次带压缩的Full GC。内存整理无法并行，还需要STW，需要适当调整内存整理的频率，在GC性能与空间利用率之间平衡。</p>
+</blockquote>
+<h4 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h4><p>GC Process：</p>
+<ol>
+<li>初始标记(initial mark，STW)：它标记了从GC Root开始直接可达的对象。</li>
+<li>并发标记(Concurrent Marking)：这个阶段从GC Root开始对heap中的对象标记，标记线程与应用程序线程并行执行，并且收集各个Region的存活对象信息。</li>
+<li>最终标记(Remark，STW)：标记那些在并发标记阶段发生变化的对象，将被回收。</li>
+<li>清除垃圾(Cleanup)：清除空Region（没有存活对象的），加入到free list。</li>
+</ol>
+<p>Advantage：</p>
+<ol>
+<li>并行与并发：G1 能充分利用CPU、多核环境下的硬件优势，使用多个CPU（CPU或者CPU核心）来缩短 Stop-The-World 停顿时间。部分其他收集器原本需要停顿 Java 线程执行的 GC 动作，G1 收集器仍然可以通过并发的方式让 Java 程序继续执行。</li>
+<li>分代收集：虽然 G1 可以不需要其他收集器配合就能独立管理整个 GC 堆，但是还是保留了分代的概念。它能够采用不同的方式去处理新创建的对象和已经存活了一段时间，熬过多次 GC 的旧对象以获取更好的收集效果。</li>
+<li>空间整合：与 CMS 的“标记-清理”算法不同，G1 从整体来看是基于“标记-整理”算法实现的收集器；从局部上来看是基于“复制”算法实现的。</li>
+<li>可预测的停顿：这是 G1 相对于 CMS 的另一个大优势，降低停顿时间是 G1 和 CMS 共同的关注点，但 G1 除了追求低停顿外，还能建立可预测的停顿时间模型，能让使用者明确指定在一个长度为M毫秒的时间片段内。</li>
+</ol>
+<p><strong>什么是RSet？</strong></p>
+<p>RSet记录了其他Region中的对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。RSet的价值在于使得垃圾收集器不需要扫描整个堆找到谁引用了当前分区中的对象，只需要扫描RSet即可。</p>
+<img src="/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/rset-example.jpg">
+<p>Region1和Region3中的对象都引用了Region2中的对象，因此在Region2的RSet中记录了这两个引用。</p>
+<p><strong>什么是CSet？</strong></p>
+<p>一组可被回收的分区(Region)的集合。在CSet中存活的数据会在GC过程中被移动到另一个可用分区，CSet中的分区可以来自Eden空间、survivor空间、或者老年代。CSet会占用不到整个堆空间的1%大小。</p>
+<h4 id="ZGC"><a href="#ZGC" class="headerlink" title="ZGC"></a>ZGC</h4><blockquote>
+<p>读屏障(Load Barrier)</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[深入理解JVM(2)——GC算法与内存分配策略] <a href="https://crowhawk.github.io/2017/08/10/jvm_2/" target="_blank" rel="noopener">https://crowhawk.github.io/2017/08/10/jvm_2/</a></li>
+<li>[JVM之逃逸分析] <a href="https://zhuanlan.zhihu.com/p/59215831" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/59215831</a></li>
+<li>[对象和数组并不是都在堆上分配内存的] <a href="http://www.hollischuang.com/archives/2398" target="_blank" rel="noopener">http://www.hollischuang.com/archives/2398</a></li>
+<li>[JVM快速调优手册之三: 内存分配策略] <a href="https://ruozedata.github.io/2019/06/19/JVM%E5%BF%AB%E9%80%9F%E8%B0%83%E4%BC%98%E6%89%8B%E5%86%8C%E4%B9%8B%E4%B8%89_%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/" target="_blank" rel="noopener">https://ruozedata.github.io/2019/06/19/JVM%E5%BF%AB%E9%80%9F%E8%B0%83%E4%BC%98%E6%89%8B%E5%86%8C%E4%B9%8B%E4%B8%89_%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/</a></li>
+<li>[Java程序员的荣光，听R大论JDK11的ZGC] <a href="https://juejin.im/entry/5b86a276f265da435c4402d4" target="_blank" rel="noopener">https://juejin.im/entry/5b86a276f265da435c4402d4</a></li>
+<li>[A first look into ZGC] <a href="http://dinfuehr.github.io/blog/a-first-look-into-zgc/" target="_blank" rel="noopener">http://dinfuehr.github.io/blog/a-first-look-into-zgc/</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+            <a href="/tags/GC/" rel="tag"># GC</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/14/Linux/Basic/Performance-Index/" rel="next" title="Linux 性能指标">
+                <i class="fa fa-chevron-left"></i> Linux 性能指标
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/10/14/Java/JVM/Basic/深入学习 JVM -  Class/" rel="prev" title="深入学习 JVM - Class">
+                深入学习 JVM - Class <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">631</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">263</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">681</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-Arithmetic"><span class="nav-number">1.</span> <span class="nav-text">GC Arithmetic</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#可达性分析"><span class="nav-number">1.1.</span> <span class="nav-text">可达性分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#对象的结构"><span class="nav-number">1.2.</span> <span class="nav-text">对象的结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#常见回收算法"><span class="nav-number">1.3.</span> <span class="nav-text">常见回收算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内存分配策略"><span class="nav-number">1.4.</span> <span class="nav-text">内存分配策略</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#逃逸分析-Escape-Analysis-与栈上分配"><span class="nav-number">1.5.</span> <span class="nav-text">逃逸分析(Escape Analysis)与栈上分配</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC回收器"><span class="nav-number">2.</span> <span class="nav-text">GC回收器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CMS"><span class="nav-number">2.1.</span> <span class="nav-text">CMS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#G1"><span class="nav-number">2.2.</span> <span class="nav-text">G1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ZGC"><span class="nav-number">2.3.</span> <span class="nav-text">ZGC</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">3.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

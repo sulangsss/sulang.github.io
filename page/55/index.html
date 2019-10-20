@@ -284,7 +284,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Middle/middleware/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/10/Python/stdlib/map,reduce/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Middle/middleware/" itemprop="url">Django Middleware</a></h2>
+                <a class="post-title-link" href="/2017/11/10/Python/stdlib/map,reduce/" itemprop="url">map/reduce</a></h2>
         
 
         <div class="post-meta">
@@ -315,8 +315,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
-                2017-10-27
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-10T11:50:50+08:00">
+                2017-11-10
               </time>
             
 
@@ -349,8 +349,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
+                  <a href="/categories/python/stdlib/" itemprop="url" rel="index">
+                    <span itemprop="name">stdlib</span>
                   </a>
                 </span>
 
@@ -388,25 +388,14 @@
       
         
           
-            <h2 id="Middleware是什么？"><a href="#Middleware是什么？" class="headerlink" title="Middleware是什么？"></a>Middleware是什么？</h2><p>Middleware is a framework of hooks into Django’s request/response processing. It’s a light, low-level “plugin” system for globally altering Django’s input or output.</p>
-<h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><p>从浏览器发出一个请求 Request，得到一个响应后的内容 HttpResponse ，这个请求传递到 Django的过程如下：</p>
-<img src="/2017/10/27/Python/Django/Middle/middleware/middleware_processing.svg" title="工作流程">
-<p>process_request 被 process_view 替换</p>
-<p>每一个请求都是先通过中间件中的 process_view 函数，这个函数返回 None 或者 HttpResponse 对象，如果返回前者，继续处理其它中间件，如果返回一个 HttpResponse，就处理中止，返回结果给浏览器。</p>
-<p>process_view: <a href="https://docs.djangoproject.com/en/1.11/topics/http/middleware/#process_view" target="_blank" rel="noopener">https://docs.djangoproject.com/en/1.11/topics/http/middleware/#process_view</a></p>
-<h3 id="自定义Middleware"><a href="#自定义Middleware" class="headerlink" title="自定义Middleware"></a>自定义Middleware</h3><h4 id="开发模式（DEBUG-True）禁用Middleware"><a href="#开发模式（DEBUG-True）禁用Middleware" class="headerlink" title="开发模式（DEBUG=True）禁用Middleware"></a>开发模式（DEBUG=True）禁用Middleware</h4><p>在Middleware class的 <strong>init</strong>() 方法中 raise MiddlewareNotUsed</p>
-<p>Django will then remove that middleware from the middleware process and log a debug message to the django.request logger when DEBUG is True.</p>
-<hr>
-<h4 id="定义方法"><a href="#定义方法" class="headerlink" title="定义方法"></a>定义方法</h4><p>Response类型</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">simple_middleware</span><span class="params">(get_response)</span>:</span></span><br><span class="line">    <span class="comment"># One-time configuration and initialization.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">middleware</span><span class="params">(request)</span>:</span></span><br><span class="line">        <span class="comment"># Code to be executed for each request before</span></span><br><span class="line">        <span class="comment"># the view (and later middleware) are called.</span></span><br><span class="line"></span><br><span class="line">        response = get_response(request)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Code to be executed for each request/response after</span></span><br><span class="line">        <span class="comment"># the view is called.</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> response</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> middleware</span><br></pre></td></tr></table></figure>
-<hr>
-<h4 id="定义类"><a href="#定义类" class="headerlink" title="定义类"></a>定义类</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SimpleMiddleware</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, get_response)</span>:</span></span><br><span class="line">        self.get_response = get_response</span><br><span class="line">        <span class="comment"># One-time configuration and initialization.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="comment"># Code to be executed for each request before</span></span><br><span class="line">        <span class="comment"># the view (and later middleware) are called.</span></span><br><span class="line"></span><br><span class="line">        response = self.get_response(request)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Code to be executed for each request/response after</span></span><br><span class="line">        <span class="comment"># the view is called.</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
-<h4 id="Django-1-10-定义类"><a href="#Django-1-10-定义类" class="headerlink" title="Django 1.10 定义类"></a>Django 1.10 定义类</h4><p>class django.utils.deprecation.MiddlewareMixin</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MiddlewareMixin</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, get_response=None)</span>:</span></span><br><span class="line">        self.get_response = get_response</span><br><span class="line">        super(MiddlewareMixin, self).__init__()</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        response = <span class="keyword">None</span></span><br><span class="line">        <span class="keyword">if</span> hasattr(self, <span class="string">'process_request'</span>):</span><br><span class="line">            response = self.process_request(request)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> response:</span><br><span class="line">            response = self.get_response(request)</span><br><span class="line">        <span class="keyword">if</span> hasattr(self, <span class="string">'process_response'</span>):</span><br><span class="line">            response = self.process_response(request, response)</span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
-<p><strong>call</strong> 方法会先调用 self.process_request(request)，接着执行 self.get_response(request) 然后调用 self.process_response(request, response)</p>
-<p>创建一个Middleware基类，后续Middleware直接继承重写即可</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseMiddleware</span><span class="params">(MiddlewareMixin)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_request</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_response</span><span class="params">(self, request)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_response</span><span class="params">(self, request, response)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
-<hr>
+            <h3 id="map-说明"><a href="#map-说明" class="headerlink" title="map 说明"></a>map 说明</h3><p>map()函数接收两个参数，一个是函数，一个是Iterable，map将传入的函数依次作用到序列的每个元素，并把结果作为新的Iterator返回。</p>
+<h4 id="示例代码1-计算数值"><a href="#示例代码1-计算数值" class="headerlink" title="示例代码1 计算数值"></a>示例代码1 计算数值</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add</span><span class="params">(x)</span>:</span></span><br><span class="line">    <span class="keyword">return</span> x + <span class="number">100</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">num = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]</span><br><span class="line">result = map(add, num)</span><br><span class="line">print(list(result))</span><br></pre></td></tr></table></figure>
+<p>输出结果<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="number">101</span>, <span class="number">102</span>, <span class="number">103</span>]</span><br></pre></td></tr></table></figure></p>
+<h4 id="示例代码2-转换数据类型"><a href="#示例代码2-转换数据类型" class="headerlink" title="示例代码2 转换数据类型"></a>示例代码2 转换数据类型</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">num = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]</span><br><span class="line">result = map(str, num)</span><br><span class="line">print(list(result))</span><br></pre></td></tr></table></figure>
+<p>输出结果<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">['<span class="number">1</span>', '<span class="number">2</span>', '<span class="number">3</span>']</span><br></pre></td></tr></table></figure></p>
+<h3 id="reduce-说明"><a href="#reduce-说明" class="headerlink" title="reduce 说明"></a>reduce 说明</h3><p>reduce把一个函数作用在一个序列[x1, x2, x3, …]上，这个函数必须接收两个参数，reduce把结果继续和序列的下一个元素做累积计算。</p>
+<h4 id="示例代码1-序列求和"><a href="#示例代码1-序列求和" class="headerlink" title="示例代码1 序列求和"></a>示例代码1 序列求和</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">fn</span><span class="params">(x, y)</span>:</span></span><br><span class="line">    <span class="keyword">return</span> x + y</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">num = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]</span><br><span class="line">result = reduce(fn, num)</span><br><span class="line">print(result)</span><br></pre></td></tr></table></figure>
+<p>输出结果<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">6</span></span><br></pre></td></tr></table></figure></p>
 
           
         
@@ -455,7 +444,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Python/Django/Log/log/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/10/Python/lambda/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -474,7 +463,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/27/Python/Django/Log/log/" itemprop="url">Django Log</a></h2>
+                <a class="post-title-link" href="/2017/11/10/Python/lambda/" itemprop="url">lambda</a></h2>
         
 
         <div class="post-meta">
@@ -486,8 +475,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:30:38+08:00">
-                2017-10-27
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-10T11:39:03+08:00">
+                2017-11-10
               </time>
             
 
@@ -516,17 +505,6 @@
 
                 
                 
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
               
             </span>
           
@@ -559,34 +537,7 @@
       
         
           
-            <h2 id="Logging"><a href="#Logging" class="headerlink" title="Logging"></a>Logging</h2><p>Python logging 主要有以下四部分组成:</p>
-<ol>
-<li>Loggers</li>
-<li>Handlers</li>
-<li>Filters</li>
-<li>Formatters</li>
-</ol>
-<h3 id="Loggers"><a href="#Loggers" class="headerlink" title="Loggers"></a>Loggers</h3><p>A logger is the entry point into the logging system. Each logger is a named bucket to which messages can be written for processing.</p>
-<p>log leve: DEBUG -&gt; INFO -&gt; WARNING -&gt; ERROR -&gt; CRITICAL</p>
-<ul>
-<li>DEBUG: Low level system information for debugging purposes</li>
-<li>INFO: General system information</li>
-<li>WARNING: Information describing a minor problem that has occurred.</li>
-<li>ERROR: Information describing a major problem that has occurred.</li>
-<li>CRITICAL: Information describing a critical problem that has occurred.</li>
-</ul>
-<p>message log’level &lt;= logger’level 消息才会被logger接收，logger会把消息传递给Handler进行处理</p>
-<hr>
-<h3 id="Handlers"><a href="#Handlers" class="headerlink" title="Handlers"></a>Handlers</h3><p>The handler is the engine that determines what happens to each message in a logger. It describes a particular logging behavior, such as writing a message to the screen, to a file, or to a network socket.</p>
-<p>同Logger一样，Handler也会检查message log’level，Logger可以有多个Handler，例如，</p>
-<hr>
-<h3 id="Filters"><a href="#Filters" class="headerlink" title="Filters"></a>Filters</h3><p>A filter is used to provide additional control over which log records are passed from logger to handler.</p>
-<p>Filters can be installed on loggers or on handlers; multiple filters can be used in a chain to perform multiple filtering actions.</p>
-<hr>
-<h3 id="Formatters"><a href="#Formatters" class="headerlink" title="Formatters"></a>Formatters</h3><p>Formatters describe the exact format of that text.</p>
-<p>logrecord-attributes：<a href="https://docs.python.org/3/library/logging.html#logrecord-attributes" target="_blank" rel="noopener">https://docs.python.org/3/library/logging.html#logrecord-attributes</a></p>
-<h3 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h3><h4 id="disable-existing-loggers"><a href="#disable-existing-loggers" class="headerlink" title="disable_existing_loggers"></a>disable_existing_loggers</h4><p>If the disable_existing_loggers key in the LOGGING dictConfig is set to True (which is the default) then all loggers from the default configuration will be disabled. Disabled loggers are not the same as removed; the logger will still exist, but will silently discard anything logged to it, not even propagating entries to a parent logger. Thus you should be very careful using ‘disable_existing_loggers’: True; it’s probably not what you want. Instead, you can set disable_existing_loggers to False and redefine some or all of the default loggers; or you can set LOGGING_CONFIG to None and handle logging config yourself.</p>
-
+            
           
         
       
@@ -634,7 +585,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Server/Log/elk/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/10/FrontEnd/Nuxt/primer/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -653,7 +604,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/27/Server/Log/elk/" itemprop="url">ELK日志收集系统</a></h2>
+                <a class="post-title-link" href="/2017/11/10/FrontEnd/Nuxt/primer/" itemprop="url">Nuxt 入门</a></h2>
         
 
         <div class="post-meta">
@@ -665,8 +616,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T15:08:18+08:00">
-                2017-10-27
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-10T01:44:22+08:00">
+                2017-11-10
               </time>
             
 
@@ -688,8 +639,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/" itemprop="url" rel="index">
-                    <span itemprop="name">server</span>
+                  <a href="/categories/frontend/" itemprop="url" rel="index">
+                    <span itemprop="name">frontend</span>
                   </a>
                 </span>
 
@@ -699,8 +650,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/server/elk/" itemprop="url" rel="index">
-                    <span itemprop="name">elk</span>
+                  <a href="/categories/frontend/nuxt/" itemprop="url" rel="index">
+                    <span itemprop="name">nuxt</span>
                   </a>
                 </span>
 
@@ -738,928 +689,32 @@
       
         
           
-            <h2 id="ELK组成"><a href="#ELK组成" class="headerlink" title="ELK组成"></a>ELK组成</h2><p>参考链接：<a href="https://zhuanlan.zhihu.com/p/26399963" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/26399963</a></p>
-<p>ELK架构</p>
-<img src="/2017/10/27/Server/Log/elk/elk_framework.jpe" title="架构">
-<ol>
-<li>Shipper：负责收集各种来源的日志数据，可以是系统日志、文件、redis、mq等等；</li>
-<li>Broker：作为Shipper与中心Indexer之间的缓冲区（redis，kafka，RabbitMQ），主要是为了可以提高系统的性能和可靠性，当Indexer提取数据失败时，数据保存在redis中，而不至于丢失；</li>
-<li>Indexer：负责从Broker中取出数据，对数据进行格式化和相关处理后，输出到Elasticsearch中存储；</li>
-<li>Elasticsearch：一个分布式搜索引擎和分析引擎，用于数据存储，可提供实时的数据查询。</li>
-<li>Kibana：一个数据可视化服务，根据用户的操作从Elasticsearch中查询数据，形成相应的分析结果，以图表的形式展现给用户。</li>
-</ol>
-<h2 id="部署ELK方案"><a href="#部署ELK方案" class="headerlink" title="部署ELK方案"></a>部署ELK方案</h2><img src="/2017/10/27/Server/Log/elk/elk_deploy_step.png">
-<ol>
-<li>在每台生成日志文件的机器上，部署Logstash，作为Shipper的角色，负责从日志文件中提取数据，但是不做任何处理，直接将数据输出到Redis队列(list)中；</li>
-<li>需要一台机器部署Logstash，作为Indexer的角色，负责从Redis中取出数据，对数据进行格式化和相关处理后，输出到Elasticsearch中存储；</li>
-<li>部署Elasticsearch集群，当然取决于你的数据量了，数据量小的话可以使用单台服务，如果做集群的话，最好是有3个以上节点，同时还需要部署相关的监控插件；</li>
-<li>部署Kibana服务，提供Web服务。</li>
-</ol>
-<p>在上面的部署方案中，我们将Logstash分为Shipper和Indexer两种角色来完成不同的工作，中间通过Redis做数据管道。</p>
-<p>为什么要这样做？为什么不是直接在每台机器上使用Logstash提取数据、处理、存入Elasticsearch？采用这样的架构部署，有三点优势：</p>
-<ol>
-<li>降低对日志所在机器的影响，这些机器上一般都部署着反向代理或应用服务，本身负载就很重了，所以尽可能的在这些机器上少做事；</li>
-<li>如果有很多台机器需要做日志收集，那么让每台机器都向Elasticsearch持续写入数据，必然会对Elasticsearch造成压力，因此需要对数据进行缓冲，同时这样的缓冲也可以一定程度的保护数据不丢失；</li>
-<li>将日志数据的格式化与处理放到Indexer中统一做，可以在一处修改代码、部署，避免需要到多台机器上去修改配置。</li>
-</ol>
-<h2 id="docker部署ELK"><a href="#docker部署ELK" class="headerlink" title="docker部署ELK"></a>docker部署ELK</h2><p>参考链接：<a href="https://logz.io/blog/docker-logging/" target="_blank" rel="noopener">https://logz.io/blog/docker-logging/</a></p>
-<p>推荐docker：<a href="https://github.com/deviantony/docker-elk" target="_blank" rel="noopener">https://github.com/deviantony/docker-elk</a></p>
-<p>端口占用情况：</p>
-<ul>
-<li>5000: Logstash TCP input.</li>
-<li>9200: Elasticsearch HTTP</li>
-<li>9300: Elasticsearch TCP transport</li>
-<li>5601: Kibana</li>
-</ul>
-<h3 id="Logspout"><a href="#Logspout" class="headerlink" title="Logspout"></a>Logspout</h3><p>Logspout是Docker流行和轻量级的（15.2MB）日志路由器，它将附加到主机中的所有容器，并将Docker日志流输出到syslog服务器（除非定义了不同的输出目标）。</p>
-<h4 id="Filebeat"><a href="#Filebeat" class="headerlink" title="Filebeat"></a>Filebeat</h4><p>Filebeat属于Elastic的Beats系列日志收集组件， Filebeat是用Go语言开发的，支持追踪特定文件和日志加密的中间组件，它可以配置将日志导出到Logstash或者直接导出到Elasticsearch。</p>
-<p>如果没有额外指定，容器的stdout和stderr输出（也称为“docker logs”）输出到JSON文件。所以，如果是一个小型Docker环境，使用Filebeat来收集日志将是不错的选择。但如果使用其他日志记录驱动程序，则可能需要考虑其他方法。</p>
-<h4 id="Logging-Driver"><a href="#Logging-Driver" class="headerlink" title="Logging Driver"></a>Logging Driver</h4><p>Docker从1.12开始支持Logging Driver，允许将Docker日志路由到指定的第三方日志转发层，可将日志转发到AWS CloudWatch，Fluentd，GELF或NAT服务器。</p>
-<hr>
-<h2 id="docker应用服务器配置"><a href="#docker应用服务器配置" class="headerlink" title="docker应用服务器配置"></a>docker应用服务器配置</h2><h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p>日志格式化，日志输出重定向</p>
-<p>http {} 节点添加如下配置信息：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">log_format main '[$remote_addr, $request, $status, $body_bytes_sent, ' </span><br><span class="line">                    '$http_user_agent, $http_referer, $http_x_forwarded_for, $request_time, '</span><br><span class="line">                    '$upstream_response_time, $http_cookie, $http_Authorization, $http_token]';</span><br><span class="line"></span><br><span class="line">access_log /dev/stdout main;</span><br><span class="line">error_log /dev/stdout;</span><br></pre></td></tr></table></figure></p>
-<p>注意，在Docker中<br>/var/log/nginx/access.log -&gt; /dev/stdout<br>/var/log/nginx/error.log -&gt; /dev/stderr</p>
-<p>为了方便logstash进行分割，建议使用如下格式：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">log_format main '&#123;"@timestamp":"$time_iso8601",'</span><br><span class="line">                 '"host":"$server_addr",'</span><br><span class="line">                 '"clientip":"$remote_addr",'</span><br><span class="line">                 '"size":$body_bytes_sent,'</span><br><span class="line">                 '"responsetime":$request_time,'</span><br><span class="line">                 '"upstreamtime":"$upstream_response_time",'</span><br><span class="line">                 '"upstreamhost":"$upstream_addr",'</span><br><span class="line">                 '"http_host":"$host",'</span><br><span class="line">                 '"url":"$uri",'</span><br><span class="line">                 '"xff":"$http_x_forwarded_for",'</span><br><span class="line">                 '"referer":"$http_referer",'</span><br><span class="line">                 '"agent":"$http_user_agent",'</span><br><span class="line">                 '"status":"$status"&#125;';</span><br></pre></td></tr></table></figure></p>
-<h4 id="Logstash-配置信息"><a href="#Logstash-配置信息" class="headerlink" title="Logstash 配置信息"></a>Logstash 配置信息</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">input &#123;</span><br><span class="line">        udp &#123;</span><br><span class="line">                port =&gt; 5000</span><br><span class="line">                type =&gt; "nginx"</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">## Add your filters / logstash plugins configuration here</span><br><span class="line">output &#123;</span><br><span class="line">        elasticsearch &#123;</span><br><span class="line">        hosts =&gt; ["elasticsearch:9200"]</span><br><span class="line">        index =&gt; "logstash-%&#123;type&#125;-%&#123;+YYYY.MM.dd&#125;"</span><br><span class="line">        document_type =&gt; "%&#123;type&#125;"</span><br><span class="line">        flush_size =&gt; 20000</span><br><span class="line">        idle_flush_time =&gt; 10</span><br><span class="line">        sniffing =&gt; true</span><br><span class="line">        template_overwrite =&gt; true</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注意：这里input默认是使用TCP，现在修改为UDP，则docker-compse.yml需要修改ports为 “port:5000/udp”</p>
-<p><strong>input参数说明</strong></p>
-<p>type</p>
-<ul>
-<li>对应_type</li>
-</ul>
-<p><strong>output参数说明</strong></p>
-<p>flush_size idle_flush_time</p>
-<ul>
-<li>Logstash 会努力攒到 20000 条数据一次性发送出去，但是如果 10 秒钟内也没攒够 20000 条，Logstash 还是会以当前攒到的数据量发一次。</li>
-</ul>
-<p>index</p>
-<ul>
-<li>写入的 ES 索引的名称，这里可以使用变量。为了更贴合日志场景，Logstash 提供了 %{+YYYY.MM.dd} 这种写法。在语法解析的时候，看到以 + 号开头的，就会自动认为后面是时间格式，尝试用时间格式来解析后续字符串。此外，注意索引名中不能有大写字母，否则 ES 在日志中会报 InvalidIndexNameException，但是 Logstash 不会报错，这个错误比较隐晦，也容易掉进这个坑中。</li>
-</ul>
-<p>hosts</p>
-<ul>
-<li>host 可以设置数组，它会从节点列表中选取不同的节点发送数据，达到 Round-Robin 负载均衡的效果。</li>
-</ul>
-<h4 id="Logstas-过滤日志"><a href="#Logstas-过滤日志" class="headerlink" title="Logstas 过滤日志"></a>Logstas 过滤日志</h4><h4 id="Logspout-1"><a href="#Logspout-1" class="headerlink" title="Logspout"></a>Logspout</h4><p>查看收集Logspout收集nginx日志<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://ip:port/logs</span><br></pre></td></tr></table></figure></p>
-<hr>
-<h3 id="docker日志处理"><a href="#docker日志处理" class="headerlink" title="docker日志处理"></a>docker日志处理</h3><p>在部署一个传统的Linux时，应用程序或者架构记录日志的方式通常记录到文件里，一般会记录到/var/log目录下。</p>
-<p>Docker有什么不同呢？不同于以往将所有日志放在主机系统的统一位置，如今日志分散在很多不同容器的相互隔离的环境中。</p>
-<p>典型ELK日志收集流程如下所示：</p>
-<img src="/2017/10/27/Server/Log/elk/elk_process_docker_logs.png" title="处理流程">
-<p>Logstash负责从各种Docker容器和主机中提取日志，这个流程的主要优点是可以更好地用过滤器来解析日志，Logstash将日志转发到Elasticsearch进行索引，Kibana分析和可视化数据。</p>
-<p>这个流程可以有多种不同的实现方式， 例如可以使用不同的日志收集和转发组件, 如Fluentd或Filebeat 将日志发送到Elasticsearch。或者添加一个由Kafka或Redis容器组成的中间层，作为Logstash和Elasticsearch之间的缓冲区。</p>
-<hr>
-<h3 id="docker-compose"><a href="#docker-compose" class="headerlink" title="docker-compose"></a>docker-compose</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/deviantony/docker-elk.git</span><br><span class="line">docker-compose up</span><br></pre></td></tr></table></figure>
-<p>正常情况下, ELK套件的三个服务(Elasticsearch, Logstash, Kibana)会启动成功，默认持久化数据目录 /var/lib/elasticsearch (Elasticsearch 的数据存储目录)</p>
-<p>测试Elasticsearch<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl localhost:9200</span><br></pre></td></tr></table></figure></p>
-<p>返回结果<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span> : <span class="string">"6cU6dcx"</span>,</span><br><span class="line">  <span class="attr">"cluster_name"</span> : <span class="string">"docker-cluster"</span>,</span><br><span class="line">  <span class="attr">"cluster_uuid"</span> : <span class="string">"PGZdqdKdQiKwh67to_2H7g"</span>,</span><br><span class="line">  <span class="attr">"version"</span> : &#123;</span><br><span class="line">    <span class="attr">"number"</span> : <span class="string">"5.6.3"</span>,</span><br><span class="line">    <span class="attr">"build_hash"</span> : <span class="string">"1a2f265"</span>,</span><br><span class="line">    <span class="attr">"build_date"</span> : <span class="string">"2017-10-06T20:33:39.012Z"</span>,</span><br><span class="line">    <span class="attr">"build_snapshot"</span> : <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"lucene_version"</span> : <span class="string">"6.6.1"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"tagline"</span> : <span class="string">"You Know, for Search"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>打开Kibaba web页面 localhost:5601</p>
-<h4 id="Logspout-收集日志"><a href="#Logspout-收集日志" class="headerlink" title="Logspout 收集日志"></a>Logspout 收集日志</h4><p>如果docker服务使用docker-compose管理，则添加如下配置信息<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">logspout:</span><br><span class="line">     image: gliderlabs/logspout:latest</span><br><span class="line">     volumes:</span><br><span class="line">         - /var/run/docker.sock:/var/run/docker.sock</span><br><span class="line">     ports:</span><br><span class="line">         - "10000:80"</span><br><span class="line">     command:</span><br><span class="line">         syslog://Logstash_IP:Logstash_port</span><br></pre></td></tr></table></figure></p>
-<p>查看logsout收集的日志<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://localhost:10000/logs</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/DB/MySQL/Backup/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/27/DB/MySQL/Backup/" itemprop="url">MySQL 备份</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T11:55:07+08:00">
-                2017-10-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/" itemprop="url" rel="index">
-                    <span itemprop="name">DB</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="mysqlpump"><a href="#mysqlpump" class="headerlink" title="mysqlpump"></a>mysqlpump</h2><p>命令参考链接</p>
-<p><a href="http://www.ywnds.com/?p=7272" target="_blank" rel="noopener">http://www.ywnds.com/?p=7272</a><br>官方文档</p>
-<p><a href="https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/mysqlpump.html</a></p>
-<h3 id="备份脚本-1-0"><a href="#备份脚本-1-0" class="headerlink" title="备份脚本 1.0"></a>备份脚本 1.0</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/bin/mysqlpump</span><br><span class="line"><span class="comment"># --databases（-B） 数据库名，多个以“，”间隔;</span></span><br><span class="line"><span class="comment"># --set-charset：备份文件里写SET NAMES default_character_set 到输出，此参默认开启。</span></span><br><span class="line"><span class="comment"># --single-transaction：该参数在事务隔离级别设置成Repeatable Read，并在dump之前发送start transaction 语句给服务端。</span></span><br><span class="line"><span class="comment"># --watch-progress：定期显示进度的完成，包括总数表、行和其他对象。该参数默认开启</span></span><br><span class="line"><span class="comment"># --default-parallelism 指定并行线程数，默认是2，如果设置成0，表示不使用并行备份。</span></span><br><span class="line"><span class="comment"># --exclude-tables=database.table 排除指定表，每次指定一张表，如果需要排除多张表，则使用多次即可</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -databases db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
-<h3 id="服务器centos脚本"><a href="#服务器centos脚本" class="headerlink" title="服务器centos脚本"></a>服务器centos脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">date=`date <span class="string">"+%Y%m%d%H%M%S"</span>`</span><br><span class="line">backup_path=/root/mysql_backup</span><br><span class="line">mysqlbackup=/usr/bin/mysqlpump</span><br><span class="line"><span class="variable">$&#123;mysqlbackup&#125;</span> -uroot -p密码 --single-transaction --compress-output=ZLIB --watch-progress -B db_name &gt; <span class="variable">$&#123;backup_path&#125;</span>/db_name.<span class="variable">$&#123;date&#125;</span>.sql.zlib</span><br></pre></td></tr></table></figure>
-<h3 id="恢复数据库"><a href="#恢复数据库" class="headerlink" title="恢复数据库"></a>恢复数据库</h3><h4 id="Centos7"><a href="#Centos7" class="headerlink" title="Centos7"></a>Centos7</h4><p>解压文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zlib_decompress file.zlip mysql.sql</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/27/Linux/Command/mkpasswd/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/27/Linux/Command/mkpasswd/" itemprop="url">mkpasswd 密码生成</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-27T11:55:07+08:00">
-                2017-10-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/Command/" itemprop="url" rel="index">
-                    <span itemprop="name">Command</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="命令参数"><a href="#命令参数" class="headerlink" title="命令参数"></a>命令参数</h3><p>-l 标志定义口令长度。缺省值为9</p>
-<ul>
-<li>生成一个20位的密码 mkpasswd -l 20</li>
-</ul>
-<p>-c 标志定义口令必须包含的最少小写字母个数。缺省值为2。</p>
-<p>-C 标志定义口令必须包含的最少大写字母个数。缺省值也是2。</p>
-<p>-p 标志标明设立口令的程序。如果/etc/yppasswd存在的话则它为缺省值，否则就用/bin/passwd。</p>
-<h3 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h3><h4 id="建立一个15位包含至少3位数字和5位大写字符的口令"><a href="#建立一个15位包含至少3位数字和5位大写字符的口令" class="headerlink" title="建立一个15位包含至少3位数字和5位大写字符的口令"></a>建立一个15位包含至少3位数字和5位大写字符的口令</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkpasswd -l 15 -d 3 -C 5</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/26/Docker/MySQL/error/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/26/Docker/MySQL/error/" itemprop="url">MySQL Docker Error</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-26T10:23:03+08:00">
-                2017-10-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Docker/" itemprop="url" rel="index">
-                    <span itemprop="name">Docker</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Docker/mysql/" itemprop="url" rel="index">
-                    <span itemprop="name">mysql</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Centos-7-2002-“Can’t-connect-to-local-MySQL-server-through-socket-‘-var-run-mysqld-mysqld-sock’-2-”"><a href="#Centos-7-2002-“Can’t-connect-to-local-MySQL-server-through-socket-‘-var-run-mysqld-mysqld-sock’-2-”" class="headerlink" title="Centos 7 (2002, “Can’t connect to local MySQL server through socket ‘/var/run/mysqld/mysqld.sock’ (2)”)"></a>Centos 7 (2002, “Can’t connect to local MySQL server through socket ‘/var/run/mysqld/mysqld.sock’ (2)”)</h3><p>从错误提示可知，很由可能就是因为程序连接MySQL数据库时，查找不到/var/run/mysqld/mysqld.sock文件</p>
-<p>解决方法：docker增加文件映射 /var/lib/mysql/mysql.sock:/var/run/mysqld/mysqld.sock</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/25/Python/Django/RestFramework/permission/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/25/Python/Django/RestFramework/permission/" itemprop="url">Django Rest Permission</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-25T20:13:03+08:00">
-                2017-10-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/rest/" itemprop="url" rel="index">
-                    <span itemprop="name">rest</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="API-Permission"><a href="#API-Permission" class="headerlink" title="API Permission"></a>API Permission</h3><h4 id="示例代码1：CRUD权限"><a href="#示例代码1：CRUD权限" class="headerlink" title="示例代码1：CRUD权限"></a>示例代码1：CRUD权限</h4><p>创建API权限管理类</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasePerms</span><span class="params">(BasePermission)</span>:</span></span><br><span class="line">    <span class="comment"># API require permissions</span></span><br><span class="line">    api_perms = []</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">check_user_perms</span><span class="params">(user, perms)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> user <span class="keyword">and</span> perms <span class="keyword">and</span> isinstance(perms, list):</span><br><span class="line">            <span class="keyword">return</span> user.has_perms(perms)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">check_user_perm</span><span class="params">(user, codename)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> user <span class="keyword">and</span> codename:</span><br><span class="line">            <span class="keyword">return</span> user.has_perm(codename)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseModelAPIPerms</span><span class="params">(BasePerms)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">has_permission</span><span class="params">(self, request, view)</span>:</span></span><br><span class="line">        <span class="comment"># is_superuser 超级权限</span></span><br><span class="line">        <span class="keyword">if</span> request.user.is_superuser:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line"></span><br><span class="line">        codename = self.get_codename(request, view)</span><br><span class="line">        <span class="keyword">return</span> self.check_user_perm(request.user, codename)</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_codename</span><span class="params">(request, view)</span>:</span></span><br><span class="line">        req_method = request.method</span><br><span class="line">        serializer_class = view.serializer_class</span><br><span class="line">        codename = <span class="string">''</span></span><br><span class="line">        <span class="keyword">if</span> serializer_class:</span><br><span class="line">            meta = serializer_class.Meta</span><br><span class="line">            <span class="keyword">if</span> meta:</span><br><span class="line">                model = meta.model</span><br><span class="line">                <span class="keyword">if</span> model:</span><br><span class="line">                    model_attr = getattr(model, <span class="string">'_meta'</span>)</span><br><span class="line">                    codename = <span class="string">"%s.&#123;&#125;_%s"</span> % (getattr(model_attr, <span class="string">'app_label'</span>, <span class="string">''</span>),</span><br><span class="line">                                             getattr(model_attr, <span class="string">'model_name'</span>, <span class="string">''</span>))</span><br><span class="line">                    <span class="keyword">if</span> req_method == <span class="string">'GET'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"access"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'POST'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"add"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'PUT'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"change"</span>)</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">elif</span> req_method == <span class="string">'DELETE'</span>:</span><br><span class="line">                        <span class="keyword">return</span> codename.format(<span class="string">"delete"</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> codename</span><br></pre></td></tr></table></figure>
-<p>API使用权限管理类</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ProjectViewSet</span><span class="params">(CreateProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     RetrieveProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     UpdateProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     DestroyProjectMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">                     ProjectListPermission,</span></span></span><br><span class="line"><span class="class"><span class="params">                     BaseModelApi)</span>):</span></span><br><span class="line">    permission_classes = [IsAuthenticated, ProjectAPIPerm]</span><br><span class="line">    serializer_class = ProjectWithAttrSerializer</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_class</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">            返回Class对象</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="keyword">return</span> Project</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/25/Python/Django/Authentication/authentication-system/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/25/Python/Django/Authentication/authentication-system/" itemprop="url">Django Authentication System</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-25T08:13:03+08:00">
-                2017-10-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/authentication/" itemprop="url" rel="index">
-                    <span itemprop="name">authentication</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="User"><a href="#User" class="headerlink" title="User"></a>User</h2><h3 id="默认属性"><a href="#默认属性" class="headerlink" title="默认属性"></a>默认属性</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">username</span><br><span class="line">password</span><br><span class="line">email</span><br><span class="line">first_name</span><br><span class="line">last_name</span><br></pre></td></tr></table></figure>
-<h3 id="Diagram"><a href="#Diagram" class="headerlink" title="Diagram"></a>Diagram</h3><img src="/2017/10/25/Python/Django/Authentication/authentication-system/django_user_diagram.png" title="User UML">
-<h3 id="所属方法"><a href="#所属方法" class="headerlink" title="所属方法"></a>所属方法</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">is_anonymous()：</span><br><span class="line">　　　　永远返回<span class="keyword">False</span>.用来将User对象和AnonymousUser(未登录的匿名用户)对象作区分用的识别方法。通常，最好用</span><br><span class="line">is_authenticated()方法。</span><br><span class="line"></span><br><span class="line">　　is_authenticated()：</span><br><span class="line">　　　　永远返回<span class="keyword">True</span>。该方法不代表该用户有任何的许可，也不代表该用户是active的，而只是表明该用户提供了正确的username和password。</span><br><span class="line"></span><br><span class="line">　　get_full_name()：</span><br><span class="line">　　　　返回一个字符串，是first_name和last_name中间加一个空格组成。</span><br><span class="line"></span><br><span class="line">　　set_password(raw_password)：</span><br><span class="line">　　　　调用该方法时候传入一个明文密码，该方法会进行hash转换。该方法调用之后并不会保存User对象。</span><br><span class="line"></span><br><span class="line">　　check_password(raw_password)：</span><br><span class="line">　　　　如果传入的明文密码是正确的返回<span class="keyword">True</span>。该方法和set_password是一对，也会考虑hash转换。</span><br><span class="line"></span><br><span class="line">　　set_unusable_password()：</span><br><span class="line">　　　　将用户设置为没有密码的状态。调用该方法后，check_password()方法将会永远返回false。但是如果，调用set_password()方法重新设置密码后，该方法将会失效，has_usable_password()也会返回<span class="keyword">True</span>。</span><br><span class="line"></span><br><span class="line">　　has_usable_password()：</span><br><span class="line">　　　　在调用set_unusable_password()方法之后，该方法返回<span class="keyword">False</span>，正常情况下返回<span class="keyword">True</span>。</span><br><span class="line"></span><br><span class="line">　　get_group_permissions(obj=<span class="keyword">None</span>)：</span><br><span class="line">　　　　返回该用户通过组所拥有的许可（字符串列表每一个代表一个许可）。obj如果指定，将会返回关于该对象的许可，而不是模型。</span><br><span class="line"></span><br><span class="line">　　get_all_permissions(obj=<span class="keyword">None</span>):</span><br><span class="line">　　　　返回该用户所拥有的所有的许可，包括通过组的和通过用户赋予的许可。</span><br><span class="line"></span><br><span class="line">　　has_perm(perm,obj=<span class="keyword">None</span>)：</span><br><span class="line">　　　　如果用户有传入的perm，则返回<span class="keyword">True</span>。perm可以是一个格式为：<span class="string">'&lt;app label&gt;.&lt;permission codename&gt;'</span>的字符串。如果User对象为inactive，该方法永远返回<span class="keyword">False</span>。和前面一样，如果传入obj，则判断该用户对于这个对象是否有这个许可。</span><br><span class="line"></span><br><span class="line">　　has_perms(perm_list,obj=<span class="keyword">None</span>)：</span><br><span class="line">　　　　和has_perm一样，不同的地方是第一个参数是一个perm列表，只有用户拥有传入的每一个perm，返回值才是<span class="keyword">True</span>。</span><br><span class="line"></span><br><span class="line">　　has_module_perms(package_name)：</span><br><span class="line">　　　　传入的是Django app label，按照<span class="string">'&lt;app label&gt;.&lt;permission codename&gt;'</span>格式。当用户拥有该app label下面所有的perm时，返回值为<span class="keyword">True</span>。如果用户为inactive，返回值永远为<span class="keyword">False</span>。</span><br><span class="line"></span><br><span class="line">　　email_user(subject,message,from_email=<span class="keyword">None</span>)：</span><br><span class="line">　　　　发送一封邮件给这个用户，依靠的当然是该用户的email属性。如果from_email不提供的话，Django会使用settings中的DEFAULT_FROM_EMAIL发送。</span><br><span class="line"></span><br><span class="line">　　get_profile()：</span><br><span class="line">　　　　返回一个和Site相关的profile对象，用来存储额外的用户信息。这个返回值会在另一片博文中详细描述。</span><br></pre></td></tr></table></figure>
-<h3 id="创建管理员用户"><a href="#创建管理员用户" class="headerlink" title="创建管理员用户"></a>创建管理员用户</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py createsuperuser --username=joe --email=joe@example.com</span><br></pre></td></tr></table></figure>
-<h3 id="修改User-Ojbect的密码"><a href="#修改User-Ojbect的密码" class="headerlink" title="修改User Ojbect的密码"></a>修改User Ojbect的密码</h3><p>方式一：代码<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">u = User.objects.get(username=<span class="string">'john'</span>)</span><br><span class="line">u.set_password(<span class="string">'new password'</span>)</span><br><span class="line">u.save()</span><br></pre></td></tr></table></figure></p>
-<p>方式二：后台管理</p>
-<p>登陆自带的后台管理系统修改用户密码</p>
-<p><strong>注意：用户修改密码后，根据自己系统的设计，可能需要更新session，否则可能会遇到Session invalidation on password change</strong></p>
-<h3 id="验证用户"><a href="#验证用户" class="headerlink" title="验证用户"></a>验证用户</h3><h4 id="默认验证用户方法"><a href="#默认验证用户方法" class="headerlink" title="默认验证用户方法"></a>默认验证用户方法</h4><p>django.contrib.auth.backends.ModelBackend</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.contrib.auth <span class="keyword">import</span> authenticate</span><br><span class="line">user = authenticate(username=<span class="string">'john'</span>, password=<span class="string">'secret'</span>)</span><br><span class="line"><span class="keyword">if</span> user <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">    <span class="comment"># A backend authenticated the credentials</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    <span class="comment"># No backend authenticated the credentials</span></span><br></pre></td></tr></table></figure>
-<p>如果验证不通过，系统抛出PermissionDenied异常</p>
-<hr>
-<h4 id="自定义验证"><a href="#自定义验证" class="headerlink" title="自定义验证"></a>自定义验证</h4><hr>
-<h2 id="Permissions-and-Authorization"><a href="#Permissions-and-Authorization" class="headerlink" title="Permissions and Authorization"></a>Permissions and Authorization</h2><h3 id="用户权限类型"><a href="#用户权限类型" class="headerlink" title="用户权限类型"></a>用户权限类型</h3><ol>
-<li><p>Access to view the “add” form and <strong>add an object</strong> is limited to users with the <strong>“add” permission</strong> for that type of object.</p>
+            <h3 id="创建项目"><a href="#创建项目" class="headerlink" title="创建项目"></a>创建项目</h3><ol>
+<li><p>依赖安装</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm install -g cnpm --registry=https://registry.npm.taobao.org</span><br><span class="line"></span><br><span class="line">cnpm install -g vue-cli</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>Access to view the change list, view the “change” form and <strong>change an object</strong> is limited to users with the <strong>“change” permission</strong> for that type of object.</p>
+<li><p>创建项目模板</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vue init nuxt-community/starter-template project_name</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>Access to <strong>delete an object</strong> is limited to users with the <strong>“delete” permission</strong> for that type of object.</p>
+<li><p>运行项目</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm run dev</span><br></pre></td></tr></table></figure>
 </li>
 </ol>
-<p>Permissions can be set not only per type of object, but also per specific object instance. </p>
-<p>By using the <strong>has_add_permission()</strong>, <strong>has_change_permission()</strong> and <strong>has_delete_permission()</strong> methods provided by the ModelAdmin class, it is possible to customize permissions for different object instances of the same type.</p>
-<h3 id="User-Fields"><a href="#User-Fields" class="headerlink" title="User Fields"></a>User Fields</h3><p>User objects have two many-to-many fields: <strong>groups and user_permissions</strong>.</p>
-<p>访问这两个属性字段的方法如下:</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">myuser.groups.set([group_list])</span><br><span class="line">myuser.groups.add(group, group, ...)</span><br><span class="line">myuser.groups.remove(group, group, ...)</span><br><span class="line">myuser.groups.clear()</span><br><span class="line"></span><br><span class="line">myuser.user_permissions.set([permission_list])</span><br><span class="line">myuser.user_permissions.add(permission, permission, ...)</span><br><span class="line">myuser.user_permissions.remove(permission, permission, ...)</span><br><span class="line">myuser.user_permissions.clear()</span><br></pre></td></tr></table></figure>
-<h3 id="默认权限列表"><a href="#默认权限列表" class="headerlink" title="默认权限列表"></a>默认权限列表</h3><p>当在setting.py的INSTALLED_APPS添加django.contrib.auth时，执行命令**python manager.py migrate后，系统将为每个Model默认生成3种权限：add，change and delete。</p>
-
-<p><strong>注：python manager.py migrate，创建Model权限列表时，会发出 post_migrate 信号。</strong></p>
-<hr>
-<h2 id="Groups"><a href="#Groups" class="headerlink" title="Groups"></a>Groups</h2><p>django.contrib.auth.models.Group models are a generic way of categorizing users so you can apply permissions, or some other label, to those users. </p>
-<p>A user can belong to any number of groups.</p>
-<h3 id="用户的Group权限"><a href="#用户的Group权限" class="headerlink" title="用户的Group权限"></a>用户的Group权限</h3><p>A user in a group automatically has the permissions granted to that group. For example, if the group Site editors has the permission can_edit_home_page, any user in that group will have that permission.</p>
-<p>简单来说，隶属用户组的用户，自然拥有该用户组所拥有的权限。</p>
-<hr>
-<h2 id="Model"><a href="#Model" class="headerlink" title="Model"></a>Model</h2><h3 id="自定义权限"><a href="#自定义权限" class="headerlink" title="自定义权限"></a>自定义权限</h3><p>To create custom permissions for a given model object, use the permissions model Meta attribute.</p>
-<h4 id="示例代码1-Meta"><a href="#示例代码1-Meta" class="headerlink" title="示例代码1 Meta"></a>示例代码1 Meta</h4><p>在Task自带的权限外，添加额外的权限属性</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Task</span><span class="params">(models.Model)</span>:</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Meta</span>:</span></span><br><span class="line">        permissions = (</span><br><span class="line">            (<span class="string">"view_task"</span>, <span class="string">"Can see available tasks"</span>),</span><br><span class="line">            (<span class="string">"change_task_status"</span>, <span class="string">"Can change the status of tasks"</span>),</span><br><span class="line">            (<span class="string">"close_task"</span>, <span class="string">"Can remove a task by setting its status as closed"</span>),</span><br><span class="line">        )</span><br></pre></td></tr></table></figure>
-<p>检查用户权限代码</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># codename 查看数据库auth_permission表</span></span><br><span class="line">user.has_perm(<span class="string">'&lt;app label&gt;.&lt;permission codename&gt;'</span>)</span><br></pre></td></tr></table></figure>
-<h4 id="示例代码2-program"><a href="#示例代码2-program" class="headerlink" title="示例代码2 program"></a>示例代码2 program</h4><p>创建一个permission权限属性对象，然后使用 user/group 对象添加这个权限属性对象。</p>
-<p>create the can_publish permission for a BlogPost model in myapp:</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> myapp.models <span class="keyword">import</span> BlogPost</span><br><span class="line"><span class="keyword">from</span> django.contrib.auth.models <span class="keyword">import</span> Permission</span><br><span class="line"><span class="keyword">from</span> django.contrib.contenttypes.models <span class="keyword">import</span> ContentType</span><br><span class="line"></span><br><span class="line">content_type = ContentType.objects.get_for_model(BlogPost)</span><br><span class="line">permission = Permission.objects.create(</span><br><span class="line">    codename=<span class="string">'can_publish'</span>,</span><br><span class="line">    name=<span class="string">'Can Publish Posts'</span>,</span><br><span class="line">    content_type=content_type,</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-<p>The permission can then be assigned to a User via its user_permissions attribute or to a Group via its permissions attribute.</p>
+<h3 id="集成element-ui"><a href="#集成element-ui" class="headerlink" title="集成element-ui"></a>集成element-ui</h3><ol>
+<li><p>安装Elemen-UI</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cnpm  install element-ui --save</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>nuxt.config.js 完整配置</p>
+</li>
+</ol>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">module</span>.exports = &#123;</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  ** Global CSS</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  css: [</span><br><span class="line">    <span class="string">'element-ui/lib/theme-default/index.css'</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  ** Add element-ui in our app, see plugins/element-ui.js file</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  plugins: [</span><br><span class="line">    <span class="string">'@/plugins/element-ui'</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  ** Headers of the page</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  head: &#123;</span><br><span class="line">    title: <span class="string">'designer'</span>,</span><br><span class="line">    meta: [</span><br><span class="line">      &#123;<span class="attr">charset</span>: <span class="string">'utf-8'</span>&#125;,</span><br><span class="line">      &#123;<span class="attr">name</span>: <span class="string">'viewport'</span>, <span class="attr">content</span>: <span class="string">'width=device-width, initial-scale=1'</span>&#125;,</span><br><span class="line">      &#123;<span class="attr">hid</span>: <span class="string">'description'</span>, <span class="attr">name</span>: <span class="string">'description'</span>, <span class="attr">content</span>: <span class="string">'Nuxt.js project'</span>&#125;</span><br><span class="line">    ],</span><br><span class="line">    link: [</span><br><span class="line">      &#123;<span class="attr">rel</span>: <span class="string">'icon'</span>, <span class="attr">type</span>: <span class="string">'image/x-icon'</span>, <span class="attr">href</span>: <span class="string">'/favicon.ico'</span>&#125;</span><br><span class="line">    ]</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  ** Customize the progress bar color</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  loading: &#123;<span class="attr">color</span>: <span class="string">'#3B8070'</span>&#125;,</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  ** Build configuration</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  build: &#123;</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    ** Run ESLint on save</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    extend (config, ctx) &#123;</span><br><span class="line">      <span class="keyword">if</span> (ctx.dev &amp;&amp; ctx.isClient) &#123;</span><br><span class="line">        config.module.rules.push(&#123;</span><br><span class="line">          enforce: <span class="string">'pre'</span>,</span><br><span class="line">          test: <span class="regexp">/\.(js|vue)$/</span>,</span><br><span class="line">          loader: <span class="string">'eslint-loader'</span>,</span><br><span class="line">          exclude: <span class="regexp">/(node_modules)/</span></span><br><span class="line">        &#125;)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li><p>package.json 完整配置</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span>: <span class="string">"designer"</span>,</span><br><span class="line">  <span class="attr">"version"</span>: <span class="string">"1.0.0"</span>,</span><br><span class="line">  <span class="attr">"description"</span>: <span class="string">"Nuxt.js project"</span>,</span><br><span class="line">  <span class="attr">"author"</span>: <span class="string">"sulang &lt;sulang357159@163.com&gt;"</span>,</span><br><span class="line">  <span class="attr">"private"</span>: <span class="literal">true</span>,</span><br><span class="line">  <span class="attr">"scripts"</span>: &#123;</span><br><span class="line">    <span class="attr">"dev"</span>: <span class="string">"nuxt"</span>,</span><br><span class="line">    <span class="attr">"build"</span>: <span class="string">"nuxt build"</span>,</span><br><span class="line">    <span class="attr">"start"</span>: <span class="string">"nuxt start"</span>,</span><br><span class="line">    <span class="attr">"generate"</span>: <span class="string">"nuxt generate"</span>,</span><br><span class="line">    <span class="attr">"lint"</span>: <span class="string">"eslint --ext .js,.vue --ignore-path .gitignore ."</span>,</span><br><span class="line">    <span class="attr">"precommit"</span>: <span class="string">"npm run lint"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"dependencies"</span>: &#123;</span><br><span class="line">    <span class="attr">"element-ui"</span>: <span class="string">"^1.4.10"</span>,</span><br><span class="line">    <span class="attr">"nuxt"</span>: <span class="string">"^1.0.0-rc11"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">"devDependencies"</span>: &#123;</span><br><span class="line">    <span class="attr">"node-sass"</span>: <span class="string">"^4.6.0"</span>,</span><br><span class="line">    <span class="attr">"sass-loader"</span>: <span class="string">"^6.0.6"</span>,</span><br><span class="line">    <span class="attr">"babel-eslint"</span>: <span class="string">"^7.2.3"</span>,</span><br><span class="line">    <span class="attr">"eslint"</span>: <span class="string">"^4.3.0"</span>,</span><br><span class="line">    <span class="attr">"eslint-config-standard"</span>: <span class="string">"^10.2.1"</span>,</span><br><span class="line">    <span class="attr">"eslint-loader"</span>: <span class="string">"^1.9.0"</span>,</span><br><span class="line">    <span class="attr">"eslint-plugin-html"</span>: <span class="string">"^3.1.1"</span>,</span><br><span class="line">    <span class="attr">"eslint-plugin-import"</span>: <span class="string">"^2.7.0"</span>,</span><br><span class="line">    <span class="attr">"eslint-plugin-node"</span>: <span class="string">"^5.1.1"</span>,</span><br><span class="line">    <span class="attr">"eslint-plugin-promise"</span>: <span class="string">"^3.5.0"</span>,</span><br><span class="line">    <span class="attr">"eslint-plugin-standard"</span>: <span class="string">"^3.0.1"</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>跟目录创建plugins目录，添加element-ui.js，内容如下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> Vue <span class="keyword">from</span> <span class="string">'vue'</span></span><br><span class="line"><span class="keyword">import</span> Element <span class="keyword">from</span> <span class="string">'element-ui/lib/element-ui.common'</span></span><br><span class="line"><span class="keyword">import</span> locale <span class="keyword">from</span> <span class="string">'element-ui/lib/locale/lang/en'</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> () =&gt; &#123;</span><br><span class="line">  Vue.use(Element, &#123; locale &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
 
           
         
@@ -1708,7 +763,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/25/Python/Django/Authentication/session/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/09/Python/stdlib/random/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1727,7 +782,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/25/Python/Django/Authentication/session/" itemprop="url">Django Session</a></h2>
+                <a class="post-title-link" href="/2017/11/09/Python/stdlib/random/" itemprop="url">random</a></h2>
         
 
         <div class="post-meta">
@@ -1739,8 +794,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-25T07:10:03+08:00">
-                2017-10-25
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-09T11:25:37+08:00">
+                2017-11-09
               </time>
             
 
@@ -1773,19 +828,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/django/authentication/" itemprop="url" rel="index">
-                    <span itemprop="name">authentication</span>
+                  <a href="/categories/python/stdlib/" itemprop="url" rel="index">
+                    <span itemprop="name">stdlib</span>
                   </a>
                 </span>
 
@@ -1823,7 +867,499 @@
       
         
           
-            <h3 id="启用-禁止Session"><a href="#启用-禁止Session" class="headerlink" title="启用/禁止Session"></a>启用/禁止Session</h3><h4 id="禁用Session"><a href="#禁用Session" class="headerlink" title="禁用Session"></a>禁用Session</h4><p>you might as well remove the SessionMiddleware line from MIDDLEWARE and ‘django.contrib.sessions’ from your INSTALLED_APPS. </p>
+            <h4 id="获取范围随机数"><a href="#获取范围随机数" class="headerlink" title="获取范围随机数"></a>获取范围随机数</h4><p>获取 [0,10] 范围的随机数<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">random.randint(<span class="number">0</span>, <span class="number">10</span>)</span><br></pre></td></tr></table></figure></p>
+<h4 id="获取指定长度数字"><a href="#获取指定长度数字" class="headerlink" title="获取指定长度数字"></a>获取指定长度数字</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_random_num</span><span class="params">(**kwargs)</span>:</span></span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">        获取指定长度的随机数字</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> kwargs:</span><br><span class="line">        <span class="keyword">return</span> <span class="string">'0'</span></span><br><span class="line">    <span class="keyword">if</span> <span class="string">'length'</span> <span class="keyword">in</span> kwargs <span class="keyword">and</span> kwargs[<span class="string">'length'</span>]:</span><br><span class="line">        length = int(kwargs[<span class="string">'length'</span>])</span><br><span class="line">        <span class="keyword">if</span> length &lt;= <span class="number">0</span> <span class="keyword">or</span> length &gt; <span class="number">50</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">'0'</span></span><br><span class="line">        range_start = <span class="number">10</span> ** (length - <span class="number">1</span>)</span><br><span class="line">        range_end = (<span class="number">10</span> ** length) - <span class="number">1</span></span><br><span class="line">        <span class="keyword">return</span> str(random.randint(range_start, range_end))</span><br><span class="line">    <span class="keyword">if</span> <span class="string">'start'</span> <span class="keyword">in</span> kwargs <span class="keyword">and</span> <span class="string">'end'</span> <span class="keyword">in</span> kwargs:</span><br><span class="line">        <span class="keyword">if</span> kwargs[<span class="string">'start'</span>] <span class="keyword">and</span> kwargs[<span class="string">'end'</span>]:</span><br><span class="line">            <span class="keyword">return</span> random.randint(int(kwargs[<span class="string">'start'</span>]), int(kwargs[<span class="string">'end'</span>]))</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'0'</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">''</span>.join(random.choices(string.ascii_uppercase + string.digits, k=<span class="number">6</span>))</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/09/DB/SQL/delete/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/09/DB/SQL/delete/" itemprop="url">SQL delete</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-09T11:13:44+08:00">
+                2017-11-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/" itemprop="url" rel="index">
+                    <span itemprop="name">Database</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/SQL/" itemprop="url" rel="index">
+                    <span itemprop="name">SQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="DELETE"><a href="#DELETE" class="headerlink" title="DELETE"></a>DELETE</h3><p>DELETE 语句用于删除表中的记录。</p>
+<p>语法格式</p>
+<ul>
+<li>无需指定要插入数据的列名，只需提供被插入的值即可<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DELETE</span> <span class="keyword">FROM</span> table_name</span><br><span class="line"><span class="keyword">WHERE</span> some_column=some_value;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><strong>特别注意：WHERE 子句规定哪条记录或者哪些记录需要删除。如果您省略了 WHERE 子句，所有的记录都将被删除！</strong></p>
+<h3 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h3><h4 id="删除一条数据"><a href="#删除一条数据" class="headerlink" title="删除一条数据"></a>删除一条数据</h4><img src="/2017/11/09/DB/SQL/delete/project_table_column.png">
+<p>删除指定数据</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DELETE</span> <span class="keyword">FROM</span> iat.interfaces_project</span><br><span class="line"><span class="keyword">WHERE</span> <span class="keyword">name</span>=<span class="string">"new Testing"</span>;</span><br></pre></td></tr></table></figure>
+<h4 id="删除Table的Column"><a href="#删除Table的Column" class="headerlink" title="删除Table的Column"></a>删除Table的Column</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> tablename <span class="keyword">DROP</span> <span class="keyword">COLUMN</span> col_name ;</span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/09/DB/SQL/update/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/09/DB/SQL/update/" itemprop="url">SQL update</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-09T11:08:44+08:00">
+                2017-11-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/" itemprop="url" rel="index">
+                    <span itemprop="name">Database</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/SQL/" itemprop="url" rel="index">
+                    <span itemprop="name">SQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="UPDATE"><a href="#UPDATE" class="headerlink" title="UPDATE"></a>UPDATE</h3><p>UPDATE 语句用于更新表中已存在的记录。</p>
+<p>语法格式</p>
+<ul>
+<li>无需指定要插入数据的列名，只需提供被插入的值即可<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> table_name</span><br><span class="line"><span class="keyword">SET</span> column1=value1,column2=value2,...</span><br><span class="line"><span class="keyword">WHERE</span> some_column=some_value;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><strong>特别注意：WHERE 子句规定哪条记录或者哪些记录需要更新。如果您省略了 WHERE 子句，所有的记录都将被更新！</strong></p>
+<h3 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h3><h4 id="插入一条数据"><a href="#插入一条数据" class="headerlink" title="插入一条数据"></a>插入一条数据</h4><img src="/2017/11/09/DB/SQL/update/project_table_column.png">
+<p>修改一条项目的name字段</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> iat.interfaces_project</span><br><span class="line"><span class="keyword">SET</span> <span class="keyword">name</span>=<span class="string">"new Testing"</span></span><br><span class="line"><span class="keyword">WHERE</span> <span class="keyword">name</span>=<span class="string">"Testing"</span>;</span><br></pre></td></tr></table></figure>
+<h4 id="replace-null-with-empty-string"><a href="#replace-null-with-empty-string" class="headerlink" title="replace null with empty string"></a>replace null with empty string</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> tablename <span class="keyword">SET</span> fieldname = <span class="string">''</span> <span class="keyword">where</span> fieldname <span class="keyword">is</span> <span class="literal">NULL</span></span><br></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/09/DB/SQL/insert/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/09/DB/SQL/insert/" itemprop="url">SQL insert</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-09T10:35:44+08:00">
+                2017-11-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/" itemprop="url" rel="index">
+                    <span itemprop="name">Database</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Database/SQL/" itemprop="url" rel="index">
+                    <span itemprop="name">SQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="INSERT"><a href="#INSERT" class="headerlink" title="INSERT"></a>INSERT</h3><p>INSERT INTO 语句用于向表中插入新记录。</p>
+<p>语法格式（两种格式）</p>
+<ul>
+<li><p>无需指定要插入数据的列名，只需提供被插入的值即可</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> table_name</span><br><span class="line"><span class="keyword">VALUES</span> (value1,value2,value3,...);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>需要指定列名及被插入的值</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> table_name (column1,column2,column3,...)</span><br><span class="line"><span class="keyword">VALUES</span> (value1,value2,value3,...);</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="使用举例"><a href="#使用举例" class="headerlink" title="使用举例"></a>使用举例</h3><h4 id="插入一条数据"><a href="#插入一条数据" class="headerlink" title="插入一条数据"></a>插入一条数据</h4><img src="/2017/11/09/DB/SQL/insert/project_table_column.png">
+<p>插入一条项目数据</p>
+<p>第一种方式，在没有指定要插入数据的列名时，需要列出插入行的每一列数据，这里的id列值插入为0<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># INSERT INTO iat.interfaces_project VALUES(0, 0, 0, "Testing", "2017-04-20 10:49:05", "2017-04-20 10:49:05", "");</span><br><span class="line"><span class="keyword">INSERT</span> iat.interfaces_project </span><br><span class="line"><span class="keyword">VALUES</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="string">"Testing"</span>, <span class="string">"2017-04-20 10:49:05"</span>, <span class="string">"2017-04-20 10:49:05"</span>, <span class="string">""</span>);</span><br></pre></td></tr></table></figure></p>
+<p>第二种方式<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> iat.interfaces_project (created_user_id, template_id, <span class="keyword">name</span>, created_date, updated_date, tags)</span><br><span class="line"><span class="keyword">VALUES</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="string">"Testing"</span>, <span class="string">"2017-04-20 10:49:05"</span>, <span class="string">"2017-04-20 10:49:05"</span>, <span class="string">""</span>);</span><br></pre></td></tr></table></figure></p>
+<p>注：这里的INTO可以省略。</p>
 
           
         
@@ -1872,7 +1408,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/10/24/Linux/Tools/hexo-ci/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/08/Network/BBR/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1891,7 +1427,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/24/Linux/Tools/hexo-ci/" itemprop="url">防SSH暴力破解工具</a></h2>
+                <a class="post-title-link" href="/2017/11/08/Network/BBR/" itemprop="url">Google BBR</a></h2>
         
 
         <div class="post-meta">
@@ -1903,8 +1439,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-24T17:03:27+08:00">
-                2017-10-24
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-08T12:33:18+08:00">
+                2017-11-08
               </time>
             
 
@@ -1926,8 +1462,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
                   </a>
                 </span>
 
@@ -1937,8 +1473,8 @@
                 
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/tools/" itemprop="url" rel="index">
-                    <span itemprop="name">tools</span>
+                  <a href="/categories/Server/Network/" itemprop="url" rel="index">
+                    <span itemprop="name">Network</span>
                   </a>
                 </span>
 
@@ -1976,17 +1512,432 @@
       
         
           
-            <h3 id="SSH暴力破解"><a href="#SSH暴力破解" class="headerlink" title="SSH暴力破解"></a>SSH暴力破解</h3><p>对于SSH服务的常见的攻击就是暴力破解攻击——远程攻击者通过不同的密码来无限次地进行登录尝试。</p>
-<p>当然SSH可以设置使用非密码验证验证方式来对抗这种攻击，例如公钥验证或者双重验证。</p>
-<p>将不同的验证方法的优劣处先放在一边，如果我们必须使用密码验证方式怎么办？你是如何保护你的 SSH 服务器免遭暴力破解攻击的呢？</p>
-<h3 id="fail2ban"><a href="#fail2ban" class="headerlink" title="fail2ban"></a>fail2ban</h3><p>fail2ban 是 Linux 上的一个著名的入侵保护的开源框架，它会监控多个系统的日志文件（例如：/var/log/auth.log 或者 /var/log/secure）并根据检测到的任何可疑的行为自动触发不同的防御动作。</p>
-<p>事实上，fail2ban 在防御对SSH服务器的暴力密码破解上非常有用。</p>
-<h3 id="Centos安装配置fail2ban"><a href="#Centos安装配置fail2ban" class="headerlink" title="Centos安装配置fail2ban"></a>Centos安装配置fail2ban</h3><h4 id="安装fail2ban，前提是已经添加EPEL仓库"><a href="#安装fail2ban，前提是已经添加EPEL仓库" class="headerlink" title="安装fail2ban，前提是已经添加EPEL仓库"></a>安装fail2ban，前提是已经添加EPEL仓库</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install fail2ban</span><br></pre></td></tr></table></figure>
-<h4 id="SSH服务器配置"><a href="#SSH服务器配置" class="headerlink" title="SSH服务器配置"></a>SSH服务器配置</h4><p>编辑其配置文件 /etc/fail2ban/jail.conf</p>
-<p>在配置文件的“[DEFAULT]”区，你可以在此定义所有受监控的服务的默认参数，另外在特定服务的配置部分，你可以为每个服务（例如SSH，Apache等）设置特定的配置来覆盖默认的参数配置。</p>
-<p>PortSentry 保护云主机禁止被恶意扫描</p>
-<p>参考链接：<a href="https://linux.cn/article-5067-1.html" target="_blank" rel="noopener">https://linux.cn/article-5067-1.html</a></p>
+            <h3 id="TCP-BBR-解决什么问题？"><a href="#TCP-BBR-解决什么问题？" class="headerlink" title="TCP BBR 解决什么问题？"></a>TCP BBR 解决什么问题？</h3><ol>
+<li><p>在有一定丢包率的网络链路上充分利用带宽。</p>
+</li>
+<li><p>降低网络链路上的buffer占用率，从而降低延迟。</p>
+</li>
+</ol>
+<h3 id="BBR-原理"><a href="#BBR-原理" class="headerlink" title="BBR 原理"></a>BBR 原理</h3><p>TCP 拥塞控制的目标是最大化利用网络上瓶颈链路的带宽。一条网络链路就像一条水管，要想用满这条水管，最好的办法就是给这根水管灌满水。</p>
+<p><strong>水管内的水的数量 = 水管的容积 = 水管粗细 × 水管长度</strong></p>
+<p>网络术语：<strong>网络内尚未被确认收到的数据包数量 = 网络链路上能容纳的数据包数量 = 链路带宽 × 往返延迟</strong></p>
+<p>TCP 维护一个发送窗口，估计当前网络链路上能容纳的数据包数量，希望在有数据可发的情况下，回来一个确认包就发出一个数据包，总是保持发送窗口那么多个包在网络中流动。</p>
+<img src="/2017/11/08/Network/BBR/tcp_window.jpg">
+<p>如何估计水管的容积呢？一种大家都能想到的方法是不断往里灌水，直到溢出来为止。标准 TCP 中的拥塞控制算法也类似：<strong>不断增加发送窗口，直到发现开始丢包</strong>。这就是所谓的 ”加性增，乘性减”，也就是当收到一个确认消息的时候慢慢增加发送窗口，当确认一个包丢掉的时候较快地减小发送窗口。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
+<p><a href="https://www.zhihu.com/question/53559433/answer/135903103" target="_blank" rel="noopener">https://www.zhihu.com/question/53559433/answer/135903103</a><br><a href="https://www.zhihu.com/question/53559433" target="_blank" rel="noopener">https://www.zhihu.com/question/53559433</a></p>
+</blockquote>
 
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/07/Server/Http/https,ssl,tls/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/07/Server/Http/https,ssl,tls/" itemprop="url">HTTPS SSL TLS</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-07T15:45:18+08:00">
+                2017-11-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/" itemprop="url" rel="index">
+                    <span itemprop="name">Server</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Server/Http/" itemprop="url" rel="index">
+                    <span itemprop="name">Http</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="简要关系图"><a href="#简要关系图" class="headerlink" title="简要关系图"></a>简要关系图</h3><p>HTTPS，也称作HTTP over TLS。</p>
+<p>TLS的前身是SSL</p>
+<ul>
+<li>TLS 1.0通常被标示为SSL 3.1</li>
+<li>TLS 1.1为SSL 3.2</li>
+<li>TLS 1.2为SSL 3.3（目前主流）</li>
+</ul>
+<p>下图描述了在TCP/IP协议栈中TLS(各子协议)和HTTP的关系。</p>
+<img src="/2017/11/07/Server/Http/https,ssl,tls/relation.png">
+<hr>
+<h3 id="HTTPS-与-HTTP-区别"><a href="#HTTPS-与-HTTP-区别" class="headerlink" title="HTTPS 与 HTTP 区别"></a>HTTPS 与 HTTP 区别</h3><ol>
+<li><p>HTTPS协议需要到证书颁发机构(Certificate Authority，简称CA)申请证书。</p>
+</li>
+<li><p>HTTP是超文本传输协议，信息是明文传输，HTTPS则是具有安全性的SSL加密传输协议。</p>
+</li>
+<li><p>HTTP和HTTPS使用的是完全不同的连接方式，使用的端口也不一样,前者是80,后者是443。</p>
+</li>
+<li><p>HTTP的连接很简单，是无状态的。</p>
+</li>
+<li><p>HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，要比HTTP协议安全。</p>
+</li>
+</ol>
+<p>从上面可看出，HTTPS和HTTP协议相比提供了：</p>
+<ul>
+<li>数据完整性：内容传输经过完整性校验</li>
+<li>数据隐私性：内容经过对称加密，每个连接生成一个唯一的加密密钥</li>
+<li>身份认证：第三方无法伪造服务端(客户端)身份</li>
+</ul>
+<p>其中，数据完整性和隐私性由TLS Record Protocol保证，身份认证由TLS Handshaking Protocols实现。</p>
+<h3 id="深入了解-HTTPS"><a href="#深入了解-HTTPS" class="headerlink" title="深入了解 HTTPS"></a>深入了解 HTTPS</h3><h4 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h4><p>HTTP协议运行在TCP之上，所有传输的内容都是明文，客户端和服务器端都无法验证对方的身份。</p>
+<p>HTTPS是运行在SSL/TLS之上的HTTP协议，SSL/TLS运行在TCP之上。所有传输的内容都经过加密，加密采用对称加密，但对称加密的密钥用服务器方的证书进行了非对称加密。</p>
+<p>HTTPS是由两部分组成：HTTP +SSL/TLS，也就是在HTTP上又加了一层处理加密信息的模块。服务端和客户端的信息传输都会通过TLS进行加密，所以传输的数据都是加密后的数据。</p>
+<img src="/2017/11/07/Server/Http/https,ssl,tls/tls_ssl.png">
+<p>对称加密：密钥只有一个，加密解密为同一个密码，且加解密速度快，典型的对称加密算法有DES、AES等；</p>
+<p>非对称加密：密钥成对出现（且根据公钥无法推知私钥，根据私钥也无法推知公钥），加密解密使用不同密钥（公钥加密需要私钥解密，私钥加密需要公钥解密），相对对称加密速度较慢，典型的非对称加密算法有RSA、DSA等。</p>
+<hr>
+<h4 id="通过HTTP访问网站的过程"><a href="#通过HTTP访问网站的过程" class="headerlink" title="通过HTTP访问网站的过程"></a>通过HTTP访问网站的过程</h4><img src="/2017/11/07/Server/Http/https,ssl,tls/visit_web_by_http.png">
+<hr>
+<h4 id="通过HTTPS访问网站的过程"><a href="#通过HTTPS访问网站的过程" class="headerlink" title="通过HTTPS访问网站的过程"></a>通过HTTPS访问网站的过程</h4><img src="/2017/11/07/Server/Http/https,ssl,tls/https_comunication.png">
+<p>步骤如下：</p>
+<ol>
+<li><p>客户使用HTTPS的URL访问Web服务器，要求与Web服务器建立SSL连接。</p>
+</li>
+<li><p>Web服务器收到客户端请求后，会将网站的证书信息（证书中包含公钥）传送一份给客户端。</p>
+</li>
+<li><p>客户端的浏览器与Web服务器开始协商SSL/TLS连接的安全等级，也就是信息加密的等级。</p>
+</li>
+<li><p>客户端的浏览器根据双方同意的安全等级，建立会话密钥，然后利用网站的公钥将会话密钥加密，并传送给网站。</p>
+</li>
+<li><p>Web服务器利用自己的私钥解密出会话密钥。</p>
+</li>
+<li><p>Web服务器利用会话密钥加密与客户端之间的通信。</p>
+</li>
+</ol>
+<p>小结</p>
+<ul>
+<li>客户端产生的密钥只有客户端和服务器端能得到；</li>
+<li>加密的数据只有客户端和服务器端才能得到明文；</li>
+<li>客户端到服务端的通信是安全的。</li>
+</ul>
+<hr>
+<h4 id="HTTPS的局限"><a href="#HTTPS的局限" class="headerlink" title="HTTPS的局限"></a>HTTPS的局限</h4><ol>
+<li><p>HTTPS比HTTP耗费更多服务器资源，HTTPS其实就是在SSL/TLS之上的HTTP协议。</p>
+</li>
+<li><p>耗费的资源多，过程也复杂，想当然访问不如HTTP高效。大流量网站非必要也不会采用，流量成本太高。</p>
+</li>
+<li><p>SSL证书需要钱，功能越强大的证书费用越高。</p>
+</li>
+<li><p>SSL证书通常需要绑定IP，不能在同一IP上绑定多个域名，IPv4资源不可能支撑这个消耗。</p>
+</li>
+</ol>
+<hr>
+<h4 id="如何加密和解密"><a href="#如何加密和解密" class="headerlink" title="如何加密和解密"></a>如何加密和解密</h4><img src="/2017/11/07/Server/Http/https,ssl,tls/encrypt_and_decrypt.png">
+<ol>
+<li><p>客户端发起HTTPS请求<br>用户在浏览器里输入一个HTTPS网址，然后连接到server的443端口</p>
+</li>
+<li><p>服务端的配置<br>采用HTTPS协议的服务器必须要有一套数字证书，这套证书其实就是一对公钥和私钥。如果对公钥和私钥不太理解，可以想象成一把钥匙和一个锁头，只是全世界只有你一个人有这把钥匙，你可以把锁头给别人，别人可以用这个锁把重要的东西锁起来，然后发给你，因为只有你一个人有这把钥匙，所以只有你才能看到被这把锁锁起来的东西。</p>
+</li>
+</ol>
+<ol start="3">
+<li>服务器传送证书给客户端<br>这个证书其实就是公钥，只是包含了很多信息，如证书的颁发机构，过期时间等等。</li>
+</ol>
+<ol start="4">
+<li>客户端解析证书<br>这部分工作是由客户端的TLS来完成的，首先会验证公钥是否有效，比如颁发机构，过期时间等等，如果发现异常，则会弹出一个警告框，提示证书存在问题。如果证书没有问题，那么就生成一个随机值。然后用证书对该随机值进行加密。就好像上面说的，把随机值用锁头锁起来，这样除非有钥匙，不然看不到被锁住的内容。</li>
+</ol>
+<ol start="5">
+<li>客户端发送加密信息给服务器<br>这部分传送的是用证书加密后的随机值，目的就是让服务端得到这个随机值，以后客户端和服务端的通信就可以通过这个随机值来进行加密解密了。</li>
+</ol>
+<ol start="6">
+<li>服务端解密信息<br>服务端用私钥解密后，得到了客户端传过来的随机值(私钥)，然后把内容通过该值进行对称加密。所谓对称加密就是，将信息和私钥(随机值)通过某种算法混合在一起，这样除非知道私钥(随机值)，不然无法获取内容，而正好客户端和服务端都知道这个私钥(随机值)，所以只要加密算法够彪悍，私钥(随机值)够复杂，数据就够安全。</li>
+</ol>
+<ol start="7">
+<li>服务器发送加密后的信息给客户端<br>这部分信息是服务端用私钥(随机值)加密后的信息，可以在客户端被还原</li>
+</ol>
+<ol start="8">
+<li>客户端解密信息<br>客户端用之前生成的私钥(随机值)解密服务端传过来的信息，于是获取了解密后的内容。整个过程第三方即使监听到了数据，也束手无策。</li>
+</ol>
+<hr>
+<h3 id="SSL-TLS"><a href="#SSL-TLS" class="headerlink" title="SSL/TLS"></a>SSL/TLS</h3><p>SSL 是“Secure Sockets Layer”的缩写，中文叫做“安全套接层”。</p>
+<p>为什么要使用SSL？HTTP 协议是明文的，存在很多缺点——比如传输内容会被偷窥（嗅探）和篡改。发明 SSL 协议，就是为了解决这些问题。</p>
+<p>1999年，SSL 因为应用广泛，已经成为互联网上的事实标准。IETF 就在那年把 SSL 标准化。标准化之后的名称改为 TLS（是“Transport Layer Security”的缩写），中文叫做“传输层安全协议”。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2017/11/07/Python/stdlib/urllib/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/07/Python/stdlib/urllib/" itemprop="url">urllib</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-07T11:54:53+08:00">
+                2017-11-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/python/stdlib/" itemprop="url" rel="index">
+                    <span itemprop="name">stdlib</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="urllib-parse"><a href="#urllib-parse" class="headerlink" title="urllib.parse"></a>urllib.parse</h2><h3 id="URL编码"><a href="#URL编码" class="headerlink" title="URL编码"></a>URL编码</h3><p>python3之后urllib.quote()这个转换字符串str类型为url编码的方法已经不能用了,</p>
+<p>现在由 urllib.parse.quote(str)代替.</p>
+<p>解码则用 urllib.parse.unquote(str)</p>
+<p>因为urllib.parse.urlencode只能编码对象格式的数据,对于字符串类型数据需要编码就得使用quote了. </p>
+<p>ps文件开头必须引入 import urllib.parse 这个包后才可以使用.</p>
+<h3 id="解析URL"><a href="#解析URL" class="headerlink" title="解析URL"></a>解析URL</h3>
           
         
       
@@ -2025,7 +1976,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/54/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/54/">54</a><span class="page-number current">55</span><a class="page-number" href="/page/56/">56</a><span class="space">&hellip;</span><a class="page-number" href="/page/61/">61</a><a class="extend next" rel="next" href="/page/56/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/54/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/54/">54</a><span class="page-number current">55</span><a class="page-number" href="/page/56/">56</a><span class="space">&hellip;</span><a class="page-number" href="/page/64/">64</a><a class="extend next" rel="next" href="/page/56/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2072,7 +2023,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">608</span>
+                <span class="site-state-item-count">631</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2083,7 +2034,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">256</span>
+                <span class="site-state-item-count">263</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2094,7 +2045,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">661</span>
+                <span class="site-state-item-count">681</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

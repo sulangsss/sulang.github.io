@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="google-site-verification" content="true">
+
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true">
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Kubernetes,kubectl,Command,Pod,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="A Big Boy Blog -  Tech Articls & Notes" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2">
+
+
+
+
+
+
+<meta name="description" content="Horizontal Pod Autoscaling - HPAHPA 与之前的 Deployment、Service 一样，也属于一种 K8S 资源对象。 HPA 的目标是希望通过追踪集群中所有 Pod 的负载变化情况，来自动化地调整 Pod 的副本数，以此来满足应用的需求和减少资源的浪费。 HAP 度量 Pod 负载变化情况的指标有两种：  CPU 利用率（CPUUtilizationPerc">
+<meta name="keywords" content="Kubernetes,kubectl,Command,Pod">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kubectl Pod">
+<meta property="og:url" content="https://sulangsss.github.io/2018/10/03/Kubenetes/Command/pod/index.html">
+<meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
+<meta property="og:description" content="Horizontal Pod Autoscaling - HPAHPA 与之前的 Deployment、Service 一样，也属于一种 K8S 资源对象。 HPA 的目标是希望通过追踪集群中所有 Pod 的负载变化情况，来自动化地调整 Pod 的副本数，以此来满足应用的需求和减少资源的浪费。 HAP 度量 Pod 负载变化情况的指标有两种：  CPU 利用率（CPUUtilizationPerc">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-10-15T06:37:26.756Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kubectl Pod">
+<meta name="twitter:description" content="Horizontal Pod Autoscaling - HPAHPA 与之前的 Deployment、Service 一样，也属于一种 K8S 资源对象。 HPA 的目标是希望通过追踪集群中所有 Pod 的负载变化情况，来自动化地调整 Pod 的副本数，以此来满足应用的需求和减少资源的浪费。 HAP 度量 Pod 负载变化情况的指标有两种：  CPU 利用率（CPUUtilizationPerc">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.2',
+    sidebar: {"position":"right","display":"always","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Command/pod/">
+
+
+
+
+
+<meta name="baidu-site-verification" content="xV2vphJ53Q">
+
+
+  <title>kubectl Pod | A Big Boy Blog -  Tech Articls & Notes</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?344f3e8f33d176fceb44e65d30a341dc";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">A Big Boy Blog -  Tech Articls & Notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">Python Java Android Django Web -> sulang357159@gmail.com</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2018/10/03/Kubenetes/Command/pod/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">kubectl Pod</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-03T11:13:06+08:00">
+                2018-10-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/Command/" itemprop="url" rel="index">
+                    <span itemprop="name">Command</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="Horizontal-Pod-Autoscaling-HPA"><a href="#Horizontal-Pod-Autoscaling-HPA" class="headerlink" title="Horizontal Pod Autoscaling - HPA"></a>Horizontal Pod Autoscaling - HPA</h4><p>HPA 与之前的 Deployment、Service 一样，也属于一种 K8S 资源对象。</p>
+<p>HPA 的目标是希望通过追踪集群中所有 Pod 的负载变化情况，来自动化地调整 Pod 的副本数，以此来满足应用的需求和减少资源的浪费。</p>
+<p>HAP 度量 Pod 负载变化情况的指标有两种：</p>
+<ul>
+<li>CPU 利用率（CPUUtilizationPercentage）</li>
+<li>自定义的度量指标，比如服务在每秒之内的请求数(TPS 或 QPS)</li>
+</ul>
+<p>如何统计和查询这些指标，要依托于组件Heapster。Heapster 会监控一段时间内集群内所有 Pod 的 CPU 利用率的平均值或者其他自定义的值，在满足条件时(比如 CPU 使用率超过 80% 或 降低到 10%)会将这些信息反馈给 HPA 控制器，HPA 控制器就根据 RC 或者 Deployment 的定义调整 Pod 的数量。</p>
+<p><strong>Theory</strong></p>
+<p>autoscaler（自动扩容器）的实现方式是一个循环，它通过定期通过 Status.PodSelector 来查询Pods的状态，获得他们的CPU使用率。然后，它通过现有Pods的CPU使用率的算数平均值跟目标使用率进行比较，并且在扩容的时候，还要遵循预先设定的副本数限制：MinReplicas &lt;= Replicas &lt;= MaxReplicas（MinReplicas是用户预先设置的最小副本数，MaxReplicas是用户预先设置的最大副本数）</p>
+<blockquote>
+<p>定期轮询的时间通过–horizontal-pod-autoscaler-sync-period选项来设置，默认的时间为30秒。</p>
+</blockquote>
+<p>CPU利用率是指最近的Pod使用量（最近一分钟的平均值，从heapster中获得）除以设定的每个Pod的CPU使用率限额，在kubernetes1.1版本中，CPU的使用率直接从Heapster中获得，将来，我们将从Master提供的API中获得。</p>
+<p>计算扩容后Pod的个数计算公式：TargetNumOfPods = ceil(sum(CurrentPodsCPUUtilization) / Target)</p>
+<blockquote>
+<p>CurrentPodsCPUUtilization 为最近一分钟内某个Pod的CPU使用率/量的平均值<br>Target CPU使用上限</p>
+</blockquote>
+<p>自动扩容的流程：</p>
+<ol>
+<li>创建HPA资源，设定目标CPU使用率限额，以及最大、最小实例数；</li>
+<li>收集一组中（PodSelector）每个Pod最近一分钟内的CUP使用率，并计算平均值；</li>
+<li>读取HPA中设定的CPU使用限额；</li>
+<li>计算：平均值之和/限额，求出目标调整的实例个数；</li>
+<li>目标调整的实例数不能超过1中设定的最大、最小实例数，如果没有超过，则扩容；超过，则扩容至最大的实例个数；</li>
+<li>默认情况每隔30秒做一次自动扩容判断。</li>
+</ol>
+<p>Example：假设一组Pod中有三个实例，CPU限额为50%，当前的CPU使用率/量分别为：60%， 80%， 80%时，要扩容成多少实例呢？</p>
+<p>(60%+80%+80%）/ 50% = 4.4，4.4取整后为4，即应该扩容到4个实例。</p>
+<blockquote>
+<p>启动、停止Pod可能会引入噪声度量（例如，启动过程会暂时增加cpu的使用），所以，在每次起/停操作后，自动扩容器会等待一段时间（冷却时间），以获得更可靠的数据。扩容每次要冷却3分钟之后才能再次扩容，缩容要冷却5分钟。</p>
+</blockquote>
+<hr>
+<p>实现方式：</p>
+<ol>
+<li>配置文件</li>
+<li>命令行</li>
+</ol>
+<p><strong>配置文件</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">autoscaling/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">HorizontalPodAutoscaler</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">php-apache</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  scaleTargetRef:</span></span><br><span class="line"><span class="attr">    kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">    name:</span> <span class="string">php-apache</span></span><br><span class="line"><span class="attr">  minReplicas:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">  maxReplicas:</span> <span class="number">10</span></span><br><span class="line"><span class="attr">  targetAverageUtilization:</span> <span class="number">50</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>scaleTargetRef 字段指定需要管理的 Deployment/RC 的名字，也就是提前需要存在一个 Deployment/RC 对象。</li>
+<li>minReplicas 和 maxReplicas 字段定义 Pod 可伸缩的数量范围。这个例子中扩容最高不能超过 10 个，缩容最低不能少于 1 个。</li>
+<li>targetAverageUtilization 指定 CPU 使用率，也就是自动扩容和缩容的触发条件，当 CPU 使用率超过 50% 时会触发自动动态扩容的行为，当回落到 50% 以下时，又会触发自动动态缩容的行为。</li>
+</ul>
+<p><strong>命令行</strong></p>
+<p>kubectl autoscale deployment php-apache –cpu-percent=50 –min=1 –max=10</p>
+<hr>
+<h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><h4 id="Force-delete"><a href="#Force-delete" class="headerlink" title="Force delete"></a>Force delete</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete pods pod-name  --grace-period=0 --force</span><br></pre></td></tr></table></figure>
+<p>If even after these commands the pod is stuck on Unknown state, use the following command to remove the pod from the cluster:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl patch pod &lt;pod&gt; -p <span class="string">'&#123;"metadata":&#123;"finalizers":null&#125;&#125;'</span></span><br></pre></td></tr></table></figure>
+<h4 id="Running-with-Shell"><a href="#Running-with-Shell" class="headerlink" title="Running with Shell"></a>Running with Shell</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run pod-name -i --rm --image nginx:lastes -- sh -c</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">Examples:</span><br><span class="line">  <span class="comment"># Start a single instance of nginx.</span></span><br><span class="line">  kubectl run nginx --image=nginx</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and let the container expose port 5701 .</span></span><br><span class="line">  kubectl run hazelcast --image=hazelcast --port=5701</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and set environment variables "DNS_DOMAIN=cluster" and "POD_NAMESPACE=default" in the container.</span></span><br><span class="line">  kubectl run hazelcast --image=hazelcast --env=<span class="string">"DNS_DOMAIN=cluster"</span> --env=<span class="string">"POD_NAMESPACE=default"</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of hazelcast and set labels "app=hazelcast" and "env=prod" in the container.</span></span><br><span class="line">  kubectl run hazelcast --image=nginx --labels=<span class="string">"app=hazelcast,env=prod"</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a replicated instance of nginx.</span></span><br><span class="line">  kubectl run nginx --image=nginx --replicas=5</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Dry run. Print the corresponding API objects without creating them.</span></span><br><span class="line">  kubectl run nginx --image=nginx --dry-run</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a single instance of nginx, but overload the spec of the deployment with a partial set of values parsed from JSON.</span></span><br><span class="line">  kubectl run nginx --image=nginx --overrides=<span class="string">'&#123; "apiVersion": "v1", "spec": &#123; ... &#125; &#125;'</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start a pod of busybox and keep it in the foreground, don't restart it if it exits.</span></span><br><span class="line">  kubectl run -i -t busybox --image=busybox --restart=Never</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the nginx container using the default command, but use custom arguments (arg1 .. argN) for that command.</span></span><br><span class="line">  kubectl run nginx --image=nginx -- &lt;arg1&gt; &lt;arg2&gt; ... &lt;argN&gt;</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the nginx container using a different command and custom arguments.</span></span><br><span class="line">  kubectl run nginx --image=nginx --<span class="built_in">command</span> -- &lt;cmd&gt; &lt;arg1&gt; ... &lt;argN&gt;</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the perl container to compute π to 2000 places and print it out.</span></span><br><span class="line">  kubectl run pi --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># Start the cron job to compute π to 2000 places and print it out every 5 minutes.</span></span><br><span class="line">  kubectl run pi --schedule=<span class="string">"0/5 * * * ?"</span> --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span></span><br></pre></td></tr></table></figure>
+<h4 id="Adding-or-updating-labels-for-existing-clusters"><a href="#Adding-or-updating-labels-for-existing-clusters" class="headerlink" title="Adding or updating labels for existing clusters"></a>Adding or updating labels for existing clusters</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container clusters update [CLUSTER_NAME] --update-labels [KEY]=[VALUE]</span><br></pre></td></tr></table></figure>
+<h4 id="Remove-labels-for-existing-clusters"><a href="#Remove-labels-for-existing-clusters" class="headerlink" title="Remove labels for existing clusters"></a>Remove labels for existing clusters</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud container clusters update example-cluster --remove-labels env=dev</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[Kubernetes 1.2 新功能介绍：自动扩容算法] <a href="http://www.dockerinfo.net/1095.html" target="_blank" rel="noopener">http://www.dockerinfo.net/1095.html</a></li>
+<li><a href="https://www.cnblogs.com/bakari/p/10620592.html" target="_blank" rel="noopener">https://www.cnblogs.com/bakari/p/10620592.html</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Kubernetes/" rel="tag"># Kubernetes</a>
+          
+            <a href="/tags/kubectl/" rel="tag"># kubectl</a>
+          
+            <a href="/tags/Command/" rel="tag"># Command</a>
+          
+            <a href="/tags/Pod/" rel="tag"># Pod</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/03/Kubenetes/Term/" rel="next" title="Kubernetes Term">
+                <i class="fa fa-chevron-left"></i> Kubernetes Term
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/03/DB/MySQL/Configuration/Connection/" rel="prev" title="MySQL Connection Configuration">
+                MySQL Connection Configuration <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          
+            <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
+          
+            <p class="site-author-name" itemprop="name">Jason - sulang357159@163.com</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">631</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">263</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">681</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Horizontal-Pod-Autoscaling-HPA"><span class="nav-number">1.</span> <span class="nav-text">Horizontal Pod Autoscaling - HPA</span></a></li></ol><li class="nav-item nav-level-3"><a class="nav-link" href="#Command"><span class="nav-number"></span> <span class="nav-text">Command</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Force-delete"><span class="nav-number">1.</span> <span class="nav-text">Force delete</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Running-with-Shell"><span class="nav-number">2.</span> <span class="nav-text">Running with Shell</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Adding-or-updating-labels-for-existing-clusters"><span class="nav-number">3.</span> <span class="nav-text">Adding or updating labels for existing clusters</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Remove-labels-for-existing-clusters"><span class="nav-number">4.</span> <span class="nav-text">Remove labels for existing clusters</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number"></span> <span class="nav-text">Reference</span></a></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jason - sulang357159@163.com</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

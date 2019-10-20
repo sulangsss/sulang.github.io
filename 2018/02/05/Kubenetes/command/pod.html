@@ -1,0 +1,124 @@
+<hr>
+<p>title: kubectl Pod<br>date: 2018-10-03 11:13:06<br>tags: </p>
+<ul>
+<li>kubectl</li>
+<li>Kubernetes</li>
+<li>Command</li>
+<li>Pod<br>categories:</li>
+<li>Kubernetes</li>
+<li>Command</li>
+</ul>
+<hr>
+<h4 id="Horizontal-Pod-Autoscaling-HPA"><a href="#Horizontal-Pod-Autoscaling-HPA" class="headerlink" title="Horizontal Pod Autoscaling - HPA"></a>Horizontal Pod Autoscaling - HPA</h4><p>HPA 与之前的 Deployment、Service 一样，也属于一种 K8S 资源对象。</p>
+<p>HPA 的目标是希望通过追踪集群中所有 Pod 的负载变化情况，来自动化地调整 Pod 的副本数，以此来满足应用的需求和减少资源的浪费。</p>
+<p>HAP 度量 Pod 负载变化情况的指标有两种：</p>
+<ul>
+<li>CPU 利用率（CPUUtilizationPercentage）</li>
+<li>自定义的度量指标，比如服务在每秒之内的请求数(TPS 或 QPS)</li>
+</ul>
+<p>如何统计和查询这些指标，要依托于组件Heapster。Heapster 会监控一段时间内集群内所有 Pod 的 CPU 利用率的平均值或者其他自定义的值，在满足条件时(比如 CPU 使用率超过 80% 或 降低到 10%)会将这些信息反馈给 HPA 控制器，HPA 控制器就根据 RC 或者 Deployment 的定义调整 Pod 的数量。</p>
+<p><strong>Theory</strong></p>
+<p>autoscaler（自动扩容器）的实现方式是一个循环，它通过定期通过 Status.PodSelector 来查询Pods的状态，获得他们的CPU使用率。然后，它通过现有Pods的CPU使用率的算数平均值跟目标使用率进行比较，并且在扩容的时候，还要遵循预先设定的副本数限制：MinReplicas &lt;= Replicas &lt;= MaxReplicas（MinReplicas是用户预先设置的最小副本数，MaxReplicas是用户预先设置的最大副本数）</p>
+<blockquote>
+<p>定期轮询的时间通过–horizontal-pod-autoscaler-sync-period选项来设置，默认的时间为30秒。</p>
+</blockquote>
+<p>CPU利用率是指最近的Pod使用量（最近一分钟的平均值，从heapster中获得）除以设定的每个Pod的CPU使用率限额，在kubernetes1.1版本中，CPU的使用率直接从Heapster中获得，将来，我们将从Master提供的API中获得。</p>
+<p>计算扩容后Pod的个数计算公式：TargetNumOfPods = ceil(sum(CurrentPodsCPUUtilization) / Target)</p>
+<blockquote>
+<p>CurrentPodsCPUUtilization 为最近一分钟内某个Pod的CPU使用率/量的平均值<br>Target CPU使用上限</p>
+</blockquote>
+<p>自动扩容的流程：</p>
+<ol>
+<li>创建HPA资源，设定目标CPU使用率限额，以及最大、最小实例数；</li>
+<li>收集一组中（PodSelector）每个Pod最近一分钟内的CUP使用率，并计算平均值；</li>
+<li>读取HPA中设定的CPU使用限额；</li>
+<li>计算：平均值之和/限额，求出目标调整的实例个数；</li>
+<li>目标调整的实例数不能超过1中设定的最大、最小实例数，如果没有超过，则扩容；超过，则扩容至最大的实例个数；</li>
+<li>默认情况每隔30秒做一次自动扩容判断。</li>
+</ol>
+<p>Example：假设一组Pod中有三个实例，CPU限额为50%，当前的CPU使用率/量分别为：60%， 80%， 80%时，要扩容成多少实例呢？</p>
+<p>(60%+80%+80%）/ 50% = 4.4，4.4取整后为4，即应该扩容到4个实例。</p>
+<blockquote>
+<p>启动、停止Pod可能会引入噪声度量（例如，启动过程会暂时增加cpu的使用），所以，在每次起/停操作后，自动扩容器会等待一段时间（冷却时间），以获得更可靠的数据。扩容每次要冷却3分钟之后才能再次扩容，缩容要冷却5分钟。</p>
+</blockquote>
+<hr>
+<p>实现方式：</p>
+<ol>
+<li>配置文件</li>
+<li>命令行</li>
+</ol>
+<p><strong>配置文件</strong></p>
+<pre><code class="yaml"><span class="attr">apiVersion:</span> <span class="string">autoscaling/v1</span>
+<span class="attr">kind:</span> <span class="string">HorizontalPodAutoscaler</span>
+<span class="attr">metadata:</span>
+<span class="attr">  name:</span> <span class="string">php-apache</span>
+<span class="attr">  namespace:</span> <span class="string">default</span>
+<span class="attr">spec:</span>
+<span class="attr">  scaleTargetRef:</span>
+<span class="attr">    kind:</span> <span class="string">Deployment</span>
+<span class="attr">    name:</span> <span class="string">php-apache</span>
+<span class="attr">  minReplicas:</span> <span class="number">1</span>
+<span class="attr">  maxReplicas:</span> <span class="number">10</span>
+<span class="attr">  targetAverageUtilization:</span> <span class="number">50</span>
+</code></pre>
+<ul>
+<li>scaleTargetRef 字段指定需要管理的 Deployment/RC 的名字，也就是提前需要存在一个 Deployment/RC 对象。</li>
+<li>minReplicas 和 maxReplicas 字段定义 Pod 可伸缩的数量范围。这个例子中扩容最高不能超过 10 个，缩容最低不能少于 1 个。</li>
+<li>targetAverageUtilization 指定 CPU 使用率，也就是自动扩容和缩容的触发条件，当 CPU 使用率超过 50% 时会触发自动动态扩容的行为，当回落到 50% 以下时，又会触发自动动态缩容的行为。</li>
+</ul>
+<p><strong>命令行</strong></p>
+<p>kubectl autoscale deployment php-apache –cpu-percent=50 –min=1 –max=10</p>
+<hr>
+<h3 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h3><h4 id="Force-delete"><a href="#Force-delete" class="headerlink" title="Force delete"></a>Force delete</h4><pre><code class="bash">kubectl delete pods pod-name  --grace-period=0 --force
+</code></pre>
+<p>If even after these commands the pod is stuck on Unknown state, use the following command to remove the pod from the cluster:</p>
+<pre><code class="bash">kubectl patch pod &lt;pod&gt; -p <span class="string">'{"metadata":{"finalizers":null}}'</span>
+</code></pre>
+<h4 id="Running-with-Shell"><a href="#Running-with-Shell" class="headerlink" title="Running with Shell"></a>Running with Shell</h4><pre><code class="bash">kubectl run pod-name -i --rm --image nginx:lastes -- sh -c
+</code></pre>
+<pre><code class="bash">Examples:
+  <span class="comment"># Start a single instance of nginx.</span>
+  kubectl run nginx --image=nginx
+
+  <span class="comment"># Start a single instance of hazelcast and let the container expose port 5701 .</span>
+  kubectl run hazelcast --image=hazelcast --port=5701
+
+  <span class="comment"># Start a single instance of hazelcast and set environment variables "DNS_DOMAIN=cluster" and "POD_NAMESPACE=default" in the container.</span>
+  kubectl run hazelcast --image=hazelcast --env=<span class="string">"DNS_DOMAIN=cluster"</span> --env=<span class="string">"POD_NAMESPACE=default"</span>
+
+  <span class="comment"># Start a single instance of hazelcast and set labels "app=hazelcast" and "env=prod" in the container.</span>
+  kubectl run hazelcast --image=nginx --labels=<span class="string">"app=hazelcast,env=prod"</span>
+
+  <span class="comment"># Start a replicated instance of nginx.</span>
+  kubectl run nginx --image=nginx --replicas=5
+
+  <span class="comment"># Dry run. Print the corresponding API objects without creating them.</span>
+  kubectl run nginx --image=nginx --dry-run
+
+  <span class="comment"># Start a single instance of nginx, but overload the spec of the deployment with a partial set of values parsed from JSON.</span>
+  kubectl run nginx --image=nginx --overrides=<span class="string">'{ "apiVersion": "v1", "spec": { ... } }'</span>
+
+  <span class="comment"># Start a pod of busybox and keep it in the foreground, don't restart it if it exits.</span>
+  kubectl run -i -t busybox --image=busybox --restart=Never
+
+  <span class="comment"># Start the nginx container using the default command, but use custom arguments (arg1 .. argN) for that command.</span>
+  kubectl run nginx --image=nginx -- &lt;arg1&gt; &lt;arg2&gt; ... &lt;argN&gt;
+
+  <span class="comment"># Start the nginx container using a different command and custom arguments.</span>
+  kubectl run nginx --image=nginx --<span class="built_in">command</span> -- &lt;cmd&gt; &lt;arg1&gt; ... &lt;argN&gt;
+
+  <span class="comment"># Start the perl container to compute π to 2000 places and print it out.</span>
+  kubectl run pi --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span>
+
+  <span class="comment"># Start the cron job to compute π to 2000 places and print it out every 5 minutes.</span>
+  kubectl run pi --schedule=<span class="string">"0/5 * * * ?"</span> --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle <span class="string">'print bpi(2000)'</span>
+</code></pre>
+<h4 id="Adding-or-updating-labels-for-existing-clusters"><a href="#Adding-or-updating-labels-for-existing-clusters" class="headerlink" title="Adding or updating labels for existing clusters"></a>Adding or updating labels for existing clusters</h4><pre><code class="bash">gcloud container clusters update [CLUSTER_NAME] --update-labels [KEY]=[VALUE]
+</code></pre>
+<h4 id="Remove-labels-for-existing-clusters"><a href="#Remove-labels-for-existing-clusters" class="headerlink" title="Remove labels for existing clusters"></a>Remove labels for existing clusters</h4><pre><code class="bash">gcloud container clusters update example-cluster --remove-labels env=dev
+</code></pre>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[Kubernetes 1.2 新功能介绍：自动扩容算法] <a href="http://www.dockerinfo.net/1095.html">http://www.dockerinfo.net/1095.html</a></li>
+<li><a href="https://www.cnblogs.com/bakari/p/10620592.html">https://www.cnblogs.com/bakari/p/10620592.html</a></li>
+</ul>

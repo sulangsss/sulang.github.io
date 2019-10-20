@@ -101,19 +101,19 @@
 
 
 
-<meta name="description" content="Introduction缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看清楚">
+<meta name="description" content="Introduction缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。 当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。 缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看">
 <meta name="keywords" content="Java,Memory,FalseSharing">
 <meta property="og:type" content="article">
 <meta property="og:title" content="False Sharing">
 <meta property="og:url" content="https://sulangsss.github.io/2019/01/28/Java/Advance/Memory/FalseSharing/index.html">
 <meta property="og:site_name" content="A Big Boy Blog -  Tech Articls &amp; Notes">
-<meta property="og:description" content="Introduction缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看清楚">
+<meta property="og:description" content="Introduction缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。 当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。 缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://sulangsss.github.io/2019/01/28/Java/Advance/Memory/FalseSharing/cache-line.png">
-<meta property="og:updated_time" content="2019-02-01T03:16:02.024Z">
+<meta property="og:updated_time" content="2019-10-15T03:32:59.194Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="False Sharing">
-<meta name="twitter:description" content="Introduction缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看清楚">
+<meta name="twitter:description" content="Introduction缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。 当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。 缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看">
 <meta name="twitter:image" content="https://sulangsss.github.io/2019/01/28/Java/Advance/Memory/FalseSharing/cache-line.png">
 
 
@@ -401,11 +401,14 @@
       
 
       
-        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看清楚是否会出现伪共享。 </p>
-<p>为了让可伸缩性与线程数呈线性关系，就必须确保不会有两个线程往同一个变量或缓存行中写。两个线程写同一个变量可以在代码中发现。为了确定互相独立的变量是否共享了同一个缓存行，就需要了解内存布局。</p>
+        <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，一般为32-256个字节。最常见的缓存行大小是64个字节。</p>
+<p><strong>当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。</strong></p>
+<p>缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。有人将伪共享描述成无声的性能杀手，因为从代码中很难看清楚是否会出现伪共享。 为了让可伸缩性与线程数呈线性关系，就必须确保不会有两个线程往同一个变量或缓存行中写。两个线程写同一个变量可以在代码中发现。为了确定互相独立的变量是否共享了同一个缓存行，就需要了解内存布局。</p>
 <hr>
 <img src="/2019/01/28/Java/Advance/Memory/FalseSharing/cache-line.png">
-<p>在核心1上运行的线程想更新变量X，同时核心2上的线程想要更新变量Y。不幸的是，这两个变量在同一个缓存行中。每个线程都要去竞争缓存行的所有权来更新变量。如果核心1获得了所有权，缓存子系统将会使核心2中对应的缓存行失效。当核心2获得了所有权然后执行更新操作，核心1就要使自己对应的缓存行失效。这会来来回回的经过L3缓存，大大影响了性能。如果互相竞争的核心位于不同的插槽，就要额外横跨插槽连接，问题可能更加严重。 </p>
+<p>在核心1上运行的线程想更新变量X，同时核心2上的线程想要更新变量Y。</p>
+<p>不幸的是，这两个变量在同一个缓存行中。每个线程都要去竞争缓存行的所有权来更新变量。</p>
+<p>如果核心1获得了所有权，缓存子系统将会使核心2中对应的缓存行失效。当核心2获得了所有权然后执行更新操作，核心1就要使自己对应的缓存行失效。这会来来回回的经过L3缓存，大大影响了性能。如果互相竞争的核心位于不同的插槽，就要额外横跨插槽连接，问题可能更加严重。 </p>
 <hr>
 <h3 id="Java-Memory-Layout"><a href="#Java-Memory-Layout" class="headerlink" title="Java Memory Layout"></a>Java Memory Layout</h3><p>对于HotSpot JVM(32位)，所有对象都有两个字(32位 + 32位)的对象头：</p>
 <ul>
@@ -432,7 +435,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VolatileLong</span>(</span></span><br><span class="line"><span class="class">    @<span class="title">Volatile</span></span></span><br><span class="line">    var value: Long = 0</span><br><span class="line">) &#123;</span><br><span class="line">    var p1: Long = <span class="number">0</span></span><br><span class="line">    var p2: Long = <span class="number">0</span></span><br><span class="line">    var p3: Long = <span class="number">0</span></span><br><span class="line">    var p4: Long = <span class="number">0</span></span><br><span class="line">    var p5: Long = <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">fun <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    println(VM.current().details())</span><br><span class="line">    println(ClassLayout.parseClass(VolatileLong::<span class="class"><span class="keyword">class</span>.<span class="title">java</span>).<span class="title">toPrintable</span>())</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">com.demo.falsesharing.VolatileLong object internals:</span><br><span class="line"> OFFSET  SIZE   TYPE DESCRIPTION                               VALUE</span><br><span class="line">      0    12        (object header)                           N/A</span><br><span class="line">     12     4        (alignment/padding gap)                  </span><br><span class="line">     16     8   long VolatileLong.p1                           N/A</span><br><span class="line">     24     8   long VolatileLong.p2                           N/A</span><br><span class="line">     32     8   long VolatileLong.p3                           N/A</span><br><span class="line">     40     8   long VolatileLong.p4                           N/A</span><br><span class="line">     48     8   long VolatileLong.p5                           N/A</span><br><span class="line">     56     8   long VolatileLong.value                        N/A</span><br><span class="line">Instance size: 64 bytes</span><br><span class="line">Space losses: 4 bytes internal + 0 bytes external = 4 bytes total</span><br></pre></td></tr></table></figure>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><blockquote>
-<p><a href="https://mechanical-sympathy.blogspot.com/2011/07/false-sharing.html" target="_blank" rel="noopener">https://mechanical-sympathy.blogspot.com/2011/07/false-sharing.html</a><br><a href="http://openjdk.java.net/projects/code-tools/jol/" target="_blank" rel="noopener">http://openjdk.java.net/projects/code-tools/jol/</a><br><a href="http://ifeve.com/falsesharing/" target="_blank" rel="noopener">http://ifeve.com/falsesharing/</a><br><a href="http://hg.openjdk.java.net/code-tools/jol/file/tip/jol-samples/src/main/java/org/openjdk/jol/samples/" target="_blank" rel="noopener">http://hg.openjdk.java.net/code-tools/jol/file/tip/jol-samples/src/main/java/org/openjdk/jol/samples/</a></p>
+<p><a href="https://mechanical-sympathy.blogspot.com/2011/07/false-sharing.html" target="_blank" rel="noopener">https://mechanical-sympathy.blogspot.com/2011/07/false-sharing.html</a><br><a href="http://openjdk.java.net/projects/code-tools/jol/" target="_blank" rel="noopener">http://openjdk.java.net/projects/code-tools/jol/</a><br><a href="http://ifeve.com/falsesharing/" target="_blank" rel="noopener">http://ifeve.com/falsesharing/</a><br><a href="http://hg.openjdk.java.net/code-tools/jol/file/tip/jol-samples/src/main/java/org/openjdk/jol/samples/" target="_blank" rel="noopener">http://hg.openjdk.java.net/code-tools/jol/file/tip/jol-samples/src/main/java/org/openjdk/jol/samples/</a><br>[CPU缓存刷新的误解] <a href="http://ifeve.com/cpu-cache-flushing-fallacy-cn/" target="_blank" rel="noopener">http://ifeve.com/cpu-cache-flushing-fallacy-cn/</a></p>
 </blockquote>
 
       
@@ -558,7 +561,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">608</span>
+                <span class="site-state-item-count">631</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -569,7 +572,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">256</span>
+                <span class="site-state-item-count">263</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -580,7 +583,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">661</span>
+                <span class="site-state-item-count">681</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

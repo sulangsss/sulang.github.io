@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://sulangsss.github.io/"/>
-  <updated>2019-10-13T08:42:31.832Z</updated>
+  <updated>2019-10-17T15:20:19.617Z</updated>
   <id>https://sulangsss.github.io/</id>
   
   <author>
@@ -15,6 +15,565 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>每天一个模式 - Object Pool Pattern</title>
+    <link href="https://sulangsss.github.io/2019/10/17/CS/DesignPattern/Object%20Pool/"/>
+    <id>https://sulangsss.github.io/2019/10/17/CS/DesignPattern/Object Pool/</id>
+    <published>2019-10-17T15:06:18.000Z</published>
+    <updated>2019-10-17T15:20:19.617Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>对象池模式一般用来管理一组可重用对象，以供调用组件使用，它可以为组件提供多个完全相同的对象。</p><p>Advantage：</p><ol><li>节省了创建类的实例的开销；</li><li>节省了创建类的实例的时间；</li></ol><p>Disadvantage：</p><ol><li>存储空间随着对象的增多而增大；</li></ol><p><strong>Object Pool 适用在什么地方？</strong></p><ol><li>类的实例可重用；</li><li>类的实例化过程开销较大；</li><li>类的实例化的频率较高；</li><li>类的使用周期有限，在周期结束后回收对象；</li></ol><hr><h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><ol><li>初始化，准备需要的对象集合；</li><li>借出对象，需要对象的组件从池子中借出对象；</li><li>组件使用借到的对象完成任务，对象池保证这个对象在其被归还之前不会再借给其他组件；</li><li>组件返回对象给对象池；</li></ol><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[设计模式学习-对象池模式] <a href="https://juejin.im/post/5a3a788c51882512ae12ceca" target="_blank" rel="noopener">https://juejin.im/post/5a3a788c51882512ae12ceca</a></li><li>[设计模式之美：Object Pool（对象池）] <a href="https://www.cnblogs.com/gaochundong/p/design_pattern_object_pool.html" target="_blank" rel="noopener">https://www.cnblogs.com/gaochundong/p/design_pattern_object_pool.html</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;p&gt;对象池模式一般用来管理一组可重用对象，以供调用组件使用，它可
+      
+    
+    </summary>
+    
+      <category term="Design Pattern" scheme="https://sulangsss.github.io/categories/Design-Pattern/"/>
+    
+    
+      <category term="Design Pattern" scheme="https://sulangsss.github.io/tags/Design-Pattern/"/>
+    
+      <category term="Object Pool Pattern" scheme="https://sulangsss.github.io/tags/Object-Pool-Pattern/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>缓存穿透、缓存击穿和缓存雪崩</title>
+    <link href="https://sulangsss.github.io/2019/10/17/DistributedSystem/%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F%E3%80%81%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E5%92%8C%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9/"/>
+    <id>https://sulangsss.github.io/2019/10/17/DistributedSystem/缓存穿透、缓存击穿和缓存雪崩/</id>
+    <published>2019-10-17T09:52:18.000Z</published>
+    <updated>2019-10-17T09:37:50.389Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><ul><li>缓存穿透</li><li>缓存雪崩</li><li>缓存击穿</li></ul><hr><h3 id="缓存穿透"><a href="#缓存穿透" class="headerlink" title="缓存穿透"></a>缓存穿透</h3><p>正常情况下，我们去查询数据都是存在。那么请求去查询一条压根儿数据库中根本就不存在的数据，也就是缓存和数据库都查询不到这条数据，但是请求每次都会打到数据库上面去。这种查询不存在数据的现象我们称为<strong>缓存穿透</strong>。</p><h4 id="缓存穿透可能引起的问题"><a href="#缓存穿透可能引起的问题" class="headerlink" title="缓存穿透可能引起的问题"></a>缓存穿透可能引起的问题</h4><p>如果有黑客会对你的系统进行攻击，拿一个不存在的id去查询数据，会产生大量的请求到数据库去查询。可能会导致你的数据库由于压力过大而宕掉。</p><h4 id="如何解决？"><a href="#如何解决？" class="headerlink" title="如何解决？"></a>如何解决？</h4><p><strong>1. 缓存空值</strong></p><p>之所以会发生穿透，就是因为缓存中没有存储这些空数据的 key。从而导致每次查询都到数据库去了。那么我们就可以为这些 key 对应的值设置为 null 丢到缓存里面去。后面再出现查询这个 key 的请求的时候，直接返回 null，但是别忘了设置过期时间。</p><hr><p><strong>2. BloomFilter</strong></p><p>BloomFilter 用来判断某个元素（key）是否存在于某个集合中。</p><p>这种方式在大数据场景应用比较多，比如 Hbase 中使用它去判断数据是否在磁盘上。还有在爬虫场景判断url 是否已经被爬取过。</p><p>这种方案可以加在第一种方案中，在缓存之前在加一层 BloomFilter ，在查询的时候先去 BloomFilter 去查询 key 是否存在，如果不存在就直接返回，存在再走查缓存 -&gt; 查 DB。</p><hr><p><strong>小结</strong></p><p>针对于一些恶意攻击，攻击带过来的大量 key 是不存在的，那么我们采用第一种方案就会缓存大量不存在key的数据。此时我们采用第一种方案就不合适了，我们完全可以先对使用第二种方案进行过滤掉这些 key。针对这种 key 异常多、请求重复率比较低的数据，我们就没有必要进行缓存，使用第二种方案直接过滤掉。而对于空数据的key有限的，重复率比较高的，我们则可以采用第一种方式进行缓存。</p><hr><h3 id="缓存雪崩"><a href="#缓存雪崩" class="headerlink" title="缓存雪崩"></a>缓存雪崩</h3><p>缓存雪崩的情况是说，当某一时刻发生大规模的缓存失效的情况，比如你的缓存服务宕机了，会有大量的请求进来直接打到 DB 上面。结果就是 DB 扛不住而挂掉。</p><h4 id="如何解决？-1"><a href="#如何解决？-1" class="headerlink" title="如何解决？"></a>如何解决？</h4><ol><li>使用集群缓存，保证缓存服务的高可用；</li><li>ehcache本地缓存 + Hystrix 限流&amp;降级，避免 MySQL 被打死；</li><li>开启Redis持久化机制，尽快恢复缓存集群；</li></ol><hr><h3 id="缓存击穿"><a href="#缓存击穿" class="headerlink" title="缓存击穿"></a>缓存击穿</h3><p>在平常高并发的系统中，大量的请求同时查询一个 key 时，此时这个 key 正好失效了，就会导致大量的请求都打到数据库上面去。这种现象我们称为<strong>缓存击穿</strong>。</p><h4 id="缓存击穿可能引起的问题"><a href="#缓存击穿可能引起的问题" class="headerlink" title="缓存击穿可能引起的问题"></a>缓存击穿可能引起的问题</h4><p>会造成某一时刻数据库请求量过大，压力剧增。</p><h4 id="如何解决？-2"><a href="#如何解决？-2" class="headerlink" title="如何解决？"></a>如何解决？</h4><p>上面的现象是多个线程同时去查询数据库的这条数据，那么我们可以在第一个查询数据的请求上使用一个互斥锁来锁住它。</p><p>其他的线程走到这一步拿不到锁就等着，等第一个线程查询到了数据，然后做缓存。后面的线程进来发现已经有缓存了，就直接走缓存。</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">get</span><span class="params">(key)</span> </span>&#123;</span><br><span class="line">    String value = redis.get(key);  </span><br><span class="line">    <span class="keyword">if</span> (value == <span class="keyword">null</span>) &#123; <span class="comment">//代表缓存值过期  </span></span><br><span class="line">        <span class="comment">//设置3min的超时，防止del操作失败的时候，下次缓存过期一直不能load db</span></span><br><span class="line">        <span class="keyword">if</span> (redis.setnx(key_mutex, <span class="number">1</span>, <span class="number">3</span> * <span class="number">60</span>) == <span class="number">1</span>) &#123;  <span class="comment">//代表设置成功</span></span><br><span class="line">            value = db.get(key);</span><br><span class="line">            redis.set(key, value, expire_secs);</span><br><span class="line">            redis.del(key_mutex);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">            <span class="comment">//这个时候代表同时候的其他线程已经load db并回设到缓存了，这时候重试获取缓存值即可</span></span><br><span class="line">            sleep(<span class="number">50</span>);</span><br><span class="line">            get(key);   <span class="comment">//重试</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="keyword">return</span> value;</span><br><span class="line">    &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://juejin.im/post/5c9a67ac6fb9a070cb24bf34" target="_blank" rel="noopener">https://juejin.im/post/5c9a67ac6fb9a070cb24bf34</a></li><li><a href="https://juejin.im/post/5b961172f265da0ab7198f4d" target="_blank" rel="noopener">https://juejin.im/post/5b961172f265da0ab7198f4d</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;缓存穿透&lt;/li&gt;
+&lt;li&gt;缓存雪崩&lt;/li&gt;
+
+      
+    
+    </summary>
+    
+      <category term="Distributed System" scheme="https://sulangsss.github.io/categories/Distributed-System/"/>
+    
+    
+      <category term="Distributed System" scheme="https://sulangsss.github.io/tags/Distributed-System/"/>
+    
+      <category term="Cache" scheme="https://sulangsss.github.io/tags/Cache/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Redis Query Performance Analyzes</title>
+    <link href="https://sulangsss.github.io/2019/10/17/Redis/Performance%20-%20Analyzes/"/>
+    <id>https://sulangsss.github.io/2019/10/17/Redis/Performance - Analyzes/</id>
+    <published>2019-10-17T09:36:06.000Z</published>
+    <updated>2019-10-17T09:32:58.303Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Redis性能分析工具redis-faina] <a href="https://yq.aliyun.com/articles/511562" target="_blank" rel="noopener">https://yq.aliyun.com/articles/511562</a></li><li>[redis-faina] <a href="https://github.com/facebookarchive/redis-faina" target="_blank" rel="noopener">https://github.com/facebookarchive/redis-faina</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Reference&quot;&gt;&lt;a href=&quot;#Reference&quot; class=&quot;headerlink&quot; title=&quot;Reference&quot;&gt;&lt;/a&gt;Reference&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;[Redis性能分析工具redis-faina] &lt;a href=&quot;ht
+      
+    
+    </summary>
+    
+      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
+    
+    
+      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
+    
+      <category term="Query Performance Analyzes" scheme="https://sulangsss.github.io/tags/Query-Performance-Analyzes/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 Eureka 原理</title>
+    <link href="https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Theory/"/>
+    <id>https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Theory/</id>
+    <published>2019-10-17T03:50:06.000Z</published>
+    <updated>2019-10-20T13:36:37.759Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>Eureka包含两个组件：Eureka Server和Eureka Client。</p><ul><li>Eureka Server 提供服务注册服务，各个节点启动后会在 Eureka Server 中进行注册，这样 EurekaServer 中的服务注册表中将会存储所有可用服务节点的信息，服务节点的信息可以在界面中直观的看到。</li><li>Eureka Client 是一个java客户端，用于简化与 Eureka Server 的交互，客户端同时也就是一个内置的、使用轮询(round-robin)负载算法的负载均衡器。</li></ul><h4 id="CAP"><a href="#CAP" class="headerlink" title="CAP"></a>CAP</h4><p>从 CAP 理论看，Eureka 是一个 AP 系统，优先保证可用性A 和 分区容错性P，不保证强一致性C，只保证最终一致性，因此在架构中设计了较多缓存。</p><img src="/2019/10/17/SpringBoot/Eureka/Theory/eureka-process-structure.png"><p>Feature：</p><ul><li>Eureka 不持久化缓存，重启后内存数据丢失；</li><li>Eureka 通过增量更新注册信息，只关心瞬时状态；</li><li>Eureka 提供客户端缓存，宁可返回某服务5分钟之前可用的服务器列表信息，也不能因为暂时的网络故障而找不到可用的服务器，满足 CAP 中的 AP。</li></ul><h4 id="Eureka-Server"><a href="#Eureka-Server" class="headerlink" title="Eureka Server"></a>Eureka Server</h4><img src="/2019/10/17/SpringBoot/Eureka/Theory/eureka-cache-structure.png"><p>Eureka Server 存在三个变量(三级缓存机制)：</p><ul><li>registry(ConcurrentHashMap)：实时更新，类 AbstractInstanceRegistry 成员变量，UI 端请求的是这里的服务注册信息。</li><li>readWriteCacheMap(Guava Cache/LoadingCache)：实时更新，类 ResponseCacheImpl 成员变量，缓存时间 180 秒。</li><li>readOnlyCacheMap(ConcurrentHashMap)：周期更新，类 ResponseCacheImpl 成员变量，默认每30s从 readWriteCacheMap 更新，Eureka client 默认从这里更新服务注册信息，可配置直接从 readWriteCacheMap 更新</li></ul><p>Eureka Server 通过上面的三个变量来保存服务注册信息。默认情况下定时任务每 30s 将 readWriteCacheMap 同步至 readOnlyCacheMap，每 60s 清理超过 90s 未续约的节点，Eureka Client 每 30s 从 readOnlyCacheMap 更新服务注册信息，而 UI 则从 registry 更新服务注册信息。</p><p><strong>Association attributes：</strong></p><ul><li>eureka.instance.lease-expiration-duration-in-seconds：Server 至上一次收到 Client 的心跳之后，等待下一次心跳的超时时间，在这个时间内若没收到下一次心跳，则将移除该 Instance。</li><li><blockquote><p>默认为90秒；</p></blockquote></li><li><blockquote><p>如果该值太大，则很可能将流量转发过去的时候，该instance已经不存活了；</p></blockquote></li><li><blockquote><p>如果该值设置太小了，则instance则很可能因为临时的网络抖动而被摘除掉；</p></blockquote></li><li><blockquote><p>该值至少应该大于leaseRenewalIntervalInSeconds</p></blockquote></li><li><p>eureka.server.enable-self-preservation：是否开启自我保护模式，默认为true。</p></li><li>eureka.server.eviction-interval-timer-in-ms：Server 清理无效节点的时间间隔，默认60000毫秒，即60秒。</li><li>eureka.server.useReadOnlyResponseCache：是否使用 readOnlyCacheMap，默认为true。</li><li>eureka.server.responseCacheUpdateIntervalMs：readWriteCacheMap 更新至 readOnlyCacheMap 周期，默认30s。</li><li>eureka.server.responseCacheAutoExpirationInSeconds：Server 缓存readWriteCacheMap失效时间，缓存默认180s。</li></ul><h4 id="Eureka-Client"><a href="#Eureka-Client" class="headerlink" title="Eureka Client"></a>Eureka Client</h4><p>Eureka Client存在两种角色：服务提供者和服务消费者，作为服务消费者一般配合Ribbon或Feign（Feign内部使用Ribbon）使用。</p><p>Eureka Client启动后，作为服务提供者立即向 Server 注册，默认情况下每30s续约(renew)；作为服务消费者立即向 Server 全量更新服务注册信息，默认情况下每30s增量更新服务注册信息；Ribbon 延时1s向 Client 获取使用的服务注册信息，默认每30s更新使用的服务注册信息，只保存状态为UP的服务。</p><p><strong>Association attributes：</strong></p><ul><li>eureka.instance.lease-renewal-interval-in-seconds：Client 发送心跳给 Server 端的频率，默认为30秒。如果该instance实现了 HealthCheckCallback，并决定让自己 unavailable 的话，则该 Instance 也不会接收到流量。</li><li>eureka.client.registry-fetch-interval-seconds：Client 间隔多久去拉取服务注册信息，默认为30秒，对于 api-gateway，如果要迅速获取服务注册状态，可以缩小该值，比如5秒。</li><li>eureka.client.registryFetchIntervalSeconds：Client 增量更新周期，默认30s（正常情况下增量更新，超时或与 Server 端不一致等情况则全量更新）。</li><li>ribbon.ServerListRefreshInterval：Ribbon 更新周期，默认30s。</li></ul><p>Process：</p><ul><li>EurekaClient 第一次全量拉取，定时增量拉取应用服务实例信息，保存在缓存中：</li><li>EurekaClient 增量拉取失败，或者增量拉取之后对比 hashcode 发现不一致，就会执行全量拉取，这样避免了网络某时段分片带来的问题；</li><li>对于服务调用，如果涉及到 ribbon 负载均衡，那么 ribbon 对于这个实例列表也有自己的缓存，这个缓存定时从 EurekaClient 的缓存更新；</li></ul><hr><h3 id="Registry-And-Discovery"><a href="#Registry-And-Discovery" class="headerlink" title="Registry And Discovery"></a>Registry And Discovery</h3><img src="/2019/10/17/SpringBoot/Eureka/Theory/register-and-discovery.png"><blockquote><p>如果 Server-A 向 Server-B 节点单向注册，则 Server-A 视 Server-B 为 peer Server-A 接受的数据会同步给 Server-B，但 Server-B 接受的数据不会同步给 Server-A。</p></blockquote><p>Registry Process：</p><ol><li>将实例注册信息放入或者更新 Registry：</li><li>实例注册信息加入最近修改的记录队列；</li><li>主动让 Response 缓存失效；</li></ol><p>Unregister Service Process：</p><ol><li>从 Registry 中剔除这个实例；</li><li>将实例注册信息加入最近修改的记录队列；</li><li>主动让 Response 缓存失效；</li></ol><hr><h3 id="默认配置下服务消费者最长感知时间"><a href="#默认配置下服务消费者最长感知时间" class="headerlink" title="默认配置下服务消费者最长感知时间"></a>默认配置下服务消费者最长感知时间</h3><h4 id="正常上线"><a href="#正常上线" class="headerlink" title="正常上线"></a>正常上线</h4><p>数据流：readWrite -&gt; readOnly -&gt; Client -&gt; Ribbon</p><p>预估：30(readOnly) + 30(Client) + 30(Ribbon) = 90s</p><h4 id="正常下线"><a href="#正常下线" class="headerlink" title="正常下线"></a>正常下线</h4><p>数据流：readWrite -&gt; readOnly -&gt; Client -&gt; Ribbon</p><p>预估：30(readOnly) + 30(Client Fetch) + 30(Ribbon) = 90s</p><p>服务正常下线（kill或kill -15杀死进程）会给进程善后机会，DiscoveryClient.shutdown() 将向 Server 更新自身状态为 DOWN，然后发送 DELETE 请求注销自己，registry 和 readWriteCacheMap 实时更新，故UI将不再显示该服务实例。</p><blockquote><p>SpringBoot 下线是否会默认调用 DiscoveryClient.shutdown()？</p></blockquote><h4 id="非正常下线"><a href="#非正常下线" class="headerlink" title="非正常下线"></a>非正常下线</h4><p>预估：90(LeaseExpiration)*2 + 30(readOnly) + 30(Client Fetch) + 30(Ribbon) = 270s</p><p>服务非正常下线（kill -9杀死进程或进程崩溃）不会触发 DiscoveryClient.shutdown() 方法，Eureka Server 将依赖每60s清理超过90s未续约服务从 registry 和 readWriteCacheMap 中删除该服务实例。</p><h4 id="优化配置"><a href="#优化配置" class="headerlink" title="优化配置"></a>优化配置</h4><p><strong>Server Configuration</strong><br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## 中小规模下，自我保护模式坑比好处多，所以关闭它</span></span><br><span class="line"><span class="string">eureka.server.enableSelfPreservation=false</span></span><br><span class="line"><span class="comment">## 心跳阈值计算周期，如果开启自我保护模式，可以改一下这个配置</span></span><br><span class="line"><span class="comment">## eureka.server.renewalThresholdUpdateIntervalMs=120000</span></span><br><span class="line"><span class="comment">## 主动失效检测间隔,配置成5秒</span></span><br><span class="line"><span class="string">eureka.server.evictionIntervalTimerInMs=5000</span></span><br><span class="line"><span class="comment">## 心跳间隔，5秒</span></span><br><span class="line"><span class="string">eureka.instance.leaseRenewalIntervalInSeconds=5</span></span><br><span class="line"><span class="comment">## 没有心跳的淘汰时间，10秒</span></span><br><span class="line"><span class="string">eureka.instance.leaseExpirationDurationInSeconds=10</span></span><br><span class="line"><span class="comment">## 禁用readOnlyCacheMap</span></span><br><span class="line"><span class="string">eureka.server.useReadOnlyResponseCache=false</span></span><br></pre></td></tr></table></figure></p><p><strong>Client Configuration</strong><br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## 心跳间隔，5秒</span></span><br><span class="line"><span class="string">eureka.instance.leaseRenewalIntervalInSeconds=5</span></span><br><span class="line"><span class="comment">## 没有心跳的淘汰时间，10秒</span></span><br><span class="line"><span class="string">eureka.instance.leaseExpirationDurationInSeconds=10</span></span><br><span class="line"><span class="comment"># 定时刷新本地缓存时间</span></span><br><span class="line"><span class="string">eureka.client.registryFetchIntervalSeconds=5</span></span><br><span class="line"><span class="comment"># ribbon缓存时间</span></span><br><span class="line"><span class="string">ribbon.ServerListRefreshInterval=2000</span></span><br></pre></td></tr></table></figure></p><ol><li>禁用 readOnlyCacheMap，直接从 readWriteCacheMap 获取信息；</li><li>禁用 Self Preservation Mode；</li><li>Heartbeat 时间间隔为5秒；</li><li>Heartbeat 超时时间间隔为10秒；</li><li>Client 获取服务列表信息间隔为5秒；</li><li>ribbon 缓存刷新时间为2秒；</li></ol><p>经过优化配置后：</p><ul><li>正常上下线预估：5(Client Fetch) + 2(Ribbon) = 7秒；</li><li>异常下线预估(最坏情况))：10(LeaseExpiration)*2 + 5(Evict) + 5(Client Fetch) + 2(Ribbon) = 32秒</li></ul><hr><h3 id="Self-Preservation-Mode"><a href="#Self-Preservation-Mode" class="headerlink" title="Self Preservation Mode"></a>Self Preservation Mode</h3><p>Eureka servers will enter self preservation mode if they detect that a larger than expected number of registered clients have terminated their connections in an ungraceful way, and are pending eviction at the same time. </p><p><strong>This is done to ensure catastrophic network events do not wipe out eureka registry data, and having this be propagated downstream to all clients.</strong></p><p>When in self preservation mode, eureka servers will stop eviction of all instances until either:</p><ol><li>the number of heartbeat renewals it sees is back above the expected threshold;</li><li>self preservation is disabled;</li></ol><hr><p>默认情况下，如果 Eureka Server 在一定时间内没有接收到某个微服务实例的心跳，Eureka Server 将会注销该实例（默认90秒）。但是当网络分区故障发生时，微服务与 Eureka Server 之间无法正常通信，以上行为可能变得非常危险了——因为微服务本身其实是健康的，此时本不应该注销这个微服务。</p><p>Eureka Server 通过“自我保护模式”来解决这个问题——当 Eureka Server 节点在短时间内丢失过多客户端时（可能发生了网络分区故障），那么这个节点就会进入自我保护模式。一旦进入该模式，Eureka Server 就会保护服务注册表中的信息，不再删除服务注册表中的数据（也就是不会注销任何微服务）。当网络故障恢复后，该 Eureka Server 节点会自动退出自我保护模式。</p><p>认情况下，如果在15分钟内超过 85% 的客户端节点都没有正常的心跳，那么 Eureka 就认为客户端与注册中心出现了网络故障(比如网络故障或频繁的启动关闭客户端)，Eureka Server 自动进入自我保护模式。不再剔除任何服务，当网络故障恢复后，该节点自动退出自我保护模式。</p><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">eureka:</span></span><br><span class="line"><span class="attr">  server:</span></span><br><span class="line">    <span class="comment">#自我保护模式，当出现网络分区故障、频繁的开启关闭客户端、eureka在短时间内丢失过多客户端时，会进入自我保护模式，即一个服务长时间没有发送心跳，eureka也不会将其删除，默认为true</span></span><br><span class="line"><span class="attr">    enable-self-preservation:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment">#阈值因子，默认是0.85，如果阈值比最小值大，则自我保护模式开启</span></span><br><span class="line"><span class="attr">    renewal-percent-threshold:</span> <span class="number">0.85</span></span><br></pre></td></tr></table></figure><p>自我保护模式是一种对网络异常的安全保护措施。使用自我保护模式让Eureka集群更加的健壮、稳定。</p><hr><h3 id="API-Gateway-实现服务下线实时感知"><a href="#API-Gateway-实现服务下线实时感知" class="headerlink" title="API-Gateway 实现服务下线实时感知"></a>API-Gateway 实现服务下线实时感知</h3><p>以Spring Cloud Zuul网关为例，网关作为Eureka Client保存了服务注册信息，服务消费者通过网关将请求转发给服务提供者，只需要做到服务提供者下线时通知网关在自己保存的服务列表中使该服务失效。为了保持网关的独立性，可实现一个独立服务接收下线通知并协调网关集群。</p><blockquote><p>在 Kubernetes 集群中，可监听 Pod 事件来协调服务的上下线。</p></blockquote><p>目前服务发现主要有两种模式：</p><ul><li>客户端发现：客户端负责决定可用服务实例的网络地址，并且在集群中对请求负载均衡, 客户端访问服务登记表，也就是一个可用服务的数据库，然后客户端使用一种负载均衡算法选择一个可用的服务实例然后发起请求。</li><li>服务端发现：客户端通过负载均衡器向服务注册中心发起请求，负载均衡器查询服务注册中心，将每个请求路由到可用的服务实例上。</li></ul><h4 id="Zuul-与-Eureka-的配合"><a href="#Zuul-与-Eureka-的配合" class="headerlink" title="Zuul 与 Eureka 的配合"></a>Zuul 与 Eureka 的配合</h4><p>Eureka Server 为注册中心，Zuul 相对于 Eureka Server 来说是 Eureka Client，Zuul 会把 Eureka Server 端服务列表缓存到本地，并以定时任务的形式更新服务列表，同时 Zuul 通过本地列表发现其它服务，使用 Ribbon 实现客户端负载均衡。</p><img src="/2019/10/17/SpringBoot/Eureka/Theory/eureka-and-zuul-connection.png"><p>正常情况下，调用方对网关发起请求即刻能得到响应。但是当对生产者做缩容、下线、升级的情况下，由于Eureka这种多级缓存的设计结构和定时更新的机制，LoadBalance 端的服务列表B存在更新不及时的情况，服务消费者最长感知时间将无限趋近240s），如果这时消费者对网关发起请求，LoadBalance 会对一个已经不存在的服务发起请求，请求是会超时的。</p><h4 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h4><p><strong>Idea</strong></p><p>生产者下线后，最先得到感知的是 Eureka Server 中的 readWriteCacheMap，最后得到感知的是网关核心中的 LoadBalance。但是 loadBalance 对生产者的发现是在 loadBalance 本地维护的列表中。</p><p>所以要想达到网关对生产者下线的实时感知，可以这样做：首先生产者或者部署平台主动通知 Eureka Server，然后跳过 Eureka 多级缓存之间的更新时间，直接通知 Zuul 中的 Eureka Client，最后将 Eureka Client 中的服务列表更新到 Ribbon 中。</p><blockquote><p>如果下线通知的逻辑代码放在生产者中，会造成代码污染、语言差异等问题。</p></blockquote><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Eureka自我保护模式——难点重点] <a href="https://www.cnblogs.com/linjiqin/p/10090000.html" target="_blank" rel="noopener">https://www.cnblogs.com/linjiqin/p/10090000.html</a></li><li>[Spring Cloud Eureka 自我保护机制] <a href="https://www.cnblogs.com/xishuai/p/spring-cloud-eureka-safe.html" target="_blank" rel="noopener">https://www.cnblogs.com/xishuai/p/spring-cloud-eureka-safe.html</a></li><li>[SpringCloud之Eureka] <a href="https://juejin.im/post/5ca4ca43e51d4577dd2e82e3" target="_blank" rel="noopener">https://juejin.im/post/5ca4ca43e51d4577dd2e82e3</a></li><li>[Self Preservation Mode] <a href="https://github.com/Netflix/eureka/wiki/Server-Self-Preservation-Mode" target="_blank" rel="noopener">https://github.com/Netflix/eureka/wiki/Server-Self-Preservation-Mode</a></li><li>[spring cloud eureka 参数配置] <a href="https://segmentfault.com/a/1190000008378268" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008378268</a></li><li>[详解 Eureka 缓存机制] <a href="http://college.creditease.cn/detail/243" target="_blank" rel="noopener">http://college.creditease.cn/detail/243</a></li><li>[API网关如何实现对服务下线实时感知] <a href="https://juejin.im/post/5cf62c13f265da1bc37efb4c" target="_blank" rel="noopener">https://juejin.im/post/5cf62c13f265da1bc37efb4c</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;p&gt;Eureka包含两个组件：Eureka Server和Eur
+      
+    
+    </summary>
+    
+      <category term="SpringBoot" scheme="https://sulangsss.github.io/categories/SpringBoot/"/>
+    
+      <category term="Eureka" scheme="https://sulangsss.github.io/categories/SpringBoot/Eureka/"/>
+    
+    
+      <category term="SpringBoot" scheme="https://sulangsss.github.io/tags/SpringBoot/"/>
+    
+      <category term="Eureka" scheme="https://sulangsss.github.io/tags/Eureka/"/>
+    
+      <category term="自我保护" scheme="https://sulangsss.github.io/tags/%E8%87%AA%E6%88%91%E4%BF%9D%E6%8A%A4/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Eureka 服务实例上下线</title>
+    <link href="https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Quickly-Register-And-Unregister/"/>
+    <id>https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Quickly-Register-And-Unregister/</id>
+    <published>2019-10-17T03:18:06.000Z</published>
+    <updated>2019-10-19T05:52:19.623Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>默认的Spring Eureka服务器，服务提供者和服务调用者配置不够灵敏，总是服务提供者在停掉很久之后，服务调用者很长时间并没有感知到变化。或者是服务已经注册上去了，但是服务调用方很长时间还是调用不到(发现不了这个服务)。</p><p>在实际情况中，Eureka 的默认设置是不符合我们生产要求的，一般情况下，我们的生产要求：</p><ol><li>ServiceA 下线一台实例后，API-Gateway 的调用不能失败；</li><li>ServiceB 下线一台实例后，ServiceA 的 Feign 调用不能失败；</li><li>服务上线下线，Eureka服务能够快速感知；</li></ol><hr><h3 id="涉及原理知识"><a href="#涉及原理知识" class="headerlink" title="涉及原理知识"></a>涉及原理知识</h3><h4 id="Eureka的两层缓存问题"><a href="#Eureka的两层缓存问题" class="headerlink" title="Eureka的两层缓存问题"></a>Eureka的两层缓存问题</h4><p>EurekaServer 默认有两个缓存，一个是 ReadWriteMap，另一个是 ReadOnlyMap。有服务提供者注册服务或者维持心跳时时，会修改 ReadWriteMap。当有服务调用者查询服务实例列表时，默认会从 ReadOnlyMap 读取（这个在原生Eureka可以配置，SpringCloud Eureka中不能配置，一定会启用ReadOnlyMap读取），这样可以减少 ReadWriteMap 读写锁的争用，增大吞吐量。EurekaServer 定时把数据从 ReadWriteMap 更新到 ReadOnlyMap 中。</p><h4 id="心跳时间"><a href="#心跳时间" class="headerlink" title="心跳时间"></a>心跳时间</h4><p>客户端注册服务后，会定时心跳。这个根据客户端的 Eureka 配置中的服务刷新时间决定。还有个配置是客户端的服务过期时间，但是 EurekaServer 默认情况下是忽略客户端的这个字段。需要配置好 EurekaServer 的扫描失效时间，才会触发 EurekaServer 的主动失效机制。</p><p>在这个机制启用下：每个客户端会发送自己的服务过期时间上去，EurekaServer 会定时检查每个客户端的服务过期时间和上次心跳时间，如果在服务过期时间内没有收到过任何一次心跳，同时没有处于保护模式下，则会将这个实例从ReadWriteMap中去掉。</p><h4 id="调用者服务从Eureka拉列表的轮训间隔"><a href="#调用者服务从Eureka拉列表的轮训间隔" class="headerlink" title="调用者服务从Eureka拉列表的轮训间隔"></a>调用者服务从Eureka拉列表的轮训间隔</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.client.registry-fetch-interval-seconds</span></span><br></pre></td></tr></table></figure><p>表示 Eureka Server 间隔多久去拉取服务注册信息，默认为30秒，对于api-gateway，如果要迅速获取服务注册状态，可以缩小该值，比如5秒。</p><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.instance.lease-expiration-duration-in-seconds</span></span><br></pre></td></tr></table></figure><p>表示 Eureka Server 至上一次收到 Client 的心跳之后，等待下一次心跳的超时时间，在这个时间内若没收到下一次心跳，则将移除该 Instance。</p><p>默认为90秒，如果该值太大，则很可能将流量转发过去的时候，该instance已经不存活了；如果该值设置太小了，则instance则很可能因为临时的网络抖动而被摘除掉。因此，该值至少应该大于lease-renewal-interval-in-seconds。</p><blockquote><p>eureka.instance.lease-renewal-interval-in-seconds：表示eureka client发送心跳给server端的频率。<br>lease-expiration-duration-in-seconds后，server端没有收到client的心跳，则将摘除该instance。除此之外，如果该instance实现了HealthCheckCallback，并决定让自己unavailable的话，则该instance也不会接收到流量。</p></blockquote><h4 id="Zuul-Ribbon缓存"><a href="#Zuul-Ribbon缓存" class="headerlink" title="Zuul - Ribbon缓存"></a>Zuul - Ribbon缓存</h4><p>在 Zuul 内部进行 Routing 和 Load Balance 时候，为了保证 HA，不受 Eureka 掉线的影响，内存中会有一个 Server List 缓存。</p><hr><h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><ol><li>服务过期时间，默认90s</li></ol><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.instance.lease-expiration-duration-in-seconds=9</span></span><br></pre></td></tr></table></figure><p>超过这个时间没有接收到心跳 EurekaServer 就会将这个实例剔除。EurekaServer 一定要设置 eureka.server.eviction-interval-timer-in-ms 否则这个配置无效，这个配置一般为服务刷新时间配置的三倍。</p><ol start="2"><li>服务刷新时间配置，每隔这个时间会主动心跳一次，默认30s</li></ol><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.instance.lease-renewal-interval-in-seconds=3</span></span><br></pre></td></tr></table></figure><ol><li>拉服务列表时间间隔，默认30s</li></ol><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.client.registryFetchIntervalSeconds=5</span></span><br></pre></td></tr></table></figure><ol start="4"><li>ribbon刷新时间，默认30s</li></ol><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">ribbon.ServerListRefreshInterval=5000</span></span><br></pre></td></tr></table></figure><h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><ol><li>禁用Eureka的ReadOnlyMap缓存</li></ol><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.server.use-read-only-response-cache:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure><ol start="2"><li>启用主动失效，并且每次主动失效检测间隔为3s</li></ol><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.server.eviction-interval-timer-in-ms:</span> <span class="number">3000</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># eureka.server.responseCacheUpdateInvervalMs</span></span><br><span class="line"><span class="comment"># eureka.server.responseCacheAutoExpirationInSeconds</span></span><br><span class="line"><span class="comment"># 在启用了主动失效后其实没什么用了。默认值180s</span></span><br></pre></td></tr></table></figure><h4 id="Zuul-Retry"><a href="#Zuul-Retry" class="headerlink" title="Zuul - Retry"></a>Zuul - Retry</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework.retry&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-retry&lt;/artifactId&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#(是否所有操作都重试，若false则仅get请求重试)</span></span><br><span class="line"><span class="string">ribbon.OkToRetryOnAllOperations:true</span> </span><br><span class="line"><span class="comment">#(重试负载均衡其他实例最大重试次数,不含首次实例)</span></span><br><span class="line"><span class="string">ribbon.MaxAutoRetriesNextServer:3</span> </span><br><span class="line"><span class="comment">#(同一实例最大重试次数,不含首次调用)</span></span><br><span class="line"><span class="string">ribbon.MaxAutoRetries:1</span></span><br><span class="line"><span class="string">ribbon.ReadTimeout:30000</span></span><br><span class="line"><span class="string">ribbon.ConnectTimeout:3000</span></span><br><span class="line"><span class="comment">#（那些状态进行重试）</span></span><br><span class="line"><span class="string">ribbon.retryableStatusCodes:404,500,503</span></span><br><span class="line"><span class="comment"># (重试开关)</span></span><br><span class="line"><span class="string">spring.cloud.loadbalancer.retry.enable:true</span></span><br></pre></td></tr></table></figure><h4 id="Spring-Cloud-Gateway"><a href="#Spring-Cloud-Gateway" class="headerlink" title="Spring Cloud Gateway"></a>Spring Cloud Gateway</h4><blockquote><p><a href="https://juejin.im/post/5ba0ea35f265da0afe62d7a4" target="_blank" rel="noopener">https://juejin.im/post/5ba0ea35f265da0afe62d7a4</a></p></blockquote><h4 id="Client-主动通知-Eureka-下线"><a href="#Client-主动通知-Eureka-下线" class="headerlink" title="Client 主动通知 Eureka 下线"></a>Client 主动通知 Eureka 下线</h4><p>如果是 Spring Boot 应用，可以调用以下代码通知 Eureka，本服务实例暂停提供服务。</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DiscoveryManager.getInstance().shutdownComponent();</span><br></pre></td></tr></table></figure><p>另外还可以通过 HTTP API 接口删除实例注册信息来实现服务下线。</p><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[SpringCloud服务的平滑上下线] <a href="https://juejin.im/post/5cf63899f265da1b9253c7f4" target="_blank" rel="noopener">https://juejin.im/post/5cf63899f265da1b9253c7f4</a></li><li>[spring eureka 服务实例实现快速下线快速感知快速刷新配置解析] <a href="https://blog.csdn.net/zhxdick/article/details/78560993" target="_blank" rel="noopener">https://blog.csdn.net/zhxdick/article/details/78560993</a></li><li>[eureka缓存细节以及生产环境的最佳配置] bhsc881114.github.io/2018/04/01/eureka缓存细节以及生产环境的最佳配置/</li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;p&gt;默认的Spring Eureka服务器，服务提供者和服务调用
+      
+    
+    </summary>
+    
+      <category term="SpringBoot" scheme="https://sulangsss.github.io/categories/SpringBoot/"/>
+    
+      <category term="Eureka" scheme="https://sulangsss.github.io/categories/SpringBoot/Eureka/"/>
+    
+    
+      <category term="SpringBoot" scheme="https://sulangsss.github.io/tags/SpringBoot/"/>
+    
+      <category term="Eureka" scheme="https://sulangsss.github.io/tags/Eureka/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>MySQL 联合索引最左匹配原则</title>
+    <link href="https://sulangsss.github.io/2019/10/15/DB/MySQL/MySQL%20-%20%E8%81%94%E5%90%88%E7%B4%A2%E5%BC%95%E6%9C%80%E5%B7%A6%E5%8C%B9%E9%85%8D%E5%8E%9F%E5%88%99/"/>
+    <id>https://sulangsss.github.io/2019/10/15/DB/MySQL/MySQL - 联合索引最左匹配原则/</id>
+    <published>2019-10-15T11:00:13.000Z</published>
+    <updated>2019-10-16T02:31:07.493Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="最左前缀匹配原则"><a href="#最左前缀匹配原则" class="headerlink" title="最左前缀匹配原则"></a>最左前缀匹配原则</h3><p>在 MySQL 建立联合索引时会遵循最左前缀匹配的原则，即最左优先，在检索数据时从联合索引的最左边开始匹配。</p><hr><p>Example 1：KEY test_col1_col2_col3 on test(col1,col2,col3);</p><p>表结构包含5个字段：col1, col2, col3, col4, col5</p><p>联合索引 test_col1_col2_col3 实际建立了(col1)、(col1,col2)、(col1,col2,col3)三个索引。</p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">test</span> <span class="keyword">WHERE</span> col1=“<span class="number">1</span>” <span class="keyword">AND</span> clo2=“<span class="number">2</span>” <span class="keyword">AND</span> clo4=“<span class="number">4</span>”</span><br></pre></td></tr></table></figure><p>上面这个查询语句执行时会依照最左前缀匹配原则，检索时会使用索引(col1,col2)进行数据匹配。</p><hr><p>Example 2：索引的字段可以是任意顺序的<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">test</span> <span class="keyword">WHERE</span> col1=“<span class="number">1</span>” <span class="keyword">AND</span> clo2=“<span class="number">2</span>”</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">test</span> <span class="keyword">WHERE</span> col2=“<span class="number">2</span>” <span class="keyword">AND</span> clo1=“<span class="number">1</span>”</span><br></pre></td></tr></table></figure></p><p>这两个查询语句都会用到索引(col1,col2)，MySQL 创建联合索引的规则是首先会对联合合索引的最左边的，也就是第一个字段col1的数据进行排序，在第一个字段的排序基础上，然后再对后面第二个字段col2进行排序。其实就相当于实现了类似 order by col1 col2这样一种排序规则。</p><p>有人会疑惑第二个查询语句不符合最左前缀匹配：首先可以肯定是两个查询语句都包含索引(col1,col2)中的col1、col2两个字段，只是顺序不一样，查询条件一样，最后所查询的结果肯定是一样的。既然结果是一样的，到底以何种顺序的查询方式最好呢？此时我们可以借助 MySQL 查询优化器explain，explain会纠正sql语句该以什么样的顺序执行效率最高，最后才生成真正的执行计划。</p><hr><p>Example 3：跳过第一个索引字段</p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">test</span> <span class="keyword">WHERE</span> col2=<span class="number">2</span>;</span><br></pre></td></tr></table></figure><p>对于联合索引(col1,col2,col3)，上面这条语句是能不够触发索引的。</p><p>如果表中的字段除了（col1,col2,col3），还有别的字段。那么的 EXPLAIN 中结果将不会是 INDEX 而是 ALL。其实是没有用到索引的。</p><p>如果表中的字段只有（col1,col2,col3）。那么的 EXPLAIN 中结果才会是 INDEX 。</p><hr><h3 id="为什么要使用联合索引"><a href="#为什么要使用联合索引" class="headerlink" title="为什么要使用联合索引"></a>为什么要使用联合索引</h3><ol><li><p>减少开销。建一个联合索引(col1,col2,col3)，实际相当于建了(col1),(col1,col2),(col1,col2,col3)三个索引。每多一个索引，都会增加写操作的开销和磁盘空间的开销。对于大量数据的表，使用联合索引会大大的减少开销。</p></li><li><p>覆盖索引。对联合索引(col1,col2,col3)，如果有如下的sql: select col1,col2,col3 from test where col1=1 and col2=2。那么MySQL可以直接通过遍历索引取得数据，而无需回表，这减少了很多的随机io操作。减少io操作，特别的随机io其实是dba主要的优化策略。所以，在真正的实际应用中，覆盖索引是主要的提升性能的优化手段之一。</p></li><li><p>效率高。索引列越多，通过索引筛选出的数据越少。有1000W条数据的表，有如下sql:select from table where col1=1 and col2=2 and col3=3,假设假设每个条件可以筛选出10%的数据，如果只有单值索引，那么通过该索引能筛选出1000W10%=100w条数据，然后再回表从100w条数据中找到符合col2=2 and col3= 3的数据，然后再排序，再分页；如果是联合索引，通过索引筛选出1000w10% 10% *10%=1w，效率提升可想而知！</p></li></ol><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Mysql联合索引最左匹配原则] <a href="https://segmentfault.com/a/1190000015416513" target="_blank" rel="noopener">https://segmentfault.com/a/1190000015416513</a></li><li><a href="https://blog.codinglabs.org/articles/theory-of-mysql-index.html" target="_blank" rel="noopener">https://blog.codinglabs.org/articles/theory-of-mysql-index.html</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;最左前缀匹配原则&quot;&gt;&lt;a href=&quot;#最左前缀匹配原则&quot; class=&quot;headerlink&quot; title=&quot;最左前缀匹配原则&quot;&gt;&lt;/a&gt;最左前缀匹配原则&lt;/h3&gt;&lt;p&gt;在 MySQL 建立联合索引时会遵循最左前缀匹配的原则，即最左优先，在检索数据时从联合索引的
+      
+    
+    </summary>
+    
+      <category term="DB" scheme="https://sulangsss.github.io/categories/DB/"/>
+    
+      <category term="MySQL" scheme="https://sulangsss.github.io/categories/DB/MySQL/"/>
+    
+    
+      <category term="DB" scheme="https://sulangsss.github.io/tags/DB/"/>
+    
+      <category term="MySQL" scheme="https://sulangsss.github.io/tags/MySQL/"/>
+    
+      <category term="索引" scheme="https://sulangsss.github.io/tags/%E7%B4%A2%E5%BC%95/"/>
+    
+      <category term="Index" scheme="https://sulangsss.github.io/tags/Index/"/>
+    
+      <category term="联合索引" scheme="https://sulangsss.github.io/tags/%E8%81%94%E5%90%88%E7%B4%A2%E5%BC%95/"/>
+    
+      <category term="最左匹配原则" scheme="https://sulangsss.github.io/tags/%E6%9C%80%E5%B7%A6%E5%8C%B9%E9%85%8D%E5%8E%9F%E5%88%99/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Kubernetes Ingress</title>
+    <link href="https://sulangsss.github.io/2019/10/15/Kubenetes/Ingress/"/>
+    <id>https://sulangsss.github.io/2019/10/15/Kubenetes/Ingress/</id>
+    <published>2019-10-15T09:10:27.000Z</published>
+    <updated>2019-10-15T09:11:26.482Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Ingress Controllers] <a href="https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Reference&quot;&gt;&lt;a href=&quot;#Reference&quot; class=&quot;headerlink&quot; title=&quot;Reference&quot;&gt;&lt;/a&gt;Reference&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;[Ingress Controllers] &lt;a href=&quot;https
+      
+    
+    </summary>
+    
+      <category term="Kubernetes" scheme="https://sulangsss.github.io/categories/Kubernetes/"/>
+    
+    
+      <category term="Kubernetes" scheme="https://sulangsss.github.io/tags/Kubernetes/"/>
+    
+      <category term="Ingress" scheme="https://sulangsss.github.io/tags/Ingress/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Thread Lifecycle</title>
+    <link href="https://sulangsss.github.io/2019/10/15/CS/Thread/Thread-Lifecycle/"/>
+    <id>https://sulangsss.github.io/2019/10/15/CS/Thread/Thread-Lifecycle/</id>
+    <published>2019-10-15T03:39:18.000Z</published>
+    <updated>2019-10-15T04:20:46.243Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Java-Thread-Status"><a href="#Java-Thread-Status" class="headerlink" title="Java Thread Status"></a>Java Thread Status</h3><img src="/2019/10/15/CS/Thread/Thread-Lifecycle/java-early-stage-process-status.jpg"><p>上图是早期进程的状态，这里所谓“进程状态”指早期的那种“单线程进程”的状态。</p><p>对于现在普遍的“多线程进程”，显然，谈论“进程状态”已经没有意义，应该谈论“进程下某个线程的状态”或者直接说“线程状态”。</p><p>这里有个误区：其实在 Java 里面，线程是包含6个状态，而不是5个状态。</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment">*   sun.misc.VM</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">*   The threadStatus field is set by the VM at state transition</span></span><br><span class="line"><span class="comment">*   in the hotspot implementation. Its value is set according to the JVM TI specification GetThreadState function.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_ALIVE = <span class="number">0x0001</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_TERMINATED = <span class="number">0x0002</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_RUNNABLE = <span class="number">0x0004</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_BLOCKED_ON_MONITOR_ENTER = <span class="number">0x0400</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_WAITING_INDEFINITELY = <span class="number">0x0010</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_WAITING_WITH_TIMEOUT = <span class="number">0x0020</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*   Thread.State</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">enum</span> State &#123;</span><br><span class="line">    NEW,</span><br><span class="line">    RUNNABLE,</span><br><span class="line">    BLOCKED,</span><br><span class="line">    WAITING,</span><br><span class="line">    TIMED_WAITING,</span><br><span class="line">    TERMINATED;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>These states are virtual machine states which do not reflect any operating system thread states。</p><blockquote><p>这些状态是虚拟机状态，它不反映任何操作系统的线程状态。</p></blockquote><img src="/2019/10/15/CS/Thread/Thread-Lifecycle/java-thread-status.jpg"><p><strong>Runnable 与 传统Running 状态的区别</strong></p><p>有人常觉得 Java 线程状态中还少了个 Running 状态，这其实是把两个不同层面的状态混淆了。对 Java 线程状态而言，不存在所谓的 Running 状态，它的 Runnable 状态包含了 Running 状态。</p><p>为何 JVM 中没有去区分这两种状态呢？现在的时分(time-sharing)多任务(multi-task)操作系统架构通常都是用所谓的“时间分片(time quantum or time slice)”方式进行抢占式（preemptive）轮转调度（round-robin式）。这个时间分片通常是很小的，一个线程一次最多只能在 CPU 上运行比如 10-20ms 的时间（此时处于 Running 状态），也即大概只有 0.01 秒这一量级，时间片用后就要被切换下来放入调度队列的末尾等待再次调度(也即回到 Ready 状态)。</p><p>Java中的 RUNNABLE 状态实际上是包含了 Ready 与 Running 的状态的。</p><hr><p>从实际来说，线程只有”就绪”、”阻塞”、”运行”三种状态：</p><ol><li>运行状态，线程正在干活的状态；</li><li>就绪状态，CPU正在忙活别的；</li><li>阻塞状态，线程主动让出CPU资源；</li></ol><p>NEW 和 TERMINATED 这两种状态其实并不是线程的状态，而是java.lang.Thread对象的状态。可以说，处于 NEW 和 TERMINATED 状态的”线程”其实并不是线程，而只是一个代表着线程对象而已。</p><p>所以我们把 NEW 和 TERMINATED 两种状态去掉，那么Java定义的线程状态还有4种：</p><ol><li>RUNNABLE</li><li>BLOCKED</li><li>WAITING</li><li>TIMED_WAITING</li></ol><p>这四种状态怎么对应到”就绪”、”阻塞”、”运行”这三种状态里呢：</p><ol><li>RUNNABLE，对应”就绪”和”运行”两种状态，也就是说处于就绪和运行状态的线程在java.lang.Thread中都表现为”RUNNABLE”；</li><li>BLOCKED，对应”阻塞”状态，此线程需要获得某个锁才能继续执行，而这个锁目前被其他线程持有，所以进入了被动的等待状态，直到抢到了那个锁，才会再次进入”就绪”状态；</li><li>WAITING，对应”阻塞”状态，代表此线程正处于无限期的主动等待中，直到有人唤醒它，它才会再次进入就绪状态；</li><li>TIMED_WAITING，对应”阻塞”状态，代表此线程正处于有限期的主动等待中，要么有人唤醒它，要么等待够了一定时间之后，才会再次进入就绪状态；</li></ol><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[java线程运行怎么有第六种状态？] <a href="https://www.zhihu.com/question/56494969" target="_blank" rel="noopener">https://www.zhihu.com/question/56494969</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Java-Thread-Status&quot;&gt;&lt;a href=&quot;#Java-Thread-Status&quot; class=&quot;headerlink&quot; title=&quot;Java Thread Status&quot;&gt;&lt;/a&gt;Java Thread Status&lt;/h3&gt;&lt;img src=
+      
+    
+    </summary>
+    
+      <category term="CS" scheme="https://sulangsss.github.io/categories/CS/"/>
+    
+      <category term="Thread" scheme="https://sulangsss.github.io/categories/CS/Thread/"/>
+    
+    
+      <category term="CS" scheme="https://sulangsss.github.io/tags/CS/"/>
+    
+      <category term="Thread" scheme="https://sulangsss.github.io/tags/Thread/"/>
+    
+      <category term="Lifecycle" scheme="https://sulangsss.github.io/tags/Lifecycle/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 JVM - G1</title>
+    <link href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20JVM%20-%20%20G1/"/>
+    <id>https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  G1/</id>
+    <published>2019-10-14T15:29:06.000Z</published>
+    <updated>2019-10-14T15:29:07.443Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/categories/Java/JVM/"/>
+    
+      <category term="Basic" scheme="https://sulangsss.github.io/categories/Java/JVM/Basic/"/>
+    
+    
+      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/tags/JVM/"/>
+    
+      <category term="G1" scheme="https://sulangsss.github.io/tags/G1/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 JVM - CMS</title>
+    <link href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20JVM%20-%20%20CMS/"/>
+    <id>https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  CMS/</id>
+    <published>2019-10-14T14:19:06.000Z</published>
+    <updated>2019-10-14T15:26:54.650Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="GC-Phases"><a href="#GC-Phases" class="headerlink" title="GC Phases"></a>GC Phases</h3><h4 id="1-Initial-Mark-初始标记阶段-STW"><a href="#1-Initial-Mark-初始标记阶段-STW" class="headerlink" title="1. Initial Mark - 初始标记阶段 - STW"></a>1. Initial Mark - 初始标记阶段 - STW</h4><p>作用：标记存活的对象。</p><p>主要标记两部分：</p><ul><li>老年代中所有的 GC Roots 对象；</li><li>年轻代中活着的对象引用到的老年代的对象；</li></ul><h4 id="2-Concurrent-Mark-并发标记阶段"><a href="#2-Concurrent-Mark-并发标记阶段" class="headerlink" title="2. Concurrent Mark - 并发标记阶段"></a>2. Concurrent Mark - 并发标记阶段</h4><p>从“初始化标记”阶段找到的GC Roots开始，找出所有存活的对象。</p><p>并发标记的特点是标记线程和应用程序线程同时运行。并不是老年代的所有存活对象都会被标记，因为标记的同时应用程序会改变一些对象的引用等。</p><h4 id="3-Concurrent-Preclean-预清理阶段"><a href="#3-Concurrent-Preclean-预清理阶段" class="headerlink" title="3. Concurrent Preclean - 预清理阶段"></a>3. Concurrent Preclean - 预清理阶段</h4><p>前一个阶段在并行运行的时候，一些对象的引用已经发生了变化，当这些引用发生变化的时候，JVM会标记堆的这个区域为Dirty Card(包含被标记但是改变了的对象，被认为”dirty”)，这就是Card Marking。</p><h4 id="4-Concurrent-Abortable-Preclean"><a href="#4-Concurrent-Abortable-Preclean" class="headerlink" title="4. Concurrent Abortable Preclean"></a>4. Concurrent Abortable Preclean</h4><h4 id="5-Final-Remark"><a href="#5-Final-Remark" class="headerlink" title="5. Final Remark"></a>5. Final Remark</h4><h4 id="6-Concurrent-Sweep"><a href="#6-Concurrent-Sweep" class="headerlink" title="6. Concurrent Sweep"></a>6. Concurrent Sweep</h4><h4 id="7-Concurrent-Reset"><a href="#7-Concurrent-Reset" class="headerlink" title="7. Concurrent Reset"></a>7. Concurrent Reset</h4>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;GC-Phases&quot;&gt;&lt;a href=&quot;#GC-Phases&quot; class=&quot;headerlink&quot; title=&quot;GC Phases&quot;&gt;&lt;/a&gt;GC Phases&lt;/h3&gt;&lt;h4 id=&quot;1-Initial-Mark-初始标记阶段-STW&quot;&gt;&lt;a href=&quot;#
+      
+    
+    </summary>
+    
+      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/categories/Java/JVM/"/>
+    
+      <category term="Basic" scheme="https://sulangsss.github.io/categories/Java/JVM/Basic/"/>
+    
+    
+      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/tags/JVM/"/>
+    
+      <category term="CMS" scheme="https://sulangsss.github.io/tags/CMS/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 JVM - Class</title>
+    <link href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20JVM%20-%20%20Class/"/>
+    <id>https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  Class/</id>
+    <published>2019-10-14T08:51:06.000Z</published>
+    <updated>2019-10-14T09:03:02.248Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/categories/Java/JVM/"/>
+    
+      <category term="Basic" scheme="https://sulangsss.github.io/categories/Java/JVM/Basic/"/>
+    
+    
+      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/tags/JVM/"/>
+    
+      <category term="Class" scheme="https://sulangsss.github.io/tags/Class/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 JVM - GC</title>
+    <link href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20JVM%20-%20%20GC/"/>
+    <id>https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  GC/</id>
+    <published>2019-10-14T03:32:06.000Z</published>
+    <updated>2019-10-14T14:34:41.074Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="GC-Arithmetic"><a href="#GC-Arithmetic" class="headerlink" title="GC Arithmetic"></a>GC Arithmetic</h3><h4 id="可达性分析"><a href="#可达性分析" class="headerlink" title="可达性分析"></a>可达性分析</h4><p>GC Roots其实不是一组对象，而通常是一组特别管理的指向引用类型对象的指针，这些指针是tracing GC的trace的起点。</p><blockquote><p>只有引用类型的变量才被认为是Roots，值类型的变量永远不被认为是Roots。</p></blockquote><p>哪些对象可以作为 GC Root：</p><ul><li>虚拟机栈（栈帧中的局部变量表，Local Variable Table）中引用的对象；</li><li>方法区中类静态属性引用的对象；</li><li>方法区中常量引用的对象；</li><li>本地方法栈中JNI（即一般说的Native方法）引用的对象。</li></ul><p><strong>选择这些对象作为 GC Root 的依据是什么？</strong></p><p>可作为GC Roots的节点主要在全局性的引用与执行上下文中。</p><p>要明确的是，<strong>tracing gc必须以当前存活的对象集为Roots</strong>，因此必须选取确定存活的引用类型对象。GC管理的区域是Java堆，而虚拟机栈、方法区和本地方法栈不被GC所管理，因此选用这些区域内引用的对象作为GC Roots，是不会被GC所回收的。</p><p>其中虚拟机栈和本地方法栈都是线程私有的内存区域，只要线程没有终止，就能确保它们中引用的对象的存活。而方法区中类静态属性引用的对象是显然存活的。常量引用的对象在当前可能存活，因此，也可能是GC roots的一部分。</p><h4 id="对象的结构"><a href="#对象的结构" class="headerlink" title="对象的结构"></a>对象的结构</h4><h4 id="常见回收算法"><a href="#常见回收算法" class="headerlink" title="常见回收算法"></a>常见回收算法</h4><h4 id="内存分配策略"><a href="#内存分配策略" class="headerlink" title="内存分配策略"></a>内存分配策略</h4><ol><li>优先分配对象到 Eden 区；</li><li>大对象直接分配到老年代；</li><li>长期存活对象分配到老年代，-XX:MaxTenuringThreshold=15；</li><li>空间分配担保，-XX:+HandlePromotionFailure，默认开启；</li><li>动态对象年龄判定；</li></ol><hr><p><strong>优先分配对象到 Eden 区</strong></p><p>内存分配情况：将JVM内存划分为一块较大的Eden空间（80%）和两块小的Servivor（各占10%）。当回收时，将 Eden 和 Survivor 中还存活的对象一次性采用复制算法直接复制到另外一块 Survivor 空间上，最后清理 Eden 空间和原先的 Survivor 空间中的数据。</p><p>大多数情况下，对象在新生代 Eden 区中分配。当 Eden 区没有足够空间进行分配时，JVM将发起一次 Minor GC。</p><blockquote><p>新生代GC（Minor GC）：指发生在新生代的垃圾收集动作，因为Java对象大多是具有朝生夕灭的特性，所以Minor GC非常频繁，而且该速度也比较快。<br>老年代GC（Major GC/Full GC）：指发生在老年代的GC，出现了Major GC，一般可能也会伴随着一次Minor GC，但是与Minor GC不同的是，Major GC的速度慢十倍以上。</p></blockquote><p><strong>大对象直接分配到老年代</strong></p><p>大对象做一个定义：这里指的是需要大量连续内存空间的Java对象。最典型的大对象可以是很长的字符串和数组。</p><p>大对象对于JVM的内存分配来说是十分麻烦的，如果我们将大对象分配在新生代中，那样子的话很容易导致内存还有不少空间时，提前触发垃圾收集以获取足够的连续空间来“安置”它们。</p><p>为了避免上述情况的经常发生而导致不需要的GC活动所浪费的资源和时间，可采用的分配策略是将大对象直接分配到老年代中去，虚拟机中也提供了-XX:PretenureSizeThreshold参数，令大于这个设置值的对象直接在老年代里面分配内容。</p><blockquote><p>-XX:PretenureSizeThreshold，默认为0<br>-XX:PretenureSizeThreshold只对Serial和ParNew收集器有效。</p></blockquote><p><strong>长期存活对象分配到老年代</strong></p><p>当 JVM 采用分代收集的思想来管理内存时，为了识别哪些对象应该放在新生代、哪些对象应该放在老年代，JVM 给每个对象定义了一个对象年龄计数器。</p><p>对象年龄计数器：如果对象在Eden出生并经过第一次Minor GC后仍然存活，并且能被Survivor容纳的话，便可以被移动到Survivor空间中，年龄计数器将设置该对象的年龄为1。对于对象在Survivor区每经过一次Minor GC，年龄便增加1岁，当它的年龄增加到一定程度（可通过参数-XX:MaxTenuringThreshold设置）默认15，该对象便会进入到老年代中。成为老年代的对象。</p><p><strong>动态对象年龄判定</strong></p><p>事实上，有的虚拟机并不永远地要求对象的年龄必须达到MaxTeruringThreshold才能晋升老年代，如果在Survivor空间中相同年龄所有对象大小的总和大于Surivior空间的一半，年龄大于或等于该年龄的对象就可以直接进行老年代，无须等到MaxTeruringThreshold中所要求的年龄。</p><p><strong>空间分配担保</strong></p><p>在发生Minor GC之前，<strong>虚拟机会先检查老年代最大可用的连续空间是否大于新生代所有对象总空间</strong>，如果这个条件成立，那么Minor GC可以确保是安全的。</p><p>如果不成立，则虚拟机会查看HandlePromotionFailure设置值是否允许担保失败。如果允许，那么会继续检查老年代最大可用的连续空间是否大于历次晋升到老年代对象的平均大小，如果大于，将尝试着进行一次Minor GC，尽管这次Minor GC是有风险的；如果小于，或者HandlePromotionFailure设置不允许冒险，那这时也要改为进行一次Full GC。</p><p>前面提到过，新生代使用复制收集算法，但为了内存利用率，只使用其中一个Survivor空间来作为轮换备份，因此当出现大量对象在Minor GC后仍然存活的情况（最极端的情况就是内存回收后新生代中所有对象都存活），就需要老年代进行分配担保，把Survivor无法容纳的对象直接进入老年代。与生活中的贷款担保类似，老年代要进行这样的担保，前提是老年代本身还有容纳这些对象的剩余空间，一共有多少对象会活下来在实际完成内存回收之前是无法明确知道的，所以只好取之前每一次回收晋升到老年代对象容量的平均大小值作为经验值，与老年代的剩余空间进行比较，决定是否进行Full GC来让老年代腾出更多空间。</p><p>取平均值进行比较其实仍然是一种动态概率的手段，也就是说，如果某次Minor GC存活后的对象突增，远远高于平均值的话，依然会导致担保失败（Handle Promotion Failure）。如果出现了HandlePromotionFailure失败，那就只好在失败后重新发起一次Full GC。虽然担保失败时绕的圈子是最大的，但大部分情况下都还是会将HandlePromotionFailure打开，避免Full GC过于频繁。</p><blockquote><p><a href="https://cloud.tencent.com/developer/article/1082730" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1082730</a></p></blockquote><h4 id="逃逸分析-Escape-Analysis-与栈上分配"><a href="#逃逸分析-Escape-Analysis-与栈上分配" class="headerlink" title="逃逸分析(Escape Analysis)与栈上分配"></a>逃逸分析(Escape Analysis)与栈上分配</h4><p>在编译程序优化理论中，逃逸分析是一种确定指针动态范围的方法——分析在程序的哪些地方可以访问到指针。它涉及到指针分析和形状分析。</p><p><strong>逃逸分析(Escape Analysis)</strong>是目前Java虚拟机中比较前沿的优化技术。这是一种可以有效减少 Java 程序中同步负载和内存堆分配压力的跨函数全局数据流分析算法。通过逃逸分析，Java Hotspot编译器能够分析出一个新的对象的引用的使用范围从而决定是否要将这个对象分配到堆上。</p><p><strong>简单说，就是把没有发生逃逸的对象分配到栈空间上。</strong></p><p>逃逸分析的基本行为就是分析对象动态作用域：当一个对象在方法中被定义后，它可能被外部方法所引用，例如作为调用参数传递到其他地方中，称为<strong>方法逃逸</strong>。</p><p>使用逃逸分析，编译器可以对代码做如下优化：</p><ol><li><p>同步省略。如果一个对象被发现只能从一个线程被访问到，那么对于这个对象的操作可以不考虑同步。</p></li><li><p>将堆分配转化为栈分配。如果一个对象在子程序中被分配，要使指向该对象的指针永远不会逃逸，对象可能是栈分配的候选，而不是堆分配。</p></li><li><p>分离对象或标量替换。有的对象可能不需要作为一个连续的内存结构存在也可以被访问到，那么对象的部分（或全部）可以不存储在内存，而是存储在CPU寄存器中。</p></li></ol><blockquote><p>JVM参数 XX:+DoEscapeAnalysis 和 -XX:-DoEscapeAnalysis，默认情况下开启。<br>以上三种优化中，栈上内存分配其实是依靠标量替换来实现的。</p></blockquote><hr><h3 id="GC回收器"><a href="#GC回收器" class="headerlink" title="GC回收器"></a>GC回收器</h3><img src="/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/collectors-category.png"><h4 id="CMS"><a href="#CMS" class="headerlink" title="CMS"></a>CMS</h4><img src="/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/cms-process.png"><p>分代回收：</p><ul><li>年轻代：采用 stop-the-world mark-copy 算法；</li><li>年老代：采用 Mostly Concurrent mark-sweep 算法；</li></ul><p>使用 Mark-Sweep GC Arithmetic，该算法不足之处在于：</p><ol><li>空间问题：标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后在程序运行过程中需要分配较大对象时，无法找到足够的连续内存而不得不触发另一次垃圾收集动作。</li><li>效率问题：因为内存碎片的存在，操作会变得更加费时，因为查找下一个可用空闲块已不再是一个简单操作。</li></ol><hr><p>GC Process：</p><ol><li>初始标记(STW)</li><li>并发标记(两阶段：并发标记 和 并发预处理)</li><li>重新标记(STW)</li><li>并发清理(两阶段：并发清理 和 并发重置)</li></ol><p>Advantage：</p><ol><li>并发GC；</li><li>低停顿；</li></ol><p>Weakness：</p><ol><li>占用较多CPU资源；</li><li>无法处理Floating Garbage，并发标记与并发清除过程会产生浮动垃圾，如果CMS之前预留的内存无法满足程序需要，就会出现一次“Concurrent Mode Failure”失败，这时虚拟机将退化使用Serial Old收集器，重新进行老年代的垃圾收集，这样停顿时间就很长了。</li><li>出现Concurrent Mode Failure问题，造成使用Serial Old GC进行回收老年代；</li><li>基于“标记-清除算法”，收集结束时会有大量空间碎片产生，导致明明剩余空间充足，却无法为大对象分配足够的连续内存。</li></ol><blockquote><p>Floating Garbage：由于CMS并发清理阶段用户线程还在运行着，伴随程序运行自然就还会有新的垃圾不断产生，这一部分垃圾出现在标记过程之后，CMS无法在当次收集中处理掉它们，只好留待下一次GC时再清理掉。这一部分垃圾就称为“浮动垃圾”。在这期间用户可能创建新的对象。为了处理这部分浮动垃圾和对象，CMS在并发清理之前，需要预留出足够空间给并发清理期间的用户线程使用。一般会显示使用-XX:CMSInitiatingOccupancyFraction参数设置触发CMS时的老年代空间比例，如果老年代增长不是太快，可以适当提高比例，以减少Full GC的次数。<br>关于浮动垃圾和内存碎片的问题，HDFS namenode在堆内存达到100G规模时，通常设置75%触发Full GC，不开启压缩，优先考虑STW造成的延迟。<br>打开-XX:+UseCMSCompactAtFullCollection开关参数（默认打开）在进行Full GC之前整理内存碎片（称为“压缩”）；使用-XX:CMSFullGCsBeforeCompaction参数（默认0）设置多少次不带压缩的Full CG之后才进行一次带压缩的Full GC。内存整理无法并行，还需要STW，需要适当调整内存整理的频率，在GC性能与空间利用率之间平衡。</p></blockquote><h4 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h4><p>GC Process：</p><ol><li>初始标记(initial mark，STW)：它标记了从GC Root开始直接可达的对象。</li><li>并发标记(Concurrent Marking)：这个阶段从GC Root开始对heap中的对象标记，标记线程与应用程序线程并行执行，并且收集各个Region的存活对象信息。</li><li>最终标记(Remark，STW)：标记那些在并发标记阶段发生变化的对象，将被回收。</li><li>清除垃圾(Cleanup)：清除空Region（没有存活对象的），加入到free list。</li></ol><p>Advantage：</p><ol><li>并行与并发：G1 能充分利用CPU、多核环境下的硬件优势，使用多个CPU（CPU或者CPU核心）来缩短 Stop-The-World 停顿时间。部分其他收集器原本需要停顿 Java 线程执行的 GC 动作，G1 收集器仍然可以通过并发的方式让 Java 程序继续执行。</li><li>分代收集：虽然 G1 可以不需要其他收集器配合就能独立管理整个 GC 堆，但是还是保留了分代的概念。它能够采用不同的方式去处理新创建的对象和已经存活了一段时间，熬过多次 GC 的旧对象以获取更好的收集效果。</li><li>空间整合：与 CMS 的“标记-清理”算法不同，G1 从整体来看是基于“标记-整理”算法实现的收集器；从局部上来看是基于“复制”算法实现的。</li><li>可预测的停顿：这是 G1 相对于 CMS 的另一个大优势，降低停顿时间是 G1 和 CMS 共同的关注点，但 G1 除了追求低停顿外，还能建立可预测的停顿时间模型，能让使用者明确指定在一个长度为M毫秒的时间片段内。</li></ol><p><strong>什么是RSet？</strong></p><p>RSet记录了其他Region中的对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。RSet的价值在于使得垃圾收集器不需要扫描整个堆找到谁引用了当前分区中的对象，只需要扫描RSet即可。</p><img src="/2019/10/14/Java/JVM/Basic/深入学习%20JVM%20-%20%20GC/rset-example.jpg"><p>Region1和Region3中的对象都引用了Region2中的对象，因此在Region2的RSet中记录了这两个引用。</p><p><strong>什么是CSet？</strong></p><p>一组可被回收的分区(Region)的集合。在CSet中存活的数据会在GC过程中被移动到另一个可用分区，CSet中的分区可以来自Eden空间、survivor空间、或者老年代。CSet会占用不到整个堆空间的1%大小。</p><h4 id="ZGC"><a href="#ZGC" class="headerlink" title="ZGC"></a>ZGC</h4><blockquote><p>读屏障(Load Barrier)</p></blockquote><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[深入理解JVM(2)——GC算法与内存分配策略] <a href="https://crowhawk.github.io/2017/08/10/jvm_2/" target="_blank" rel="noopener">https://crowhawk.github.io/2017/08/10/jvm_2/</a></li><li>[JVM之逃逸分析] <a href="https://zhuanlan.zhihu.com/p/59215831" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/59215831</a></li><li>[对象和数组并不是都在堆上分配内存的] <a href="http://www.hollischuang.com/archives/2398" target="_blank" rel="noopener">http://www.hollischuang.com/archives/2398</a></li><li>[JVM快速调优手册之三: 内存分配策略] <a href="https://ruozedata.github.io/2019/06/19/JVM%E5%BF%AB%E9%80%9F%E8%B0%83%E4%BC%98%E6%89%8B%E5%86%8C%E4%B9%8B%E4%B8%89_%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/" target="_blank" rel="noopener">https://ruozedata.github.io/2019/06/19/JVM%E5%BF%AB%E9%80%9F%E8%B0%83%E4%BC%98%E6%89%8B%E5%86%8C%E4%B9%8B%E4%B8%89_%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/</a></li><li>[Java程序员的荣光，听R大论JDK11的ZGC] <a href="https://juejin.im/entry/5b86a276f265da435c4402d4" target="_blank" rel="noopener">https://juejin.im/entry/5b86a276f265da435c4402d4</a></li><li>[A first look into ZGC] <a href="http://dinfuehr.github.io/blog/a-first-look-into-zgc/" target="_blank" rel="noopener">http://dinfuehr.github.io/blog/a-first-look-into-zgc/</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;GC-Arithmetic&quot;&gt;&lt;a href=&quot;#GC-Arithmetic&quot; class=&quot;headerlink&quot; title=&quot;GC Arithmetic&quot;&gt;&lt;/a&gt;GC Arithmetic&lt;/h3&gt;&lt;h4 id=&quot;可达性分析&quot;&gt;&lt;a href=&quot;#可达性分
+      
+    
+    </summary>
+    
+      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/categories/Java/JVM/"/>
+    
+      <category term="Basic" scheme="https://sulangsss.github.io/categories/Java/JVM/Basic/"/>
+    
+    
+      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/tags/JVM/"/>
+    
+      <category term="GC" scheme="https://sulangsss.github.io/tags/GC/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Linux 性能指标</title>
+    <link href="https://sulangsss.github.io/2019/10/14/Linux/Basic/Performance-Index/"/>
+    <id>https://sulangsss.github.io/2019/10/14/Linux/Basic/Performance-Index/</id>
+    <published>2019-10-14T02:18:06.000Z</published>
+    <updated>2019-10-14T03:53:16.843Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><ol><li>CPU相关：/proc/stat</li><li>磁盘相关：/proc/mounts</li><li>megacli：megacli 工具读取 RAID 相关信息</li><li>smartctl：smartctl 工具读取磁盘 SMART 信息</li><li>分区读写监控：测试所有已挂载分区是否可读写，每个metric都会有一组tag描述，表示挂载点，比如mount=/home</li><li>I/O相关：/proc/diskstats</li><li>机器负载：/proc/loadavg</li><li>内存相关：/proc/meminfo</li><li>网络相关：/proc/net/dev</li><li>端口：通过ss -ln，来判断指定的端口是否处于listen状态。原始值类型，值要么是1：代表在监听，要么是0，代表没有在监听。</li><li>机器内核：/proc/sys/fs/file-max，/proc/sys/fs/file-nr，/proc/sys/kernel/pid_max</li><li>ntp：使用 ntpq -pn 获取本机时间相对于 ntp 服务器的 offset</li><li>进程监控</li><li>进程资源监控</li><li>ss命令输出：获取 socket 统计信息，它显示的内容和 netstat 类似。但 ss 的优势在于它能够显示更多更详细的有关 TCP 和连接状态的信息，而且比 netstat 更快。当服务器的 socket 连接数量变得非常大时，无论是使用 netstat 命令还是直接 cat /proc/net/tcp，执行速度都会很慢。ss 命令利用到了 TCP 协议栈中 tcp_diag。tcp_diag 是一个用于分析统计的模块，可以获得 Linux 内核中第一手的信息，因此 ss 命令的性能会好很多。</li></ol><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Linux运维基础采集项] <a href="https://book.open-falcon.org/zh/faq/linux-metrics.html" target="_blank" rel="noopener">https://book.open-falcon.org/zh/faq/linux-metrics.html</a></li><li>[linux ss 命令] <a href="https://www.cnblogs.com/sparkdev/p/8421897.html" target="_blank" rel="noopener">https://www.cnblogs.com/sparkdev/p/8421897.html</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;CPU相关：/proc/stat&lt;/li&gt;
+&lt;l
+      
+    
+    </summary>
+    
+      <category term="Linux" scheme="https://sulangsss.github.io/categories/Linux/"/>
+    
+      <category term="Basic" scheme="https://sulangsss.github.io/categories/Linux/Basic/"/>
+    
+    
+      <category term="Linux" scheme="https://sulangsss.github.io/tags/Linux/"/>
+    
+      <category term="性能指标" scheme="https://sulangsss.github.io/tags/%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87/"/>
+    
+      <category term="Performance Index" scheme="https://sulangsss.github.io/tags/Performance-Index/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 JVM - 体系结构</title>
+    <link href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20JVM%20-%20%20%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/"/>
+    <id>https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM -  体系结构/</id>
+    <published>2019-10-13T15:56:06.000Z</published>
+    <updated>2019-10-15T03:11:20.417Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="JVM-位置"><a href="#JVM-位置" class="headerlink" title="JVM 位置"></a>JVM 位置</h3><hr><h3 id="JVM-运行时数据区-Runtime-Data-Area"><a href="#JVM-运行时数据区-Runtime-Data-Area" class="headerlink" title="JVM 运行时数据区 - Runtime Data Area"></a>JVM 运行时数据区 - Runtime Data Area</h3><p>在jdk8，如何让方法区溢出?</p><p>模拟 OOM Jave heap space</p><p>什么是逃逸分析？</p><hr><h3 id="ClassLoader"><a href="#ClassLoader" class="headerlink" title="ClassLoader"></a>ClassLoader</h3><blockquote><p>反射有几种方式？<br>ClassLoader父类是谁？Object类<br>请帮我显示出来有哪些ClassLoader？</p></blockquote><h4 id="什么是双亲委派机制"><a href="#什么是双亲委派机制" class="headerlink" title="什么是双亲委派机制"></a>什么是双亲委派机制</h4><p>某个特定的类加载器在接到加载类的请求时，首先将加载任务委托给父类加载器，依次递归，如果父类加载器可以完成类加载任务，就成功返回；只有父类加载器无法完成此加载任务时，才自己去加载。</p><p><strong>为什么需要这个机制？</strong>防止内存中出现多份同样的字节码。</p><h4 id="为什么需要破坏双亲委派？"><a href="#为什么需要破坏双亲委派？" class="headerlink" title="为什么需要破坏双亲委派？"></a>为什么需要破坏双亲委派？</h4><p>因为在某些情况下父类加载器需要委托子类加载器去加载class文件。受到加载范围的限制，父类加载器无法加载到需要的文件。</p><p>以Driver接口为例，由于Driver接口定义在 JDK 当中的，而其实现由各个数据库的服务商来提供，比如 MySQL 的就写了 MySQL Connector，那么问题就来了，DriverManager（也由JDK提供）要加载各个实现了 Driver 接口的实现类，然后进行管理，但是DriverManager由启动类加载器加载，只能加载JAVA_HOME的lib下文件，而其实现是由服务商提供的，由系统类加载器加载，这个时候就需要启动类加载器来委托子类来加载Driver实现，从而破坏了双亲委派。</p><blockquote><p><a href="https://www.cnblogs.com/joemsu/p/9310226.html" target="_blank" rel="noopener">https://www.cnblogs.com/joemsu/p/9310226.html</a></p></blockquote><hr><h3 id="Execution-Engine"><a href="#Execution-Engine" class="headerlink" title="Execution Engine"></a>Execution Engine</h3><p>负责解释命令，提交操作系统执行。</p><p>Native Interface：融合不同的编程语言为 Java 所用。<br>Native Method Stack：具体做法是Native Method Stack中登记Native方法，在Execution Engine执行时加载本地方法库。</p><hr><h3 id="Heap"><a href="#Heap" class="headerlink" title="Heap"></a>Heap</h3><p>主要分为三部分： </p><ol><li>Young Generation Space(Young/New)</li><li>Tenure Generation Space(Old/Tenure)</li><li>Permanent Space(Perm) / Metaspace</li></ol><hr><h3 id="对象"><a href="#对象" class="headerlink" title="对象"></a>对象</h3><h4 id="对象创建"><a href="#对象创建" class="headerlink" title="对象创建"></a>对象创建</h4><p>对象的创建方式：</p><ol><li>使用new关键字创建对象；</li><li>使用Class类的newInstance方法（反射机制）；</li><li>使用Constructor类的newInstance方法（反射机制）；</li><li>使用Clone方法创建对象（涉及浅克隆/深克隆机制，Interface Cloneable）；</li><li>使用(反)序列化机制创建对象（涉及Interface Serializable）；</li></ol><h4 id="对象结构"><a href="#对象结构" class="headerlink" title="对象结构"></a>对象结构</h4><h4 id="多线程创建单例"><a href="#多线程创建单例" class="headerlink" title="多线程创建单例"></a>多线程创建单例</h4><p>单例特点：</p><ul><li>在任何情况下，单例类永远只有一个实例存在；</li><li>单例需要有能力为整个系统提供这一唯一实例；</li></ul><p>常见创建单例方式：</p><ol><li>饿汉式单例；</li><li>懒汉式单例；</li><li>synchronized方法+懒汉式单例 或者 synchronized代码块+懒汉式单例；</li><li>Double Check Locking；</li><li>静态内置类；静态内部类虽然保证了单例在多线程并发下的线程安全性，但是在遇到序列化对象时，默认的方式运行得到的结果就是多例的。</li><li>static代码块；</li><li>枚举数据类型；</li></ol><blockquote><p><a href="https://blog.csdn.net/cselmu9/article/details/51366946" target="_blank" rel="noopener">https://blog.csdn.net/cselmu9/article/details/51366946</a></p></blockquote><h4 id="TLAB"><a href="#TLAB" class="headerlink" title="TLAB"></a>TLAB</h4><h4 id="对象的访问定位"><a href="#对象的访问定位" class="headerlink" title="对象的访问定位"></a>对象的访问定位</h4><p>Java对象在访问的时候，我们需要通过java虚拟机栈的reference类型的数据去操作具体的对象。</p><p>由于reference类型在java虚拟机规范中只规定了一个对象的引用，并没有定义这个这个引用应该通过那种方式去定位、访问java堆中的具体对象实例，所以一般的访问方式也是取决与java虚拟机的类型。</p><p>目前主流的访问方式有通过句柄和直接指针两种方式。</p><p><strong>句柄</strong></p><p><strong>直接指针</strong></p><h4 id="单例与序列化的那些事儿"><a href="#单例与序列化的那些事儿" class="headerlink" title="单例与序列化的那些事儿"></a>单例与序列化的那些事儿</h4><p>注意看下面的评论</p><p><a href="https://www.hollischuang.com/archives/1144" target="_blank" rel="noopener">https://www.hollischuang.com/archives/1144</a></p><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[关于Java类加载双亲委派机制的思考] <a href="https://www.cnblogs.com/lanxuezaipiao/p/4138511.html" target="_blank" rel="noopener">https://www.cnblogs.com/lanxuezaipiao/p/4138511.html</a></li><li>[【JVM】浅谈双亲委派和破坏双亲委派] <a href="https://www.cnblogs.com/joemsu/p/9310226.html" target="_blank" rel="noopener">https://www.cnblogs.com/joemsu/p/9310226.html</a></li><li>[高并发下线程安全的单例模式（最全最经典）] <a href="https://blog.csdn.net/cselmu9/article/details/51366946" target="_blank" rel="noopener">https://blog.csdn.net/cselmu9/article/details/51366946</a></li><li>[Java多线程-线程安全的单例模式的实现] <a href="https://juejin.im/post/5d07a0c35188255a70479beb" target="_blank" rel="noopener">https://juejin.im/post/5d07a0c35188255a70479beb</a></li><li>[Java对象的访问定位] <a href="https://cloud.tencent.com/developer/article/1350213" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1350213</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;JVM-位置&quot;&gt;&lt;a href=&quot;#JVM-位置&quot; class=&quot;headerlink&quot; title=&quot;JVM 位置&quot;&gt;&lt;/a&gt;JVM 位置&lt;/h3&gt;&lt;hr&gt;
+&lt;h3 id=&quot;JVM-运行时数据区-Runtime-Data-Area&quot;&gt;&lt;a href=&quot;#JVM-
+      
+    
+    </summary>
+    
+      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/categories/Java/JVM/"/>
+    
+      <category term="Basic" scheme="https://sulangsss.github.io/categories/Java/JVM/Basic/"/>
+    
+    
+      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/tags/JVM/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 JVM - Command</title>
+    <link href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20JVM%20-%20%20Command/"/>
+    <id>https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM -  Command/</id>
+    <published>2019-10-13T15:37:06.000Z</published>
+    <updated>2019-10-14T16:05:45.509Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Monitor"><a href="#Monitor" class="headerlink" title="Monitor"></a>Monitor</h3><h4 id="jps"><a href="#jps" class="headerlink" title="jps"></a>jps</h4><p>主要用来输出JVM中运行的进程状态信息。</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jps -m -l</span><br></pre></td></tr></table></figure><h4 id="jinfo"><a href="#jinfo" class="headerlink" title="jinfo"></a>jinfo</h4><p>实时查看和调整虚拟机运行参数。</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jinfo -flags pid</span><br></pre></td></tr></table></figure><h4 id="jstat"><a href="#jstat" class="headerlink" title="jstat"></a>jstat</h4><p>用于监视虚拟机运行时状态信息的命令，它可以显示出虚拟机进程中的类装载、内存、垃圾收集、JIT编译等运行数据。</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">jstat -gcutil pid 1000</span><br><span class="line"></span><br><span class="line"> S0     S1     E      O      M     CCS    YGC     YGCT    FGC    FGCT     GCT</span><br><span class="line">0.00   0.00  28.55  39.40  95.96  89.23   833     3.391     5    6.704   10.096</span><br><span class="line">0.00   0.00  28.55  39.40  95.96  89.23   833     3.391     5    6.704   10.096</span><br><span class="line">0.00   0.00  28.55  39.40  95.96  89.23   833     3.391     5    6.704   10.096</span><br><span class="line">0.00   0.00  28.55  39.40  95.96  89.23   833     3.391     5    6.704   10.096</span><br></pre></td></tr></table></figure><blockquote><p><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html" target="_blank" rel="noopener">https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html</a></p></blockquote><h4 id="jmap"><a href="#jmap" class="headerlink" title="jmap"></a>jmap</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">jmap -histo:live -pid</span><br><span class="line"></span><br><span class="line">jmap -heap pid</span><br><span class="line"></span><br><span class="line">jmap -dump:format=b</span><br></pre></td></tr></table></figure><h4 id="jhat"><a href="#jhat" class="headerlink" title="jhat"></a>jhat</h4><h4 id="jstack"><a href="#jstack" class="headerlink" title="jstack"></a>jstack</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jstack -l pid</span><br></pre></td></tr></table></figure><h4 id="jconsole"><a href="#jconsole" class="headerlink" title="jconsole"></a>jconsole</h4><hr><h3 id="Compile"><a href="#Compile" class="headerlink" title="Compile"></a>Compile</h3><h4 id="javap"><a href="#javap" class="headerlink" title="javap"></a>javap</h4><p>分解一个class文件，它根据options来决定到底输出什么。如果没有使用options，那么javap将会输出包，类里的protected和public域以及类里的所有方法。</p><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://www.cnblogs.com/ityouknow/p/5714703.html" target="_blank" rel="noopener">https://www.cnblogs.com/ityouknow/p/5714703.html</a></li><li><a href="https://my.oschina.net/feichexia/blog/196575" target="_blank" rel="noopener">https://my.oschina.net/feichexia/blog/196575</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Monitor&quot;&gt;&lt;a href=&quot;#Monitor&quot; class=&quot;headerlink&quot; title=&quot;Monitor&quot;&gt;&lt;/a&gt;Monitor&lt;/h3&gt;&lt;h4 id=&quot;jps&quot;&gt;&lt;a href=&quot;#jps&quot; class=&quot;headerlink&quot; title=
+      
+    
+    </summary>
+    
+      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/categories/Java/JVM/"/>
+    
+      <category term="Basic" scheme="https://sulangsss.github.io/categories/Java/JVM/Basic/"/>
+    
+    
+      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
+    
+      <category term="Command" scheme="https://sulangsss.github.io/tags/Command/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/tags/JVM/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>系统 I/O 模型</title>
+    <link href="https://sulangsss.github.io/2019/10/13/CS/IO/%E7%B3%BB%E7%BB%9FIO%E6%A8%A1%E5%9E%8B/"/>
+    <id>https://sulangsss.github.io/2019/10/13/CS/IO/系统IO模型/</id>
+    <published>2019-10-13T14:23:18.000Z</published>
+    <updated>2019-10-14T08:50:03.036Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="I-O-类型"><a href="#I-O-类型" class="headerlink" title="I/O 类型"></a>I/O 类型</h3><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[五种IO模型介绍和对比] <a href="https://juejin.im/post/5bd32b84f265da0ac962e7c9" target="_blank" rel="noopener">https://juejin.im/post/5bd32b84f265da0ac962e7c9</a></li><li>[聊聊IO多路复用之select、poll、epoll详解] <a href="https://www.jianshu.com/p/dfd940e7fca2" target="_blank" rel="noopener">https://www.jianshu.com/p/dfd940e7fca2</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;I-O-类型&quot;&gt;&lt;a href=&quot;#I-O-类型&quot; class=&quot;headerlink&quot; title=&quot;I/O 类型&quot;&gt;&lt;/a&gt;I/O 类型&lt;/h3&gt;&lt;hr&gt;
+&lt;h3 id=&quot;Reference&quot;&gt;&lt;a href=&quot;#Reference&quot; class=&quot;heade
+      
+    
+    </summary>
+    
+      <category term="CS" scheme="https://sulangsss.github.io/categories/CS/"/>
+    
+      <category term="I/O" scheme="https://sulangsss.github.io/categories/CS/I-O/"/>
+    
+    
+      <category term="I/O" scheme="https://sulangsss.github.io/tags/I-O/"/>
+    
+      <category term="I/O模型" scheme="https://sulangsss.github.io/tags/I-O%E6%A8%A1%E5%9E%8B/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Hash 一致性</title>
+    <link href="https://sulangsss.github.io/2019/10/13/DistributedSystem/Hash%E4%B8%80%E8%87%B4%E6%80%A7/"/>
+    <id>https://sulangsss.github.io/2019/10/13/DistributedSystem/Hash一致性/</id>
+    <published>2019-10-13T14:09:18.000Z</published>
+    <updated>2019-10-13T14:10:29.921Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+      <category term="Distributed System" scheme="https://sulangsss.github.io/categories/Distributed-System/"/>
+    
+    
+      <category term="Distributed System" scheme="https://sulangsss.github.io/tags/Distributed-System/"/>
+    
+      <category term="Hash 一致性" scheme="https://sulangsss.github.io/tags/Hash-%E4%B8%80%E8%87%B4%E6%80%A7/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 Redis 原理 - 分布式</title>
+    <link href="https://sulangsss.github.io/2019/10/13/Redis/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20Redis%20%E5%8E%9F%E7%90%86%20-%20%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    <id>https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 分布式/</id>
+    <published>2019-10-13T13:15:06.000Z</published>
+    <updated>2019-10-14T03:30:32.448Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Sentinel"><a href="#Sentinel" class="headerlink" title="Sentinel"></a>Sentinel</h3><hr><h3 id="Codis"><a href="#Codis" class="headerlink" title="Codis"></a>Codis</h3><hr><h3 id="Replication"><a href="#Replication" class="headerlink" title="Replication"></a>Replication</h3><p>This system works using three main mechanisms:</p><ol><li><p>When a master and a slave instances are well-connected, the master keeps the slave updated by sending a stream of commands to the slave, in order to replicate the effects on the dataset happening in the master side due to: client writes, keys expired or evicted, any other action changing the master dataset.</p></li><li><p>When the link between the master and the slave breaks, for network issues or because a timeout is sensed in the master or the slave, the slave reconnects and attempts to proceed with a partial resynchronization: it means that it will try to just obtain the part of the stream of commands it missed during the disconnection.</p></li><li><p>When a partial resynchronization is not possible, the slave will ask for a full resynchronization. This will involve a more complex process in which the master needs to create a snapshot of all its data, send it to the slave, and then continue sending the stream of commands as the dataset changes.</p></li></ol><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Redis Sentinel Documentation] <a href="https://redis.io/topics/sentinel" target="_blank" rel="noopener">https://redis.io/topics/sentinel</a></li><li>[Replication] <a href="https://redis.io/topics/replication" target="_blank" rel="noopener">https://redis.io/topics/replication</a></li><li>[为什么大厂都喜欢用 Codis 来管理分布式集群？] <a href="https://juejin.im/post/5c132b076fb9a04a08218eef" target="_blank" rel="noopener">https://juejin.im/post/5c132b076fb9a04a08218eef</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;Sentinel&quot;&gt;&lt;a href=&quot;#Sentinel&quot; class=&quot;headerlink&quot; title=&quot;Sentinel&quot;&gt;&lt;/a&gt;Sentinel&lt;/h3&gt;&lt;hr&gt;
+&lt;h3 id=&quot;Codis&quot;&gt;&lt;a href=&quot;#Codis&quot; class=&quot;heade
+      
+    
+    </summary>
+    
+      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
+    
+    
+      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
+    
+      <category term="分布式" scheme="https://sulangsss.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>深入学习 JVM -</title>
+    <link href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20JVM%20-%20/"/>
+    <id>https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM - /</id>
+    <published>2019-10-13T13:15:06.000Z</published>
+    <updated>2019-10-13T15:36:24.179Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/categories/Java/JVM/"/>
+    
+      <category term="Basic" scheme="https://sulangsss.github.io/categories/Java/JVM/Basic/"/>
+    
+    
+      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
+    
+      <category term="JVM" scheme="https://sulangsss.github.io/tags/JVM/"/>
+    
+  </entry>
   
   <entry>
     <title>Memory - MMU</title>
@@ -42,558 +601,6 @@
       <category term="Memeory" scheme="https://sulangsss.github.io/tags/Memeory/"/>
     
       <category term="MMU" scheme="https://sulangsss.github.io/tags/MMU/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Redis Installation</title>
-    <link href="https://sulangsss.github.io/2019/10/13/Redis/Redis-Installation/"/>
-    <id>https://sulangsss.github.io/2019/10/13/Redis/Redis-Installation/</id>
-    <published>2019-10-13T07:36:06.000Z</published>
-    <updated>2019-10-13T07:44:28.015Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Redis-cli"><a href="#Redis-cli" class="headerlink" title="Redis cli"></a>Redis cli</h3><h4 id="Mac"><a href="#Mac" class="headerlink" title="Mac"></a>Mac</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">brew tap ringohub/redis-cli</span><br><span class="line"></span><br><span class="line">brew update &amp;&amp; brew doctor</span><br><span class="line"></span><br><span class="line">brew install redis-cli</span><br></pre></td></tr></table></figure>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Redis-cli&quot;&gt;&lt;a href=&quot;#Redis-cli&quot; class=&quot;headerlink&quot; title=&quot;Redis cli&quot;&gt;&lt;/a&gt;Redis cli&lt;/h3&gt;&lt;h4 id=&quot;Mac&quot;&gt;&lt;a href=&quot;#Mac&quot; class=&quot;headerlink
-      
-    
-    </summary>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
-    
-    
-      <category term="Installation" scheme="https://sulangsss.github.io/tags/Installation/"/>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入学习 Redis 原理 - 速度快</title>
-    <link href="https://sulangsss.github.io/2019/10/13/Redis/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20Redis%20%E5%8E%9F%E7%90%86%20-%20%E9%80%9F%E5%BA%A6%E5%BF%AB/"/>
-    <id>https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 速度快/</id>
-    <published>2019-10-13T01:36:06.000Z</published>
-    <updated>2019-10-13T08:27:09.403Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Redis为什么这么快？"><a href="#Redis为什么这么快？" class="headerlink" title="Redis为什么这么快？"></a>Redis为什么这么快？</h3><ol><li>完全基于内存，绝大部分请求是纯粹的内存操作，非常快速。数据存在内存中，类似于HashMap，HashMap的优势就是查找和操作的时间复杂度都是O(1)；</li><li>数据结构简单，对数据操作也简单，Redis中的数据结构是专门进行设计的；</li><li>采用单线程，避免了不必要的上下文切换和竞争条件，也不存在多进程或者多线程导致的切换而消耗 CPU，不用去考虑各种锁的问题，不存在加锁释放锁操作，没有因为可能出现死锁而导致的性能消耗；</li><li>使用多路I/O复用模型，非阻塞IO；</li></ol><blockquote><p>Redis is single threaded. How can I exploit multiple CPU / cores?<br>It’s not very frequent that CPU becomes your bottleneck with Redis, as usually Redis is either memory or network bound. For instance, using pipelining Redis running on an average Linux system can deliver even 1 million requests per second, so if your application mainly uses O(N) or O(log(N)) commands, it is hardly going to use too much CPU.<br>However, to maximize CPU usage you can start multiple instances of Redis in the same box and treat them as different servers. At some point a single box may not be enough anyway, so if you want to use multiple CPUs you can start thinking of some way to shard earlier.</p></blockquote><h4 id="多路I-O复用模型"><a href="#多路I-O复用模型" class="headerlink" title="多路I/O复用模型"></a>多路I/O复用模型</h4><p>多路I/O复用模型是利用 select、poll、epoll 可以同时监察多个流的 I/O 事件的能力，在空闲的时候，会把当前线程阻塞掉，当有一个或多个流有 I/O 事件时，就从阻塞态中唤醒，于是程序就会轮询一遍所有的流（epoll 是只轮询那些真正发出了事件的流），并且只依次顺序的处理就绪的流，这种做法就避免了大量的无用操作。</p><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[洞察|Redis是单线程的，但Redis为什么这么快？] <a href="https://zhuanlan.zhihu.com/p/42272979" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/42272979</a></li><li>[Redis FAQ] <a href="https://redis.io/topics/faq" target="_blank" rel="noopener">https://redis.io/topics/faq</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Redis为什么这么快？&quot;&gt;&lt;a href=&quot;#Redis为什么这么快？&quot; class=&quot;headerlink&quot; title=&quot;Redis为什么这么快？&quot;&gt;&lt;/a&gt;Redis为什么这么快？&lt;/h3&gt;&lt;ol&gt;
-&lt;li&gt;完全基于内存，绝大部分请求是纯粹的内存操作，非常
-      
-    
-    </summary>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
-    
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
-    
-      <category term="性能" scheme="https://sulangsss.github.io/tags/%E6%80%A7%E8%83%BD/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入学习 Redis 原理 - 过期策略</title>
-    <link href="https://sulangsss.github.io/2019/10/13/Redis/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20Redis%20%E5%8E%9F%E7%90%86%20-%20%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5/"/>
-    <id>https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 过期策略/</id>
-    <published>2019-10-13T01:36:06.000Z</published>
-    <updated>2019-10-13T09:52:12.586Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>主要分类：</p><ol><li>定时过期</li><li>惰性过期</li><li>定期过期</li></ol><p>Redis 采用的是惰性过期 + 定期过期的策略，而 Memcached 采用惰性过期。</p><p>Redis 惰性过期流程：</p><ol><li>在进行get或setnx等操作时，先检查key是否过期；</li><li>若过期，删除key，然后执行相应操作；若没过期，直接执行相应操作</li></ol><hr><p>Redis 定期过期流程：</p><ol><li>遍历每个数据库（就是redis.conf中配置的”database”数量，默认为16）；</li><li>检查当前库中的指定个数个key（默认是每个库检查20个key，注意相当于该循环执行20次，循环体时下边的描述）；<ol><li>如果当前库中没有一个key设置了过期时间，直接执行下一个库的遍历；</li><li>随机获取一个设置了过期时间的key，检查该key是否过期，如果过期，删除key；</li><li>判断定期删除操作是否已经达到指定时长，若已经达到，直接退出定期删除。</li></ol></li></ol><hr><p>RDB 对过期 key 的处理：</p><ol><li>从内存数据库持久化数据到RDB文件，持久化key之前，会检查是否过期，过期的key不进入RDB文件。</li><li>从RDB文件恢复数据到内存数据库，会对key先进行过期检查，如果过期，不导入数据库（主库情况）。</li></ol><hr><p>AOF 对过期key的处理：</p><ol><li><p>从内存数据库持久化数据到AOF文件：</p><ol><li>当key过期后，还没有被删除，此时进行执行持久化操作（该key是不会进入aof文件的，因为没有发生修改命令）；</li><li>当key过期后，在发生删除操作时，程序会向aof文件追加一条del命令（在将来的以aof文件恢复数据的时候该过期的键就会被删掉）；</li></ol></li><li><p>AOF重写：重写时，会先判断key是否过期，已过期的key不会重写到aof文件。</p></li></ol><h4 id="定时过期"><a href="#定时过期" class="headerlink" title="定时过期"></a>定时过期</h4><p>在设置key的过期时间的同时，为该key创建一个定时器，让定时器在key的过期时间来临时，对key进行删除。</p><p>Advantage：</p><ul><li>保证内存被尽快释放；</li></ul><p>Weakness：</p><ul><li>若过期key很多，删除这些key会占用很多的CPU时间，在CPU时间紧张的情况下，CPU不能把所有的时间用来做要紧的事儿，还需要去花时间删除这些key；</li><li>定时器的创建耗时，若为每一个设置过期时间的key创建一个定时器（将会有大量的定时器产生），性能影响严重；</li></ul><h4 id="惰性过期"><a href="#惰性过期" class="headerlink" title="惰性过期"></a>惰性过期</h4><p>key过期的时候不删除，每次从数据库获取key的时候去检查是否过期，若过期，则删除，返回null。</p><p>Advantage：</p><ul><li>删除操作只发生在从数据库取出key的时候发生，而且只删除当前key，所以对CPU时间的占用是比较少的，而且此时的删除是已经到了非做不可的地步（如果此时还不删除的话，我们就会获取到了已经过期的key了）</li></ul><p>Weakness：</p><ul><li>若大量的key在超出超时时间后，很久一段时间内，都没有被获取过，那么可能发生内存泄露（无用的垃圾占用了大量的内存）</li></ul><h4 id="定期过期"><a href="#定期过期" class="headerlink" title="定期过期"></a>定期过期</h4><p>每隔一段时间执行一次删除(在redis.conf配置文件设置hz，1s刷新的频率)过期key操作。</p><p>Advantage：</p><ul><li>通过限制删除操作的时长和频率，来减少删除操作对CPU时间的占用 - 避免了”定时过期”和”惰性过期”的缺点。</li></ul><p>Weakness：</p><ul><li>在内存友好方面，不如”定时删除”；</li><li>在CPU时间友好方面，不如”惰性删除”；</li></ul><p>注意：合理设置删除操作的执行时长（每次删除执行多长时间）和执行频率（每隔多长时间做一次删除），这个要根据服务器运行情况来定了。</p><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://www.cnblogs.com/xuliangxing/p/7151812.html" target="_blank" rel="noopener">https://www.cnblogs.com/xuliangxing/p/7151812.html</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;p&gt;主要分类：&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;定时过期&lt;/li&gt;
-&lt;
-      
-    
-    </summary>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
-    
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
-    
-      <category term="过期策略" scheme="https://sulangsss.github.io/tags/%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入学习 Redis 原理 - 淘汰策略</title>
-    <link href="https://sulangsss.github.io/2019/10/13/Redis/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20Redis%20%E5%8E%9F%E7%90%86%20-%20%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/"/>
-    <id>https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 淘汰策略/</id>
-    <published>2019-10-13T01:36:06.000Z</published>
-    <updated>2019-10-13T10:22:30.550Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="LRU"><a href="#LRU" class="headerlink" title="LRU"></a>LRU</h3><p>当需要从缓存中淘汰数据时，我们希望能淘汰那些将来不可能再被使用的数据，保留那些将来还会频繁访问的数据，但最大的问题是缓存并不能预言未来。一个解决方法就是通过LRU进行预测：最近被频繁访问的数据将来被访问的可能性也越大。</p><p>缓存中的数据一般会有这样的访问分布：一部分数据拥有绝大部分的访问量。当访问方式没有改变时，可以记录每个数据的最后一次访问时间，拥有最少空闲时间的数据可以被认为将来最有可能被访问到。</p><p>举例如下的访问模式，A每5s访问一次，B每2s访问一次，C与D每10s访问一次，|代表计算空闲时间的截止点：</p><img src="/2019/10/13/Redis/深入学习%20Redis%20原理%20-%20淘汰策略/lru-access-exp.png"><p>可以看到，LRU对于A、B、C工作的很好，完美预测了将来被访问到的概率B&gt;A&gt;C，但对于D却预测了最少的空闲时间。但是，总体来说，LRU算法已经是一个性能足够好的算法了。</p><hr><h3 id="可选策略"><a href="#可选策略" class="headerlink" title="可选策略"></a>可选策略</h3><ul><li><p>noeviction: return errors when the memory limit was reached and the client is trying to execute commands that could result in more memory to be used (most write commands, but DEL and a few more exceptions).</p></li><li><p>allkeys-lru: evict keys by trying to remove the less recently used (LRU) keys first, in order to make space for the new data added.</p></li><li><p>volatile-lru: evict keys by trying to remove the less recently used (LRU) keys first, but only among keys that have an expire set, in order to make space for the new data added.</p></li><li><p>allkeys-random: evict keys randomly in order to make space for the new data added.</p></li><li><p>volatile-random: evict keys randomly in order to make space for the new data added, but only evict keys with an expire set.</p></li><li><p>volatile-ttl: evict keys with an expire set, and try to evict keys with a shorter time to live (TTL) first, in order to make space for the new data added.</p></li></ul><blockquote><p>The policies volatile-lru, volatile-random and volatile-ttl behave like noeviction if there are no keys to evict matching the prerequisites.</p></blockquote><hr><h3 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h3><ul><li>maxmemory：配置Redis存储数据时指定限制的内存大小，比如100m。当缓存消耗的内存超过这个数值时, 将触发数据淘汰。该数据配置为0时，表示缓存的数据量没有限制, 即LRU功能不生效。64位的系统默认值为0，32位的系统默认内存限制为3GB。</li><li>maxmemory_policy：触发数据淘汰后的淘汰策略。</li><li>maxmemory_samples：随机采样的精度，也就是随即取出key的数目。该数值配置越大, 越接近于真实的LRU算法，但是数值越大，相应消耗也变高，对性能有一定影响，样本值默认为5。</li></ul><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Redis数据过期和淘汰策略详解] <a href="https://yq.aliyun.com/articles/257459" target="_blank" rel="noopener">https://yq.aliyun.com/articles/257459</a></li><li>[Redis中的LRU淘汰策略分析] <a href="https://www.cnblogs.com/linxiyue/p/10945216.html" target="_blank" rel="noopener">https://www.cnblogs.com/linxiyue/p/10945216.html</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;LRU&quot;&gt;&lt;a href=&quot;#LRU&quot; class=&quot;headerlink&quot; title=&quot;LRU&quot;&gt;&lt;/a&gt;LRU&lt;/h3&gt;&lt;p&gt;当需要从缓存中淘汰数据时，我们希望能淘汰那些将来不可能再被使用的数据，保留那些将来还会频繁访问的数据，但最大的问题是缓存并不能预言未
-      
-    
-    </summary>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
-    
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
-    
-      <category term="淘汰策略" scheme="https://sulangsss.github.io/tags/%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入学习 Redis 原理 - 数据类型</title>
-    <link href="https://sulangsss.github.io/2019/10/13/Redis/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20Redis%20%E5%8E%9F%E7%90%86%20-%20%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/"/>
-    <id>https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 数据类型/</id>
-    <published>2019-10-13T01:36:06.000Z</published>
-    <updated>2019-10-13T04:08:50.445Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Lists"><a href="#Lists" class="headerlink" title="Lists"></a>Lists</h3><hr><h3 id="Sets"><a href="#Sets" class="headerlink" title="Sets"></a>Sets</h3><hr><h3 id="Hashes"><a href="#Hashes" class="headerlink" title="Hashes"></a>Hashes</h3><hr><h3 id="Bitmaps"><a href="#Bitmaps" class="headerlink" title="Bitmaps"></a>Bitmaps</h3><hr><h3 id="HyperLogLogs"><a href="#HyperLogLogs" class="headerlink" title="HyperLogLogs"></a>HyperLogLogs</h3><p>HyperLogLog 是用来做基数统计的算法，HyperLogLog 的优点是，在输入元素的数量或者体积非常非常大时，计算基数所需的空间总是固定 的、并且是很小的。</p><p>在 Redis 里面，每个 HyperLogLog 键只需要花费 12 KB 内存，就可以计算接近 2^64 个不同元素的基 数。这和计算基数时，元素越多耗费内存就越多的集合形成鲜明对比。但是，因为 HyperLogLog 只会根据输入元素来计算基数，而不会储存输入元素本身，所以 HyperLogLog 不能像集合那样，返回输入的各个元素。 </p><blockquote><p>什么是基数？比如数据集 {1, 3, 5, 7, 5, 7, 8}， 那么这个数据集的基数集为 {1, 3, 5 ,7, 8}, 基数(不重复元素)为5。 基数估计就是在误差可接受的范围内，快速计算基数。</p></blockquote><hr><h3 id="Streams"><a href="#Streams" class="headerlink" title="Streams"></a>Streams</h3>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Lists&quot;&gt;&lt;a href=&quot;#Lists&quot; class=&quot;headerlink&quot; title=&quot;Lists&quot;&gt;&lt;/a&gt;Lists&lt;/h3&gt;&lt;hr&gt;
-&lt;h3 id=&quot;Sets&quot;&gt;&lt;a href=&quot;#Sets&quot; class=&quot;headerlink&quot; title=&quot;
-      
-    
-    </summary>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
-    
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
-    
-      <category term="Data Type" scheme="https://sulangsss.github.io/tags/Data-Type/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入学习 Redis 原理 - Lua</title>
-    <link href="https://sulangsss.github.io/2019/10/13/Redis/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20Redis%20%E5%8E%9F%E7%90%86%20-%20Lua/"/>
-    <id>https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - Lua/</id>
-    <published>2019-10-13T01:36:06.000Z</published>
-    <updated>2019-10-13T08:10:15.652Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>EVAL and EVALSHA are used to evaluate scripts using the Lua interpreter built into Redis starting from version 2.6.0.</p><p><strong>Related commands</strong></p><ul><li>EVAL</li><li>EVALSHA</li></ul><p><strong>为什么要用Lua？</strong></p><ol><li>减少网络开销（批量执行命令）：不使用 Lua 的代码需要向 Redis 发送多次请求, 而脚本只需一次即可, 减少网络传输；</li><li>原子操作：Redis 将整个脚本作为一个原子执行，无需担心并发，也就无需事务；</li><li>复用：脚本会永久保存 Redis 中，其他客户端可继续使用。</li></ol><h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><h4 id="EVAL"><a href="#EVAL" class="headerlink" title="EVAL"></a>EVAL</h4><p>EVAL script numkeys key [key …] arg [arg …]</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">EVAL <span class="string">"return &#123;KEYS[1],KEYS[2],ARGV[1],ARGV[2]&#125;"</span> 2 key1 key2 first second</span><br><span class="line"></span><br><span class="line">1) <span class="string">"key1"</span></span><br><span class="line">2) <span class="string">"key2"</span></span><br><span class="line">3) <span class="string">"first"</span></span><br><span class="line">4) <span class="string">"second"</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">eval</span> <span class="string">"return redis.call('set', KEYS[1], ARGV[1])"</span> 1 username Jason</span><br><span class="line"></span><br><span class="line"><span class="comment"># execute script</span></span><br><span class="line"><span class="comment"># redis-cli --eval script.lua</span></span><br></pre></td></tr></table></figure><h4 id="Evalsha"><a href="#Evalsha" class="headerlink" title="Evalsha"></a>Evalsha</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">script load <span class="string">"return 'hello world'"</span></span><br><span class="line"><span class="comment"># output "8df13960c2be12fec0947206c9e087cd68b2f1b9"</span></span><br><span class="line"></span><br><span class="line">evalsha <span class="string">"8df13960c2be12fec0947206c9e087cd68b2f1b9"</span> 0</span><br><span class="line"><span class="comment"># output "hello world"</span></span><br></pre></td></tr></table></figure><h4 id="IP-Access-Limitation"><a href="#IP-Access-Limitation" class="headerlink" title="IP Access Limitation"></a>IP Access Limitation</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">local</span> access = redis.call(<span class="string">'incr'</span>, KEYS[1])</span><br><span class="line"><span class="keyword">if</span> tonumber(access) == 1 <span class="keyword">then</span></span><br><span class="line">    redis.call(<span class="string">'expire'</span>, KEYS[1], ARGV[1])</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> tonumber(access) &gt; tonumber(ARGV[2])</span><br><span class="line">    <span class="built_in">return</span> 0</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">return</span> 1</span><br><span class="line">end</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5秒访问10次</span></span><br><span class="line"><span class="comment"># redis-cli --eval "ip-limitation.lua" 192.168.1.1 , 5 10</span></span><br></pre></td></tr></table></figure><h4 id="Endless-Loop"><a href="#Endless-Loop" class="headerlink" title="Endless Loop"></a>Endless Loop</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">eval</span> <span class="string">'while(true) do end'</span> 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 此时 Redis 完全阻塞，如果此时另一个客户端进行操作，则输出</span></span><br><span class="line"><span class="comment"># (error) BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.</span></span><br><span class="line"><span class="comment"># execute command SCRIPT KILL to stop execute script</span></span><br><span class="line"><span class="comment"># relatived configuration is lua-time-limit</span></span><br><span class="line"><span class="comment"># Redis提供了一个lua-time-limit参数，默认是5秒，它是Lua脚本的“超时时间”，但这个超时时间仅仅是当Lua脚本超过lua-time-limit后，向其他命令发送BUSY的信号，但是不会停止掉服务端和客户端的执行脚本。</span></span><br><span class="line">``` </span><br><span class="line"></span><br><span class="line">``` bash</span><br><span class="line"><span class="built_in">eval</span> <span class="string">"redis.call('set', 'username', 'jason') while(true) do end"</span> 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># execute command SCRIPT KILL to stop execute script</span></span><br><span class="line"><span class="comment"># (error) UNKILLABLE Sorry the script already executed write commands against the dataset. You can either wait the script termination or kill the server in a hard way using the SHUTDOWN NOSAVE command.</span></span><br><span class="line"><span class="comment"># 注意：如果当前Lua脚本已经执行过写操作，那么script kill将不会生效</span></span><br></pre></td></tr></table></figure><hr><h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><h4 id="redis-call-与-redis-pcall-的区别"><a href="#redis-call-与-redis-pcall-的区别" class="headerlink" title="redis.call() 与 redis.pcall() 的区别"></a>redis.call() 与 redis.pcall() 的区别</h4><p>两者唯一区别在于它们对错误处理的不同：</p><ol><li><p>当 redis.call() 在执行命令的过程中发生错误时，脚本会停止执行，并返回一个脚本错误，错误的输出信息会说明错误造成的原因：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">EVAL <span class="string">"return redis.call('SADD','evalShell','a')"</span> 0</span><br><span class="line">(error) ERR Error running script (call to f_e17faafbc130014cebb229b71e0148b1f8f52389): @user_script:1: WRONGTYPE Operation against a key holding the wrong kind of value</span><br></pre></td></tr></table></figure></li><li><p>redis.pcall() 出错时并不引发(raise)错误，而是返回一个带 err 域的 Lua 表(table)，用于表示错误（这样与命令行客户端直接操作返回相同）：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">EVAL <span class="string">"return redis.pcall('SADD','evalShell','a')"</span> 0</span><br><span class="line">(error) WRONGTYPE Operation against a key holding the wrong kind of value</span><br></pre></td></tr></table></figure></li></ol><h4 id="Redis-是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？"><a href="#Redis-是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？" class="headerlink" title="Redis 是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？"></a>Redis 是单线程服务，如果某个客户端发生了阻塞，如何继续接收其他客户端的命令？</h4><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://www.cnblogs.com/barrywxx/p/8563284.html" target="_blank" rel="noopener">https://www.cnblogs.com/barrywxx/p/8563284.html</a></li><li><a href="https://www.cnblogs.com/huangxincheng/p/6230129.html" target="_blank" rel="noopener">https://www.cnblogs.com/huangxincheng/p/6230129.html</a></li><li>[实例Jedis常见异常汇总] <a href="https://help.aliyun.com/knowledge_detail/71967.html#section-nx4-7r8-82y" target="_blank" rel="noopener">https://help.aliyun.com/knowledge_detail/71967.html#section-nx4-7r8-82y</a></li><li>[Redis与Lua] <a href="https://www.cnblogs.com/yangmingxianshen/p/8100250.html" target="_blank" rel="noopener">https://www.cnblogs.com/yangmingxianshen/p/8100250.html</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;p&gt;EVAL and EVALSHA are used to e
-      
-    
-    </summary>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
-    
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
-    
-      <category term="Lua" scheme="https://sulangsss.github.io/tags/Lua/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入学习 Redis 原理 - 持久化</title>
-    <link href="https://sulangsss.github.io/2019/10/13/Redis/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20Redis%20%E5%8E%9F%E7%90%86%20-%20%E6%8C%81%E4%B9%85%E5%8C%96/"/>
-    <id>https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 持久化/</id>
-    <published>2019-10-13T01:36:06.000Z</published>
-    <updated>2019-10-13T10:39:43.043Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h3><p>在指定的时间间隔能对你的数据进行快照存储。</p><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"># 时间策略</span><br><span class="line"># 要禁用RDB配置，只需要在save的最后一行写上：save ""</span><br><span class="line"># 表示900s内如果有1条是写入命令，就触发产生一次快照，可以理解为就进行一次备份</span><br><span class="line">save 900 1 </span><br><span class="line">save 300 10</span><br><span class="line">save 60 10000</span><br><span class="line"></span><br><span class="line"># 文件名称</span><br><span class="line">dbfilename dump.rdb</span><br><span class="line"></span><br><span class="line"># 文件保存路径</span><br><span class="line">dir /home/work/app/redis/data/</span><br><span class="line"></span><br><span class="line"># 如果持久化出错，主进程是否停止写入</span><br><span class="line"># 这是当备份进程出错时，主进程就停止接受新的写入操作，是为了保护持久化的数据一致性问题。</span><br><span class="line"># 如果自己的业务有完善的监控系统，可以禁止此项配置，否则请开启。</span><br><span class="line">stop-writes-on-bgsave-error yes</span><br><span class="line"></span><br><span class="line"># 是否压缩</span><br><span class="line">rdbcompression yes</span><br><span class="line"></span><br><span class="line"># 导入时是否检查</span><br><span class="line"># 建议没有必要开启，毕竟Redis本身就属于CPU密集型服务器，再开启压缩会带来更多的CPU消耗，相比硬盘成本，CPU更值钱。</span><br><span class="line">rdbchecksum yes</span><br></pre></td></tr></table></figure><h4 id="触发条件"><a href="#触发条件" class="headerlink" title="触发条件"></a>触发条件</h4><ol><li>手动触发：</li></ol><ul><li>save：会阻塞当前Redis服务器，直到持久化完成，线上应该禁止使用。</li><li>bgsave：该触发方式会fork一个子进程，由子进程负责持久化过程，因此阻塞只会发生在fork子进程的时候。</li></ul><ol start="2"><li>自动触发：</li></ol><ul><li>根据 save m n 配置规则自动触发；</li><li>从节点全量复制时，主节点发送rdb文件给从节点完成复制操作，主节点会触发 bgsave；</li><li>执行 debug reload 时；</li><li>执行 shutdown时，如果没有开启aof，也会触发。</li></ul><hr><h3 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h3><p>记录每次对服务器写的操作，当服务器重启的时候会重新执行这些命令来恢复原始的数据。</p><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"># 是否开启aof</span><br><span class="line">appendonly yes</span><br><span class="line"></span><br><span class="line"># 文件名称</span><br><span class="line">appendfilename "appendonly.aof"</span><br><span class="line"></span><br><span class="line"># 同步方式</span><br><span class="line"># always：把每个写命令都立即同步到aof，很慢，但是很安全</span><br><span class="line"># everysec：每秒同步一次，是折中方案</span><br><span class="line"># no：redis不处理交给OS来处理，非常快，但是也最不安全</span><br><span class="line"># 一般情况下都采用 everysec 配置，这样可以兼顾速度与安全，最多损失1s的数据。</span><br><span class="line">appendfsync everysec</span><br><span class="line"></span><br><span class="line"># aof重写期间是否同步</span><br><span class="line">no-appendfsync-on-rewrite no</span><br><span class="line"></span><br><span class="line"># 重写触发配置</span><br><span class="line">auto-aof-rewrite-percentage 100</span><br><span class="line">auto-aof-rewrite-min-size 64mb</span><br><span class="line"></span><br><span class="line"># 加载aof时如果有错如何处理</span><br><span class="line">aof-load-truncated yes</span><br><span class="line"></span><br><span class="line"># 文件重写策略</span><br><span class="line">aof-rewrite-incremental-fsync yes</span><br></pre></td></tr></table></figure><h4 id="处理流程"><a href="#处理流程" class="headerlink" title="处理流程"></a>处理流程</h4><ol><li>命令的实时写入：命令写入 -&gt; 追加到aof的buffer -&gt; 同步到磁盘。</li><li>AOF文件的重写。</li></ol><h4 id="触发条件-1"><a href="#触发条件-1" class="headerlink" title="触发条件"></a>触发条件</h4><ol><li>手动触发：</li></ol><ul><li>bgrewriteaof</li></ul><ol start="2"><li>自动触发</li></ol><hr><h3 id="定时任务机制"><a href="#定时任务机制" class="headerlink" title="定时任务机制"></a>定时任务机制</h3><p>定时任务执行的频率可以在配置文件中通过 hz 10 来设置（这个配置表示1s内执行10次，也就是每100ms触发一次定时任务）。</p><p>该值最大能够设置为：500，但是不建议超过：100，因为值越大说明执行频率越频繁越高，这会带来CPU的更多消耗，从而影响主进程读写性能。</p><p>定时任务使用的是Redis自己实现的 TimeEvent，它会定时去调用一些命令完成定时任务，这些任务可能会阻塞主进程导致Redis性能下降。因此我们在配置Redis时，一定要整体考虑一些会触发定时任务的配置，根据实际情况进行调整。</p><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://juejin.im/post/5b70dfcf518825610f1f5c16" target="_blank" rel="noopener">https://juejin.im/post/5b70dfcf518825610f1f5c16</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;RDB&quot;&gt;&lt;a href=&quot;#RDB&quot; class=&quot;headerlink&quot; title=&quot;RDB&quot;&gt;&lt;/a&gt;RDB&lt;/h3&gt;&lt;p&gt;在指定的时间间隔能对你的数据进行快照存储。&lt;/p&gt;
-&lt;figure class=&quot;highlight&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td
-      
-    
-    </summary>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
-    
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
-    
-      <category term="持久化" scheme="https://sulangsss.github.io/tags/%E6%8C%81%E4%B9%85%E5%8C%96/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入学习 Redis 原理 - Transaction</title>
-    <link href="https://sulangsss.github.io/2019/10/13/Redis/%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0%20Redis%20%E5%8E%9F%E7%90%86%20-%20Transaction/"/>
-    <id>https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - Transaction/</id>
-    <published>2019-10-13T01:36:06.000Z</published>
-    <updated>2019-10-13T08:15:30.336Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>It is possible to group commands together so that they are executed as a single transaction</p><p><strong>Related commands</strong></p><ul><li>DISCARD</li><li>EXEC</li><li>MULTI</li><li>UNWATCH</li><li>WATCH</li></ul><ol><li>All the commands in a transaction are serialized and executed sequentially. It can never happen that a request issued by another client is served in the middle of the execution of a Redis transaction. This guarantees that the commands are executed as a single isolated operation.</li><li>Either all of the commands or none are processed, so a Redis transaction is also atomic.</li></ol><blockquote><p>Watch 命令用于监视一个(或多个) key ，如果在事务执行之前这个(或这些) key 被其他命令所改动，那么事务将被打断。Watch + Multi实际是一种乐观锁（CAS）。</p></blockquote><hr><p>Redis 事务可以一次执行多个命令， 并且带有以下三个重要的保证：</p><ul><li>批量操作在发送 EXEC 命令前被放入队列缓存；</li><li>收到 EXEC 命令后进入事务执行，事务中任意命令执行失败，其余的命令依然被执行；</li><li>在事务执行过程，其他客户端提交的命令请求不会插入到事务执行命令序列中</li></ul><hr><p>一个事务从开始到执行会经历以下三个阶段：</p><ul><li>开始事务；</li><li>命令入队；</li><li>执行事务。</li></ul><p>单个 Redis 命令的执行是原子性的，但 Redis 没有在事务上增加任何维持原子性的机制，所以 Redis 事务的执行并不是原子性的。</p><p>事务可以理解为一个打包的批量执行脚本，但批量指令并非原子化的操作，中间某条指令的失败不会导致前面已做指令的回滚，也不会造成后续的指令不做。</p><blockquote><p>It’s important to note that even when a command fails, all the other commands in the queue are processed – Redis will not stop the processing of commands.</p></blockquote><hr><p><strong>Errors inside a transaction</strong></p><p>During a transaction it is possible to encounter two kind of command errors:</p><ol><li><p>A command may fail to be queued, so there may be an error before EXEC is called.</p><blockquote><p>For instance the command may be syntactically wrong (wrong number of arguments, wrong command name, …), or there may be some critical condition like an out of memory condition (if the server is configured to have a memory limit using the maxmemory directive).</p></blockquote></li><li><p>A command may fail after EXEC is called.</p><blockquote><p>For instance since we performed an operation against a key with the wrong value (like calling a list operation against a string value).</p></blockquote></li></ol><hr><h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><h4 id="Why-Redis-does-not-support-roll-backs"><a href="#Why-Redis-does-not-support-roll-backs" class="headerlink" title="Why Redis does not support roll backs?"></a>Why Redis does not support roll backs?</h4><p>However there are good opinions for this behavior:</p><ul><li><p>Redis commands can fail only if called with a wrong syntax (and the problem is not detectable during the command queueing), or against keys holding the wrong data type: this means that in practical terms a failing command is the result of a programming errors, and a kind of error that is very likely to be detected during development, and not in production.</p></li><li><p>Redis is internally simplified and faster because it does not need the ability to roll back.</p></li></ul><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://redis.io/topics/transactions" target="_blank" rel="noopener">https://redis.io/topics/transactions</a></li><li><a href="https://www.runoob.com/redis/redis-transactions.html" target="_blank" rel="noopener">https://www.runoob.com/redis/redis-transactions.html</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;p&gt;It is possible to group comman
-      
-    
-    </summary>
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/categories/Redis/"/>
-    
-    
-      <category term="Redis" scheme="https://sulangsss.github.io/tags/Redis/"/>
-    
-      <category term="Transaction" scheme="https://sulangsss.github.io/tags/Transaction/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Docker Log Limitation</title>
-    <link href="https://sulangsss.github.io/2019/10/12/Docker/Log/Log-Limitation/"/>
-    <id>https://sulangsss.github.io/2019/10/12/Docker/Log/Log-Limitation/</id>
-    <published>2019-10-12T02:36:12.000Z</published>
-    <updated>2019-10-12T10:19:23.382Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[docker日志丢失问题分析] <a href="https://cloud.tencent.com/developer/article/1402443" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1402443</a></li><li>[Logging Architecture] <a href="https://kubernetes.io/docs/concepts/cluster-administration/logging/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/cluster-administration/logging/</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot; title=&quot;Introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h3&gt;&lt;h3 id=&quot;Reference&quot;&gt;&lt;a href=&quot;#Refe
-      
-    
-    </summary>
-    
-      <category term="Docker" scheme="https://sulangsss.github.io/categories/Docker/"/>
-    
-      <category term="Log" scheme="https://sulangsss.github.io/categories/Docker/Log/"/>
-    
-    
-      <category term="Docker" scheme="https://sulangsss.github.io/tags/Docker/"/>
-    
-      <category term="Log" scheme="https://sulangsss.github.io/tags/Log/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>HTTP/1、HTTP/2和HTTP/3</title>
-    <link href="https://sulangsss.github.io/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/"/>
-    <id>https://sulangsss.github.io/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/</id>
-    <published>2019-10-11T02:55:18.000Z</published>
-    <updated>2019-10-12T02:29:54.464Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="HTTP-1-x"><a href="#HTTP-1-x" class="headerlink" title="HTTP/1.x"></a>HTTP/1.x</h2><p>HTTP协议是HyperText Transfer Protocol（超文本传输协议）的缩写，它是互联网上应用最为广泛的一种网络协议。所有的WWW文件都必须遵守这个标准。伴随着计算机网络和浏览器的诞生，HTTP1.0也随之而来，处于计算机网络中的应用层，HTTP是建立在TCP协议之上，所以HTTP协议的瓶颈及其优化技巧都是基于TCP协议本身的特性，例如tcp建立连接的3次握手和断开连接的4次挥手以及每次建立连接带来的RTT延迟时间。</p><h3 id="Weakness"><a href="#Weakness" class="headerlink" title="Weakness"></a>Weakness</h3><h4 id="连接无法复用"><a href="#连接无法复用" class="headerlink" title="连接无法复用"></a>连接无法复用</h4><p>连接无法复用会导致每次请求都经历三次握手和慢启动。三次握手在高延迟的场景下影响较明显，慢启动则对大量小文件请求影响较大（没有达到最大窗口请求就被终止）。</p><ul><li>HTTP/1.0：传输数据时，每次都需要重新建立连接，增加延迟。</li><li>HTTP/1.1：虽然加入keep-alive可以复用一部分连接，但域名分片等情况下仍然需要建立多个connection，耗费资源，给服务器带来性能压力。</li></ul><h4 id="Head-Of-Line-Blocking（HOLB）"><a href="#Head-Of-Line-Blocking（HOLB）" class="headerlink" title="Head-Of-Line Blocking（HOLB）"></a>Head-Of-Line Blocking（HOLB）</h4><p>导致带宽无法被充分利用，以及后续健康请求被阻塞。HOLB是指一系列包（package）因为第一个包被阻塞；当页面中需要请求很多资源的时候，HOLB（队头阻塞）会导致在达到最大请求数量时，剩余的资源需要等待其他资源请求完成后才能发起请求。</p><ul><li>HTTP/1.0：下个请求必须在前一个请求返回后才能发出，request-response对按序发生。显然，如果某个请求长时间没有返回，那么接下来的请求就全部阻塞了。</li><li>HTTP/1.1：尝试使用 pipeling 来解决，即浏览器可以一次性发出多个请求（同个域名，同一条 TCP 链接）。但 pipeling 要求返回是按序的，那么前一个请求如果很耗时（比如处理大图片），那么后面的请求即使服务器已经处理完，仍会等待前面的请求处理完才开始按序返回。所以，pipeling 只部分解决了 HOLB。</li></ul><h4 id="协议开销大"><a href="#协议开销大" class="headerlink" title="协议开销大"></a>协议开销大</h4><p>HTTP1.x在使用时，header里携带的内容过大，在一定程度上增加了传输的成本，并且每次请求header基本不怎么变化，尤其在移动端增加用户流量。</p><h4 id="安全因素"><a href="#安全因素" class="headerlink" title="安全因素"></a>安全因素</h4><p>HTTP1.x在传输数据时，所有传输的内容都是明文，客户端和服务器端都无法验证对方的身份，这在一定程度上无法保证数据的安全性。</p><hr><h2 id="HTTP-2"><a href="#HTTP-2" class="headerlink" title="HTTP/2"></a>HTTP/2</h2><p>2015年，HTTP/2 发布。HTTP/2是现行HTTP协议（HTTP/1.x）的替代，但它不是重写，HTTP方法/状态码/语义都与HTTP/1.x一样。HTTP/2基于SPDY3，专注于性能，最大的一个目标是在用户和网站间只用一个连接（connection）。</p><p>HTTP/2由两个规范（Specification）组成：</p><ul><li>Hypertext Transfer Protocol version 2 - RFC7540</li><li>HPACK - Header Compression for HTTP/2 - RFC7541</li></ul><h3 id="SPDY-协议"><a href="#SPDY-协议" class="headerlink" title="SPDY 协议"></a>SPDY 协议</h3><p>因为HTTP/1.x的问题，我们会引入雪碧图、将小图内联、使用多个域名等等的方式来提高性能。不过这些优化都绕开了协议，直到2009年，谷歌公开了自行研发的 SPDY 协议，主要解决HTTP/1.1效率不高的问题。谷歌推出SPDY，才算是正式改造HTTP协议本身。降低延迟，压缩header等等，SPDY的实践证明了这些优化的效果，也最终带来HTTP/2的诞生。</p><p>SPDY 协议在Chrome浏览器上证明可行以后，就被当作 HTTP/2 的基础，主要特性都在 HTTP/2 之中得到继承。</p><hr><h3 id="New-Feature"><a href="#New-Feature" class="headerlink" title="New Feature"></a>New Feature</h3><h4 id="二进制传输"><a href="#二进制传输" class="headerlink" title="二进制传输"></a>二进制传输</h4><p>HTTP/2 采用二进制格式传输数据，而非 HTTP 1.x 的文本格式，二进制协议解析起来更高效。 HTTP/1 的请求和响应报文，都是由起始行，首部和实体正文（可选）组成，各部分之间以文本换行符分隔。<strong>HTTP/2 将请求和响应数据分割为更小的帧，并且它们采用二进制编码。</strong></p><h4 id="多路复用"><a href="#多路复用" class="headerlink" title="多路复用"></a>多路复用</h4><p>在 HTTP/2 中引入了多路复用的技术。多路复用很好的解决了浏览器限制<strong>同一个域名下的请求数量的问题</strong>，同时也接更容易实现<strong>全速传输</strong>，毕竟新开一个 TCP 连接都需要慢慢提升传输速度。</p><p>在 HTTP/2 中，有了二进制分帧之后，HTTP /2 不再依赖 TCP 链接去实现多流并行了，在 HTTP/2中：</p><ul><li>同域名下所有通信都在单个连接上完成。</li><li>单个连接可以承载任意数量的双向数据流。</li><li>数据流以消息的形式发送，而消息又由一个或多个帧组成，多个帧之间可以乱序发送，因为根据帧首部的流标识可以重新组装。</li></ul><p>这一特性，使性能有了极大提升：</p><ul><li>同个域名只需要占用一个 TCP 连接，使用一个连接并行发送多个请求和响应，消除了因多个 TCP 连接而带来的延时和内存消耗；</li><li>并行交错地发送多个请求，请求之间互不影响；</li><li>并行交错地发送多个响应，响应之间互不干扰；</li><li>在HTTP/2中，每个请求都可以带一个31bit的优先值，0表示最高优先级，数值越大优先级越低。有了这个优先值，客户端和服务器就可以在处理不同的流时采取不同的策略，以最优的方式发送流、消息和帧。</li></ul><img src="/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/http1-vs-http2.png"><p>如上图所示，多路复用的技术可以只通过一个 TCP 连接就可以传输所有的请求数据。</p><h4 id="Header-压缩"><a href="#Header-压缩" class="headerlink" title="Header 压缩"></a>Header 压缩</h4><p>在 HTTP/1 中，我们使用文本的形式传输 header，在 header 携带 cookie 的情况下，可能每次都需要重复传输几百到几千的字节。</p><p>为了减少这块的资源消耗并提升性能， HTTP/2对这些首部采取了压缩策略：</p><ul><li>HTTP/2在客户端和服务器端使用“首部表”来跟踪和存储之前发送的键－值对，对于相同的数据，不再通过每次请求和响应发送；</li><li>首部表在HTTP/2的连接存续期内始终存在，由客户端和服务器共同渐进地更新；</li><li>每个新的首部键－值对要么被追加到当前表的末尾，要么替换表中之前的值。</li></ul><h4 id="Server-Push"><a href="#Server-Push" class="headerlink" title="Server Push"></a>Server Push</h4><p>Server Push即服务端能通过push的方式将客户端需要的内容预先推送过去，也叫 “cache push”。</p><p>可以想象以下情况，某些资源客户端是一定会请求的，这时就可以采取服务端 push 的技术，提前给客户端推送必要的资源，这样就可以相对减少一点延迟时间。当然在浏览器兼容的情况下你也可以使用 prefetch。<br>例如服务端可以主动把JS和CSS文件推送给客户端，而不需要客户端解析HTML时再发送这些请求。</p><p>服务端可以主动推送，客户端也有权利选择是否接收。如果服务端推送的资源已经被浏览器缓存过，浏览器可以通过发送RST_STREAM帧来拒收。主动推送也遵守同源策略，换句话说，服务器不能随便将第三方资源推送给客户端，而必须是经过双方确认才行。</p><hr><h2 id="HTTP-3"><a href="#HTTP-3" class="headerlink" title="HTTP/3"></a>HTTP/3</h2><p>虽然 HTTP/2 解决了很多之前旧版本的问题，但是它还是存在一个巨大的问题，主要是底层支撑的 TCP 协议造成的。</p><p>上面提到 HTTP/2 使用了多路复用，一般来说同一域名下只需要使用一个 TCP 连接。但当这个连接中出现了丢包的情况，那就会导致 HTTP/2 的表现情况反倒不如 HTTP/1 了。因为在出现丢包的情况下，整个 TCP 都要开始等待重传，也就导致了后面的所有数据都被阻塞了。但是对于 HTTP/1.1 来说，可以开启多个 TCP 连接，出现这种情况反到只会影响其中一个连接，剩余的 TCP 连接还可以正常传输数据。</p><blockquote><p>那么可能就会有人考虑到去修改 TCP 协议，其实这已经是一件不可能完成的任务了。因为 TCP 存在的时间实在太长，已经充斥在各种设备中，并且这个协议是由操作系统实现的，更新起来不大现实。</p></blockquote><p>基于这个原因，Google 就更起炉灶搞了一个基于 UDP 协议的 QUIC 协议，并且使用在了 HTTP/3 上，HTTP/3 之前名为 HTTP-over-QUIC，从这个名字中我们也可以发现，HTTP/3 最大的改造就是使用了 QUIC。</p><h3 id="QUIC"><a href="#QUIC" class="headerlink" title="QUIC"></a>QUIC</h3><h4 id="0-RTT"><a href="#0-RTT" class="headerlink" title="0-RTT"></a>0-RTT</h4><p>通过使用类似 TCP 快速打开的技术，缓存当前会话的上下文，在下次恢复会话的时候，只需要将之前的缓存传递给服务端验证通过就可以进行传输了。<strong>0-RTT 建连可以说是 QUIC 相比 HTTP2 最大的性能优势。</strong></p><p>0RTT 建连的两层含义：</p><ol><li>传输层 0RTT 就能建立连接。</li><li>加密层 0RTT 就能建立加密连接。</li></ol><img src="/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/https-and-quic-0rtt.png"><p>上图左边是 HTTPS 的一次完全握手的建连过程，需要3个 RTT。就算是会话复用也需要至少2个 RTT。</p><p>QUIC 由于建立在 UDP 的基础上，同时又实现了 0RTT 的安全握手，所以在大部分情况下，只需要 0 个 RTT 就能实现数据发送，在实现前向加密的基础上，并且 0RTT 的成功率相比 TLS 的会话记录单要高很多。</p><blockquote><p>RTT：Round-trip delay time，来回通信延迟。</p></blockquote><h4 id="多路复用-1"><a href="#多路复用-1" class="headerlink" title="多路复用"></a>多路复用</h4><p>虽然 HTTP/2 支持了多路复用，但是 TCP 协议终究是没有这个功能的。QUIC 原生就实现了这个功能，并且传输的单个数据流可以保证有序交付且不会影响其他的数据流，这样的技术就解决了之前 TCP 存在的问题。</p><p>同HTTP2.0一样，同一条 QUIC连接上可以创建多个stream，来发送多个HTTP请求，但是，QUIC是基于UDP的，一个连接上的多个stream之间没有依赖。比如下图中stream2丢了一个UDP包，不会影响后面跟着 Stream3 和 Stream4，不存在 TCP 队头阻塞。虽然stream2的那个包需要重新传，但是stream3、stream4的包无需等待，就可以发给用户。</p><img src="/2019/10/11/Network/HTTP/HTTP1,HTTP2,HTTP3/quic-loss-package.png"><p>另外QUIC 在移动端的表现也会比 TCP 好。因为 TCP 是基于 IP 和端口去识别连接的，这种方式在多变的移动端网络环境下是很脆弱的。但是 QUIC 是通过 ID 的方式去识别一个连接，不管你网络环境如何变化，只要 ID 不变，就能迅速重连上。</p><h4 id="加密认证的报文"><a href="#加密认证的报文" class="headerlink" title="加密认证的报文"></a>加密认证的报文</h4><p>TCP 协议头部没有经过任何加密和认证，所以在传输过程中很容易被中间网络设备篡改，注入和窃听。比如修改序列号、滑动窗口。这些行为有可能是出于性能优化，也有可能是主动攻击。但是 QUIC 的 packet 可以说是武装到了牙齿。除了个别报文比如 PUBLIC_RESET 和 CHLO，所有报文头部都是经过认证的，报文 Body 都是经过加密的。这样只要对 QUIC 报文任何修改，接收端都能够及时发现，有效地降低了安全风险。</p><h4 id="向前纠错机制"><a href="#向前纠错机制" class="headerlink" title="向前纠错机制"></a>向前纠错机制</h4><p>QUIC协议有一个非常独特的特性，称为向前纠错 (Forward Error Correction，FEC)，每个数据包除了它本身的内容之外，还包括了部分其他数据包的数据，因此少量的丢包可以通过其他包的冗余数据直接组装而无需重传。向前纠错牺牲了每个数据包可以发送数据的上限，但是减少了因为丢包导致的数据重传，因为数据重传将会消耗更多的时间(包括确认数据包丢失、请求重传、等待新数据包等步骤的时间消耗)。</p><p>假如说这次我要发送三个包，那么协议会算出这三个包的异或值并单独发出一个校验包，也就是总共发出了四个包。当出现其中的非校验包丢包的情况时，可以通过另外三个包计算出丢失的数据包的内容。<strong>当然这种技术只能使用在丢失一个包的情况下，如果出现丢失多个包就不能使用纠错机制了，只能使用重传的方式了。</strong></p><hr><h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ul><li>HTTP/1.x 有连接无法复用、队头阻塞、协议开销大和安全因素等多个缺陷；</li><li>HTTP/2 通过多路复用、二进制流、Header 压缩等等技术，极大地提高了性能，但是还是存在着问题的；</li><li>QUIC 基于 UDP 实现，是 HTTP/3 中的底层支撑协议，该协议基于 UDP，又取了 TCP 中的精华，实现了即快又可靠的协议。</li></ul><hr><h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul><li>[一文读懂HTTP/2 及 HTTP/3特性] <a href="https://segmentfault.com/a/1190000018401534" target="_blank" rel="noopener">https://segmentfault.com/a/1190000018401534</a></li><li>[HTTP/3 的过去、现在和未来] <a href="https://www.infoq.cn/article/x80uOvcRyxVYw3KVusUm" target="_blank" rel="noopener">https://www.infoq.cn/article/x80uOvcRyxVYw3KVusUm</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h2 id=&quot;HTTP-1-x&quot;&gt;&lt;a href=&quot;#HTTP-1-x&quot; class=&quot;headerlink&quot; title=&quot;HTTP/1.x&quot;&gt;&lt;/a&gt;HTTP/1.x&lt;/h2&gt;&lt;p&gt;HTTP协议是HyperText Transfer Protocol（超文本传输协议）的缩写
-      
-    
-    </summary>
-    
-      <category term="Network" scheme="https://sulangsss.github.io/categories/Network/"/>
-    
-      <category term="HTTP" scheme="https://sulangsss.github.io/categories/Network/HTTP/"/>
-    
-    
-      <category term="HTTP" scheme="https://sulangsss.github.io/tags/HTTP/"/>
-    
-      <category term="Network" scheme="https://sulangsss.github.io/tags/Network/"/>
-    
-      <category term="HTTP/2" scheme="https://sulangsss.github.io/tags/HTTP-2/"/>
-    
-      <category term="HTTP/3" scheme="https://sulangsss.github.io/tags/HTTP-3/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Liquibase Quick Start</title>
-    <link href="https://sulangsss.github.io/2019/09/29/DB/Liquibase/Liquibase-Quick-Start/"/>
-    <id>https://sulangsss.github.io/2019/09/29/DB/Liquibase/Liquibase-Quick-Start/</id>
-    <published>2019-09-29T08:54:07.000Z</published>
-    <updated>2019-09-29T08:55:38.333Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h3><h4 id="Data-Type"><a href="#Data-Type" class="headerlink" title="Data Type"></a>Data Type</h4><blockquote><p><a href="https://gist.github.com/JohnnyNiu/e5f7232362cc085e2a9c9e2b683c6026" target="_blank" rel="noopener">https://gist.github.com/JohnnyNiu/e5f7232362cc085e2a9c9e2b683c6026</a></p></blockquote>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Basic&quot;&gt;&lt;a href=&quot;#Basic&quot; class=&quot;headerlink&quot; title=&quot;Basic&quot;&gt;&lt;/a&gt;Basic&lt;/h3&gt;&lt;h4 id=&quot;Data-Type&quot;&gt;&lt;a href=&quot;#Data-Type&quot; class=&quot;headerlink&quot; ti
-      
-    
-    </summary>
-    
-      <category term="DB" scheme="https://sulangsss.github.io/categories/DB/"/>
-    
-      <category term="Liquibase" scheme="https://sulangsss.github.io/categories/DB/Liquibase/"/>
-    
-    
-      <category term="Liquibase" scheme="https://sulangsss.github.io/tags/Liquibase/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>ES API</title>
-    <link href="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-API/"/>
-    <id>https://sulangsss.github.io/2019/09/24/ELK/ES/ES-API/</id>
-    <published>2019-09-24T10:42:06.000Z</published>
-    <updated>2019-09-24T10:49:08.685Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Performance-Indicator"><a href="#Performance-Indicator" class="headerlink" title="Performance Indicator"></a>Performance Indicator</h3><h4 id="Health"><a href="#Health" class="headerlink" title="Health"></a>Health</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">GET _cluster/health</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">"cluster_name"</span>: <span class="string">"jp-pte-es-hot"</span>,</span><br><span class="line">  <span class="attr">"status"</span>: <span class="string">"green"</span>,</span><br><span class="line">  <span class="attr">"timed_out"</span>: <span class="literal">false</span>,</span><br><span class="line">  <span class="attr">"number_of_nodes"</span>: <span class="number">46</span>,</span><br><span class="line">  <span class="attr">"number_of_data_nodes"</span>: <span class="number">30</span>,</span><br><span class="line">  <span class="attr">"active_primary_shards"</span>: <span class="number">4857</span>,</span><br><span class="line">  <span class="attr">"active_shards"</span>: <span class="number">12674</span>,</span><br><span class="line">  <span class="attr">"relocating_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"initializing_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"unassigned_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"delayed_unassigned_shards"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"number_of_pending_tasks"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"number_of_in_flight_fetch"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"task_max_waiting_in_queue_millis"</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">"active_shards_percent_as_number"</span>: <span class="number">100</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">指标说明：</span><br><span class="line">status：集群状态，分为green、yellow和red。 </span><br><span class="line">number_of_nodes/number_of_data_nodes:集群的节点数和数据节点数。 </span><br><span class="line">active_primary_shards：集群中所有活跃的主分片数。 </span><br><span class="line">active_shards：集群中所有活跃的分片数。 </span><br><span class="line">relocating_shards：当前节点迁往其他节点的分片数量，通常为0，当有节点加入或者退出时该值会增加。 </span><br><span class="line">initializing_shards：正在初始化的分片。 </span><br><span class="line">unassigned_shards：未分配的分片数，通常为0，当有某个节点的副本分片丢失该值就会增加。 </span><br><span class="line">number_of_pending_tasks：是指主节点创建索引并分配shards等任务，如果该指标数值一直未减小代表集群存在不稳定因素 </span><br><span class="line">active_shards_percent_as_number：集群分片健康度，活跃分片数占总分片数比例。 </span><br><span class="line">number_of_pending_tasks：pending task只能由主节点来进行处理，这些任务包括创建索引并将shards分配给节点。</span><br></pre></td></tr></table></figure><h4 id="Index"><a href="#Index" class="headerlink" title="Index"></a>Index</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET _stats</span><br></pre></td></tr></table></figure><h4 id="Cluster-Status"><a href="#Cluster-Status" class="headerlink" title="Cluster Status"></a>Cluster Status</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET _cluster/stats?pretty</span><br></pre></td></tr></table></figure><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li><a href="https://blog.51cto.com/michaelkang/2164200" target="_blank" rel="noopener">https://blog.51cto.com/michaelkang/2164200</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Performance-Indicator&quot;&gt;&lt;a href=&quot;#Performance-Indicator&quot; class=&quot;headerlink&quot; title=&quot;Performance Indicator&quot;&gt;&lt;/a&gt;Performance Indicator&lt;/
-      
-    
-    </summary>
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/categories/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/categories/ELK/ES/"/>
-    
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/tags/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/tags/ES/"/>
-    
-      <category term="API" scheme="https://sulangsss.github.io/tags/API/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>ES Optimize</title>
-    <link href="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Optimize/"/>
-    <id>https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Optimize/</id>
-    <published>2019-09-24T10:15:06.000Z</published>
-    <updated>2019-09-24T13:58:18.958Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Index"><a href="#Index" class="headerlink" title="Index"></a>Index</h3><h4 id="Parameter"><a href="#Parameter" class="headerlink" title="Parameter"></a>Parameter</h4><ul><li><p>index.refresh_interval: 默认的刷新时间间隔是1s，对于写入量很大的场景，这样的配置会导致写入吞吐量很低，适当提高刷新间隔，可以提升写入量，代价就是让新写入的数据在60s之后可以被搜索，新数据可见的及时性有所下降。</p><blockquote><p>“index.refresh_interval”: “60s”</p></blockquote></li><li><p>index.translog.sync_interval</p><blockquote><p>“sync_interval”: “120s”</p></blockquote></li><li><p>index.translog.durability</p><blockquote><p>“durability”: “async”</p></blockquote></li><li><p>index.translog.flush_threshold_size</p><blockquote><p>“flush_threshold_size”:”1g”</p></blockquote></li></ul><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[从 10 秒到 2 秒！ElasticSearch 性能调优]<a href="https://juejin.im/post/5c3e9813518825552880084a" target="_blank" rel="noopener">https://juejin.im/post/5c3e9813518825552880084a</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Index&quot;&gt;&lt;a href=&quot;#Index&quot; class=&quot;headerlink&quot; title=&quot;Index&quot;&gt;&lt;/a&gt;Index&lt;/h3&gt;&lt;h4 id=&quot;Parameter&quot;&gt;&lt;a href=&quot;#Parameter&quot; class=&quot;headerlink&quot; ti
-      
-    
-    </summary>
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/categories/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/categories/ELK/ES/"/>
-    
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/tags/ELK/"/>
-    
-      <category term="Optimize" scheme="https://sulangsss.github.io/tags/Optimize/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/tags/ES/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>ES Shard</title>
-    <link href="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Shard/"/>
-    <id>https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Shard/</id>
-    <published>2019-09-24T10:13:06.000Z</published>
-    <updated>2019-09-24T10:15:13.362Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Shard"><a href="#Shard" class="headerlink" title="Shard"></a>Shard</h3><p>Shard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。</p><blockquote><p>一个 Index 其实是有存储上限的（除非你设置足够多的 Shards 和机器），如官方声明单个 Shard 的文档数不能超过 20 亿（受限于 Lucene index，每个 Shard 是一个 Lucene index）。<br>每个搜索请求会调度到索引的每个分片中. 如果分片分散在不同的节点倒是问题不太. 但当分片开始竞争相同的硬件资源时, 性能便会逐步下降。</p></blockquote><p>shard_num = hash(_routing) % num_primary_shards</p><blockquote><p>其中 hash(_routing) 得出一个数字，然后除以主 Shards 的数量得到一个余数，余数的范围是 0 到 number_of_primary_shards - 1，这个数字就是文档所在的 Shard。Routing 默认是 id 值，当然可以自定义，合理指定 Routing 能够大幅提升查询效率，Routing 支持 GET、Delete、Update、Post、Put 等操作。</p></blockquote><p>考虑到 I、O，针对 Index 每个 Node 的 Shards 数最好不超过 3 个，那面对这样一个庞大的 Index，我们是采用更多的 Shards，还是更多的 Index，我们如何选择？</p><p>Index 的 Shards 总量也不宜太多，更多的 Shards 会带来更多的 I、O 开销，其实答案就已经很明确，除非你能接受长时间的查询等待。</p><p>Index 拆分的思路很简单，时序索引有一个好处就是只有增加，没有变更，按时间累积，天然对索引的拆分友好支持，可以按照时间和数据量做任意时间段的拆分。</p><p>ES 提供的 Rollover Api + Index Template 可以非常便捷和友好的实现 Index 的拆分工作，把单个 index docs 数量控制在百亿内，也就是一个 Index 默认 5 个 Shards 左右即可，保证查询的即时响应。</p><h4 id="Shard-Count"><a href="#Shard-Count" class="headerlink" title="Shard Count"></a>Shard Count</h4><p>当我们节点数和Shard数相等时，ElasticSearch 集群的性能可以达到最优。即，对于一个3节点集群，我们为每个集群节点分配1个 Shard，总共3个 Shard。</p><p>但是由于 ElasticSearch 的不可变性（Immutable）的限制，系统无法对 Shard 进行重新拆分分配，除非重新索引这个文件集合。所以，当我们需要增加更多节点的时候，又希望 Shard 能利用到增加节点带来的系统性能提升时，我们就不得不进行重新索引，由于重索引开销巨大，这是我们不希望看到的。</p><p>如果单个node分配多个Shard，就会引入另外一系列的性能问题，我们知道对于任意一次完整的搜索，ElasticSearch会分别对每个Shard进行查询，最后进行汇总。当节点数和Shard数是一对一的时候，所有的查询可以并行运行。但是，对于具有多个Shard的节点，如果磁盘是15000RPM或SSD，可能会相对较快，但是这也会存在等待响应的问题，所以通常不推荐一个节点超过2个Shard。</p><p>3节点6个Shard，即每个节点2个Shard，这可以使我们在未来轻松的横向扩展到6个节点，应对许多极端的场景。</p><h4 id="Replica-Count"><a href="#Replica-Count" class="headerlink" title="Replica Count"></a>Replica Count</h4><p>Replica也是Shard，与Shard不同的是，Replica只会参与读操作，同时也能提高集群的可用性。</p><p>对于Replica来说，它的主要作用就是提高集群错误恢复的能力，所以Replica的数目与Shard的数目以及Node的数目相关，与Shard不同的是，Replica的数目可以在集群建立之后变更，切代价较小，所以相比Shard的数目而言，没有那么重要。</p><p>如果宕机了，Replica是什么情况？</p><p><strong>假设条件: 3 Nodes, 3 Shards, 0 Relicas</strong></p><p><strong>假设一个Node宕机</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_1.png"><p>此时，对应的索引不可用。</p><p><strong>假设条件: 3 Nodes, 3 Shards, 1 Relicas</strong></p><p><strong>假设一个Node宕机</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_2.png"><p>此时，索引可用</p><p><strong>假设两个Node宕机</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_3.png"><p>此时，索引仍然可用。</p><p><strong>假设条件: 3 Nodes, 3 Shards, 2 Relicas</strong></p><img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_4.png"><blockquote><p>如果存储费用比较便宜，推荐使用</p></blockquote><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Shard数调优]<a href="https://www.cnblogs.com/richaaaard/p/5231905.html" target="_blank" rel="noopener">https://www.cnblogs.com/richaaaard/p/5231905.html</a></li><li><a href="https://www.javazhiyin.com/36443.html" target="_blank" rel="noopener">https://www.javazhiyin.com/36443.html</a></li><li><a href="https://segmentfault.com/a/1190000008868585" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008868585</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Shard&quot;&gt;&lt;a href=&quot;#Shard&quot; class=&quot;headerlink&quot; title=&quot;Shard&quot;&gt;&lt;/a&gt;Shard&lt;/h3&gt;&lt;p&gt;Shard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。&lt;/p&gt;
-&lt;blockqu
-      
-    
-    </summary>
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/categories/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/categories/ELK/ES/"/>
-    
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/tags/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/tags/ES/"/>
-    
-      <category term="Shard" scheme="https://sulangsss.github.io/tags/Shard/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>ES Error</title>
-    <link href="https://sulangsss.github.io/2019/09/23/ELK/ES/ES-ERROR/"/>
-    <id>https://sulangsss.github.io/2019/09/23/ELK/ES/ES-ERROR/</id>
-    <published>2019-09-23T04:13:06.000Z</published>
-    <updated>2019-09-23T04:15:00.445Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="retrying-failed-action-with-response-code-403-“type”-gt-”cluster-block-exception”-“reason”-gt-”blocked-by-FORBIDDEN-12-index-read-only-allow-delete-api-”"><a href="#retrying-failed-action-with-response-code-403-“type”-gt-”cluster-block-exception”-“reason”-gt-”blocked-by-FORBIDDEN-12-index-read-only-allow-delete-api-”" class="headerlink" title="retrying failed action with response code: 403 ({“type”=&gt;”cluster_block_exception”, “reason”=&gt;”blocked by: [FORBIDDEN/12/index read-only / allow delete (api)];”})"></a>retrying failed action with response code: 403 ({“type”=&gt;”cluster_block_exception”, “reason”=&gt;”blocked by: [FORBIDDEN/12/index read-only / allow delete (api)];”})</h3><p>Cause: 当某个数据节点的存储空间超过95%时，如果此时再分配分片的索引进来，那么该索引将强制进入只读模式。</p><p>Solution: </p><ol><li><p>在 Kibana 开发控制台执行</p><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">PUT _settings</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">"index"</span>: &#123;</span><br><span class="line">    <span class="attr">"blocks"</span>: &#123;</span><br><span class="line">      <span class="attr">"read_only_allow_delete"</span>: <span class="string">"false"</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li><li><p>使用 API 接口设置</p><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_settings -d '&#123;"index.blocks.read_only_allow_delete": null&#125;'</span><br></pre></td></tr></table></figure></li></ol><blockquote><p><a href="https://www.aityp.com/%E8%A7%A3%E5%86%B3elasticsearch%E7%B4%A2%E5%BC%95%E5%8F%AA%E8%AF%BB/" target="_blank" rel="noopener">https://www.aityp.com/%E8%A7%A3%E5%86%B3elasticsearch%E7%B4%A2%E5%BC%95%E5%8F%AA%E8%AF%BB/</a></p></blockquote>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;retrying-failed-action-with-response-code-403-“type”-gt-”cluster-block-exception”-“reason”-gt-”blocked-by-FORBIDDEN-12-index-read-on
-      
-    
-    </summary>
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/categories/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/categories/ELK/ES/"/>
-    
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/tags/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/tags/ES/"/>
-    
-      <category term="ERROR" scheme="https://sulangsss.github.io/tags/ERROR/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>ES Remove History Data</title>
-    <link href="https://sulangsss.github.io/2019/09/18/ELK/ES/ES-Remove-History-Data/"/>
-    <id>https://sulangsss.github.io/2019/09/18/ELK/ES/ES-Remove-History-Data/</id>
-    <published>2019-09-18T09:50:06.000Z</published>
-    <updated>2019-09-18T09:54:25.174Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="delete-by-query-Official-Recommendation"><a href="#delete-by-query-Official-Recommendation" class="headerlink" title="_delete_by_query - Official Recommendation"></a>_delete_by_query - Official Recommendation</h3><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">curl -u 用户名:密码  -H'Content-Type:application/json' -d'&#123;</span><br><span class="line">    "query": &#123;</span><br><span class="line">        "range": &#123;</span><br><span class="line">            "@timestamp": &#123;</span><br><span class="line">                "lt": "now-7d",</span><br><span class="line">                "format": "epoch_millis"</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">' -XPOST "http://127.0.0.1:9200/*-*/_delete_by_query?pretty"</span><br></pre></td></tr></table></figure><ul><li>-XPOST是指定用POST方式请求</li><li>-u 是格式为userName:password，使用Basic Auth进行登录。如果elasticsearch没有使用类似x-pack进行安全登录，则不需要加-u参数</li><li>-H是指定文档类型是json格式</li><li>-d是指定body内容<blockquote><p>range: 范围;<br>@timestamp: 时间字段;<br>“lt”: “now-7d” lt是小于(&lt;)，lte是小于等于(&lt;=),gt是大于(&gt;),gte是大于等于(&gt;=),now-7d是当前时间减7天</p></blockquote></li></ul><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[elasticsearch按照日期定时批量删除索引]<a href="https://juejin.im/post/58e5de06ac502e006c254145" target="_blank" rel="noopener">https://juejin.im/post/58e5de06ac502e006c254145</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;delete-by-query-Official-Recommendation&quot;&gt;&lt;a href=&quot;#delete-by-query-Official-Recommendation&quot; class=&quot;headerlink&quot; title=&quot;_delete_by_que
-      
-    
-    </summary>
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/categories/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/categories/ELK/ES/"/>
-    
-    
-      <category term="ELK" scheme="https://sulangsss.github.io/tags/ELK/"/>
-    
-      <category term="ES" scheme="https://sulangsss.github.io/tags/ES/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Java I/O Practice</title>
-    <link href="https://sulangsss.github.io/2019/09/18/Java/Java-IO/"/>
-    <id>https://sulangsss.github.io/2019/09/18/Java/Java-IO/</id>
-    <published>2019-09-18T07:01:22.000Z</published>
-    <updated>2019-09-24T13:58:22.439Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="FileChannel-And-MMAP"><a href="#FileChannel-And-MMAP" class="headerlink" title="FileChannel And MMAP"></a>FileChannel And MMAP</h3><p>Java IO 操作：</p><ul><li>普通 I/O (java.io): 阻塞式</li><li>File Channel (java.nio): 阻塞式</li><li>MMAP (java.nio): File Channel 衍生出来的一种方式，非阻塞式</li></ul><h4 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//  FIleChannel 的方式</span></span><br><span class="line">FileChannel fileChannel = <span class="keyword">new</span> RandomAccessFile(<span class="keyword">new</span> File(<span class="string">"db.data"</span>), <span class="string">"rw"</span>).getChannel();</span><br><span class="line"></span><br><span class="line"><span class="comment">//  MMAP 的方式</span></span><br><span class="line">MappedByteBuffer mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, <span class="number">0</span>, filechannel.size();</span><br></pre></td></tr></table></figure><p>Write and Read Operation</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 写</span></span><br><span class="line"><span class="keyword">byte</span>[] data = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">4096</span>];</span><br><span class="line"><span class="keyword">long</span> position = <span class="number">1024L</span>;</span><br><span class="line"><span class="comment">//指定 position 写入 4kb 的数据</span></span><br><span class="line">fileChannel.write(ByteBuffer.wrap(data), position);</span><br><span class="line"><span class="comment">//从当前文件指针的位置写入 4kb 的数据</span></span><br><span class="line">fileChannel.write(ByteBuffer.wrap(data));</span><br><span class="line"></span><br><span class="line"><span class="comment">// 读</span></span><br><span class="line">ByteBuffer buffer = ByteBuffer.allocate(<span class="number">4096</span>);</span><br><span class="line"><span class="keyword">long</span> position = <span class="number">1024L</span>;</span><br><span class="line"><span class="comment">//指定 position 读取 4kb 的数据</span></span><br><span class="line">fileChannel.read(buffer,position)；</span><br><span class="line"><span class="comment">//从当前文件指针的位置读取 4kb 的数据</span></span><br><span class="line">fileChannel.read(buffer);</span><br></pre></td></tr></table></figure><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[文件IO操作的一些最佳实践]<a href="https://www.cnkirito.moe/file-io-best-practise/" target="_blank" rel="noopener">https://www.cnkirito.moe/file-io-best-practise/</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;FileChannel-And-MMAP&quot;&gt;&lt;a href=&quot;#FileChannel-And-MMAP&quot; class=&quot;headerlink&quot; title=&quot;FileChannel And MMAP&quot;&gt;&lt;/a&gt;FileChannel And MMAP&lt;/h3&gt;&lt;
-      
-    
-    </summary>
-    
-      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
-    
-    
-      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
-    
-      <category term="I/O" scheme="https://sulangsss.github.io/tags/I-O/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>CQRS Introduction</title>
-    <link href="https://sulangsss.github.io/2019/09/17/CQRS/CQRS-Introduction/"/>
-    <id>https://sulangsss.github.io/2019/09/17/CQRS/CQRS-Introduction/</id>
-    <published>2019-09-17T04:35:06.000Z</published>
-    <updated>2019-09-17T08:33:52.022Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Introduction-Command-Query-Responsibility-Segregation-CQRS"><a href="#Introduction-Command-Query-Responsibility-Segregation-CQRS" class="headerlink" title="Introduction - Command Query Responsibility Segregation (CQRS)"></a>Introduction - Command Query Responsibility Segregation (CQRS)</h3><p>Q: How to implement a query that retrieves data from multiple services in a microservice architecture?</p><p>A: Define a view database, which is a read-only replica that is designed to support that query. The application keeps the replica up to data by subscribing to Domain events published by the service that own the data.</p><img src="/2019/09/17/CQRS/CQRS-Introduction/QuerySideService.png"><p><strong>This pattern has the following benefits:</strong></p><ul><li>Supports multiple denormalized views that are scalable and performant</li><li>Improved separation of concerns = simpler command and query models</li><li>Necessary in an event sourced architecture</li></ul><p><strong>This pattern has the following drawbacks:</strong></p><ul><li>Increased complexity</li><li>Potential code duplication</li><li>Replication lag/eventually consistent views</li></ul><hr><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul><li>[Command Query Responsibility Segregation (CQRS)] <a href="https://microservices.io/patterns/data/cqrs.html" target="_blank" rel="noopener">https://microservices.io/patterns/data/cqrs.html</a></li></ul>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Introduction-Command-Query-Responsibility-Segregation-CQRS&quot;&gt;&lt;a href=&quot;#Introduction-Command-Query-Responsibility-Segregation-CQRS&quot; cl
-      
-    
-    </summary>
-    
-      <category term="CQRS" scheme="https://sulangsss.github.io/categories/CQRS/"/>
-    
-    
-      <category term="CQRS" scheme="https://sulangsss.github.io/tags/CQRS/"/>
-    
-      <category term="Introduction" scheme="https://sulangsss.github.io/tags/Introduction/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Aeron Core Configurations</title>
-    <link href="https://sulangsss.github.io/2019/09/08/Java/LowLatency/Aeron-Configuration/"/>
-    <id>https://sulangsss.github.io/2019/09/08/Java/LowLatency/Aeron-Configuration/</id>
-    <published>2019-09-08T04:01:22.000Z</published>
-    <updated>2019-09-08T04:16:42.283Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="Network"><a href="#Network" class="headerlink" title="Network"></a>Network</h3><h4 id="MTU"><a href="#MTU" class="headerlink" title="MTU"></a>MTU</h4><p>aeron.mtu.length on the Media Driver controls the length of the MTU of data frames. This value is communicated to the Aeron clients during registration. So, applications do not have to concern themselves with the MTU value used by the Media Driver and use the same value.</p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h3 id=&quot;Network&quot;&gt;&lt;a href=&quot;#Network&quot; class=&quot;headerlink&quot; title=&quot;Network&quot;&gt;&lt;/a&gt;Network&lt;/h3&gt;&lt;h4 id=&quot;MTU&quot;&gt;&lt;a href=&quot;#MTU&quot; class=&quot;headerlink&quot; title=
-      
-    
-    </summary>
-    
-      <category term="Java" scheme="https://sulangsss.github.io/categories/Java/"/>
-    
-      <category term="Low Latency" scheme="https://sulangsss.github.io/categories/Java/Low-Latency/"/>
-    
-    
-      <category term="Java" scheme="https://sulangsss.github.io/tags/Java/"/>
-    
-      <category term="Low Latency" scheme="https://sulangsss.github.io/tags/Low-Latency/"/>
-    
-      <category term="Aeron" scheme="https://sulangsss.github.io/tags/Aeron/"/>
-    
-      <category term="Cofiguration" scheme="https://sulangsss.github.io/tags/Cofiguration/"/>
     
   </entry>
   
