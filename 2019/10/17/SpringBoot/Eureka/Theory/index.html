@@ -6,7 +6,7 @@
 
 
 <html class="theme-next mist use-motion" lang="zh-Hans">
-<head><meta name="generator" content="Hexo 3.8.0">
+<head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -113,7 +113,7 @@
 <meta property="og:image" content="https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Theory/eureka-cache-structure.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Theory/register-and-discovery.png">
 <meta property="og:image" content="https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Theory/eureka-and-zuul-connection.png">
-<meta property="og:updated_time" content="2019-10-20T13:36:37.759Z">
+<meta property="og:updated_time" content="2019-10-26T04:07:42.095Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入学习 Eureka 原理">
 <meta name="twitter:description" content="IntroductionEureka包含两个组件：Eureka Server和Eureka Client。  Eureka Server 提供服务注册服务，各个节点启动后会在 Eureka Server 中进行注册，这样 EurekaServer 中的服务注册表中将会存储所有可用服务节点的信息，服务节点的信息可以在界面中直观的看到。 Eureka Client 是一个java客户端，用于简化与 E">
@@ -178,7 +178,7 @@
 
 </head>
 
-<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
 
   
   
@@ -188,7 +188,7 @@
   <div class="container sidebar-position-right page-post-detail">
     <div class="headband"></div>
 
-    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-wrapper">
   <div class="site-meta ">
     
@@ -288,20 +288,20 @@
   
   
 
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Theory/">
 
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content>
       <meta itemprop="image" content="/images/avatar.gif">
     </span>
 
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
     </span>
 
@@ -344,7 +344,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/SpringBoot/" itemprop="url" rel="index">
                     <span itemprop="name">SpringBoot</span>
                   </a>
@@ -355,7 +355,7 @@
                   ， 
                 
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/SpringBoot/Eureka/" itemprop="url" rel="index">
                     <span itemprop="name">Eureka</span>
                   </a>
@@ -473,6 +473,11 @@
 <li>主动让 Response 缓存失效；</li>
 </ol>
 <hr>
+<h3 id="Peer-to-Peer-Communication"><a href="#Peer-to-Peer-Communication" class="headerlink" title="Peer to Peer Communication"></a>Peer to Peer Communication</h3><p>Eureka clients tries to talk to Eureka Server in the same zone. If there are problems talking with the server or if the server does not exist in the same zone, the clients fail over to the servers in the other zones.</p>
+<p>Once the server starts receiving traffic, all of the operations that is performed on the server is replicated to all of the peer nodes that the server knows about. If an operation fails for some reason, the information is reconciled(一致) on the next heartbeat that also gets replicated between servers.</p>
+<p>When the Eureka server comes up, it tries to get all of the instance registry information from a neighboring node. If there is a problem getting the information from a node, the server tries all of the peers before it gives up. If the server is able to successfully get all of the instances, it sets the renewal threshold that it should be receiving based on that information. If any time, the renewals(续期) falls below the percent configured for that value (<strong>below 85% within 15 mins</strong>), the server stops expiring instances to protect the current instance registry information.</p>
+<p>In Netflix, the above safeguard is called as <strong>self-preservation mode</strong> and is primarily used as a protection in scenarios where there is a network partition between a group of clients and the Eureka Server. In these scenarios, the server tries to protect the information it already has. There may be scenarios in case of a mass outage(中断) that this may cause the clients to get the instances that do not exist anymore. The clients must make sure they are resilient(能复原的) to eureka server returning an instance that is non-existent or un-responsive. The best protection in these scenarios is to timeout quickly and try other servers.</p>
+<hr>
 <h3 id="默认配置下服务消费者最长感知时间"><a href="#默认配置下服务消费者最长感知时间" class="headerlink" title="默认配置下服务消费者最长感知时间"></a>默认配置下服务消费者最长感知时间</h3><h4 id="正常上线"><a href="#正常上线" class="headerlink" title="正常上线"></a>正常上线</h4><p>数据流：readWrite -&gt; readOnly -&gt; Client -&gt; Ribbon</p>
 <p>预估：30(readOnly) + 30(Client) + 30(Ribbon) = 90s</p>
 <h4 id="正常下线"><a href="#正常下线" class="headerlink" title="正常下线"></a>正常下线</h4><p>数据流：readWrite -&gt; readOnly -&gt; Client -&gt; Ribbon</p>
@@ -525,7 +530,7 @@
 <h4 id="Zuul-与-Eureka-的配合"><a href="#Zuul-与-Eureka-的配合" class="headerlink" title="Zuul 与 Eureka 的配合"></a>Zuul 与 Eureka 的配合</h4><p>Eureka Server 为注册中心，Zuul 相对于 Eureka Server 来说是 Eureka Client，Zuul 会把 Eureka Server 端服务列表缓存到本地，并以定时任务的形式更新服务列表，同时 Zuul 通过本地列表发现其它服务，使用 Ribbon 实现客户端负载均衡。</p>
 <img src="/2019/10/17/SpringBoot/Eureka/Theory/eureka-and-zuul-connection.png">
 <p>正常情况下，调用方对网关发起请求即刻能得到响应。但是当对生产者做缩容、下线、升级的情况下，由于Eureka这种多级缓存的设计结构和定时更新的机制，LoadBalance 端的服务列表B存在更新不及时的情况，服务消费者最长感知时间将无限趋近240s），如果这时消费者对网关发起请求，LoadBalance 会对一个已经不存在的服务发起请求，请求是会超时的。</p>
-<h4 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h4><p><strong>Idea</strong></p>
+<h4 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h4><p><strong>解决方案思路</strong></p>
 <p>生产者下线后，最先得到感知的是 Eureka Server 中的 readWriteCacheMap，最后得到感知的是网关核心中的 LoadBalance。但是 loadBalance 对生产者的发现是在 loadBalance 本地维护的列表中。</p>
 <p>所以要想达到网关对生产者下线的实时感知，可以这样做：首先生产者或者部署平台主动通知 Eureka Server，然后跳过 Eureka 多级缓存之间的更新时间，直接通知 Zuul 中的 Eureka Client，最后将 Eureka Client 中的服务列表更新到 Ribbon 中。</p>
 <blockquote>
@@ -540,6 +545,7 @@
 <li>[spring cloud eureka 参数配置] <a href="https://segmentfault.com/a/1190000008378268" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008378268</a></li>
 <li>[详解 Eureka 缓存机制] <a href="http://college.creditease.cn/detail/243" target="_blank" rel="noopener">http://college.creditease.cn/detail/243</a></li>
 <li>[API网关如何实现对服务下线实时感知] <a href="https://juejin.im/post/5cf62c13f265da1bc37efb4c" target="_blank" rel="noopener">https://juejin.im/post/5cf62c13f265da1bc37efb4c</a></li>
+<li>[Understanding Eureka Peer to Peer Communication] <a href="https://github.com/Netflix/eureka/wiki/Understanding-Eureka-Peer-to-Peer-Communication" target="_blank" rel="noopener">https://github.com/Netflix/eureka/wiki/Understanding-Eureka-Peer-to-Peer-Communication</a></li>
 </ul>
 
       
@@ -650,7 +656,7 @@
       
 
       <section class="site-overview sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           
             <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
           
@@ -665,7 +671,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">631</span>
+                <span class="site-state-item-count">637</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -676,7 +682,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">263</span>
+                <span class="site-state-item-count">264</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -687,7 +693,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">681</span>
+                <span class="site-state-item-count">690</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -729,7 +735,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CAP"><span class="nav-number">1.1.</span> <span class="nav-text">CAP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Eureka-Server"><span class="nav-number">1.2.</span> <span class="nav-text">Eureka Server</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Eureka-Client"><span class="nav-number">1.3.</span> <span class="nav-text">Eureka Client</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Registry-And-Discovery"><span class="nav-number">2.</span> <span class="nav-text">Registry And Discovery</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#默认配置下服务消费者最长感知时间"><span class="nav-number">3.</span> <span class="nav-text">默认配置下服务消费者最长感知时间</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#正常上线"><span class="nav-number">3.1.</span> <span class="nav-text">正常上线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#正常下线"><span class="nav-number">3.2.</span> <span class="nav-text">正常下线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#非正常下线"><span class="nav-number">3.3.</span> <span class="nav-text">非正常下线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#优化配置"><span class="nav-number">3.4.</span> <span class="nav-text">优化配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Self-Preservation-Mode"><span class="nav-number">4.</span> <span class="nav-text">Self Preservation Mode</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#API-Gateway-实现服务下线实时感知"><span class="nav-number">5.</span> <span class="nav-text">API-Gateway 实现服务下线实时感知</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Zuul-与-Eureka-的配合"><span class="nav-number">5.1.</span> <span class="nav-text">Zuul 与 Eureka 的配合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Solution"><span class="nav-number">5.2.</span> <span class="nav-text">Solution</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">6.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CAP"><span class="nav-number">1.1.</span> <span class="nav-text">CAP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Eureka-Server"><span class="nav-number">1.2.</span> <span class="nav-text">Eureka Server</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Eureka-Client"><span class="nav-number">1.3.</span> <span class="nav-text">Eureka Client</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Registry-And-Discovery"><span class="nav-number">2.</span> <span class="nav-text">Registry And Discovery</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Peer-to-Peer-Communication"><span class="nav-number">3.</span> <span class="nav-text">Peer to Peer Communication</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#默认配置下服务消费者最长感知时间"><span class="nav-number">4.</span> <span class="nav-text">默认配置下服务消费者最长感知时间</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#正常上线"><span class="nav-number">4.1.</span> <span class="nav-text">正常上线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#正常下线"><span class="nav-number">4.2.</span> <span class="nav-text">正常下线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#非正常下线"><span class="nav-number">4.3.</span> <span class="nav-text">非正常下线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#优化配置"><span class="nav-number">4.4.</span> <span class="nav-text">优化配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Self-Preservation-Mode"><span class="nav-number">5.</span> <span class="nav-text">Self Preservation Mode</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#API-Gateway-实现服务下线实时感知"><span class="nav-number">6.</span> <span class="nav-text">API-Gateway 实现服务下线实时感知</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Zuul-与-Eureka-的配合"><span class="nav-number">6.1.</span> <span class="nav-text">Zuul 与 Eureka 的配合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Solution"><span class="nav-number">6.2.</span> <span class="nav-text">Solution</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">7.</span> <span class="nav-text">Reference</span></a></li></ol></div>
             
 
           </div>

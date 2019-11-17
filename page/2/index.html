@@ -6,7 +6,7 @@
 
 
 <html class="theme-next mist use-motion" lang="zh-Hans">
-<head><meta name="generator" content="Hexo 3.8.0">
+<head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -168,7 +168,7 @@
 
 </head>
 
-<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
 
   
   
@@ -179,7 +179,7 @@
   page-home">
     <div class="headband"></div>
 
-    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-wrapper">
   <div class="site-meta ">
     
@@ -279,20 +279,20 @@
   
   
 
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  Class/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/17/SpringBoot/Eureka/Quickly-Register-And-Unregister/">
 
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content>
       <meta itemprop="image" content="/images/avatar.gif">
     </span>
 
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
     </span>
 
@@ -303,7 +303,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/10/14/Java/JVM/Basic/深入学习 JVM -  Class/" itemprop="url">深入学习 JVM - Class</a></h2>
+                <a class="post-title-link" href="/2019/10/17/SpringBoot/Eureka/Quickly-Register-And-Unregister/" itemprop="url">Eureka 服务实例上下线</a></h2>
         
 
         <div class="post-meta">
@@ -315,7 +315,738 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-14T16:51:06+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-17T11:18:06+08:00">
+                2019-10-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SpringBoot/" itemprop="url" rel="index">
+                    <span itemprop="name">SpringBoot</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SpringBoot/Eureka/" itemprop="url" rel="index">
+                    <span itemprop="name">Eureka</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>默认的Spring Eureka服务器，服务提供者和服务调用者配置不够灵敏，总是服务提供者在停掉很久之后，服务调用者很长时间并没有感知到变化。或者是服务已经注册上去了，但是服务调用方很长时间还是调用不到(发现不了这个服务)。</p>
+<p>在实际情况中，Eureka 的默认设置是不符合我们生产要求的，一般情况下，我们的生产要求：</p>
+<ol>
+<li>ServiceA 下线一台实例后，API-Gateway 的调用不能失败；</li>
+<li>ServiceB 下线一台实例后，ServiceA 的 Feign 调用不能失败；</li>
+<li>服务上线下线，Eureka服务能够快速感知；</li>
+</ol>
+<hr>
+<h3 id="涉及原理知识"><a href="#涉及原理知识" class="headerlink" title="涉及原理知识"></a>涉及原理知识</h3><h4 id="Eureka的两层缓存问题"><a href="#Eureka的两层缓存问题" class="headerlink" title="Eureka的两层缓存问题"></a>Eureka的两层缓存问题</h4><p>EurekaServer 默认有两个缓存，一个是 ReadWriteMap，另一个是 ReadOnlyMap。有服务提供者注册服务或者维持心跳时时，会修改 ReadWriteMap。当有服务调用者查询服务实例列表时，默认会从 ReadOnlyMap 读取（这个在原生Eureka可以配置，SpringCloud Eureka中不能配置，一定会启用ReadOnlyMap读取），这样可以减少 ReadWriteMap 读写锁的争用，增大吞吐量。EurekaServer 定时把数据从 ReadWriteMap 更新到 ReadOnlyMap 中。</p>
+<h4 id="心跳时间"><a href="#心跳时间" class="headerlink" title="心跳时间"></a>心跳时间</h4><p>客户端注册服务后，会定时心跳。这个根据客户端的 Eureka 配置中的服务刷新时间决定。还有个配置是客户端的服务过期时间，但是 EurekaServer 默认情况下是忽略客户端的这个字段。需要配置好 EurekaServer 的扫描失效时间，才会触发 EurekaServer 的主动失效机制。</p>
+<p>在这个机制启用下：每个客户端会发送自己的服务过期时间上去，EurekaServer 会定时检查每个客户端的服务过期时间和上次心跳时间，如果在服务过期时间内没有收到过任何一次心跳，同时没有处于保护模式下，则会将这个实例从ReadWriteMap中去掉。</p>
+<h4 id="调用者服务从Eureka拉列表的轮训间隔"><a href="#调用者服务从Eureka拉列表的轮训间隔" class="headerlink" title="调用者服务从Eureka拉列表的轮训间隔"></a>调用者服务从Eureka拉列表的轮训间隔</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.client.registry-fetch-interval-seconds</span></span><br></pre></td></tr></table></figure>
+<p>表示 Eureka Server 间隔多久去拉取服务注册信息，默认为30秒，对于api-gateway，如果要迅速获取服务注册状态，可以缩小该值，比如5秒。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.instance.lease-expiration-duration-in-seconds</span></span><br></pre></td></tr></table></figure>
+<p>表示 Eureka Server 至上一次收到 Client 的心跳之后，等待下一次心跳的超时时间，在这个时间内若没收到下一次心跳，则将移除该 Instance。</p>
+<p>默认为90秒，如果该值太大，则很可能将流量转发过去的时候，该instance已经不存活了；如果该值设置太小了，则instance则很可能因为临时的网络抖动而被摘除掉。因此，该值至少应该大于lease-renewal-interval-in-seconds。</p>
+<blockquote>
+<p>eureka.instance.lease-renewal-interval-in-seconds：表示eureka client发送心跳给server端的频率。<br>lease-expiration-duration-in-seconds后，server端没有收到client的心跳，则将摘除该instance。除此之外，如果该instance实现了HealthCheckCallback，并决定让自己unavailable的话，则该instance也不会接收到流量。</p>
+</blockquote>
+<h4 id="Zuul-Ribbon缓存"><a href="#Zuul-Ribbon缓存" class="headerlink" title="Zuul - Ribbon缓存"></a>Zuul - Ribbon缓存</h4><p>在 Zuul 内部进行 Routing 和 Load Balance 时候，为了保证 HA，不受 Eureka 掉线的影响，内存中会有一个 Server List 缓存。</p>
+<hr>
+<h3 id="Practice"><a href="#Practice" class="headerlink" title="Practice"></a>Practice</h3><h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><ol>
+<li>服务过期时间，默认90s</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.instance.lease-expiration-duration-in-seconds=9</span></span><br></pre></td></tr></table></figure>
+<p>超过这个时间没有接收到心跳 EurekaServer 就会将这个实例剔除。EurekaServer 一定要设置 eureka.server.eviction-interval-timer-in-ms 否则这个配置无效，这个配置一般为服务刷新时间配置的三倍。</p>
+<ol start="2">
+<li>服务刷新时间配置，每隔这个时间会主动心跳一次，默认30s</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.instance.lease-renewal-interval-in-seconds=3</span></span><br></pre></td></tr></table></figure>
+<ol>
+<li>拉服务列表时间间隔，默认30s</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.client.registryFetchIntervalSeconds=5</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>ribbon刷新时间，默认30s</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">ribbon.ServerListRefreshInterval=5000</span></span><br></pre></td></tr></table></figure>
+<h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><ol>
+<li>禁用Eureka的ReadOnlyMap缓存</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.server.use-read-only-response-cache:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>启用主动失效，并且每次主动失效检测间隔为3s</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">eureka.server.eviction-interval-timer-in-ms:</span> <span class="number">3000</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># eureka.server.responseCacheUpdateInvervalMs</span></span><br><span class="line"><span class="comment"># eureka.server.responseCacheAutoExpirationInSeconds</span></span><br><span class="line"><span class="comment"># 在启用了主动失效后其实没什么用了。默认值180s</span></span><br></pre></td></tr></table></figure>
+<h4 id="Zuul-Retry"><a href="#Zuul-Retry" class="headerlink" title="Zuul - Retry"></a>Zuul - Retry</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework.retry&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-retry&lt;/artifactId&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#(是否所有操作都重试，若false则仅get请求重试)</span></span><br><span class="line"><span class="string">ribbon.OkToRetryOnAllOperations:true</span> </span><br><span class="line"><span class="comment">#(重试负载均衡其他实例最大重试次数,不含首次实例)</span></span><br><span class="line"><span class="string">ribbon.MaxAutoRetriesNextServer:3</span> </span><br><span class="line"><span class="comment">#(同一实例最大重试次数,不含首次调用)</span></span><br><span class="line"><span class="string">ribbon.MaxAutoRetries:1</span></span><br><span class="line"><span class="string">ribbon.ReadTimeout:30000</span></span><br><span class="line"><span class="string">ribbon.ConnectTimeout:3000</span></span><br><span class="line"><span class="comment">#（那些状态进行重试）</span></span><br><span class="line"><span class="string">ribbon.retryableStatusCodes:404,500,503</span></span><br><span class="line"><span class="comment"># (重试开关)</span></span><br><span class="line"><span class="string">spring.cloud.loadbalancer.retry.enable:true</span></span><br></pre></td></tr></table></figure>
+<h4 id="Spring-Cloud-Gateway"><a href="#Spring-Cloud-Gateway" class="headerlink" title="Spring Cloud Gateway"></a>Spring Cloud Gateway</h4><blockquote>
+<p><a href="https://juejin.im/post/5ba0ea35f265da0afe62d7a4" target="_blank" rel="noopener">https://juejin.im/post/5ba0ea35f265da0afe62d7a4</a></p>
+</blockquote>
+<h4 id="Client-主动通知-Eureka-下线"><a href="#Client-主动通知-Eureka-下线" class="headerlink" title="Client 主动通知 Eureka 下线"></a>Client 主动通知 Eureka 下线</h4><p>如果是 Spring Boot 应用，可以调用以下代码通知 Eureka，本服务实例暂停提供服务。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DiscoveryManager.getInstance().shutdownComponent();</span><br></pre></td></tr></table></figure>
+<p>另外还可以通过 HTTP API 接口删除实例注册信息来实现服务下线。</p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[SpringCloud服务的平滑上下线] <a href="https://juejin.im/post/5cf63899f265da1b9253c7f4" target="_blank" rel="noopener">https://juejin.im/post/5cf63899f265da1b9253c7f4</a></li>
+<li>[spring eureka 服务实例实现快速下线快速感知快速刷新配置解析] <a href="https://blog.csdn.net/zhxdick/article/details/78560993" target="_blank" rel="noopener">https://blog.csdn.net/zhxdick/article/details/78560993</a></li>
+<li>[eureka缓存细节以及生产环境的最佳配置] bhsc881114.github.io/2018/04/01/eureka缓存细节以及生产环境的最佳配置/</li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/15/DB/MySQL/MySQL - 联合索引最左匹配原则/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/15/DB/MySQL/MySQL - 联合索引最左匹配原则/" itemprop="url">MySQL 联合索引最左匹配原则</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-15T19:00:13+08:00">
+                2019-10-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/" itemprop="url" rel="index">
+                    <span itemprop="name">DB</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/DB/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="最左前缀匹配原则"><a href="#最左前缀匹配原则" class="headerlink" title="最左前缀匹配原则"></a>最左前缀匹配原则</h3><p>在 MySQL 建立联合索引时会遵循最左前缀匹配的原则，即最左优先，在检索数据时从联合索引的最左边开始匹配。</p>
+<hr>
+<p>Example 1：KEY test_col1_col2_col3 on test(col1,col2,col3);</p>
+<p>表结构包含5个字段：col1, col2, col3, col4, col5</p>
+<p>联合索引 test_col1_col2_col3 实际建立了(col1)、(col1,col2)、(col1,col2,col3)三个索引。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">test</span> <span class="keyword">WHERE</span> col1=“<span class="number">1</span>” <span class="keyword">AND</span> clo2=“<span class="number">2</span>” <span class="keyword">AND</span> clo4=“<span class="number">4</span>”</span><br></pre></td></tr></table></figure>
+<p>上面这个查询语句执行时会依照最左前缀匹配原则，检索时会使用索引(col1,col2)进行数据匹配。</p>
+<hr>
+<p>Example 2：索引的字段可以是任意顺序的<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">test</span> <span class="keyword">WHERE</span> col1=“<span class="number">1</span>” <span class="keyword">AND</span> clo2=“<span class="number">2</span>”</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">test</span> <span class="keyword">WHERE</span> col2=“<span class="number">2</span>” <span class="keyword">AND</span> clo1=“<span class="number">1</span>”</span><br></pre></td></tr></table></figure></p>
+<p>这两个查询语句都会用到索引(col1,col2)，MySQL 创建联合索引的规则是首先会对联合合索引的最左边的，也就是第一个字段col1的数据进行排序，在第一个字段的排序基础上，然后再对后面第二个字段col2进行排序。其实就相当于实现了类似 order by col1 col2这样一种排序规则。</p>
+<p>有人会疑惑第二个查询语句不符合最左前缀匹配：首先可以肯定是两个查询语句都包含索引(col1,col2)中的col1、col2两个字段，只是顺序不一样，查询条件一样，最后所查询的结果肯定是一样的。既然结果是一样的，到底以何种顺序的查询方式最好呢？此时我们可以借助 MySQL 查询优化器explain，explain会纠正sql语句该以什么样的顺序执行效率最高，最后才生成真正的执行计划。</p>
+<hr>
+<p>Example 3：跳过第一个索引字段</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">test</span> <span class="keyword">WHERE</span> col2=<span class="number">2</span>;</span><br></pre></td></tr></table></figure>
+<p>对于联合索引(col1,col2,col3)，上面这条语句是能不够触发索引的。</p>
+<p>如果表中的字段除了（col1,col2,col3），还有别的字段。那么的 EXPLAIN 中结果将不会是 INDEX 而是 ALL。其实是没有用到索引的。</p>
+<p>如果表中的字段只有（col1,col2,col3）。那么的 EXPLAIN 中结果才会是 INDEX 。</p>
+<hr>
+<h3 id="为什么要使用联合索引"><a href="#为什么要使用联合索引" class="headerlink" title="为什么要使用联合索引"></a>为什么要使用联合索引</h3><ol>
+<li><p>减少开销。建一个联合索引(col1,col2,col3)，实际相当于建了(col1),(col1,col2),(col1,col2,col3)三个索引。每多一个索引，都会增加写操作的开销和磁盘空间的开销。对于大量数据的表，使用联合索引会大大的减少开销。</p>
+</li>
+<li><p>覆盖索引。对联合索引(col1,col2,col3)，如果有如下的sql: select col1,col2,col3 from test where col1=1 and col2=2。那么MySQL可以直接通过遍历索引取得数据，而无需回表，这减少了很多的随机io操作。减少io操作，特别的随机io其实是dba主要的优化策略。所以，在真正的实际应用中，覆盖索引是主要的提升性能的优化手段之一。</p>
+</li>
+<li><p>效率高。索引列越多，通过索引筛选出的数据越少。有1000W条数据的表，有如下sql:select from table where col1=1 and col2=2 and col3=3,假设假设每个条件可以筛选出10%的数据，如果只有单值索引，那么通过该索引能筛选出1000W10%=100w条数据，然后再回表从100w条数据中找到符合col2=2 and col3= 3的数据，然后再排序，再分页；如果是联合索引，通过索引筛选出1000w10% 10% *10%=1w，效率提升可想而知！</p>
+</li>
+</ol>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[Mysql联合索引最左匹配原则] <a href="https://segmentfault.com/a/1190000015416513" target="_blank" rel="noopener">https://segmentfault.com/a/1190000015416513</a></li>
+<li><a href="https://blog.codinglabs.org/articles/theory-of-mysql-index.html" target="_blank" rel="noopener">https://blog.codinglabs.org/articles/theory-of-mysql-index.html</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/15/Kubenetes/Ingress/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/15/Kubenetes/Ingress/" itemprop="url">Kubernetes Ingress</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-15T17:10:27+08:00">
+                2019-10-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">Kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[Ingress Controllers] <a href="https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/15/CS/Thread/Thread-Lifecycle/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/15/CS/Thread/Thread-Lifecycle/" itemprop="url">Thread Lifecycle</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-15T11:39:18+08:00">
+                2019-10-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index">
+                    <span itemprop="name">CS</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Thread/" itemprop="url" rel="index">
+                    <span itemprop="name">Thread</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Java-Thread-Status"><a href="#Java-Thread-Status" class="headerlink" title="Java Thread Status"></a>Java Thread Status</h3><img src="/2019/10/15/CS/Thread/Thread-Lifecycle/java-early-stage-process-status.jpg">
+<p>上图是早期进程的状态，这里所谓“进程状态”指早期的那种“单线程进程”的状态。</p>
+<p>对于现在普遍的“多线程进程”，显然，谈论“进程状态”已经没有意义，应该谈论“进程下某个线程的状态”或者直接说“线程状态”。</p>
+<p>这里有个误区：其实在 Java 里面，线程是包含6个状态，而不是5个状态。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment">*   sun.misc.VM</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">*   The threadStatus field is set by the VM at state transition</span></span><br><span class="line"><span class="comment">*   in the hotspot implementation. Its value is set according to the JVM TI specification GetThreadState function.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_ALIVE = <span class="number">0x0001</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_TERMINATED = <span class="number">0x0002</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_RUNNABLE = <span class="number">0x0004</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_BLOCKED_ON_MONITOR_ENTER = <span class="number">0x0400</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_WAITING_INDEFINITELY = <span class="number">0x0010</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> JVMTI_THREAD_STATE_WAITING_WITH_TIMEOUT = <span class="number">0x0020</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*   Thread.State</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">enum</span> State &#123;</span><br><span class="line">    NEW,</span><br><span class="line">    RUNNABLE,</span><br><span class="line">    BLOCKED,</span><br><span class="line">    WAITING,</span><br><span class="line">    TIMED_WAITING,</span><br><span class="line">    TERMINATED;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>These states are virtual machine states which do not reflect any operating system thread states。</p>
+<blockquote>
+<p>这些状态是虚拟机状态，它不反映任何操作系统的线程状态。</p>
+</blockquote>
+<img src="/2019/10/15/CS/Thread/Thread-Lifecycle/java-thread-status.jpg">
+<p><strong>Runnable 与 传统Running 状态的区别</strong></p>
+<p>有人常觉得 Java 线程状态中还少了个 Running 状态，这其实是把两个不同层面的状态混淆了。对 Java 线程状态而言，不存在所谓的 Running 状态，它的 Runnable 状态包含了 Running 状态。</p>
+<p>为何 JVM 中没有去区分这两种状态呢？现在的时分(time-sharing)多任务(multi-task)操作系统架构通常都是用所谓的“时间分片(time quantum or time slice)”方式进行抢占式（preemptive）轮转调度（round-robin式）。这个时间分片通常是很小的，一个线程一次最多只能在 CPU 上运行比如 10-20ms 的时间（此时处于 Running 状态），也即大概只有 0.01 秒这一量级，时间片用后就要被切换下来放入调度队列的末尾等待再次调度(也即回到 Ready 状态)。</p>
+<p>Java中的 RUNNABLE 状态实际上是包含了 Ready 与 Running 的状态的。</p>
+<hr>
+<p>从实际来说，线程只有”就绪”、”阻塞”、”运行”三种状态：</p>
+<ol>
+<li>运行状态，线程正在干活的状态；</li>
+<li>就绪状态，CPU正在忙活别的；</li>
+<li>阻塞状态，线程主动让出CPU资源；</li>
+</ol>
+<p>NEW 和 TERMINATED 这两种状态其实并不是线程的状态，而是java.lang.Thread对象的状态。可以说，处于 NEW 和 TERMINATED 状态的”线程”其实并不是线程，而只是一个代表着线程对象而已。</p>
+<p>所以我们把 NEW 和 TERMINATED 两种状态去掉，那么Java定义的线程状态还有4种：</p>
+<ol>
+<li>RUNNABLE</li>
+<li>BLOCKED</li>
+<li>WAITING</li>
+<li>TIMED_WAITING</li>
+</ol>
+<p>这四种状态怎么对应到”就绪”、”阻塞”、”运行”这三种状态里呢：</p>
+<ol>
+<li>RUNNABLE，对应”就绪”和”运行”两种状态，也就是说处于就绪和运行状态的线程在java.lang.Thread中都表现为”RUNNABLE”；</li>
+<li>BLOCKED，对应”阻塞”状态，此线程需要获得某个锁才能继续执行，而这个锁目前被其他线程持有，所以进入了被动的等待状态，直到抢到了那个锁，才会再次进入”就绪”状态；</li>
+<li>WAITING，对应”阻塞”状态，代表此线程正处于无限期的主动等待中，直到有人唤醒它，它才会再次进入就绪状态；</li>
+<li>TIMED_WAITING，对应”阻塞”状态，代表此线程正处于有限期的主动等待中，要么有人唤醒它，要么等待够了一定时间之后，才会再次进入就绪状态；</li>
+</ol>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[java线程运行怎么有第六种状态？] <a href="https://www.zhihu.com/question/56494969" target="_blank" rel="noopener">https://www.zhihu.com/question/56494969</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  G1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/14/Java/JVM/Basic/深入学习 JVM -  G1/" itemprop="url">深入学习 JVM - G1</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-14T23:29:06+08:00">
                 2019-10-14
               </time>
             
@@ -337,7 +1068,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/" itemprop="url" rel="index">
                     <span itemprop="name">Java</span>
                   </a>
@@ -348,7 +1079,7 @@
                   ， 
                 
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/JVM/" itemprop="url" rel="index">
                     <span itemprop="name">JVM</span>
                   </a>
@@ -359,7 +1090,7 @@
                   ， 
                 
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
                     <span itemprop="name">Basic</span>
                   </a>
@@ -442,20 +1173,355 @@
   
   
 
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  CMS/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/14/Java/JVM/Basic/深入学习 JVM -  CMS/" itemprop="url">深入学习 JVM - CMS</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-14T22:19:06+08:00">
+                2019-10-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="GC-Phases"><a href="#GC-Phases" class="headerlink" title="GC Phases"></a>GC Phases</h3><h4 id="1-Initial-Mark-初始标记阶段-STW"><a href="#1-Initial-Mark-初始标记阶段-STW" class="headerlink" title="1. Initial Mark - 初始标记阶段 - STW"></a>1. Initial Mark - 初始标记阶段 - STW</h4><p>作用：标记存活的对象。</p>
+<p>主要标记两部分：</p>
+<ul>
+<li>老年代中所有的 GC Roots 对象；</li>
+<li>年轻代中活着的对象引用到的老年代的对象；</li>
+</ul>
+<h4 id="2-Concurrent-Mark-并发标记阶段"><a href="#2-Concurrent-Mark-并发标记阶段" class="headerlink" title="2. Concurrent Mark - 并发标记阶段"></a>2. Concurrent Mark - 并发标记阶段</h4><p>从“初始化标记”阶段找到的GC Roots开始，找出所有存活的对象。</p>
+<p>并发标记的特点是标记线程和应用程序线程同时运行。并不是老年代的所有存活对象都会被标记，因为标记的同时应用程序会改变一些对象的引用等。</p>
+<h4 id="3-Concurrent-Preclean-预清理阶段"><a href="#3-Concurrent-Preclean-预清理阶段" class="headerlink" title="3. Concurrent Preclean - 预清理阶段"></a>3. Concurrent Preclean - 预清理阶段</h4><p>前一个阶段在并行运行的时候，一些对象的引用已经发生了变化，当这些引用发生变化的时候，JVM会标记堆的这个区域为Dirty Card(包含被标记但是改变了的对象，被认为”dirty”)，这就是Card Marking。</p>
+<h4 id="4-Concurrent-Abortable-Preclean"><a href="#4-Concurrent-Abortable-Preclean" class="headerlink" title="4. Concurrent Abortable Preclean"></a>4. Concurrent Abortable Preclean</h4><h4 id="5-Final-Remark"><a href="#5-Final-Remark" class="headerlink" title="5. Final Remark"></a>5. Final Remark</h4><h4 id="6-Concurrent-Sweep"><a href="#6-Concurrent-Sweep" class="headerlink" title="6. Concurrent Sweep"></a>6. Concurrent Sweep</h4><h4 id="7-Concurrent-Reset"><a href="#7-Concurrent-Reset" class="headerlink" title="7. Concurrent Reset"></a>7. Concurrent Reset</h4>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  Class/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/14/Java/JVM/Basic/深入学习 JVM -  Class/" itemprop="url">深入学习 JVM - Class</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-14T16:51:06+08:00">
+                2019-10-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/14/Java/JVM/Basic/深入学习 JVM -  GC/">
 
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content>
       <meta itemprop="image" content="/images/avatar.gif">
     </span>
 
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
     </span>
 
@@ -500,7 +1566,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/" itemprop="url" rel="index">
                     <span itemprop="name">Java</span>
                   </a>
@@ -511,7 +1577,7 @@
                   ， 
                 
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/JVM/" itemprop="url" rel="index">
                     <span itemprop="name">JVM</span>
                   </a>
@@ -522,7 +1588,7 @@
                   ， 
                 
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
                     <span itemprop="name">Basic</span>
                   </a>
@@ -738,20 +1804,20 @@
   
   
 
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/14/Linux/Basic/Performance-Index/">
 
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content>
       <meta itemprop="image" content="/images/avatar.gif">
     </span>
 
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
     </span>
 
@@ -796,7 +1862,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Linux/" itemprop="url" rel="index">
                     <span itemprop="name">Linux</span>
                   </a>
@@ -807,7 +1873,7 @@
                   ， 
                 
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Linux/Basic/" itemprop="url" rel="index">
                     <span itemprop="name">Basic</span>
                   </a>
@@ -912,20 +1978,20 @@
   
   
 
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM -  体系结构/">
 
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content>
       <meta itemprop="image" content="/images/avatar.gif">
     </span>
 
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
     </span>
 
@@ -970,7 +2036,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/" itemprop="url" rel="index">
                     <span itemprop="name">Java</span>
                   </a>
@@ -981,7 +2047,7 @@
                   ， 
                 
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/JVM/" itemprop="url" rel="index">
                     <span itemprop="name">JVM</span>
                   </a>
@@ -992,7 +2058,7 @@
                   ， 
                 
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
                     <span itemprop="name">Basic</span>
                   </a>
@@ -1134,973 +2200,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM -  Command/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/13/Java/JVM/Basic/深入学习 JVM -  Command/" itemprop="url">深入学习 JVM - Command</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T23:37:06+08:00">
-                2019-10-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
-                    <span itemprop="name">JVM</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Monitor"><a href="#Monitor" class="headerlink" title="Monitor"></a>Monitor</h3><h4 id="jps"><a href="#jps" class="headerlink" title="jps"></a>jps</h4><p>主要用来输出JVM中运行的进程状态信息。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jps -m -l</span><br></pre></td></tr></table></figure>
-<h4 id="jinfo"><a href="#jinfo" class="headerlink" title="jinfo"></a>jinfo</h4><p>实时查看和调整虚拟机运行参数。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jinfo -flags pid</span><br></pre></td></tr></table></figure>
-<h4 id="jstat"><a href="#jstat" class="headerlink" title="jstat"></a>jstat</h4><p>用于监视虚拟机运行时状态信息的命令，它可以显示出虚拟机进程中的类装载、内存、垃圾收集、JIT编译等运行数据。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">jstat -gcutil pid 1000</span><br><span class="line"></span><br><span class="line"> S0     S1     E      O      M     CCS    YGC     YGCT    FGC    FGCT     GCT</span><br><span class="line">0.00   0.00  28.55  39.40  95.96  89.23   833     3.391     5    6.704   10.096</span><br><span class="line">0.00   0.00  28.55  39.40  95.96  89.23   833     3.391     5    6.704   10.096</span><br><span class="line">0.00   0.00  28.55  39.40  95.96  89.23   833     3.391     5    6.704   10.096</span><br><span class="line">0.00   0.00  28.55  39.40  95.96  89.23   833     3.391     5    6.704   10.096</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html" target="_blank" rel="noopener">https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html</a></p>
-</blockquote>
-<h4 id="jmap"><a href="#jmap" class="headerlink" title="jmap"></a>jmap</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">jmap -histo:live -pid</span><br><span class="line"></span><br><span class="line">jmap -heap pid</span><br><span class="line"></span><br><span class="line">jmap -dump:format=b</span><br></pre></td></tr></table></figure>
-<h4 id="jhat"><a href="#jhat" class="headerlink" title="jhat"></a>jhat</h4><h4 id="jstack"><a href="#jstack" class="headerlink" title="jstack"></a>jstack</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jstack -l pid</span><br></pre></td></tr></table></figure>
-<h4 id="jconsole"><a href="#jconsole" class="headerlink" title="jconsole"></a>jconsole</h4><hr>
-<h3 id="Compile"><a href="#Compile" class="headerlink" title="Compile"></a>Compile</h3><h4 id="javap"><a href="#javap" class="headerlink" title="javap"></a>javap</h4><p>分解一个class文件，它根据options来决定到底输出什么。如果没有使用options，那么javap将会输出包，类里的protected和public域以及类里的所有方法。</p>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://www.cnblogs.com/ityouknow/p/5714703.html" target="_blank" rel="noopener">https://www.cnblogs.com/ityouknow/p/5714703.html</a></li>
-<li><a href="https://my.oschina.net/feichexia/blog/196575" target="_blank" rel="noopener">https://my.oschina.net/feichexia/blog/196575</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/CS/IO/系统IO模型/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/13/CS/IO/系统IO模型/" itemprop="url">系统 I/O 模型</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T22:23:18+08:00">
-                2019-10-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/" itemprop="url" rel="index">
-                    <span itemprop="name">CS</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/I-O/" itemprop="url" rel="index">
-                    <span itemprop="name">I/O</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="I-O-类型"><a href="#I-O-类型" class="headerlink" title="I/O 类型"></a>I/O 类型</h3><hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li>[五种IO模型介绍和对比] <a href="https://juejin.im/post/5bd32b84f265da0ac962e7c9" target="_blank" rel="noopener">https://juejin.im/post/5bd32b84f265da0ac962e7c9</a></li>
-<li>[聊聊IO多路复用之select、poll、epoll详解] <a href="https://www.jianshu.com/p/dfd940e7fca2" target="_blank" rel="noopener">https://www.jianshu.com/p/dfd940e7fca2</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/DistributedSystem/Hash一致性/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/13/DistributedSystem/Hash一致性/" itemprop="url">Hash 一致性</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T22:09:18+08:00">
-                2019-10-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Distributed-System/" itemprop="url" rel="index">
-                    <span itemprop="name">Distributed System</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 分布式/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/13/Redis/深入学习 Redis 原理 - 分布式/" itemprop="url">深入学习 Redis 原理 - 分布式</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T21:15:06+08:00">
-                2019-10-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Redis/" itemprop="url" rel="index">
-                    <span itemprop="name">Redis</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Sentinel"><a href="#Sentinel" class="headerlink" title="Sentinel"></a>Sentinel</h3><hr>
-<h3 id="Codis"><a href="#Codis" class="headerlink" title="Codis"></a>Codis</h3><hr>
-<h3 id="Replication"><a href="#Replication" class="headerlink" title="Replication"></a>Replication</h3><p>This system works using three main mechanisms:</p>
-<ol>
-<li><p>When a master and a slave instances are well-connected, the master keeps the slave updated by sending a stream of commands to the slave, in order to replicate the effects on the dataset happening in the master side due to: client writes, keys expired or evicted, any other action changing the master dataset.</p>
-</li>
-<li><p>When the link between the master and the slave breaks, for network issues or because a timeout is sensed in the master or the slave, the slave reconnects and attempts to proceed with a partial resynchronization: it means that it will try to just obtain the part of the stream of commands it missed during the disconnection.</p>
-</li>
-<li><p>When a partial resynchronization is not possible, the slave will ask for a full resynchronization. This will involve a more complex process in which the master needs to create a snapshot of all its data, send it to the slave, and then continue sending the stream of commands as the dataset changes.</p>
-</li>
-</ol>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li>[Redis Sentinel Documentation] <a href="https://redis.io/topics/sentinel" target="_blank" rel="noopener">https://redis.io/topics/sentinel</a></li>
-<li>[Replication] <a href="https://redis.io/topics/replication" target="_blank" rel="noopener">https://redis.io/topics/replication</a></li>
-<li>[为什么大厂都喜欢用 Codis 来管理分布式集群？] <a href="https://juejin.im/post/5c132b076fb9a04a08218eef" target="_blank" rel="noopener">https://juejin.im/post/5c132b076fb9a04a08218eef</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM - /">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/13/Java/JVM/Basic/深入学习 JVM - /" itemprop="url">深入学习 JVM -</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T21:15:06+08:00">
-                2019-10-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
-                    <span itemprop="name">JVM</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
-                    <span itemprop="name">Basic</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/CS/Memory/MMU/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/13/CS/Memory/MMU/" itemprop="url">Memory - MMU</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T16:32:03+08:00">
-                2019-10-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/" itemprop="url" rel="index">
-                    <span itemprop="name">CS</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/Memory/" itemprop="url" rel="index">
-                    <span itemprop="name">Memory</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>内存管理单元（英語：memory management unit，缩写为MMU），有时称作分页内存管理单元。</p>
-<p>内存管理单元是介于处理器和片外存储器之间的中间层。提供对虚拟地址(VA)向物理地址(PA)的转换。一般封装于CPU芯片内部。因此虚拟地址一般只存在于CPU内部。</p>
-
-<p>MMU工作流程：用户程序执行背后的数据/指令地址等都是虚拟地址，虚拟地址由执行单元发出，被MMU拦截并转换为物理地址。</p>
-<p>从虚拟地址到物理地址这一过程被称为<strong>地址转换（或映射）</strong>。这一映射过程包含两个问题：<strong>映射粒度</strong>和<strong>映射规则</strong>。</p>
-<ul>
-<li><p><strong>映射粒度</strong>：VA到PA映射的单位大小是页(Page)，页大小一般为4k。映射不改变业内偏移。页帧(Page Frame)指物理内存中的一页内存，MMU虚实地址映射就是寻找物理页帧的过程。</p>
-</li>
-<li><p><strong>映射规则</strong>：MMU的映射规则由页表(Page Table)来描述，即虚拟内存哪(几)个页映射到物理内存哪(几)个页帧。</p>
-</li>
-</ul>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li><a href="https://zh.wikipedia.org/wiki/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E5%8D%95%E5%85%83" target="_blank" rel="noopener">https://zh.wikipedia.org/wiki/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E5%8D%95%E5%85%83</a></li>
-<li>[浅谈内存管理单元（MMU）] <a href="https://zhuanlan.zhihu.com/p/73696670" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/73696670</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2137,7 +2236,7 @@
       
 
       <section class="site-overview sidebar-panel sidebar-panel-active">
-        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           
             <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Jason - sulang357159@163.com">
           
@@ -2152,7 +2251,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">631</span>
+                <span class="site-state-item-count">637</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2163,7 +2262,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">263</span>
+                <span class="site-state-item-count">264</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2174,7 +2273,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">681</span>
+                <span class="site-state-item-count">690</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
