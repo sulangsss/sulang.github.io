@@ -284,6 +284,236 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM -  体系结构/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/13/Java/JVM/Basic/深入学习 JVM -  体系结构/" itemprop="url">深入学习 JVM - 体系结构</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T23:56:06+08:00">
+                2019-10-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/Basic/" itemprop="url" rel="index">
+                    <span itemprop="name">Basic</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="JVM-位置"><a href="#JVM-位置" class="headerlink" title="JVM 位置"></a>JVM 位置</h3><hr>
+<h3 id="JVM-运行时数据区-Runtime-Data-Area"><a href="#JVM-运行时数据区-Runtime-Data-Area" class="headerlink" title="JVM 运行时数据区 - Runtime Data Area"></a>JVM 运行时数据区 - Runtime Data Area</h3><p>在jdk8，如何让方法区溢出?</p>
+<p>模拟 OOM Jave heap space</p>
+<p>什么是逃逸分析？</p>
+<hr>
+<h3 id="ClassLoader"><a href="#ClassLoader" class="headerlink" title="ClassLoader"></a>ClassLoader</h3><blockquote>
+<p>反射有几种方式？<br>ClassLoader父类是谁？Object类<br>请帮我显示出来有哪些ClassLoader？</p>
+</blockquote>
+<h4 id="什么是双亲委派机制"><a href="#什么是双亲委派机制" class="headerlink" title="什么是双亲委派机制"></a>什么是双亲委派机制</h4><p>某个特定的类加载器在接到加载类的请求时，首先将加载任务委托给父类加载器，依次递归，如果父类加载器可以完成类加载任务，就成功返回；只有父类加载器无法完成此加载任务时，才自己去加载。</p>
+<p><strong>为什么需要这个机制？</strong>防止内存中出现多份同样的字节码。</p>
+<h4 id="为什么需要破坏双亲委派？"><a href="#为什么需要破坏双亲委派？" class="headerlink" title="为什么需要破坏双亲委派？"></a>为什么需要破坏双亲委派？</h4><p>因为在某些情况下父类加载器需要委托子类加载器去加载class文件。受到加载范围的限制，父类加载器无法加载到需要的文件。</p>
+<p>以Driver接口为例，由于Driver接口定义在 JDK 当中的，而其实现由各个数据库的服务商来提供，比如 MySQL 的就写了 MySQL Connector，那么问题就来了，DriverManager（也由JDK提供）要加载各个实现了 Driver 接口的实现类，然后进行管理，但是DriverManager由启动类加载器加载，只能加载JAVA_HOME的lib下文件，而其实现是由服务商提供的，由系统类加载器加载，这个时候就需要启动类加载器来委托子类来加载Driver实现，从而破坏了双亲委派。</p>
+<blockquote>
+<p><a href="https://www.cnblogs.com/joemsu/p/9310226.html" target="_blank" rel="noopener">https://www.cnblogs.com/joemsu/p/9310226.html</a></p>
+</blockquote>
+<hr>
+<h3 id="Execution-Engine"><a href="#Execution-Engine" class="headerlink" title="Execution Engine"></a>Execution Engine</h3><p>负责解释命令，提交操作系统执行。</p>
+<p>Native Interface：融合不同的编程语言为 Java 所用。<br>Native Method Stack：具体做法是Native Method Stack中登记Native方法，在Execution Engine执行时加载本地方法库。</p>
+<hr>
+<h3 id="Heap"><a href="#Heap" class="headerlink" title="Heap"></a>Heap</h3><p>主要分为三部分： </p>
+<ol>
+<li>Young Generation Space(Young/New)</li>
+<li>Tenure Generation Space(Old/Tenure)</li>
+<li>Permanent Space(Perm) / Metaspace</li>
+</ol>
+<hr>
+<h3 id="对象"><a href="#对象" class="headerlink" title="对象"></a>对象</h3><h4 id="对象创建"><a href="#对象创建" class="headerlink" title="对象创建"></a>对象创建</h4><p>对象的创建方式：</p>
+<ol>
+<li>使用new关键字创建对象；</li>
+<li>使用Class类的newInstance方法（反射机制）；</li>
+<li>使用Constructor类的newInstance方法（反射机制）；</li>
+<li>使用Clone方法创建对象（涉及浅克隆/深克隆机制，Interface Cloneable）；</li>
+<li>使用(反)序列化机制创建对象（涉及Interface Serializable）；</li>
+</ol>
+<h4 id="对象结构"><a href="#对象结构" class="headerlink" title="对象结构"></a>对象结构</h4><h4 id="多线程创建单例"><a href="#多线程创建单例" class="headerlink" title="多线程创建单例"></a>多线程创建单例</h4><p>单例特点：</p>
+<ul>
+<li>在任何情况下，单例类永远只有一个实例存在；</li>
+<li>单例需要有能力为整个系统提供这一唯一实例；</li>
+</ul>
+<p>常见创建单例方式：</p>
+<ol>
+<li>饿汉式单例；</li>
+<li>懒汉式单例；</li>
+<li>synchronized方法+懒汉式单例 或者 synchronized代码块+懒汉式单例；</li>
+<li>Double Check Locking；</li>
+<li>静态内置类；静态内部类虽然保证了单例在多线程并发下的线程安全性，但是在遇到序列化对象时，默认的方式运行得到的结果就是多例的。</li>
+<li>static代码块；</li>
+<li>枚举数据类型；</li>
+</ol>
+<blockquote>
+<p><a href="https://blog.csdn.net/cselmu9/article/details/51366946" target="_blank" rel="noopener">https://blog.csdn.net/cselmu9/article/details/51366946</a></p>
+</blockquote>
+<h4 id="TLAB"><a href="#TLAB" class="headerlink" title="TLAB"></a>TLAB</h4><h4 id="对象的访问定位"><a href="#对象的访问定位" class="headerlink" title="对象的访问定位"></a>对象的访问定位</h4><p>Java对象在访问的时候，我们需要通过java虚拟机栈的reference类型的数据去操作具体的对象。</p>
+<p>由于reference类型在java虚拟机规范中只规定了一个对象的引用，并没有定义这个这个引用应该通过那种方式去定位、访问java堆中的具体对象实例，所以一般的访问方式也是取决与java虚拟机的类型。</p>
+<p>目前主流的访问方式有通过句柄和直接指针两种方式。</p>
+<p><strong>句柄</strong></p>
+<p><strong>直接指针</strong></p>
+<h4 id="单例与序列化的那些事儿"><a href="#单例与序列化的那些事儿" class="headerlink" title="单例与序列化的那些事儿"></a>单例与序列化的那些事儿</h4><p>注意看下面的评论</p>
+<p><a href="https://www.hollischuang.com/archives/1144" target="_blank" rel="noopener">https://www.hollischuang.com/archives/1144</a></p>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[关于Java类加载双亲委派机制的思考] <a href="https://www.cnblogs.com/lanxuezaipiao/p/4138511.html" target="_blank" rel="noopener">https://www.cnblogs.com/lanxuezaipiao/p/4138511.html</a></li>
+<li>[【JVM】浅谈双亲委派和破坏双亲委派] <a href="https://www.cnblogs.com/joemsu/p/9310226.html" target="_blank" rel="noopener">https://www.cnblogs.com/joemsu/p/9310226.html</a></li>
+<li>[高并发下线程安全的单例模式（最全最经典）] <a href="https://blog.csdn.net/cselmu9/article/details/51366946" target="_blank" rel="noopener">https://blog.csdn.net/cselmu9/article/details/51366946</a></li>
+<li>[Java多线程-线程安全的单例模式的实现] <a href="https://juejin.im/post/5d07a0c35188255a70479beb" target="_blank" rel="noopener">https://juejin.im/post/5d07a0c35188255a70479beb</a></li>
+<li>[Java对象的访问定位] <a href="https://cloud.tencent.com/developer/article/1350213" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1350213</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM -  Command/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -762,164 +992,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 分布式/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/13/Redis/深入学习 Redis 原理 - 分布式/" itemprop="url">深入学习 Redis 原理 - 分布式</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T21:15:06+08:00">
-                2019-10-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Redis/" itemprop="url" rel="index">
-                    <span itemprop="name">Redis</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Sentinel"><a href="#Sentinel" class="headerlink" title="Sentinel"></a>Sentinel</h3><hr>
-<h3 id="Codis"><a href="#Codis" class="headerlink" title="Codis"></a>Codis</h3><hr>
-<h3 id="Replication"><a href="#Replication" class="headerlink" title="Replication"></a>Replication</h3><p>This system works using three main mechanisms:</p>
-<ol>
-<li><p>When a master and a slave instances are well-connected, the master keeps the slave updated by sending a stream of commands to the slave, in order to replicate the effects on the dataset happening in the master side due to: client writes, keys expired or evicted, any other action changing the master dataset.</p>
-</li>
-<li><p>When the link between the master and the slave breaks, for network issues or because a timeout is sensed in the master or the slave, the slave reconnects and attempts to proceed with a partial resynchronization: it means that it will try to just obtain the part of the stream of commands it missed during the disconnection.</p>
-</li>
-<li><p>When a partial resynchronization is not possible, the slave will ask for a full resynchronization. This will involve a more complex process in which the master needs to create a snapshot of all its data, send it to the slave, and then continue sending the stream of commands as the dataset changes.</p>
-</li>
-</ol>
-<hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li>[Redis Sentinel Documentation] <a href="https://redis.io/topics/sentinel" target="_blank" rel="noopener">https://redis.io/topics/sentinel</a></li>
-<li>[Replication] <a href="https://redis.io/topics/replication" target="_blank" rel="noopener">https://redis.io/topics/replication</a></li>
-<li>[为什么大厂都喜欢用 Codis 来管理分布式集群？] <a href="https://juejin.im/post/5c132b076fb9a04a08218eef" target="_blank" rel="noopener">https://juejin.im/post/5c132b076fb9a04a08218eef</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Java/JVM/Basic/深入学习 JVM - /">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1036,6 +1108,164 @@
         
           
             
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 分布式/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/13/Redis/深入学习 Redis 原理 - 分布式/" itemprop="url">深入学习 Redis 原理 - 分布式</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T21:15:06+08:00">
+                2019-10-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Sentinel"><a href="#Sentinel" class="headerlink" title="Sentinel"></a>Sentinel</h3><hr>
+<h3 id="Codis"><a href="#Codis" class="headerlink" title="Codis"></a>Codis</h3><hr>
+<h3 id="Replication"><a href="#Replication" class="headerlink" title="Replication"></a>Replication</h3><p>This system works using three main mechanisms:</p>
+<ol>
+<li><p>When a master and a slave instances are well-connected, the master keeps the slave updated by sending a stream of commands to the slave, in order to replicate the effects on the dataset happening in the master side due to: client writes, keys expired or evicted, any other action changing the master dataset.</p>
+</li>
+<li><p>When the link between the master and the slave breaks, for network issues or because a timeout is sensed in the master or the slave, the slave reconnects and attempts to proceed with a partial resynchronization: it means that it will try to just obtain the part of the stream of commands it missed during the disconnection.</p>
+</li>
+<li><p>When a partial resynchronization is not possible, the slave will ask for a full resynchronization. This will involve a more complex process in which the master needs to create a snapshot of all its data, send it to the slave, and then continue sending the stream of commands as the dataset changes.</p>
+</li>
+</ol>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[Redis Sentinel Documentation] <a href="https://redis.io/topics/sentinel" target="_blank" rel="noopener">https://redis.io/topics/sentinel</a></li>
+<li>[Replication] <a href="https://redis.io/topics/replication" target="_blank" rel="noopener">https://redis.io/topics/replication</a></li>
+<li>[为什么大厂都喜欢用 Codis 来管理分布式集群？] <a href="https://juejin.im/post/5c132b076fb9a04a08218eef" target="_blank" rel="noopener">https://juejin.im/post/5c132b076fb9a04a08218eef</a></li>
+</ul>
+
           
         
       
@@ -1393,7 +1623,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 数据类型/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - Transaction/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1412,7 +1642,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/10/13/Redis/深入学习 Redis 原理 - 数据类型/" itemprop="url">深入学习 Redis 原理 - 数据类型</a></h2>
+                <a class="post-title-link" href="/2019/10/13/Redis/深入学习 Redis 原理 - Transaction/" itemprop="url">深入学习 Redis 原理 - Transaction</a></h2>
         
 
         <div class="post-meta">
@@ -1486,170 +1716,68 @@
       
         
           
-            <h3 id="Lists"><a href="#Lists" class="headerlink" title="Lists"></a>Lists</h3><hr>
-<h3 id="Sets"><a href="#Sets" class="headerlink" title="Sets"></a>Sets</h3><hr>
-<h3 id="Hashes"><a href="#Hashes" class="headerlink" title="Hashes"></a>Hashes</h3><hr>
-<h3 id="Bitmaps"><a href="#Bitmaps" class="headerlink" title="Bitmaps"></a>Bitmaps</h3><hr>
-<h3 id="HyperLogLogs"><a href="#HyperLogLogs" class="headerlink" title="HyperLogLogs"></a>HyperLogLogs</h3><p>HyperLogLog 是用来做基数统计的算法，HyperLogLog 的优点是，在输入元素的数量或者体积非常非常大时，计算基数所需的空间总是固定 的、并且是很小的。</p>
-<p>在 Redis 里面，每个 HyperLogLog 键只需要花费 12 KB 内存，就可以计算接近 2^64 个不同元素的基 数。这和计算基数时，元素越多耗费内存就越多的集合形成鲜明对比。但是，因为 HyperLogLog 只会根据输入元素来计算基数，而不会储存输入元素本身，所以 HyperLogLog 不能像集合那样，返回输入的各个元素。 </p>
-<blockquote>
-<p>什么是基数？比如数据集 {1, 3, 5, 7, 5, 7, 8}， 那么这个数据集的基数集为 {1, 3, 5 ,7, 8}, 基数(不重复元素)为5。 基数估计就是在误差可接受的范围内，快速计算基数。</p>
-</blockquote>
-<hr>
-<h3 id="Streams"><a href="#Streams" class="headerlink" title="Streams"></a>Streams</h3>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 速度快/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/13/Redis/深入学习 Redis 原理 - 速度快/" itemprop="url">深入学习 Redis 原理 - 速度快</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-13T09:36:06+08:00">
-                2019-10-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Redis/" itemprop="url" rel="index">
-                    <span itemprop="name">Redis</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Redis为什么这么快？"><a href="#Redis为什么这么快？" class="headerlink" title="Redis为什么这么快？"></a>Redis为什么这么快？</h3><ol>
-<li>完全基于内存，绝大部分请求是纯粹的内存操作，非常快速。数据存在内存中，类似于HashMap，HashMap的优势就是查找和操作的时间复杂度都是O(1)；</li>
-<li>数据结构简单，对数据操作也简单，Redis中的数据结构是专门进行设计的；</li>
-<li>采用单线程，避免了不必要的上下文切换和竞争条件，也不存在多进程或者多线程导致的切换而消耗 CPU，不用去考虑各种锁的问题，不存在加锁释放锁操作，没有因为可能出现死锁而导致的性能消耗；</li>
-<li>使用多路I/O复用模型，非阻塞IO；</li>
+            <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>It is possible to group commands together so that they are executed as a single transaction</p>
+<p><strong>Related commands</strong></p>
+<ul>
+<li>DISCARD</li>
+<li>EXEC</li>
+<li>MULTI</li>
+<li>UNWATCH</li>
+<li>WATCH</li>
+</ul>
+<ol>
+<li>All the commands in a transaction are serialized and executed sequentially. It can never happen that a request issued by another client is served in the middle of the execution of a Redis transaction. This guarantees that the commands are executed as a single isolated operation.</li>
+<li>Either all of the commands or none are processed, so a Redis transaction is also atomic.</li>
 </ol>
 <blockquote>
-<p>Redis is single threaded. How can I exploit multiple CPU / cores?<br>It’s not very frequent that CPU becomes your bottleneck with Redis, as usually Redis is either memory or network bound. For instance, using pipelining Redis running on an average Linux system can deliver even 1 million requests per second, so if your application mainly uses O(N) or O(log(N)) commands, it is hardly going to use too much CPU.<br>However, to maximize CPU usage you can start multiple instances of Redis in the same box and treat them as different servers. At some point a single box may not be enough anyway, so if you want to use multiple CPUs you can start thinking of some way to shard earlier.</p>
+<p>Watch 命令用于监视一个(或多个) key ，如果在事务执行之前这个(或这些) key 被其他命令所改动，那么事务将被打断。Watch + Multi实际是一种乐观锁（CAS）。</p>
 </blockquote>
-<h4 id="多路I-O复用模型"><a href="#多路I-O复用模型" class="headerlink" title="多路I/O复用模型"></a>多路I/O复用模型</h4><p>多路I/O复用模型是利用 select、poll、epoll 可以同时监察多个流的 I/O 事件的能力，在空闲的时候，会把当前线程阻塞掉，当有一个或多个流有 I/O 事件时，就从阻塞态中唤醒，于是程序就会轮询一遍所有的流（epoll 是只轮询那些真正发出了事件的流），并且只依次顺序的处理就绪的流，这种做法就避免了大量的无用操作。</p>
+<hr>
+<p>Redis 事务可以一次执行多个命令， 并且带有以下三个重要的保证：</p>
+<ul>
+<li>批量操作在发送 EXEC 命令前被放入队列缓存；</li>
+<li>收到 EXEC 命令后进入事务执行，事务中任意命令执行失败，其余的命令依然被执行；</li>
+<li>在事务执行过程，其他客户端提交的命令请求不会插入到事务执行命令序列中</li>
+</ul>
+<hr>
+<p>一个事务从开始到执行会经历以下三个阶段：</p>
+<ul>
+<li>开始事务；</li>
+<li>命令入队；</li>
+<li>执行事务。</li>
+</ul>
+<p>单个 Redis 命令的执行是原子性的，但 Redis 没有在事务上增加任何维持原子性的机制，所以 Redis 事务的执行并不是原子性的。</p>
+<p>事务可以理解为一个打包的批量执行脚本，但批量指令并非原子化的操作，中间某条指令的失败不会导致前面已做指令的回滚，也不会造成后续的指令不做。</p>
+<blockquote>
+<p>It’s important to note that even when a command fails, all the other commands in the queue are processed – Redis will not stop the processing of commands.</p>
+</blockquote>
+<hr>
+<p><strong>Errors inside a transaction</strong></p>
+<p>During a transaction it is possible to encounter two kind of command errors:</p>
+<ol>
+<li><p>A command may fail to be queued, so there may be an error before EXEC is called.</p>
+<blockquote>
+<p>For instance the command may be syntactically wrong (wrong number of arguments, wrong command name, …), or there may be some critical condition like an out of memory condition (if the server is configured to have a memory limit using the maxmemory directive).</p>
+</blockquote>
+</li>
+<li><p>A command may fail after EXEC is called.</p>
+<blockquote>
+<p>For instance since we performed an operation against a key with the wrong value (like calling a list operation against a string value).</p>
+</blockquote>
+</li>
+</ol>
+<hr>
+<h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><h4 id="Why-Redis-does-not-support-roll-backs"><a href="#Why-Redis-does-not-support-roll-backs" class="headerlink" title="Why Redis does not support roll backs?"></a>Why Redis does not support roll backs?</h4><p>However there are good opinions for this behavior:</p>
+<ul>
+<li><p>Redis commands can fail only if called with a wrong syntax (and the problem is not detectable during the command queueing), or against keys holding the wrong data type: this means that in practical terms a failing command is the result of a programming errors, and a kind of error that is very likely to be detected during development, and not in production.</p>
+</li>
+<li><p>Redis is internally simplified and faster because it does not need the ability to roll back.</p>
+</li>
+</ul>
+<hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li>[洞察|Redis是单线程的，但Redis为什么这么快？] <a href="https://zhuanlan.zhihu.com/p/42272979" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/42272979</a></li>
-<li>[Redis FAQ] <a href="https://redis.io/topics/faq" target="_blank" rel="noopener">https://redis.io/topics/faq</a></li>
+<li><a href="https://redis.io/topics/transactions" target="_blank" rel="noopener">https://redis.io/topics/transactions</a></li>
+<li><a href="https://www.runoob.com/redis/redis-transactions.html" target="_blank" rel="noopener">https://www.runoob.com/redis/redis-transactions.html</a></li>
 </ul>
 
           
@@ -1699,7 +1827,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 淘汰策略/">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/10/13/Redis/深入学习 Redis 原理 - 持久化/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jason - sulang357159@163.com">
@@ -1718,7 +1846,7 @@
         
           <h2 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/10/13/Redis/深入学习 Redis 原理 - 淘汰策略/" itemprop="url">深入学习 Redis 原理 - 淘汰策略</a></h2>
+                <a class="post-title-link" href="/2019/10/13/Redis/深入学习 Redis 原理 - 持久化/" itemprop="url">深入学习 Redis 原理 - 持久化</a></h2>
         
 
         <div class="post-meta">
@@ -1792,39 +1920,47 @@
       
         
           
-            <h3 id="LRU"><a href="#LRU" class="headerlink" title="LRU"></a>LRU</h3><p>当需要从缓存中淘汰数据时，我们希望能淘汰那些将来不可能再被使用的数据，保留那些将来还会频繁访问的数据，但最大的问题是缓存并不能预言未来。一个解决方法就是通过LRU进行预测：最近被频繁访问的数据将来被访问的可能性也越大。</p>
-<p>缓存中的数据一般会有这样的访问分布：一部分数据拥有绝大部分的访问量。当访问方式没有改变时，可以记录每个数据的最后一次访问时间，拥有最少空闲时间的数据可以被认为将来最有可能被访问到。</p>
-<p>举例如下的访问模式，A每5s访问一次，B每2s访问一次，C与D每10s访问一次，|代表计算空闲时间的截止点：</p>
-<img src="/2019/10/13/Redis/深入学习%20Redis%20原理%20-%20淘汰策略/lru-access-exp.png">
-<p>可以看到，LRU对于A、B、C工作的很好，完美预测了将来被访问到的概率B&gt;A&gt;C，但对于D却预测了最少的空闲时间。但是，总体来说，LRU算法已经是一个性能足够好的算法了。</p>
-<hr>
-<h3 id="可选策略"><a href="#可选策略" class="headerlink" title="可选策略"></a>可选策略</h3><ul>
-<li><p>noeviction: return errors when the memory limit was reached and the client is trying to execute commands that could result in more memory to be used (most write commands, but DEL and a few more exceptions).</p>
-</li>
-<li><p>allkeys-lru: evict keys by trying to remove the less recently used (LRU) keys first, in order to make space for the new data added.</p>
-</li>
-<li><p>volatile-lru: evict keys by trying to remove the less recently used (LRU) keys first, but only among keys that have an expire set, in order to make space for the new data added.</p>
-</li>
-<li><p>allkeys-random: evict keys randomly in order to make space for the new data added.</p>
-</li>
-<li><p>volatile-random: evict keys randomly in order to make space for the new data added, but only evict keys with an expire set.</p>
-</li>
-<li><p>volatile-ttl: evict keys with an expire set, and try to evict keys with a shorter time to live (TTL) first, in order to make space for the new data added.</p>
-</li>
+            <h3 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h3><p>在指定的时间间隔能对你的数据进行快照存储。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"># 时间策略</span><br><span class="line"># 要禁用RDB配置，只需要在save的最后一行写上：save ""</span><br><span class="line"># 表示900s内如果有1条是写入命令，就触发产生一次快照，可以理解为就进行一次备份</span><br><span class="line">save 900 1 </span><br><span class="line">save 300 10</span><br><span class="line">save 60 10000</span><br><span class="line"></span><br><span class="line"># 文件名称</span><br><span class="line">dbfilename dump.rdb</span><br><span class="line"></span><br><span class="line"># 文件保存路径</span><br><span class="line">dir /home/work/app/redis/data/</span><br><span class="line"></span><br><span class="line"># 如果持久化出错，主进程是否停止写入</span><br><span class="line"># 这是当备份进程出错时，主进程就停止接受新的写入操作，是为了保护持久化的数据一致性问题。</span><br><span class="line"># 如果自己的业务有完善的监控系统，可以禁止此项配置，否则请开启。</span><br><span class="line">stop-writes-on-bgsave-error yes</span><br><span class="line"></span><br><span class="line"># 是否压缩</span><br><span class="line">rdbcompression yes</span><br><span class="line"></span><br><span class="line"># 导入时是否检查</span><br><span class="line"># 建议没有必要开启，毕竟Redis本身就属于CPU密集型服务器，再开启压缩会带来更多的CPU消耗，相比硬盘成本，CPU更值钱。</span><br><span class="line">rdbchecksum yes</span><br></pre></td></tr></table></figure>
+<h4 id="触发条件"><a href="#触发条件" class="headerlink" title="触发条件"></a>触发条件</h4><ol>
+<li>手动触发：</li>
+</ol>
+<ul>
+<li>save：会阻塞当前Redis服务器，直到持久化完成，线上应该禁止使用。</li>
+<li>bgsave：该触发方式会fork一个子进程，由子进程负责持久化过程，因此阻塞只会发生在fork子进程的时候。</li>
 </ul>
-<blockquote>
-<p>The policies volatile-lru, volatile-random and volatile-ttl behave like noeviction if there are no keys to evict matching the prerequisites.</p>
-</blockquote>
-<hr>
-<h3 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h3><ul>
-<li>maxmemory：配置Redis存储数据时指定限制的内存大小，比如100m。当缓存消耗的内存超过这个数值时, 将触发数据淘汰。该数据配置为0时，表示缓存的数据量没有限制, 即LRU功能不生效。64位的系统默认值为0，32位的系统默认内存限制为3GB。</li>
-<li>maxmemory_policy：触发数据淘汰后的淘汰策略。</li>
-<li>maxmemory_samples：随机采样的精度，也就是随即取出key的数目。该数值配置越大, 越接近于真实的LRU算法，但是数值越大，相应消耗也变高，对性能有一定影响，样本值默认为5。</li>
+<ol start="2">
+<li>自动触发：</li>
+</ol>
+<ul>
+<li>根据 save m n 配置规则自动触发；</li>
+<li>从节点全量复制时，主节点发送rdb文件给从节点完成复制操作，主节点会触发 bgsave；</li>
+<li>执行 debug reload 时；</li>
+<li>执行 shutdown时，如果没有开启aof，也会触发。</li>
 </ul>
+<hr>
+<h3 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h3><p>记录每次对服务器写的操作，当服务器重启的时候会重新执行这些命令来恢复原始的数据。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"># 是否开启aof</span><br><span class="line">appendonly yes</span><br><span class="line"></span><br><span class="line"># 文件名称</span><br><span class="line">appendfilename "appendonly.aof"</span><br><span class="line"></span><br><span class="line"># 同步方式</span><br><span class="line"># always：把每个写命令都立即同步到aof，很慢，但是很安全</span><br><span class="line"># everysec：每秒同步一次，是折中方案</span><br><span class="line"># no：redis不处理交给OS来处理，非常快，但是也最不安全</span><br><span class="line"># 一般情况下都采用 everysec 配置，这样可以兼顾速度与安全，最多损失1s的数据。</span><br><span class="line">appendfsync everysec</span><br><span class="line"></span><br><span class="line"># aof重写期间是否同步</span><br><span class="line">no-appendfsync-on-rewrite no</span><br><span class="line"></span><br><span class="line"># 重写触发配置</span><br><span class="line">auto-aof-rewrite-percentage 100</span><br><span class="line">auto-aof-rewrite-min-size 64mb</span><br><span class="line"></span><br><span class="line"># 加载aof时如果有错如何处理</span><br><span class="line">aof-load-truncated yes</span><br><span class="line"></span><br><span class="line"># 文件重写策略</span><br><span class="line">aof-rewrite-incremental-fsync yes</span><br></pre></td></tr></table></figure>
+<h4 id="处理流程"><a href="#处理流程" class="headerlink" title="处理流程"></a>处理流程</h4><ol>
+<li>命令的实时写入：命令写入 -&gt; 追加到aof的buffer -&gt; 同步到磁盘。</li>
+<li>AOF文件的重写。</li>
+</ol>
+<h4 id="触发条件-1"><a href="#触发条件-1" class="headerlink" title="触发条件"></a>触发条件</h4><ol>
+<li>手动触发：</li>
+</ol>
+<ul>
+<li>bgrewriteaof</li>
+</ul>
+<ol start="2">
+<li>自动触发</li>
+</ol>
+<hr>
+<h3 id="定时任务机制"><a href="#定时任务机制" class="headerlink" title="定时任务机制"></a>定时任务机制</h3><p>定时任务执行的频率可以在配置文件中通过 hz 10 来设置（这个配置表示1s内执行10次，也就是每100ms触发一次定时任务）。</p>
+<p>该值最大能够设置为：500，但是不建议超过：100，因为值越大说明执行频率越频繁越高，这会带来CPU的更多消耗，从而影响主进程读写性能。</p>
+<p>定时任务使用的是Redis自己实现的 TimeEvent，它会定时去调用一些命令完成定时任务，这些任务可能会阻塞主进程导致Redis性能下降。因此我们在配置Redis时，一定要整体考虑一些会触发定时任务的配置，根据实际情况进行调整。</p>
 <hr>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li>[Redis数据过期和淘汰策略详解] <a href="https://yq.aliyun.com/articles/257459" target="_blank" rel="noopener">https://yq.aliyun.com/articles/257459</a></li>
-<li>[Redis中的LRU淘汰策略分析] <a href="https://www.cnblogs.com/linxiyue/p/10945216.html" target="_blank" rel="noopener">https://www.cnblogs.com/linxiyue/p/10945216.html</a></li>
+<li><a href="https://juejin.im/post/5b70dfcf518825610f1f5c16" target="_blank" rel="noopener">https://juejin.im/post/5b70dfcf518825610f1f5c16</a></li>
 </ul>
 
           
@@ -1934,7 +2070,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">690</span>
+                <span class="site-state-item-count">691</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -1983,7 +2119,7 @@
         <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2019</span>
+  <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

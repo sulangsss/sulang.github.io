@@ -284,6 +284,199 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/09/24/ELK/ES/ES-Shard/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jason - sulang357159@163.com">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/09/24/ELK/ES/ES-Shard/" itemprop="url">ES Shard</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-24T18:13:06+08:00">
+                2019-09-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/" itemprop="url" rel="index">
+                    <span itemprop="name">ELK</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ELK/ES/" itemprop="url" rel="index">
+                    <span itemprop="name">ES</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Shard"><a href="#Shard" class="headerlink" title="Shard"></a>Shard</h3><p>Shard本质上就是一个Lucene索引, 因此会消耗相应的文件句柄, 内存和CPU资源。</p>
+<blockquote>
+<p>一个 Index 其实是有存储上限的（除非你设置足够多的 Shards 和机器），如官方声明单个 Shard 的文档数不能超过 20 亿（受限于 Lucene index，每个 Shard 是一个 Lucene index）。<br>每个搜索请求会调度到索引的每个分片中. 如果分片分散在不同的节点倒是问题不太. 但当分片开始竞争相同的硬件资源时, 性能便会逐步下降。</p>
+</blockquote>
+<p>shard_num = hash(_routing) % num_primary_shards</p>
+<blockquote>
+<p>其中 hash(_routing) 得出一个数字，然后除以主 Shards 的数量得到一个余数，余数的范围是 0 到 number_of_primary_shards - 1，这个数字就是文档所在的 Shard。Routing 默认是 id 值，当然可以自定义，合理指定 Routing 能够大幅提升查询效率，Routing 支持 GET、Delete、Update、Post、Put 等操作。</p>
+</blockquote>
+<p>考虑到 I、O，针对 Index 每个 Node 的 Shards 数最好不超过 3 个，那面对这样一个庞大的 Index，我们是采用更多的 Shards，还是更多的 Index，我们如何选择？</p>
+<p>Index 的 Shards 总量也不宜太多，更多的 Shards 会带来更多的 I、O 开销，其实答案就已经很明确，除非你能接受长时间的查询等待。</p>
+<p>Index 拆分的思路很简单，时序索引有一个好处就是只有增加，没有变更，按时间累积，天然对索引的拆分友好支持，可以按照时间和数据量做任意时间段的拆分。</p>
+<p>ES 提供的 Rollover Api + Index Template 可以非常便捷和友好的实现 Index 的拆分工作，把单个 index docs 数量控制在百亿内，也就是一个 Index 默认 5 个 Shards 左右即可，保证查询的即时响应。</p>
+<h4 id="Shard-Count"><a href="#Shard-Count" class="headerlink" title="Shard Count"></a>Shard Count</h4><p>当我们节点数和Shard数相等时，ElasticSearch 集群的性能可以达到最优。即，对于一个3节点集群，我们为每个集群节点分配1个 Shard，总共3个 Shard。</p>
+<p>但是由于 ElasticSearch 的不可变性（Immutable）的限制，系统无法对 Shard 进行重新拆分分配，除非重新索引这个文件集合。所以，当我们需要增加更多节点的时候，又希望 Shard 能利用到增加节点带来的系统性能提升时，我们就不得不进行重新索引，由于重索引开销巨大，这是我们不希望看到的。</p>
+<p>如果单个node分配多个Shard，就会引入另外一系列的性能问题，我们知道对于任意一次完整的搜索，ElasticSearch会分别对每个Shard进行查询，最后进行汇总。当节点数和Shard数是一对一的时候，所有的查询可以并行运行。但是，对于具有多个Shard的节点，如果磁盘是15000RPM或SSD，可能会相对较快，但是这也会存在等待响应的问题，所以通常不推荐一个节点超过2个Shard。</p>
+<p>3节点6个Shard，即每个节点2个Shard，这可以使我们在未来轻松的横向扩展到6个节点，应对许多极端的场景。</p>
+<h4 id="Replica-Count"><a href="#Replica-Count" class="headerlink" title="Replica Count"></a>Replica Count</h4><p>Replica也是Shard，与Shard不同的是，Replica只会参与读操作，同时也能提高集群的可用性。</p>
+<p>对于Replica来说，它的主要作用就是提高集群错误恢复的能力，所以Replica的数目与Shard的数目以及Node的数目相关，与Shard不同的是，Replica的数目可以在集群建立之后变更，切代价较小，所以相比Shard的数目而言，没有那么重要。</p>
+<p>如果宕机了，Replica是什么情况？</p>
+<p><strong>假设条件: 3 Nodes, 3 Shards, 0 Relicas</strong></p>
+<p><strong>假设一个Node宕机</strong></p>
+<img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_1.png">
+<p>此时，对应的索引不可用。</p>
+<p><strong>假设条件: 3 Nodes, 3 Shards, 1 Relicas</strong></p>
+<p><strong>假设一个Node宕机</strong></p>
+<img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_2.png">
+<p>此时，索引可用</p>
+<p><strong>假设两个Node宕机</strong></p>
+<img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_3.png">
+<p>此时，索引仍然可用。</p>
+<p><strong>假设条件: 3 Nodes, 3 Shards, 2 Relicas</strong></p>
+<img src="/2019/09/24/ELK/ES/ES-Shard/replica_exp_4.png">
+<blockquote>
+<p>如果存储费用比较便宜，推荐使用</p>
+</blockquote>
+<hr>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
+<li>[Shard数调优]<a href="https://www.cnblogs.com/richaaaard/p/5231905.html" target="_blank" rel="noopener">https://www.cnblogs.com/richaaaard/p/5231905.html</a></li>
+<li><a href="https://www.javazhiyin.com/36443.html" target="_blank" rel="noopener">https://www.javazhiyin.com/36443.html</a></li>
+<li><a href="https://segmentfault.com/a/1190000008868585" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008868585</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/09/23/ELK/ES/ES-ERROR/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -401,6 +594,7 @@
 <blockquote>
 <p><a href="https://www.aityp.com/%E8%A7%A3%E5%86%B3elasticsearch%E7%B4%A2%E5%BC%95%E5%8F%AA%E8%AF%BB/" target="_blank" rel="noopener">https://www.aityp.com/%E8%A7%A3%E5%86%B3elasticsearch%E7%B4%A2%E5%BC%95%E5%8F%AA%E8%AF%BB/</a></p>
 </blockquote>
+<h3 id="Can’t-write-data-to-es-data"><a href="#Can’t-write-data-to-es-data" class="headerlink" title="Can’t write data to es data"></a>Can’t write data to es data</h3><p>Solution: es 磁盘写满之后 会自动被设置成read only ,清理索引之后，在kibana 的dev tools页面里 执行以下转为可写<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">PUT _settings</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">"index"</span>: &#123;</span><br><span class="line">    <span class="attr">"blocks"</span>: &#123;</span><br><span class="line">    <span class="attr">"read_only_allow_delete"</span>: <span class="string">"false"</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 
           
         
@@ -1708,168 +1902,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://sulangsss.github.io/2019/08/27/Java/MyBatis/MyBatis-Usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jason - sulang357159@163.com">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="A Big Boy Blog -  Tech Articls & Notes">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/08/27/Java/MyBatis/MyBatis-Usage/" itemprop="url">MyBatis Usage</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-27T18:32:13+08:00">
-                2019-08-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/MyBatis/" itemprop="url" rel="index">
-                    <span itemprop="name">MyBatis</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="符号使用"><a href="#符号使用" class="headerlink" title="符号使用"></a>符号使用</h3><h4 id="和-的区别"><a href="#和-的区别" class="headerlink" title="# 和 $ 的区别"></a># 和 $ 的区别</h4><ul>
-<li>使用 #{parameterName} 引用参数的时候，Mybatis 会把这个参数认为是一个字符串，例如 sql 传入参数 “Smith”，Select from emp where name = #{employeeName}；</li>
-<li>使用 ${parameterName} 引用参数的时候，上述例子中的 sql 语句变为 Select from emp where name = Smith；</li>
-</ul>
-<p>简单来说，#{} 是经过预编译的是安全的，而 ${} 是未经过预编译的，仅仅是取变量的值是非安全的，存在 sql 注入的危险。# 将传入的数据都当成一个字符串，会对自动传入的数据加一个双引号。</p>
-<hr>
-<h3 id="ResultMap"><a href="#ResultMap" class="headerlink" title="ResultMap"></a>ResultMap</h3><hr>
-<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><ul>
-<li>[这也许是你不曾留意过的 Mybatis 细节]<a href="https://juejin.im/post/5bce743ee51d457a4b4f956f" target="_blank" rel="noopener">https://juejin.im/post/5bce743ee51d457a4b4f956f</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1943,7 +1975,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">690</span>
+                <span class="site-state-item-count">691</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -1992,7 +2024,7 @@
         <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2019</span>
+  <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
